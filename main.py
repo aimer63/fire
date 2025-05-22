@@ -6,6 +6,7 @@ import tomllib
 import numpy as np
 import time
 import itertools
+import matplotlib.pyplot as plt
 
 # Import helper functions
 from helpers import calculate_log_normal_params, calculate_initial_asset_values
@@ -16,7 +17,7 @@ from simulation import run_single_fire_simulation
 # Import the new analysis module
 import analysis
 
-# Import plotting functions
+# Import plotting functions (import display_all_plots_in_one_window as well)
 from plots import (
     plot_retirement_duration_distribution,
     plot_final_wealth_distribution_nominal,
@@ -25,10 +26,7 @@ from plots import (
     plot_wealth_evolution_samples_nominal,
     plot_bank_account_trajectories_real,
     plot_bank_account_trajectories_nominal,
-    plot_portfolio_allocations,
-    plot_inflation_distribution
 )
-
 
 def main():
     """
@@ -248,70 +246,11 @@ def main():
     # Plotting Bank Account Trajectories
     plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, REAL_BANK_LOWER_BOUND_EUROS)
     plot_bank_account_trajectories_nominal(results_df, bank_account_plot_indices, REAL_BANK_LOWER_BOUND_EUROS)
-
-    # Plotting Portfolio Allocations for Worst, Average, Best
-    # We need to re-extract the specific allocation data for each scenario from results_df
-    # and pass it to the plotting function.
-    if plot_data.get('worst_sim_idx') is not None:
-        worst_row = results_df.loc[plot_data['worst_sim_idx']]
-        initial_allocs_tuple = calculate_initial_asset_values(I0, W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE)
-        initial_allocations_nominal_dict = {
-            'Stocks': initial_allocs_tuple[0], 'Bonds': initial_allocs_tuple[1], 'STR': initial_allocs_tuple[2],
-            'Fun': initial_allocs_tuple[3], 'Real Estate': initial_allocs_tuple[4]
-        }
-        initial_allocations_real_dict = initial_allocations_nominal_dict.copy() # Assuming I0 is real
-
-        plot_portfolio_allocations(
-            initial_allocations_nominal_dict,
-            worst_row['pre_rebalancing_allocations_nominal'], worst_row['rebalancing_allocations_nominal'], worst_row['final_allocations_nominal'],
-            initial_allocations_real_dict,
-            worst_row['pre_rebalancing_allocations_real'], worst_row['rebalancing_allocations_real'], worst_row['final_allocations_real'],
-            scenario_type="Worst Case"
-        )
-    
-    if plot_data.get('average_sim_idx') is not None:
-        average_row = results_df.loc[plot_data['average_sim_idx']]
-        initial_allocs_tuple = calculate_initial_asset_values(I0, W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE)
-        initial_allocations_nominal_dict = {
-            'Stocks': initial_allocs_tuple[0], 'Bonds': initial_allocs_tuple[1], 'STR': initial_allocs_tuple[2],
-            'Fun': initial_allocs_tuple[3], 'Real Estate': initial_allocs_tuple[4]
-        }
-        initial_allocations_real_dict = initial_allocations_nominal_dict.copy() # Assuming I0 is real
-
-        plot_portfolio_allocations(
-            initial_allocations_nominal_dict,
-            average_row['pre_rebalancing_allocations_nominal'], average_row['rebalancing_allocations_nominal'], average_row['final_allocations_nominal'],
-            initial_allocations_real_dict,
-            average_row['pre_rebalancing_allocations_real'], average_row['rebalancing_allocations_real'], average_row['final_allocations_real'],
-            scenario_type="Average Case"
-        )
-
-    if plot_data.get('best_sim_idx') is not None:
-        best_row = results_df.loc[plot_data['best_sim_idx']]
-        initial_allocs_tuple = calculate_initial_asset_values(I0, W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE)
-        initial_allocations_nominal_dict = {
-            'Stocks': initial_allocs_tuple[0], 'Bonds': initial_allocs_tuple[1], 'STR': initial_allocs_tuple[2],
-            'Fun': initial_allocs_tuple[3], 'Real Estate': initial_allocs_tuple[4]
-        }
-        initial_allocations_real_dict = initial_allocations_nominal_dict.copy() # Assuming I0 is real
-
-        plot_portfolio_allocations(
-            initial_allocations_nominal_dict,
-            best_row['pre_rebalancing_allocations_nominal'], best_row['rebalancing_allocations_nominal'], best_row['final_allocations_nominal'],
-            initial_allocations_real_dict,
-            best_row['pre_rebalancing_allocations_real'], best_row['rebalancing_allocations_real'], best_row['final_allocations_real'],
-            scenario_type="Best Case"
-        )
-    else:
-        print("No successful simulations available to plot Best Case portfolio allocations.")
-
-
-    # Plotting overall inflation distribution
-    all_annual_inflations = [res[4] for res in simulation_results] # Extract all annual_inflations_seq
-    plot_inflation_distribution(all_annual_inflations)
     
     print("\nAll requested plots generated and saved to the current directory.")
 
+    print("\nAll plots generated. Displaying interactive windows. Close them to exit.")
+    plt.show(block=True) # This will keep all open Matplotlib windows alive until manually closed
 
 if __name__ == "__main__":
     main()

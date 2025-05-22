@@ -1,44 +1,79 @@
 # plots.py
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 import os
 import math
-import pandas as pd # Needed for DataFrame operations if any, or just for type hinting
-from matplotlib.lines import Line2D # For custom legend elements
-from helpers import annual_to_monthly_compounded_rate # Import the helper function
+import pandas as pd
 
+from helpers import annual_to_monthly_compounded_rate
+
+# --- Add this line at the very beginning of the script ---
+plt.ion() # Turn on interactive mode
+
+# Define the output directory
+OUTPUT_DIR = 'output'
+
+# REMOVED: Global lists to store figure objects for later combined display
+# ALL_GENERATED_FIGURES = []
+# ALL_GENERATED_FIGURE_TITLES = []
+
+def ensure_output_directory_exists():
+    """Ensures the output directory exists."""
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
+        print(f"Created output directory: {OUTPUT_DIR}")
+
+def _save_and_store_figure(fig, filename, title):
+    """Internal helper to save a figure to disk."""
+    ensure_output_directory_exists()
+    full_path = os.path.join(OUTPUT_DIR, filename)
+    
+    fig.savefig(full_path)
+    print(f"Saved {full_path}")
+    
+    # REMOVED: Storing figure reference and title for combined display
+    # ALL_GENERATED_FIGURES.append(fig)
+    # ALL_GENERATED_FIGURE_TITLES.append(title)
+    
+    # REMOVED: Explicitly closing figure here, as they should remain open interactively
+    # plt.close(fig)
 
 def plot_retirement_duration_distribution(failed_sims, T_ret_years, filename="failed_sims_duration_distribution.png"):
     """
     Plots a histogram of retirement duration for failed simulations.
+    Saves to PNG and opens the figure interactively.
     """
     if failed_sims.empty:
         print("No failed simulations to plot retirement duration distribution.")
         return
 
-    print(f"Generating plot: Distribution of Retirement Duration for Failed Simulations")
-    plt.figure(figsize=(10, 6))
+    title = 'Distribution of Retirement Duration for Failed Simulations'
+    print(f"Generating plot: {title}")
+    fig = plt.figure(figsize=(10, 6)) # REMOVED: visible=False
     plt.hist(failed_sims['months_lasted'] / 12, bins=np.arange(0, T_ret_years + 1, 1), edgecolor='black')
-    plt.title('Distribution of Retirement Duration for Failed Simulations')
+    plt.title(title)
     plt.xlabel('Years Lasted')
     plt.ylabel('Number of Simulations')
     plt.grid(axis='y', alpha=0.75)
     plt.tight_layout()
-    plt.savefig(filename)
-    plt.close()
-    print(f"Saved {filename}")
+    
+    _save_and_store_figure(fig, filename, title)
+
 
 def plot_final_wealth_distribution_nominal(successful_sims, filename="nominal_final_wealth_distribution.png"):
     """
     Plots a histogram of nominal final wealth for successful simulations on a log scale.
+    Saves to PNG and opens the figure interactively.
     """
     if successful_sims.empty:
         print("No successful simulations to plot nominal final wealth distribution.")
         return
 
-    print(f"Generating plot: Distribution of Total Wealth (Nominal)")
-    plt.figure(figsize=(12, 6))
+    title = 'Distribution of Total Wealth at End of Successful Simulations (Nominal - Log Scale)'
+    print(f"Generating plot: {title}")
+    fig = plt.figure(figsize=(12, 6)) # REMOVED: visible=False
     nominal_total_wealth = successful_sims['final_investment'] + successful_sims['final_bank_balance']
     
     nominal_total_wealth_positive = nominal_total_wealth[nominal_total_wealth > 0]
@@ -51,52 +86,57 @@ def plot_final_wealth_distribution_nominal(successful_sims, filename="nominal_fi
         
         plt.hist(nominal_total_wealth_positive, bins=log_bins_nominal, edgecolor='black')
         plt.xscale('log')
-        plt.title('Distribution of Total Wealth at End of Successful Simulations (Nominal - Log Scale)')
+        plt.title(title)
         plt.xlabel('Total Wealth (EUR) - Log Scale')
         plt.ylabel('Number of Simulations')
         plt.grid(axis='y', alpha=0.75)
         plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
-        print(f"Saved {filename}")
+        
+    _save_and_store_figure(fig, filename, title)
+
 
 def plot_final_wealth_distribution_real(successful_sims, filename="real_final_wealth_distribution.png"):
     """
     Plots a histogram of real final wealth for successful simulations on a log scale.
+    Saves to PNG and opens the figure interactively.
     """
     if successful_sims.empty:
         print("No successful simulations to plot real final wealth distribution.")
         return
 
-    print(f"Generating plot: Distribution of Total Wealth (Real)")
-    plt.figure(figsize=(12, 6))
+    title = "Distribution of Total Wealth at End of Successful Simulations (Real - Today's Money - Log Scale)"
+    print(f"Generating plot: {title}")
+    fig = plt.figure(figsize=(12, 6)) # REMOVED: visible=False
     real_final_wealth_positive = successful_sims['real_final_wealth'][successful_sims['real_final_wealth'] > 0]
     if real_final_wealth_positive.empty:
         print("\nWarning: No positive real final wealth to plot histogram on log scale.")
     else:
         min_real = max(1.0, real_final_wealth_positive.min())
-        max_real = real_final_wealth_positive.max()
+        real_final_wealth_positive_max = real_final_wealth_positive.max()
+        max_real = max(1.0, real_final_wealth_positive_max) 
+        
         log_bins_real = np.logspace(np.log10(min_real), np.log10(max_real), 50)
         
         plt.hist(real_final_wealth_positive, bins=log_bins_real, edgecolor='black')
         plt.xscale('log')
-        plt.title("Distribution of Total Wealth at End of Successful Simulations (Real - Today's Money - Log Scale)")
+        plt.title(title)
         plt.xlabel("Total Wealth (EUR in today's money) - Log Scale")
         plt.ylabel('Number of Simulations')
         plt.grid(axis='y', alpha=0.75)
         plt.tight_layout()
-        #plt.savefig(filename)
-        plt.show()
-        plt.close()
-        print(f"Saved {filename}")
+        
+    _save_and_store_figure(fig, filename, title)
+
 
 def plot_wealth_evolution_samples_real(results_df, plot_lines_data, mu_pi, filename="wealth_evolution_real.png"):
     """
     Plots sampled wealth evolution over retirement in real terms on a log scale.
+    Saves to PNG and opens the figure interactively.
     """
-    print(f"Generating plot: Sampled Wealth Evolution (Real Terms)")
-    plt.figure(figsize=(14, 8))
-    plt.title('Sampled Wealth Evolution Over Retirement (Real Terms)')
+    title = 'Sampled Wealth Evolution Over Retirement (Real Terms)'
+    print(f"Generating plot: {title}")
+    fig = plt.figure(figsize=(14, 8))
+    plt.title(title)
     plt.xlabel('Years in Retirement')
     plt.ylabel("Total Wealth (EUR in today's money)")
     plt.grid(True, linestyle='--', alpha=0.7)
@@ -127,27 +167,45 @@ def plot_wealth_evolution_samples_real(results_df, plot_lines_data, mu_pi, filen
         
         real_history_positive = np.where(real_history <= 0, 1, real_history) # Replace non-positive with 1 for log plot
         
+        # --- MODIFIED CODE FOR LABEL ADJUSTMENT ---
+        adjusted_label = label
+        if label != '_nolegend_':
+            current_final_real_wealth = real_history[-1] if real_history.size > 0 else 0 
+            
+            if "Failed" in label:
+                adjusted_label = label
+            elif "Best Successful" in label:
+                adjusted_label = f"Best Successful (Final Real: {current_final_real_wealth:,.0f}€)"
+            elif "Worst Successful" in label:
+                adjusted_label = f"Worst Successful (Final Real: {current_final_real_wealth:,.0f}€)"
+            elif "Percentile Range" in label:
+                adjusted_label = label.replace("Percentile Range", f"Percentile Range (Final Real: {current_final_real_wealth:,.0f}€)")
+            else:
+                adjusted_label = f"Sample (Final Real: {current_final_real_wealth:,.0f}€)"
+        # --- END MODIFIED CODE BLOCK ---
+
         plt.plot(
             np.arange(0, len(nominal_history)) / 12,
             real_history_positive,
-            label=label,
+            label=adjusted_label, # Now uses the adjusted label
             color=color,
             linewidth=linewidth
         )
 
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
     plt.tight_layout(rect=[0, 0, 0.85, 1])
-    plt.savefig(filename)
-    plt.close()
-    print(f"Saved {filename}")
+    
+    _save_and_store_figure(fig, filename, title)
 
 def plot_wealth_evolution_samples_nominal(results_df, plot_lines_data, filename="wealth_evolution_nominal.png"):
     """
     Plots sampled wealth evolution over retirement in nominal terms on a log scale.
+    Saves to PNG and opens the figure interactively.
     """
-    print(f"Generating plot: Sampled Wealth Evolution (Nominal Terms)")
-    plt.figure(figsize=(14, 8))
-    plt.title('Sampled Wealth Evolution Over Retirement (Nominal Terms)')
+    title = 'Sampled Wealth Evolution Over Retirement (Nominal Terms)'
+    print(f"Generating plot: {title}")
+    fig = plt.figure(figsize=(14, 8)) # REMOVED: visible=False
+    plt.title(title)
     plt.xlabel('Years in Retirement')
     plt.ylabel("Total Wealth (EUR at time of value)")
     plt.grid(True, linestyle='--', alpha=0.7)
@@ -190,17 +248,19 @@ def plot_wealth_evolution_samples_nominal(results_df, plot_lines_data, filename=
 
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
     plt.tight_layout(rect=[0, 0, 0.85, 1])
-    plt.savefig(filename)
-    plt.close()
-    print(f"Saved {filename}")
+    
+    _save_and_store_figure(fig, filename, title)
+
 
 def plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, REAL_BANK_LOWER_BOUND_EUROS, filename="bank_account_trajectories_real.png"):
     """
     Plots sample bank account balance trajectories in real terms.
+    Saves to PNG and opens the figure interactively.
     """
-    print(f"Generating plot: Sampled Bank Account Trajectories (Real Terms)")
-    plt.figure(figsize=(14, 8))
-    plt.title('Sampled Bank Account Balance Evolution (Real Terms)')
+    title = 'Sampled Bank Account Balance Evolution (Real Terms)'
+    print(f"Generating plot: {title}")
+    fig = plt.figure(figsize=(14, 8)) # REMOVED: visible=False
+    plt.title(title)
     plt.xlabel('Years in Retirement')
     plt.ylabel(f"Bank Account Balance (EUR in today's money)")
     plt.grid(True, linestyle='--', alpha=0.7)
@@ -218,11 +278,11 @@ def plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, R
             
             monthly_inflation_rate_this_year = annual_to_monthly_compounded_rate(annual_inflations_seq[year_idx])
             
-            if year_idx == 0:
-                cumulative_inflation_factor_up_to_current_month = (1 + monthly_inflation_rate_this_year)**(month_in_year_idx + 1)
-            else:
-                cumulative_inflation_factor_up_to_current_month = np.prod(1 + annual_inflations_seq[:year_idx]) * \
-                                                                   ((1 + monthly_inflation_rate_this_year)**(month_in_year_idx + 1))
+            # Calculate cumulative inflation factor up to the current month in the simulation year
+            cumulative_inflation_factor_up_to_current_month = (1 + monthly_inflation_rate_this_year)**(month_in_year_idx + 1)
+            # If there are prior years, multiply by the cumulative inflation of those years
+            for prev_year_rate in annual_inflations_seq[:year_idx]:
+                 cumulative_inflation_factor_up_to_current_month *= (1 + prev_year_rate)
             
             if cumulative_inflation_factor_up_to_current_month <= 0:
                  cumulative_inflation_factor_up_to_current_month = 1.0 
@@ -231,7 +291,7 @@ def plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, R
             real_bank_history.append(real_balance)
 
         real_bank_history_np = np.array(real_bank_history)
-        plot_real_bank_history = np.where(real_bank_history_np < 0, 0, real_bank_history_np) # Bank balance can't be negative
+        plot_real_bank_history = np.where(real_bank_history_np < 0, 0, real_bank_history_np)
 
 
         plt.plot(np.arange(0, len(nominal_bank_history)) / 12, plot_real_bank_history, 
@@ -247,17 +307,19 @@ def plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, R
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
 
     plt.tight_layout(rect=[0, 0, 0.85, 1])
-    plt.savefig(filename)
-    plt.close()
-    print(f"Saved {filename}")
+    
+    _save_and_store_figure(fig, filename, title)
+
 
 def plot_bank_account_trajectories_nominal(results_df, bank_account_plot_indices, REAL_BANK_LOWER_BOUND_EUROS, filename="bank_account_trajectories_nominal.png"):
     """
     Plots sample bank account balance trajectories in nominal terms.
+    Saves to PNG and opens the figure interactively.
     """
-    print(f"Generating plot: Sampled Bank Account Trajectories (Nominal Terms)")
-    plt.figure(figsize=(14, 8))
-    plt.title('Sampled Bank Account Balance Evolution (Nominal Terms)')
+    title = 'Sampled Bank Account Balance Evolution (Nominal Terms)'
+    print(f"Generating plot: {title}")
+    fig = plt.figure(figsize=(14, 8)) # REMOVED: visible=False
+    plt.title(title)
     plt.xlabel('Years in Retirement')
     plt.ylabel(f"Bank Account Balance (EUR)")
     plt.grid(True, linestyle='--', alpha=0.7)
@@ -273,119 +335,15 @@ def plot_bank_account_trajectories_nominal(results_df, bank_account_plot_indices
                  alpha=0.7, linewidth=1.5,
                  label=f"Sim {sim_idx} ({'Success' if row['success'] else 'Fail'})")
 
-    # The real bank lower bound is a constant nominal value only at the start.
-    # Its nominal equivalent would change over time due to inflation.
-    # Plotting the *initial* real lower bound as a nominal line might be misleading.
-    # If a nominal lower bound is desired, it would need to be calculated based on inflation.
-    # For now, keeping the real lower bound as a horizontal line here is technically wrong
-    # if it's meant to be a *nominal* threshold, but if it's a visual reference to the *initial*
-    # real bound, then it's fine.
-    # Let's keep it commented out for now as it makes more sense for the real plot.
-    # plt.axhline(y=REAL_BANK_LOWER_BOUND_EUROS, color='r', linestyle='--', label='Real Bank Lower Bound (Initial)')
+    # Add the horizontal line for the REAL_BANK_LOWER_BOUND_EUROS as a constant nominal reference
+    plt.axhline(y=REAL_BANK_LOWER_BOUND_EUROS, color='r', linestyle='--', label='Real Bank Lower Bound (Nominal Reference)')
 
     if len(bank_account_plot_indices) > 5:
-        plt.legend(loc='upper right', fontsize='small')
+        legend_elements = [Line2D([0], [0], color='r', linestyle='--', label='Real Bank Lower Bound (Nominal Reference)')]
+        plt.legend(handles=legend_elements, loc='upper right')
     else:
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
 
     plt.tight_layout(rect=[0, 0, 0.85, 1])
-    plt.savefig(filename)
-    plt.close()
-    print(f"Saved {filename}")
-
-
-def plot_portfolio_allocations(
-    initial_allocations_nominal, pre_rebalancing_allocations_nominal, rebalancing_allocations_nominal, final_allocations_nominal,
-    initial_allocations_real, pre_rebalancing_allocations_real, rebalancing_allocations_real, final_allocations_real,
-    scenario_type="Representative Simulation", filename_prefix="portfolio_allocations"
-):
-    """
-    Plots a series of pie charts for nominal and real portfolio allocations at different stages
-    for a specific scenario (e.g., worst, average, best).
-
-    Args:
-        initial_allocations_nominal (dict): Initial nominal allocations.
-        pre_rebalancing_allocations_nominal (dict): Pre-rebalancing nominal allocations.
-        rebalancing_allocations_nominal (dict): Post-rebalancing nominal allocations.
-        final_allocations_nominal (dict): Final nominal allocations.
-        initial_allocations_real (dict): Initial real allocations.
-        pre_rebalancing_allocations_real (dict): Pre-rebalancing real allocations.
-        rebalancing_allocations_real (dict): Post-rebalancing real allocations.
-        final_allocations_real (dict): Final real allocations.
-        scenario_type (str): Description of the scenario (e.g., "Worst Case").
-        filename_prefix (str): Prefix for saved plot filenames.
-    """
-    # Helper to clean and plot a single pie chart
-    def plot_single_pie(ax, data_dict, title):
-        if not data_dict:
-            ax.text(0.5, 0.5, "No Data", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title(title)
-            return
-        
-        # Filter out assets with zero value to avoid empty slices
-        labels = [k for k, v in data_dict.items() if v > 0]
-        sizes = [v for v in data_dict.values() if v > 0]
-        
-        if not sizes: # Handle case where all filtered values are zero
-            ax.text(0.5, 0.5, "No Assets > 0", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title(title)
-            return
-
-        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, pctdistance=0.85, labeldistance=1.1)
-        ax.axis('equal')
-        ax.set_title(title)
-
-    # Plot Nominal Allocations
-    print(f"Generating nominal portfolio allocation plots for {scenario_type}: {filename_prefix}_{scenario_type.lower().replace(' ', '_')}_nominal.png")
-    fig_nom, axs_nom = plt.subplots(1, 4, figsize=(20, 6))
-    fig_nom.suptitle(f"Nominal Portfolio Allocations - {scenario_type}", fontsize=16)
-
-    plot_single_pie(axs_nom[0], initial_allocations_nominal, "Initial")
-    plot_single_pie(axs_nom[1], pre_rebalancing_allocations_nominal, "Pre-Rebalancing")
-    plot_single_pie(axs_nom[2], rebalancing_allocations_nominal, "Post-Rebalancing")
-    plot_single_pie(axs_nom[3], final_allocations_nominal, "Final")
-
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig(f"{filename_prefix}_{scenario_type.lower().replace(' ', '_')}_nominal.png")
-    plt.close(fig_nom)
-    print(f"Saved {filename_prefix}_{scenario_type.lower().replace(' ', '_')}_nominal.png")
-
-
-    # Plot Real Allocations
-    print(f"Generating real portfolio allocation plots for {scenario_type}: {filename_prefix}_{scenario_type.lower().replace(' ', '_')}_real.png")
-    fig_real, axs_real = plt.subplots(1, 4, figsize=(20, 6))
-    fig_real.suptitle(f"Real Portfolio Allocations - {scenario_type}", fontsize=16)
-
-    plot_single_pie(axs_real[0], initial_allocations_real, "Initial")
-    plot_single_pie(axs_real[1], pre_rebalancing_allocations_real, "Pre-Rebalancing")
-    plot_single_pie(axs_real[2], rebalancing_allocations_real, "Post-Rebalancing")
-    plot_single_pie(axs_real[3], final_allocations_real, "Final")
-
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig(f"{filename_prefix}_{scenario_type.lower().replace(' ', '_')}_real.png")
-    plt.close(fig_real)
-    print(f"Saved {filename_prefix}_{scenario_type.lower().replace(' ', '_')}_real.png")
-
-
-def plot_inflation_distribution(
-    annual_inflations_sequences,
-    plot_title="Annual Inflation Distribution (All Simulations)",
-    filename="inflation_distribution.png"
-):
-    """
-    Plots a histogram of annual inflation rates across all simulations.
-    """
-    print(f"Generating plot: {plot_title}")
     
-    all_inflations = np.concatenate(annual_inflations_sequences) # Flatten all annual inflations into one array
-
-    plt.figure(figsize=(10, 6))
-    plt.hist(all_inflations, bins=50, density=True, alpha=0.7, color='skyblue', edgecolor='black')
-    plt.xlabel("Annual Inflation Rate")
-    plt.ylabel("Density")
-    plt.title(plot_title)
-    plt.grid(True, linestyle=':', alpha=0.7)
-    plt.tight_layout()
-    plt.savefig(filename)
-    plt.close()
-    print(f"Saved {filename}")
+    _save_and_store_figure(fig, filename, title)

@@ -1,23 +1,38 @@
 # config.toml
 
+# The years are counted from zero, so, if we are 2025:
+# 0 2025
+# 1 2026
+# 2 ...
+# 3
+# 4
+# 5 2030
+# 6
+#
 # --- A. Deterministic Inputs (Your Personal Financial Plan) ---
-[deterministic_inputs]
-I0 = 123700
-b0 = 24000
-REAL_BANK_LOWER_BOUND_EUROS = 10000
-T_ret_years = 7
-X_real_monthly_initial = 3300
 
-# Planned Contributions (real_amount, year_of_retirement_start_idx)
-# Represented as an array of arrays.
+[deterministic_inputs]
+I0 = 323700 # Initial Investment Value (e.g., EUR)
+b0 = 24000  # Initial Bank Account Balance (e.g., EUR)
+
+# Bank account lower bound in real monaey if it goes below it will be topped
+# from the investment
+REAL_BANK_LOWER_BOUND_EUROS = 10_000
+
+# Number of years the simulation will run
+T_ret_years = 38
+
+# Planned Contributions, real amount. [[contrib, year], ...]
 C_planned = [[55000, 2], [54000, 3], [52000, 4]]
 
-# Planned Extra Expenses (real_amount, year_of_retirement_start_idx)
+# Fixed monthly exepense for the life level you want to keep
+X_real_monthly_initial = 3300
+# Planned Extra Expenses real_amount.
 # Represented as an array of arrays.
 X_planned_extra = [[0, 6]]
 
 P_real_monthly = 3900
-PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
+PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.7
 Y_P_start_idx = 5
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
@@ -44,11 +59,29 @@ W_P1_STR = 0.56
 W_P1_FUN = 0.04
 W_P1_REAL_ESTATE = 0.00
 
-W_P2_STOCKS = 0.80
-W_P2_BONDS = 0.10
+W_P2_STOCKS = 0.432
+W_P2_BONDS = 0.108
 W_P2_STR = 0.00
-W_P2_FUN = 0.10
-W_P2_REAL_ESTATE = 0.00
+W_P2_FUN = 0.00
+W_P2_REAL_ESTATE = 0.46
+
+# W_P2_STOCKS = 0.60
+# W_P2_BONDS = 0.40
+# W_P2_STR = 0.00
+# W_P2_FUN = 0.00
+# W_P2_REAL_ESTATE = 0.0
+
+# W_P2_STOCKS = 0.03
+# W_P2_BONDS = 0.30
+# W_P2_STR = 0.00 
+# W_P2_FUN = 0.00
+# W_P2_REAL_ESTATE = 0.67
+
+# W_P2_STOCKS = 0.80
+# W_P2_BONDS = 0.10
+# W_P2_STR = 0.00
+# W_P2_FUN = 0.10
+# W_P2_REAL_ESTATE = 0.00
 
 # --- D. Simulation Parameters ---
 [simulation_parameters]
