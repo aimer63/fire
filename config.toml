@@ -1,0 +1,56 @@
+# config.toml
+
+# --- A. Deterministic Inputs (Your Personal Financial Plan) ---
+[deterministic_inputs]
+I0 = 123700
+b0 = 24000
+REAL_BANK_LOWER_BOUND_EUROS = 10000
+T_ret_years = 38
+X_real_monthly_initial = 3300
+
+# Planned Contributions (real_amount, year_of_retirement_start_idx)
+# Represented as an array of arrays.
+C_planned = [[55000, 2], [54000, 3], [52000, 4]]
+
+# Planned Extra Expenses (real_amount, year_of_retirement_start_idx)
+# Represented as an array of arrays.
+X_planned_extra = [[0, 6]]
+
+P_real_monthly = 3900
+PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
+Y_P_start_idx = 5
+
+# --- B. Economic Assumptions (Averages and Volatilities) ---
+[economic_assumptions]
+STOCK_MU = 0.055
+STOCK_SIGMA = 0.16
+BOND_MU = 0.01
+BOND_SIGMA = 0.03
+STR_MU = 0.001
+STR_SIGMA = 0.001
+FUN_MU = 0.26
+FUN_SIGMA = 0.81
+REAL_ESTATE_MU = -0.01
+REAL_ESTATE_SIGMA = 0.10
+mu_pi = 0.02
+sigma_pi = 0.015
+
+# --- C. Portfolio Allocations (Weights) ---
+[portfolio_allocations]
+REBALANCING_YEAR_IDX = 5
+W_P1_STOCKS = 0.10
+W_P1_BONDS = 0.30
+W_P1_STR = 0.56
+W_P1_FUN = 0.04
+W_P1_REAL_ESTATE = 0.00
+
+W_P2_STOCKS = 0.80
+W_P2_BONDS = 0.10
+W_P2_STR = 0.00
+W_P2_FUN = 0.10
+W_P2_REAL_ESTATE = 0.00
+
+# --- D. Simulation Parameters ---
+[simulation_parameters]
+num_simulations = 10000
+random_seed = 42
