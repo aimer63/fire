@@ -5,7 +5,7 @@
 I0 = 123700
 b0 = 24000
 REAL_BANK_LOWER_BOUND_EUROS = 10000
-T_ret_years = 38
+T_ret_years = 7
 X_real_monthly_initial = 3300
 
 # Planned Contributions (real_amount, year_of_retirement_start_idx)
