@@ -107,7 +107,7 @@ def main():
     sim_params = config_data['simulation_parameters']
     num_simulations = sim_params['num_simulations']
     random_seed = sim_params['random_seed']
-    np.random.seed(random_seed)
+    # np.random.seed(random_seed)
 
     (
         mu_log_stocks, sigma_log_stocks,
