@@ -22,7 +22,8 @@ def run_single_fire_simulation(
     mu_log_str, sigma_log_str,
     mu_log_fun, sigma_log_fun,
     mu_log_real_estate, sigma_log_real_estate,
-    real_bank_lower_bound
+    real_bank_lower_bound,
+    C_real_monthly_initial,
 ):
     """
     Runs a single Monte Carlo simulation of a financial independence retirement plan.
@@ -66,6 +67,7 @@ def run_single_fire_simulation(
         mu_log_real_estate (float): Log-normal mean for real estate.
         sigma_log_real_estate (float): Log-normal sigma for real estate.
         real_bank_lower_bound (float): Minimum desired real bank balance.
+        C_real_monthly_initial (float): Initial monthly contribution in real terms.
 
     Returns:
         tuple: A tuple containing simulation results:
@@ -245,6 +247,37 @@ def run_single_fire_simulation(
                 current_str += nominal_c_amount * current_W_STR
                 current_fun += nominal_c_amount * current_W_FUN
                 current_real_estate += nominal_c_amount * current_W_REAL_ESTATE
+
+        # NEW LOGIC FOR C_real_monthly_initial (Fixed Monthly Contribution)
+        # Apply C_real_monthly_initial every month
+        if C_real_monthly_initial > 0: # Only if a positive contribution is set
+            # Determine current portfolio weights for allocation
+            if current_year_idx < REBALANCING_YEAR_IDX:
+                current_W_STOCKS = W_P1_STOCKS
+                current_W_BONDS = W_P1_BONDS
+                current_W_STR = W_P1_STR
+                current_W_FUN = W_P1_FUN
+                current_W_REAL_ESTATE = W_P1_REAL_ESTATE
+            else:
+                current_W_STOCKS = W_P2_STOCKS
+                current_W_BONDS = W_P2_BONDS
+                current_W_STR = W_P2_STR
+                current_W_FUN = W_P2_FUN
+                current_W_REAL_ESTATE = W_P2_REAL_ESTATE
+
+            # Inflate the real monthly contribution to its nominal value for the current year
+            nominal_c_monthly = inflate_amount_over_years(
+                C_real_monthly_initial,
+                current_year_idx,
+                annual_inflations_seq # Use this trial's inflation sequence
+            )
+            
+            # Allocate the nominal monthly contribution across assets based on weights
+            current_stocks += nominal_c_monthly * current_W_STOCKS
+            current_bonds += nominal_c_monthly * current_W_BONDS
+            current_str += nominal_c_monthly * current_W_STR
+            current_fun += nominal_c_monthly * current_W_FUN
+            current_real_estate += nominal_c_monthly * current_W_REAL_ESTATE
 
         # 3. Calculate nominal monthly withdrawal amount (includes X_real_monthly_initial)
         # Inflate the initial real withdrawal to current month's nominal value

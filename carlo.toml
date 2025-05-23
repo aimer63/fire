@@ -12,36 +12,24 @@
 # --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 
 [deterministic_inputs]
-I0 = 323700 # Initial Investment Value (e.g., EUR)
-b0 = 24000  # Initial Bank Account Balance (e.g., EUR)
+I0 = 0 # Initial Investment Value (e.g., EUR)
+b0 = 0 # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower bound in real monaey if it goes below it will be topped
 # from the investment
 REAL_BANK_LOWER_BOUND_EUROS = 0
 
 # Number of years the simulation will run
-T_ret_years = 38
+T_ret_years = 20
 
 # Fixed monthly contribution to the invested assets, like a pak in today money
-C_real_monthly_initial = 0 # Example: 500€ per month in today's money
+C_real_monthly_initial = 4166 # Example: 500€ per month in today's money
 
 # Planned Contributions, real amount. [[contrib, year], ...]
-C_planned = [
-    # Equivalent to 60,000€ nominal in Year 2 (assuming 2% inflation)
-    # 60000 / (1.02)^2 = 60000 / 1.0404 = 57669.93 plus 16088 naspi already 
-    # deflated
-    [73_758, 2],
-    # Equivalent to 60,000€ nominal in Year 3 (assuming 2% inflation)
-    # 60000 / (1.02)^3 = 60000 / 1.061208 = 56538.96 plus 11382 naspi already 
-    # deflated
-    [67_920, 3],
-    # Equivalent to 60,000€ nominal in Year 4 (assuming 2% inflation)
-    # 60000 / (1.02)^4 = 60000 / 1.08243216 = 55430.35
-    [55_430, 4],
-]
+C_planned = [[0, 0]]
 
 # Fixed monthly exepense for the life level you want to keep
-X_real_monthly_initial = 3300
+X_real_monthly_initial = 0
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
 # 1	1,02	98.039,22
@@ -50,15 +38,12 @@ X_real_monthly_initial = 3300
 # 4	1,08	92.384,54
 # 5	1,10	90.573,08
 
-X_planned_extra = [
-    # Represents a nominal 100000 in Year 5 (assuming 2% average inflation)
-    [100_000, 0],
-]
+X_planned_extra = [[0, 0]]
 
 # The pension
-P_real_monthly = 3900
+P_real_monthly = 0
 PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
-Y_P_start_idx = 5
+Y_P_start_idx = 0
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
 # Nominal values
@@ -79,17 +64,17 @@ sigma_pi = 0.015
 # --- C. Portfolio Allocations (Weights) ---
 [portfolio_allocations]
 REBALANCING_YEAR_IDX = 5
-W_P1_STOCKS = 0.18
-W_P1_BONDS = 0.28
-W_P1_STR = 0.49
-W_P1_FUN = 0.05
+W_P1_STOCKS = 0.80
+W_P1_BONDS = 0.20
+W_P1_STR = 0.00
+W_P1_FUN = 0.00
 W_P1_REAL_ESTATE = 0.00
 
-W_P2_STOCKS = 0.432
-W_P2_BONDS = 0.108
+W_P2_STOCKS = 0.80
+W_P2_BONDS = 0.20
 W_P2_STR = 0.00
 W_P2_FUN = 0.00
-W_P2_REAL_ESTATE = 0.46
+W_P2_REAL_ESTATE = 0.0
 
 # W_P2_STOCKS = 0.60
 # W_P2_BONDS = 0.40
@@ -112,4 +97,3 @@ W_P2_REAL_ESTATE = 0.46
 # --- D. Simulation Parameters ---
 [simulation_parameters]
 num_simulations = 10000
-random_seed = 42

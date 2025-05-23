@@ -55,6 +55,8 @@ X_planned_extra = [
     [100_000, 0],
 ]
 
+H0_real_cost = 0 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
+
 # The pension
 P_real_monthly = 3900
 PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6

@@ -62,10 +62,11 @@ def main():
     T_ret_months = T_ret_years * 12
 
     X_real_monthly_initial = det_inputs['X_real_monthly_initial']
-    
-    C_planned = [tuple(item) for item in det_inputs['C_planned']] 
     X_planned_extra = [tuple(item) for item in det_inputs['X_planned_extra']]
 
+    C_real_monthly_initial = det_inputs['C_real_monthly_initial']
+    C_planned = [tuple(item) for item in det_inputs['C_planned']] 
+    
     P_real_monthly = det_inputs['P_real_monthly']
     PENSION_INFLATION_ADJUSTMENT_FACTOR = det_inputs['PENSION_INFLATION_ADJUSTMENT_FACTOR']
     Y_P_start_idx = det_inputs['Y_P_start_idx']
@@ -106,7 +107,7 @@ def main():
 
     sim_params = config_data['simulation_parameters']
     num_simulations = sim_params['num_simulations']
-    random_seed = sim_params['random_seed']
+    # random_seed = sim_params['random_seed']
     # np.random.seed(random_seed)
 
     (
@@ -141,8 +142,9 @@ def main():
     print(f"T_ret_years: {T_ret_years}")
     print(f"T_ret_months: {T_ret_months}")
     print(f"X_real_monthly_initial: {X_real_monthly_initial:,.2f}")
-    print(f"C_planned: {C_planned}")
     print(f"X_planned_extra: {X_planned_extra}")
+    print(f"C_planned: {C_planned}")
+    print(f"C_real_monthly_initial: {C_real_monthly_initial:,.2f}")    
     print(f"P_real_monthly: {P_real_monthly:,.2f}")
     print(f"PENSION_INFLATION_ADJUSTMENT_FACTOR: {PENSION_INFLATION_ADJUSTMENT_FACTOR}")
     print(f"Y_P_start_idx: {Y_P_start_idx}")
@@ -176,7 +178,7 @@ def main():
 
     print("\n--- Simulation Parameters ---")
     print(f"num_simulations: {num_simulations}")
-    print(f"random_seed: {random_seed}")
+    # print(f"random_seed: {random_seed}")
 
     print("\n--- End of Parameter Assignment and Verification ---")
 
@@ -205,7 +207,8 @@ def main():
             mu_log_str, sigma_log_str,
             mu_log_fun, sigma_log_fun,
             mu_log_real_estate, sigma_log_real_estate,
-            REAL_BANK_LOWER_BOUND_EUROS
+            REAL_BANK_LOWER_BOUND_EUROS,
+            C_real_monthly_initial 
         )
         simulation_results.append(result)
         
