@@ -24,6 +24,7 @@ def run_single_fire_simulation(
     mu_log_real_estate, sigma_log_real_estate,
     real_bank_lower_bound,
     C_real_monthly_initial,
+    H0_real_cost,
 ):
     """
     Runs a single Monte Carlo simulation of a financial independence retirement plan.
@@ -395,15 +396,126 @@ def run_single_fire_simulation(
                 'Real Estate': current_real_estate / cumulative_inflation_rebalance_year
             }
 
+            # --- START HOUSE PURCHASE LOGIC ---
+            if H0_real_cost > 0: # Only execute if a house purchase cost is specified
+                nominal_house_cost = inflate_amount_over_years(H0_real_cost, REBALANCING_YEAR_IDX, annual_inflations_seq)
+                
+                # Calculate liquid assets available for purchase BEFORE rebalancing
+                liquid_assets_pre_house = current_str + current_bonds + current_stocks + current_fun
 
-            # Record nominal portfolio allocation just after rebalancing
-            rebalancing_allocations_nominal = {
-                'Stocks': total_investment_value_pre_rebalance * W_P2_STOCKS,
-                'Bonds': total_investment_value_pre_rebalance * W_P2_BONDS,
-                'STR': total_investment_value_pre_rebalance * W_P2_STR,
-                'Fun': total_investment_value_pre_rebalance * W_P2_FUN,
-                'Real Estate': total_investment_value_pre_rebalance * W_P2_REAL_ESTATE
-            }
+                # Check if enough liquid assets are available
+                if liquid_assets_pre_house < nominal_house_cost:
+                    success = False # Mark simulation as failed
+                    # Optional: print(f"Simulation failed: Insufficient liquid assets ({liquid_assets_pre_house:,.2f}) to purchase house ({nominal_house_cost:,.2f}) in year {current_year_idx}")
+                    break # Exit this simulation trial (the loop will stop)
+
+                # Perform liquidation to buy the house (prioritize from most liquid/lowest risk)
+                remaining_to_buy = nominal_house_cost
+                
+                # Liquidate from STR (Short-Term Rate / Cash Equivalent)
+                if current_str >= remaining_to_buy:
+                    current_str -= remaining_to_buy
+                    remaining_to_buy = 0
+                else:
+                    remaining_to_buy -= current_str
+                    current_str = 0
+                
+                # If funds still needed, liquidate from Bonds
+                if remaining_to_buy > 0:
+                    if current_bonds >= remaining_to_buy:
+                        current_bonds -= remaining_to_buy
+                        remaining_to_buy = 0
+                    else:
+                        remaining_to_buy -= current_bonds
+                        current_bonds = 0
+                        
+                # If funds still needed, liquidate from Stocks
+                if remaining_to_buy > 0:
+                    if current_stocks >= remaining_to_buy:
+                        current_stocks -= remaining_to_buy
+                        remaining_to_buy = 0
+                    else:
+                        remaining_to_buy -= current_stocks
+                        current_stocks = 0
+                        
+                # If funds still needed, liquidate from Fun Money (highest risk, last resort)
+                if remaining_to_buy > 0:
+                    if current_fun >= remaining_to_buy:
+                        current_fun -= remaining_to_buy
+                        remaining_to_buy = 0
+                    else:
+                        remaining_to_buy -= current_fun
+                        current_fun = 0
+                
+                # After successful liquidation, add the value to the real estate asset
+                current_real_estate += nominal_house_cost
+                # print(f"DEBUG: House of {nominal_house_cost:,.2f} bought. New RE: {current_real_estate:,.2f}") # Optional debug line
+            # --- END HOUSE PURCHASE LOGIC ---
+
+            # Recalculate total_investment_value_pre_rebalance *after* the house purchase
+            total_investment_value_pre_rebalance = current_stocks + current_bonds + current_str + current_fun + current_real_estate
+
+            # --- START CONDITIONAL REBALANCING LOGIC ---
+            if H0_real_cost > 0:
+                # Scenario: House was purchased, now distribute *remaining liquid assets*
+                # The house value (current_real_estate) is now fixed for this rebalance.
+                
+                # Calculate the value of the liquid portfolio remaining
+                liquid_portfolio_value_for_rebalance = total_investment_value_pre_rebalance - current_real_estate
+                
+                # Calculate the sum of the 'target' liquid weights from P2
+                sum_liquid_p2_weights = W_P2_STOCKS + W_P2_BONDS + W_P2_STR + W_P2_FUN
+                
+                if sum_liquid_p2_weights == 0: # Avoid division by zero if all liquid weights are zero
+                    # This case means the entire remaining portfolio goes to real estate, or there's nothing left.
+                    # This might need custom handling depending on what you want to do.
+                    # For now, we'll assume there are some liquid weights.
+                    current_stocks = 0.0
+                    current_bonds = 0.0
+                    current_str = 0.0
+                    current_fun = 0.0
+                else:
+                    # Normalize the liquid P2 weights to sum to 1
+                    norm_W_P2_STOCKS = W_P2_STOCKS / sum_liquid_p2_weights
+                    norm_W_P2_BONDS = W_P2_BONDS / sum_liquid_p2_weights
+                    norm_W_P2_STR = W_P2_STR / sum_liquid_p2_weights
+                    norm_W_P2_FUN = W_P2_FUN / sum_liquid_p2_weights
+
+                    # Apply these normalized weights to the remaining liquid portfolio
+                    # These are the *new* current asset values after rebalancing
+                    current_stocks = liquid_portfolio_value_for_rebalance * norm_W_P2_STOCKS
+                    current_bonds = liquid_portfolio_value_for_rebalance * norm_W_P2_BONDS
+                    current_str = liquid_portfolio_value_for_rebalance * norm_W_P2_STR
+                    current_fun = liquid_portfolio_value_for_rebalance * norm_W_P2_FUN
+                
+                # For rebalancing_allocations_nominal, calculate based on the new final allocations
+                # Here, W_P2_REAL_ESTATE is implicitly current_real_estate / total_investment_value_pre_rebalance
+                rebalancing_allocations_nominal = {
+                    'Stocks': current_stocks,
+                    'Bonds': current_bonds,
+                    'STR': current_str,
+                    'Fun': current_fun,
+                    'Real Estate': current_real_estate # This is the house value
+                }
+
+            else:
+                # Scenario: No house was purchased (H0_real_cost is 0), proceed with standard P2 rebalancing for all assets
+                rebalancing_allocations_nominal = {
+                    'Stocks': total_investment_value_pre_rebalance * W_P2_STOCKS,
+                    'Bonds': total_investment_value_pre_rebalance * W_P2_BONDS,
+                    'STR': total_investment_value_pre_rebalance * W_P2_STR,
+                    'Fun': total_investment_value_pre_rebalance * W_P2_FUN,
+                    'Real Estate': total_investment_value_pre_rebalance * W_P2_REAL_ESTATE
+                }
+
+                current_stocks = rebalancing_allocations_nominal['Stocks']
+                current_bonds = rebalancing_allocations_nominal['Bonds']
+                current_str = rebalancing_allocations_nominal['STR']
+                current_fun = rebalancing_allocations_nominal['Fun']
+                current_real_estate = rebalancing_allocations_nominal['Real Estate'] # This will be 0 if W_P1_REAL_ESTATE was 0 and no house was bought
+
+            # --- END CONDITIONAL REBALANCING LOGIC ---
+
 
             rebalancing_allocations_real = {
                 'Stocks': rebalancing_allocations_nominal['Stocks'] / cumulative_inflation_rebalance_year,
@@ -413,15 +525,14 @@ def run_single_fire_simulation(
                 'Real Estate': rebalancing_allocations_nominal['Real Estate'] / cumulative_inflation_rebalance_year
             }
 
-            current_stocks = total_investment_value_pre_rebalance * W_P2_STOCKS
-            current_bonds = total_investment_value_pre_rebalance * W_P2_BONDS
-            current_str = total_investment_value_pre_rebalance * W_P2_STR
-            current_fun = total_investment_value_pre_rebalance * W_P2_FUN
-            current_real_estate = total_investment_value_pre_rebalance * W_P2_REAL_ESTATE
 
         # Record nominal wealth at the end of the month
         nominal_wealth_history.append(current_b + current_stocks + current_bonds + current_str + current_fun + current_real_estate)
         bank_balance_history.append(current_b)
+        
+    # --- ADD THIS DEBUG LINE HERE ---
+    #   print(f"DEBUG RE: Year {current_year_idx}, Month {month_in_year_idx}: Real Estate = {current_real_estate:,.2f}")
+    # --- END DEBUG LINE ---
 
     # Final results for this simulation
     final_investment = current_stocks + current_bonds + current_str + current_fun + current_real_estate

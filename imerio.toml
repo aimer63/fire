@@ -7,7 +7,7 @@
 # 3
 # 4
 # 5 2030
-# 6
+# 6                               
 #
 # --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 
@@ -17,7 +17,7 @@ b0 = 24000  # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower bound in real monaey if it goes below it will be topped
 # from the investment
-REAL_BANK_LOWER_BOUND_EUROS = 0
+REAL_BANK_LOWER_BOUND_EUROS = 10_000
 
 # Number of years the simulation will run
 T_ret_years = 38
@@ -42,6 +42,7 @@ C_planned = [
 
 # Fixed monthly exepense for the life level you want to keep
 X_real_monthly_initial = 3300
+
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
 # 1	1,02	98.039,22
@@ -51,11 +52,10 @@ X_real_monthly_initial = 3300
 # 5	1,10	90.573,08
 
 X_planned_extra = [
-    # Represents a nominal 100000 in Year 5 (assuming 2% average inflation)
-    [100_000, 0],
+    [100_000, 5],
 ]
 
-H0_real_cost = 0 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
+H0_real_cost = 150_000 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
 
 # The pension
 P_real_monthly = 3900
@@ -87,11 +87,11 @@ W_P1_STR = 0.49
 W_P1_FUN = 0.05
 W_P1_REAL_ESTATE = 0.00
 
-W_P2_STOCKS = 0.432
-W_P2_BONDS = 0.108
-W_P2_STR = 0.00
-W_P2_FUN = 0.00
-W_P2_REAL_ESTATE = 0.46
+W_P2_STOCKS = 0.80
+W_P2_BONDS = 0.20
+W_P2_STR = 0.0
+W_P2_FUN = 0.0
+W_P2_REAL_ESTATE = 0.00
 
 # W_P2_STOCKS = 0.60
 # W_P2_BONDS = 0.40
@@ -114,4 +114,4 @@ W_P2_REAL_ESTATE = 0.46
 # --- D. Simulation Parameters ---
 [simulation_parameters]
 num_simulations = 10000
-random_seed = 42
+

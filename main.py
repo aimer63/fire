@@ -67,6 +67,8 @@ def main():
     C_real_monthly_initial = det_inputs['C_real_monthly_initial']
     C_planned = [tuple(item) for item in det_inputs['C_planned']] 
     
+    H0_real_cost = det_inputs['H0_real_cost']
+
     P_real_monthly = det_inputs['P_real_monthly']
     PENSION_INFLATION_ADJUSTMENT_FACTOR = det_inputs['PENSION_INFLATION_ADJUSTMENT_FACTOR']
     Y_P_start_idx = det_inputs['Y_P_start_idx']
@@ -145,6 +147,7 @@ def main():
     print(f"X_planned_extra: {X_planned_extra}")
     print(f"C_planned: {C_planned}")
     print(f"C_real_monthly_initial: {C_real_monthly_initial:,.2f}")    
+    print(f"H0_real_cost: {H0_real_cost:,.2f}")
     print(f"P_real_monthly: {P_real_monthly:,.2f}")
     print(f"PENSION_INFLATION_ADJUSTMENT_FACTOR: {PENSION_INFLATION_ADJUSTMENT_FACTOR}")
     print(f"Y_P_start_idx: {Y_P_start_idx}")
@@ -208,7 +211,8 @@ def main():
             mu_log_fun, sigma_log_fun,
             mu_log_real_estate, sigma_log_real_estate,
             REAL_BANK_LOWER_BOUND_EUROS,
-            C_real_monthly_initial 
+            C_real_monthly_initial,
+            H0_real_cost,
         )
         simulation_results.append(result)
         

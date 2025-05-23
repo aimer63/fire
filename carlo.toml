@@ -13,7 +13,7 @@
 
 [deterministic_inputs]
 I0 = 0 # Initial Investment Value (e.g., EUR)
-b0 = 0 # Initial Bank Account Balance (e.g., EUR)
+b0 = 10_000 # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower bound in real monaey if it goes below it will be topped
 # from the investment
@@ -23,13 +23,13 @@ REAL_BANK_LOWER_BOUND_EUROS = 0
 T_ret_years = 20
 
 # Fixed monthly contribution to the invested assets, like a pak in today money
-C_real_monthly_initial = 4166 # Example: 500€ per month in today's money
+C_real_monthly_initial = 500 # Example: 500€ per month in today's money
 
 # Planned Contributions, real amount. [[contrib, year], ...]
 C_planned = [[0, 0]]
 
 # Fixed monthly exepense for the life level you want to keep
-X_real_monthly_initial = 0
+X_real_monthly_initial = 100
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
 # 1	1,02	98.039,22
@@ -39,6 +39,8 @@ X_real_monthly_initial = 0
 # 5	1,10	90.573,08
 
 X_planned_extra = [[0, 0]]
+
+H0_real_cost = 0 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
 
 # The pension
 P_real_monthly = 0
