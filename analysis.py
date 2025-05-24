@@ -284,3 +284,89 @@ def perform_analysis_and_prepare_plots_data(
     }
 
     return results_df, plot_data_dict
+
+
+def calculate_and_display_cagr(simulation_results, I0, b0, T_ret_years):
+    """
+    Calculates and displays the Compound Annual Growth Rate (CAGR) for
+    the worst, average (median), and best performing successful simulations,
+    for both Nominal and Real terms.
+
+    Args:
+        simulation_results (list): List of results from each simulation run.
+        I0 (float): Initial total investment (real terms, which is nominal at Year 0).
+        b0 (float): Initial bank account balance (real terms, which is nominal at Year 0).
+        T_ret_years (int): Total simulation duration in years.
+    """
+    # Beginning Wealth (Nominal and Real are the same at Year 0)
+    beginning_wealth = I0 + b0 
+
+    if beginning_wealth <= 0:
+        print("\nCannot calculate CAGR: Initial total wealth (I0 + b0) must be positive.")
+        return
+
+    if T_ret_years <= 0:
+        print("\nCannot calculate CAGR: Simulation duration (T_ret_years) must be positive.")
+        return
+
+    nominal_cagr_list = []
+    real_cagr_list = []
+
+    for res in simulation_results:
+        success, _, final_investment, final_bank_balance, annual_inflations_seq, *_ = res
+        
+        if success: # Only consider successful simulations for CAGR
+            # --- Calculate Nominal CAGR ---
+            total_final_wealth_nominal = final_investment + final_bank_balance
+            
+            if total_final_wealth_nominal >= 0:
+                if total_final_wealth_nominal == 0:
+                    cagr_nominal = -1.0 # -100% return
+                else:
+                    cagr_nominal = (total_final_wealth_nominal / beginning_wealth)**(1 / T_ret_years) - 1
+                nominal_cagr_list.append(cagr_nominal)
+            else:
+                # If nominal final wealth is negative, CAGR is conceptually complex or undefined for growth.
+                # For simplicity, we can treat it as -100% for reporting purposes if initial wealth was positive.
+                # Or, if you want to strictly exclude, you could 'continue' here.
+                # For now, we'll include as -1.0 if beginning wealth was positive and final negative
+                if beginning_wealth > 0:
+                     nominal_cagr_list.append(-1.0) # Represents complete loss relative to positive start
+
+
+            # --- Calculate Real CAGR ---
+            cumulative_inflation_factor = np.prod(1 + annual_inflations_seq) if len(annual_inflations_seq) > 0 else 1.0
+            total_final_wealth_real = total_final_wealth_nominal / cumulative_inflation_factor
+
+            if total_final_wealth_real >= 0:
+                if total_final_wealth_real == 0:
+                    cagr_real = -1.0 # -100% return
+                else:
+                    cagr_real = (total_final_wealth_real / beginning_wealth)**(1 / T_ret_years) - 1
+                real_cagr_list.append(cagr_real)
+            else:
+                # Same handling for real final wealth being negative
+                if beginning_wealth > 0:
+                    real_cagr_list.append(-1.0)
+
+
+    if not nominal_cagr_list: # If no successful simulations, both lists will be empty
+        print("\nNo successful simulations to calculate CAGR for.")
+        return
+
+    nominal_cagrs = np.array(nominal_cagr_list)
+    real_cagrs = np.array(real_cagr_list)
+
+    # --- Print Nominal CAGR Results ---
+    print("\n--- Compound Annual Growth Rate (CAGR) of Total Wealth (Nominal Terms) ---")
+    print(f"Worst Case CAGR: {np.min(nominal_cagrs):.2%}")
+    print(f"Average Case (Median) CAGR: {np.median(nominal_cagrs):.2%}")
+    print(f"Best Case CAGR: {np.max(nominal_cagrs):.2%}")
+    print("-------------------------------------------------------------------------")
+
+    # --- Print Real CAGR Results ---
+    print("\n--- Compound Annual Growth Rate (CAGR) of Total Wealth (Real Terms) ---")
+    print(f"Worst Case CAGR: {np.min(real_cagrs):.2%}")
+    print(f"Average Case (Median) CAGR: {np.median(real_cagrs):.2%}")
+    print(f"Best Case CAGR: {np.max(real_cagrs):.2%}")
+    print("---------------------------------------------------------------------")

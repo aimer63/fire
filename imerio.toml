@@ -73,7 +73,7 @@ H0_real_cost = 150_000 # Initial real cost of the house to be purchased at REBAL
 # The pension
 P_real_monthly = 3900
 PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
-Y_P_start_idx = 8
+Y_P_start_idx = 5
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
 # Nominal values
@@ -93,7 +93,7 @@ sigma_pi = 0.015
 
 # --- C. Portfolio Allocations (Weights) ---
 [portfolio_allocations]
-REBALANCING_YEAR_IDX = 8
+REBALANCING_YEAR_IDX = 5
 W_P1_STOCKS = 0.18
 W_P1_BONDS = 0.28
 W_P1_STR = 0.49

@@ -249,6 +249,8 @@ def main():
         W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE, # Pass initial weights
         REBALANCING_YEAR_IDX, num_simulations, mu_pi
     )
+    
+    analysis.calculate_and_display_cagr(simulation_results, I0, b0, T_ret_years) # <--- ADD THIS LINE
 
     # --- 8. Generate Plots ---
     print("\n--- Generating Plots ---")
