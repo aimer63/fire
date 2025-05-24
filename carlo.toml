@@ -18,6 +18,7 @@ b0 = 10_000 # Initial Bank Account Balance (e.g., EUR)
 # Bank account lower bound in real monaey if it goes below it will be topped
 # from the investment
 REAL_BANK_LOWER_BOUND_EUROS = 0
+REAL_BANK_UPPER_BOUND_EUROS = 30_000
 
 # Number of years the simulation will run
 T_ret_years = 20

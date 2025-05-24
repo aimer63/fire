@@ -24,6 +24,7 @@ def run_single_fire_simulation(
     mu_log_fun, sigma_log_fun,
     mu_log_real_estate, sigma_log_real_estate,
     real_bank_lower_bound,
+    real_bank_upper_bound,
     C_real_monthly_initial,
     H0_real_cost,
 ):
@@ -45,6 +46,10 @@ def run_single_fire_simulation(
         P_real_monthly (float): Monthly pension income in real terms.
         PENSION_INFLATION_ADJUSTMENT_FACTOR (float): Factor by which pension adjusts to inflation.
         Y_P_start_idx (int): Year index when pension starts (0-indexed).
+        S_real_monthly (float): Monthly salary income in real terms.
+        SALARY_INFLATION_ADJUSTMENT_FACTOR (float): Factor by which salary adjusts to inflation.
+        Y_S_start_idx (int): Year index when salary starts (0-indexed).
+        Y_S_end_idx (int): Year index when salary ends (0-indexed, exclusive).
         mu_pi (float): Mean of annual inflation rate.
         sigma_pi (float): Standard deviation of annual inflation rate.
         REBALANCING_YEAR_IDX (int): Year index when portfolio rebalances to Phase 2 weights.
@@ -69,6 +74,7 @@ def run_single_fire_simulation(
         mu_log_real_estate (float): Log-normal mean for real estate.
         sigma_log_real_estate (float): Log-normal sigma for real estate.
         real_bank_lower_bound (float): Minimum desired real bank balance.
+        real_bank_upper_bound (float): Maximum desired real bank balance. # <--- NEW DOCSTRING
         C_real_monthly_initial (float): Initial monthly contribution in real terms.
 
     Returns:
@@ -245,6 +251,49 @@ def run_single_fire_simulation(
             if amount_to_liquidate_for_top_up > 0:
                 success = False
                 break # Simulation failed, exit loop
+
+        # --- NEW LOGIC: Move excess from Bank Account to Investments if above Real Upper Bound ---
+        # Re-calculate real_current_b in case it was topped up in the previous step
+        real_current_b = current_b / cumulative_inflation_factor_up_to_current_month
+
+        if real_current_b > real_bank_upper_bound:
+            real_excess_to_invest = real_current_b - real_bank_upper_bound
+            nominal_excess_to_invest = real_excess_to_invest * cumulative_inflation_factor_up_to_current_month
+
+            # Determine current portfolio weights for allocation
+            if current_year_idx < REBALANCING_YEAR_IDX:
+                current_W_STOCKS = W_P1_STOCKS
+                current_W_BONDS = W_P1_BONDS
+                current_W_STR = W_P1_STR
+                current_W_FUN = W_P1_FUN
+                # W_P1_REAL_ESTATE is intentionally skipped for this allocation
+            else:
+                current_W_STOCKS = W_P2_STOCKS
+                current_W_BONDS = W_P2_BONDS
+                current_W_STR = W_P2_STR
+                current_W_FUN = W_P2_FUN
+                # W_P2_REAL_ESTATE is intentionally skipped for this allocation
+            
+            # Calculate the sum of the *liquid* weights to normalize them
+            # This ensures the excess cash is distributed only among liquid assets
+            liquid_weights_sum = current_W_STOCKS + current_W_BONDS + current_W_STR + current_W_FUN
+
+            if liquid_weights_sum > 0: # Avoid division by zero
+                # Normalize the liquid weights to sum to 1
+                norm_W_STOCKS = current_W_STOCKS / liquid_weights_sum
+                norm_W_BONDS = current_W_BONDS / liquid_weights_sum
+                norm_W_STR = current_W_STR / liquid_weights_sum
+                norm_W_FUN = current_W_FUN / liquid_weights_sum
+
+                # Distribute the nominal excess across the liquid assets
+                current_stocks += nominal_excess_to_invest * norm_W_STOCKS
+                current_bonds += nominal_excess_to_invest * norm_W_BONDS
+                current_str += nominal_excess_to_invest * norm_W_STR
+                current_fun += nominal_excess_to_invest * norm_W_FUN
+
+                # Subtract the invested amount from the bank account
+                current_b -= nominal_excess_to_invest
+            # Else (if liquid_weights_sum is 0), nothing to do, excess stays in bank
 
         # 2. Handle planned contributions
         for nominal_c_amount, c_year_idx in nominal_c_planned_amounts:

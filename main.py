@@ -58,6 +58,7 @@ def main():
     I0 = det_inputs['I0']
     b0 = det_inputs['b0']
     REAL_BANK_LOWER_BOUND_EUROS = det_inputs['REAL_BANK_LOWER_BOUND_EUROS']
+    REAL_BANK_UPPER_BOUND_EUROS = det_inputs['REAL_BANK_UPPER_BOUND_EUROS']
     T_ret_years = det_inputs['T_ret_years']
     T_ret_months = T_ret_years * 12
 
@@ -112,6 +113,11 @@ def main():
     assert np.isclose(P2_sum, 1.0), f"Error: Phase 2 portfolio weights sum to {P2_sum:.4f}, but should sum to 1.0."
     print("Portfolio weights (W_P1, W_P2) successfully validated: sum to 1.0.")
 
+    assert REAL_BANK_UPPER_BOUND_EUROS >= REAL_BANK_LOWER_BOUND_EUROS, \
+        f"Error: REAL_BANK_UPPER_BOUND_EUROS ({REAL_BANK_UPPER_BOUND_EUROS:,.2f}) must be greater than or equal to REAL_BANK_LOWER_BOUND_EUROS ({REAL_BANK_LOWER_BOUND_EUROS:,.2f})."
+    print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
+
+
     sim_params = config_data['simulation_parameters']
     num_simulations = sim_params['num_simulations']
     # random_seed = sim_params['random_seed']
@@ -146,6 +152,7 @@ def main():
     print(f"I0: {I0:,.2f}")
     print(f"b0: {b0:,.2f}")
     print(f"REAL_BANK_LOWER_BOUND_EUROS: {REAL_BANK_LOWER_BOUND_EUROS:,.2f}")
+    print(f"REAL_BANK_UPPER_BOUND_EUROS: {REAL_BANK_UPPER_BOUND_EUROS:,.2f}")
     print(f"T_ret_years: {T_ret_years}")
     print(f"T_ret_months: {T_ret_months}")
     print(f"X_real_monthly_initial: {X_real_monthly_initial:,.2f}")
@@ -220,7 +227,8 @@ def main():
             mu_log_str, sigma_log_str,
             mu_log_fun, sigma_log_fun,
             mu_log_real_estate, sigma_log_real_estate,
-            REAL_BANK_LOWER_BOUND_EUROS,
+            REAL_BANK_LOWER_BOUND_EUROS,\
+            REAL_BANK_UPPER_BOUND_EUROS,
             C_real_monthly_initial,
             H0_real_cost,
         )
