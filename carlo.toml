@@ -22,14 +22,26 @@ REAL_BANK_LOWER_BOUND_EUROS = 0
 # Number of years the simulation will run
 T_ret_years = 20
 
+# In flows
+
+# To the bank:
+S_real_monthly = 3000                            # Initial real monthly salary (e.g., 2500 EUR in today's money)
+SALARY_INFLATION_ADJUSTMENT_FACTOR = 1.0         # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
+Y_S_start_idx = 0                                # Year index when salary starts (e.g., 0 for immediate start)
+Y_S_end_idx = 20                                 # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+
+# To the investment:
 # Fixed monthly contribution to the invested assets, like a pak in today money
-C_real_monthly_initial = 500 # Example: 500€ per month in today's money
+C_real_monthly_initial = 4166 # Example: 500€ per month in today's money
 
 # Planned Contributions, real amount. [[contrib, year], ...]
 C_planned = [[0, 0]]
 
+
+# Out flows
+
 # Fixed monthly exepense for the life level you want to keep
-X_real_monthly_initial = 100
+X_real_monthly_initial = 2500
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
 # 1	1,02	98.039,22

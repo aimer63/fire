@@ -13,6 +13,7 @@ def run_single_fire_simulation(
     C_planned,
     X_planned_extra,
     P_real_monthly, PENSION_INFLATION_ADJUSTMENT_FACTOR, Y_P_start_idx,
+    S_real_monthly, SALARY_INFLATION_ADJUSTMENT_FACTOR, Y_S_start_idx, Y_S_end_idx,
     mu_pi, sigma_pi,
     REBALANCING_YEAR_IDX,
     W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE,
@@ -148,6 +149,10 @@ def run_single_fire_simulation(
         P_real_monthly, Y_P_start_idx, annual_inflations_seq
     )
 
+    nominal_salary_start_amount = inflate_amount_over_years(
+        S_real_monthly, Y_S_start_idx, annual_inflations_seq
+    )
+
     # Simulation loop
     for current_month_idx in range(T_ret_months):
         months_lasted += 1
@@ -162,6 +167,22 @@ def run_single_fire_simulation(
             
             nominal_pension_monthly = nominal_pension_start_amount * pension_inflation_factor
             current_b += nominal_pension_monthly # Pension directly to bank account
+
+        # 2. Add monthly salary if applicable
+        nominal_salary_monthly = 0
+        # Check if current year is within the salary start and end range (exclusive end year)
+        if Y_S_start_idx <= current_year_idx < Y_S_end_idx:
+            # Adjust salary by its specific inflation factor from start year
+            salary_inflation_factor_period = 1
+            if current_year_idx > Y_S_start_idx:
+                # If SALARY_INFLATION_ADJUSTMENT_FACTOR is 1.0, this calculates regular inflation.
+                # If it's > 1.0, it means salary grows faster than inflation.
+                # If it's < 1.0, it means salary grows slower than inflation.
+                salary_inflation_factor_period = np.prod(1 + (annual_inflations_seq[Y_S_start_idx:current_year_idx] * SALARY_INFLATION_ADJUSTMENT_FACTOR))
+
+            nominal_salary_monthly = nominal_salary_start_amount * salary_inflation_factor_period
+            current_b += nominal_salary_monthly # Salary directly to bank account
+
 
         # --- Check and Top-Up Bank Account if below Real Lower Bound ---
         # Calculate current cumulative inflation factor for real value assessment
@@ -529,7 +550,7 @@ def run_single_fire_simulation(
         # Record nominal wealth at the end of the month
         nominal_wealth_history.append(current_b + current_stocks + current_bonds + current_str + current_fun + current_real_estate)
         bank_balance_history.append(current_b)
-        
+
     # --- ADD THIS DEBUG LINE HERE ---
     #   print(f"DEBUG RE: Year {current_year_idx}, Month {month_in_year_idx}: Real Estate = {current_real_estate:,.2f}")
     # --- END DEBUG LINE ---

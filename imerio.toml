@@ -3,9 +3,9 @@
 # The years are counted from zero, so, if we are 2025:
 # 0 2025
 # 1 2026
-# 2 ...
-# 3
-# 4
+# 2 2027
+# 3 2028
+# 4 2029
 # 5 2030
 # 6                               
 #
@@ -22,6 +22,15 @@ REAL_BANK_LOWER_BOUND_EUROS = 10_000
 # Number of years the simulation will run
 T_ret_years = 38
 
+# In flows
+
+To the bank:
+S_real_monthly = 0                               # Initial real monthly salary (e.g., 2500 EUR in today's money)   
+SALARY_INFLATION_ADJUSTMENT_FACTOR = 1.0         # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
+Y_S_start_idx = 0                                # Year index when salary starts (e.g., 0 for immediate start)
+Y_S_end_idx = 0                                  # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+
+# To the investment:
 # Fixed monthly contribution to the invested assets, like a pak in today money
 C_real_monthly_initial = 0 # Example: 500€ per month in today's money
 
@@ -40,6 +49,8 @@ C_planned = [
     [55_430, 4],
 ]
 
+# Out flows
+
 # Fixed monthly exepense for the life level you want to keep
 X_real_monthly_initial = 3300
 
@@ -52,7 +63,7 @@ X_real_monthly_initial = 3300
 # 5	1,10	90.573,08
 
 X_planned_extra = [
-    [100_000, 5],
+    [100_000, 1],
 ]
 
 H0_real_cost = 150_000 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX

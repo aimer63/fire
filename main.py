@@ -72,6 +72,11 @@ def main():
     P_real_monthly = det_inputs['P_real_monthly']
     PENSION_INFLATION_ADJUSTMENT_FACTOR = det_inputs['PENSION_INFLATION_ADJUSTMENT_FACTOR']
     Y_P_start_idx = det_inputs['Y_P_start_idx']
+    
+    S_real_monthly = det_inputs['S_real_monthly']
+    SALARY_INFLATION_ADJUSTMENT_FACTOR = det_inputs['SALARY_INFLATION_ADJUSTMENT_FACTOR']
+    Y_S_start_idx = det_inputs['Y_S_start_idx']
+    Y_S_end_idx = det_inputs['Y_S_end_idx']
 
     eco_assumptions = config_data['economic_assumptions']
     STOCK_MU = eco_assumptions['STOCK_MU']
@@ -151,6 +156,10 @@ def main():
     print(f"P_real_monthly: {P_real_monthly:,.2f}")
     print(f"PENSION_INFLATION_ADJUSTMENT_FACTOR: {PENSION_INFLATION_ADJUSTMENT_FACTOR}")
     print(f"Y_P_start_idx: {Y_P_start_idx}")
+    print(f"S_real_monthly: {S_real_monthly:,.2f}")
+    print(f"SALARY_INFLATION_ADJUSTMENT_FACTOR: {SALARY_INFLATION_ADJUSTMENT_FACTOR}")
+    print(f"Y_S_start_idx: {Y_S_start_idx}")
+    print(f"Y_S_end_idx: {Y_S_end_idx}")
 
     print("\n--- Economic Assumptions ---")
     print(f"STOCK_MU: {STOCK_MU:.4f}, STOCK_SIGMA: {STOCK_SIGMA:.4f}")
@@ -201,6 +210,7 @@ def main():
             list(C_planned),
             list(X_planned_extra),
             P_real_monthly, PENSION_INFLATION_ADJUSTMENT_FACTOR, Y_P_start_idx,
+            S_real_monthly, SALARY_INFLATION_ADJUSTMENT_FACTOR, Y_S_start_idx, Y_S_end_idx,
             mu_pi, sigma_pi,
             REBALANCING_YEAR_IDX,
             W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE,
