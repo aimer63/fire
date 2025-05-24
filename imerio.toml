@@ -12,8 +12,8 @@
 # --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 
 [deterministic_inputs]
-I0 = 323700 # Initial Investment Value (e.g., EUR)
-b0 = 24000  # Initial Bank Account Balance (e.g., EUR)
+I0 = 323_700 # Initial Investment Value (e.g., EUR)
+b0 = 24_000  # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower and upper bound in real monaey 
 # if it goes below it will be topped, if it goes above it will be invested
@@ -52,7 +52,7 @@ C_planned = [
 ]
 
 # Out flows
-
+TER_ANNUAL_PERCENTAGE = 0.002 # 2%
 # Fixed monthly exepense for the life level you want to keep
 X_real_monthly_initial = 3300
 
@@ -71,7 +71,7 @@ X_planned_extra = [
 H0_real_cost = 150_000 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
 
 # The pension
-P_real_monthly = 3900
+P_real_monthly = 4225
 PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
 Y_P_start_idx = 5
 
@@ -91,6 +91,14 @@ REAL_ESTATE_SIGMA = 0.08
 mu_pi = 0.02
 sigma_pi = 0.015
 
+[shocks]
+events = [
+    {year = 5, asset = "Stocks", magnitude = -0.35},
+    {year = 5, asset = "Bonds", magnitude = -0.20},
+    {year = 10, asset = "Fun", magnitude = -0.60},
+    {year = 15, asset = "Real Estate", magnitude = -0.25}
+]
+
 # --- C. Portfolio Allocations (Weights) ---
 [portfolio_allocations]
 REBALANCING_YEAR_IDX = 5
@@ -101,9 +109,9 @@ W_P1_FUN = 0.05
 W_P1_REAL_ESTATE = 0.00
 
 W_P2_STOCKS = 0.80
-W_P2_BONDS = 0.20
-W_P2_STR = 0.0
-W_P2_FUN = 0.0
+W_P2_BONDS = 0.00
+W_P2_STR = 0.00
+W_P2_FUN = 0.20
 W_P2_REAL_ESTATE = 0.00
 
 # W_P2_STOCKS = 0.60

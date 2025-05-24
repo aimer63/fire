@@ -12,7 +12,7 @@
 # --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 
 [deterministic_inputs]
-I0 = 0 # Initial Investment Value (e.g., EUR)
+I0 = 100_000 # Initial Investment Value (e.g., EUR)
 b0 = 0 # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower bound in real monaey if it goes below it will be topped
@@ -33,13 +33,13 @@ Y_S_end_idx = 0                                  # Year index when salary ends (
 
 # To the investment:
 # Fixed monthly contribution to the invested assets, like a pak in today money
-C_real_monthly_initial = 4166 # Example: 500€ per month in today's money
+C_real_monthly_initial = 0   # Example: 500€ per month in today's money
 
 # Planned Contributions, real amount. [[contrib, year], ...]
 C_planned = [[0, 0]]
 
-
 # Out flows
+TER_ANNUAL_PERCENTAGE = 0.03  # Example: 0.25% Total Expense Ratio per year
 
 # Fixed monthly exepense for the life level you want to keep
 X_real_monthly_initial = 0

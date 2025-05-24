@@ -27,6 +27,7 @@ def run_single_fire_simulation(
     real_bank_upper_bound,
     C_real_monthly_initial,
     H0_real_cost,
+    TER_ANNUAL_PERCENTAGE
 ):
     """
     Runs a single Monte Carlo simulation of a financial independence retirement plan.
@@ -74,8 +75,9 @@ def run_single_fire_simulation(
         mu_log_real_estate (float): Log-normal mean for real estate.
         sigma_log_real_estate (float): Log-normal sigma for real estate.
         real_bank_lower_bound (float): Minimum desired real bank balance.
-        real_bank_upper_bound (float): Maximum desired real bank balance. # <--- NEW DOCSTRING
+        real_bank_upper_bound (float): Maximum desired real bank balance.
         C_real_monthly_initial (float): Initial monthly contribution in real terms.
+        TER_ANNUAL_PERCENTAGE (float): Annual Total Expense Ratio as a percentage of relevant investments. # <--- NEW DOCSTRING
 
     Returns:
         tuple: A tuple containing simulation results:
@@ -158,6 +160,8 @@ def run_single_fire_simulation(
     nominal_salary_start_amount = inflate_amount_over_years(
         S_real_monthly, Y_S_start_idx, annual_inflations_seq
     )
+
+    ter_monthly_factor = TER_ANNUAL_PERCENTAGE / 12.0
 
     # Simulation loop
     for current_month_idx in range(T_ret_months):
@@ -442,7 +446,22 @@ def run_single_fire_simulation(
         current_str *= (1 + monthly_str_return)
         current_fun *= (1 + monthly_fun_return)
         current_real_estate *= (1 + monthly_real_estate_return)
-        
+
+        # TER is applied as a reduction in the value of the assets themselves.
+        # It's based on current value AFTER growth for the month.
+        current_stocks *= (1 - ter_monthly_factor)
+        current_bonds *= (1 - ter_monthly_factor)
+        current_str *= (1 - ter_monthly_factor)
+        current_fun *= (1 - ter_monthly_factor) # Assuming fun money is part of "invested capital" for TER
+        # Real estate is explicitly excluded as per requirement.
+
+        # Ensure no asset values drop below zero due to fees (unlikely with small TER but good practice)
+        current_stocks = max(0, current_stocks)
+        current_bonds = max(0, current_bonds)
+        current_str = max(0, current_str)
+        current_fun = max(0, current_fun)
+        # current_real_estate is also max(0, current_real_estate) by apply_asset_returns_to_nominal_values usually.
+
         # 6. Rebalance at the start of REBALANCING_YEAR_IDX
         if current_year_idx == REBALANCING_YEAR_IDX and month_in_year_idx == 0 and REBALANCING_YEAR_IDX > 0: # Ensure rebalancing only happens once at the start of the year
             total_investment_value_pre_rebalance = current_stocks + current_bonds + current_str + current_fun + current_real_estate
