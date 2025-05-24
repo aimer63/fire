@@ -27,7 +27,8 @@ def run_single_fire_simulation(
     real_bank_upper_bound,
     C_real_monthly_initial,
     H0_real_cost,
-    TER_ANNUAL_PERCENTAGE
+    TER_ANNUAL_PERCENTAGE,
+    shock_events,
 ):
     """
     Runs a single Monte Carlo simulation of a financial independence retirement plan.
@@ -78,6 +79,7 @@ def run_single_fire_simulation(
         real_bank_upper_bound (float): Maximum desired real bank balance.
         C_real_monthly_initial (float): Initial monthly contribution in real terms.
         TER_ANNUAL_PERCENTAGE (float): Annual Total Expense Ratio as a percentage of relevant investments. # <--- NEW DOCSTRING
+        shock_events:
 
     Returns:
         tuple: A tuple containing simulation results:
@@ -133,6 +135,27 @@ def run_single_fire_simulation(
     annual_real_estate_returns_seq = np.random.lognormal(
         mu_log_real_estate, sigma_log_real_estate, T_ret_years
     ) - 1
+
+    for shock in shock_events:
+        shock_year = shock['year']
+        shock_asset = shock['asset']
+        shock_magnitude = shock['magnitude']
+
+        # Ensure the shock year is within the simulation duration
+        if 0 <= shock_year < T_ret_years:
+            if shock_asset == 'Stocks':
+                annual_stocks_returns_seq[shock_year] = shock_magnitude
+            elif shock_asset == 'Bonds':
+                annual_bonds_returns_seq[shock_year] = shock_magnitude
+            elif shock_asset == 'STR': # Assuming 'STR' for short-term rate
+                annual_str_returns_seq[shock_year] = shock_magnitude
+            elif shock_asset == 'Fun': # Assuming 'Fun' for fun money
+                annual_fun_returns_seq[shock_year] = shock_magnitude
+            elif shock_asset == 'Real Estate':
+                annual_real_estate_returns_seq[shock_year] = shock_magnitude
+            # else:
+            #     Optional: Add a warning if an unknown asset is specified in config.toml
+            #     print(f"Warning: Unknown asset '{shock_asset}' in shock definition for year {shock_year}.")
 
     # Pre-calculate nominal planned contributions and pension start year based on this trial's inflation
     nominal_c_planned_amounts = []

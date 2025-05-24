@@ -94,6 +94,10 @@ def main():
     mu_pi = eco_assumptions['mu_pi']
     sigma_pi = eco_assumptions['sigma_pi']
 
+    # Load historical shock events (new)
+    shocks_config = config_data.get('shocks', {})
+    shock_events = shocks_config.get('events', [])
+
     port_allocs = config_data['portfolio_allocations']
     REBALANCING_YEAR_IDX = port_allocs['REBALANCING_YEAR_IDX']
     W_P1_STOCKS = port_allocs['W_P1_STOCKS']
@@ -233,7 +237,8 @@ def main():
             REAL_BANK_UPPER_BOUND_EUROS,
             C_real_monthly_initial,
             H0_real_cost,
-            TER_ANNUAL_PERCENTAGE
+            TER_ANNUAL_PERCENTAGE,
+            shock_events,
         )
         simulation_results.append(result)
         

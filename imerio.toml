@@ -93,10 +93,10 @@ sigma_pi = 0.015
 
 [shocks]
 events = [
-    {year = 5, asset = "Stocks", magnitude = -0.35},
-    {year = 5, asset = "Bonds", magnitude = -0.20},
-    {year = 10, asset = "Fun", magnitude = -0.60},
-    {year = 15, asset = "Real Estate", magnitude = -0.25}
+    {year = 3, asset = "Stocks", magnitude = -0.35},
+    {year = 3, asset = "Bonds", magnitude = -0.20},
+    {year = 3, asset = "Fun", magnitude = -0.60},
+    {year = 13, asset = "Real Estate", magnitude = -0.25}
 ]
 
 # --- C. Portfolio Allocations (Weights) ---

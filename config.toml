@@ -41,6 +41,7 @@ TER_ANNUAL_PERCENTAGE = 0.0025 # Example: 0.25% Total Expense Ratio per year
 
 # Out flows
 TER_ANNUAL_PERCENTAGE = 0.0025 # Example: 0.25% Total Expense Ratio per year
+
 # Fixed monthly exepense for the life level you want to keep
 X_real_monthly_initial = 0
 # Planned Extra Expenses real_amount. [[X, year], ...]
