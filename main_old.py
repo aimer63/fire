@@ -17,7 +17,7 @@ from simulation import run_single_fire_simulation
 # Import the new analysis module
 import analysis
 
-# Import plotting functions
+# Import plotting functions (import display_all_plots_in_one_window as well)
 from plots import (
     plot_retirement_duration_distribution,
     plot_final_wealth_distribution_nominal,
@@ -34,6 +34,9 @@ def main():
     analysis, and plotting.
     """
     # --- 1-5. Config Loading, Parameter Assignment, Derived Calculations, and Assertions ---
+    # (Keep all this part as it was in the previous main.py update)
+    # ... (Your existing code for sections 1 through 5, including assertions and parameter prints) ...
+
     config_file_path = 'config.toml'
     if len(sys.argv) > 1:
         config_file_path = sys.argv[1]
@@ -88,10 +91,10 @@ def main():
     FUN_SIGMA = eco_assumptions['FUN_SIGMA']
     REAL_ESTATE_MU = eco_assumptions['REAL_ESTATE_MU']
     REAL_ESTATE_SIGMA = eco_assumptions['REAL_ESTATE_SIGMA']
-    mu_pi = eco_assumptions['MU_PI']
-    sigma_pi = eco_assumptions['SIGMA_PI']
+    mu_pi = eco_assumptions['mu_pi']
+    sigma_pi = eco_assumptions['sigma_pi']
 
-    # Load historical shock events
+    # Load historical shock events (new)
     shocks_config = config_data.get('shocks', {})
     shock_events = shocks_config.get('events', [])
 
@@ -246,10 +249,7 @@ def main():
     sys.stdout.write('\n') 
     sys.stdout.flush()
     
-    end_simulation_time = time.time()
-    total_simulation_elapsed_time = end_simulation_time - start_time
-    
-    print(f"\nMonte Carlo Simulation Complete. Total time elapsed: {total_simulation_elapsed_time:.2f} seconds.")
+    print(f"\nMonte Carlo Simulation Complete. Total time elapsed: {elapsed_time:.2f} seconds.")
 
     # --- 7. Perform Analysis and Prepare Plotting Data ---
     results_df, plot_data = analysis.perform_analysis_and_prepare_plots_data(
@@ -258,14 +258,7 @@ def main():
         REBALANCING_YEAR_IDX, num_simulations, mu_pi
     )
     
-    # Generate and print the consolidated FIRE plan summary
-    initial_total_wealth = I0 + b0 # Initial investment + initial bank balance
-    fire_summary_string = analysis.generate_fire_plan_summary(simulation_results, initial_total_wealth, T_ret_years)
-    
-    # Print the consolidated summary, including the total simulation time here
-    print(f"\nTotal simulations run: {num_simulations}")
-    print(f"Total simulation time: {total_simulation_elapsed_time:.2f} seconds")
-    print(fire_summary_string)
+    analysis.calculate_and_display_cagr(simulation_results, I0, b0, T_ret_years) # <--- ADD THIS LINE
 
     # --- 8. Generate Plots ---
     print("\n--- Generating Plots ---")

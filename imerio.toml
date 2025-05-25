@@ -32,6 +32,11 @@ SALARY_INFLATION_ADJUSTMENT_FACTOR = 1.0         # Factor by which salary adjust
 Y_S_start_idx = 0                                # Year index when salary starts (e.g., 0 for immediate start)
 Y_S_end_idx = 0                                  # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
 
+# The pension
+P_real_monthly = 4225
+PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
+Y_P_start_idx = 5
+
 # To the investment:
 # Fixed monthly contribution to the invested assets, like a pak in today money
 C_real_monthly_initial = 0 # Example: 500€ per month in today's money
@@ -54,7 +59,7 @@ C_planned = [
 # Out flows
 TER_ANNUAL_PERCENTAGE = 0.002 # 2%
 # Fixed monthly exepense for the life level you want to keep
-X_real_monthly_initial = 3300
+X_real_monthly_initial = 3500
 
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
@@ -68,35 +73,88 @@ X_planned_extra = [
     [100_000, 1],
 ]
 
-H0_real_cost = 150_000 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
-
-# The pension
-P_real_monthly = 4225
-PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
-Y_P_start_idx = 5
+# Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
+H0_real_cost = 150_000
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
 # Nominal values
 [economic_assumptions]
-STOCK_MU = 0.095
-STOCK_SIGMA = 0.14
-BOND_MU = 0.05
-BOND_SIGMA = 0.03
-STR_MU = 0.008
-STR_SIGMA = 0.012
-FUN_MU = 0.253
-FUN_SIGMA = 0.328
-REAL_ESTATE_MU = -0.01
-REAL_ESTATE_SIGMA = 0.08
-mu_pi = 0.02
-sigma_pi = 0.015
+# Stock parameters based on MSCI World (EUR) annual total returns from 2004-2023.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+STOCK_MU = 0.1123
+STOCK_SIGMA = 0.1565
+
+# European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR) annual total returns from 2004-2023.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+BOND_MU = 0.0193
+BOND_SIGMA = 0.0535
+
+# Short-Term Reserves (STR) parameters based on historical Eurozone overnight rates (EONIA/€STR) from 2004-2023.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+STR_MU = 0.0085
+STR_SIGMA = 0.0197
+
+# "Fun Money" (50% Bitcoin, 50% Silver) parameters based on annual returns from 2011-2023.
+# Note: Bitcoin's limited history means this covers a shorter period than other assets.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+FUN_MU = 3.5133
+FUN_SIGMA = 7.5028
+
+# "Fun Money" (50% Ethereum, 50% Silver) parameters based on annual returns from 2016-2023.
+# Note: Ethereum's limited history means this covers a shorter period than other assets.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+# FUN_MU = 6.7964
+# FUN_SIGMA = 15.6560
+
+
+# A lot more conservative estimation
+# FUN_MU = 0.115
+# FUN_SIGMA = 0.358
+
+# Real Estate (Italy) parameters based on annual capital gains from 2004-2023, net of 1.5% annual maintenance.
+# Note: Excludes rental income. Maintenance cost is an assumed average.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+REAL_ESTATE_MU = -0.0054
+REAL_ESTATE_SIGMA = 0.0416
+
+# Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
+# MU_PI: Arithmetic Mean of inflation
+# SIGMA_PI: Arithmetic Standard Deviation of inflation
+MU_PI = 0.0220
+SIGMA_PI = 0.0229
 
 [shocks]
+# events = []
 events = [
-    {year = 3, asset = "Stocks", magnitude = -0.35},
-    {year = 3, asset = "Bonds", magnitude = -0.20},
-    {year = 3, asset = "Fun", magnitude = -0.60},
-    {year = 13, asset = "Real Estate", magnitude = -0.25}
+    # Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
+    # Note: Without a 'month' field, this shock will be applied based on how your
+    # simulation.py handles year-only shocks (e.g., at the start of Year 0).
+    # The specific 'October' timing of Black Friday is not preserved here.
+    {year = 6, asset = "Stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
+    {year = 6, asset = "Bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
+    {year = 6, asset = "STR", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
+    {year = 6, asset = "Fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
+    {year = 6, asset = "Real Estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
+
+    # Internet Bubble Burst (e.g., representing a year like 2000-2002)
+    {year = 10, asset = "Stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
+    {year = 10, asset = "Bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
+    {year = 10, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+    {year = 10, asset = "Fun", magnitude = -0.10},          # Fun (50% Bitcoin, 50% Silver)
+    {year = 10, asset = "Real Estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
+
+    # Great Recession (Worst year, e.g., 2008)
+    {year = 20, asset = "Stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
+    {year = 20, asset = "Bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
+    {year = 20, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+    {year = 20, asset = "Fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
+    {year = 20, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
 ]
 
 # --- C. Portfolio Allocations (Weights) ---
@@ -109,9 +167,9 @@ W_P1_FUN = 0.05
 W_P1_REAL_ESTATE = 0.00
 
 W_P2_STOCKS = 0.80
-W_P2_BONDS = 0.00
+W_P2_BONDS = 0.15
 W_P2_STR = 0.00
-W_P2_FUN = 0.20
+W_P2_FUN = 0.05
 W_P2_REAL_ESTATE = 0.00
 
 # W_P2_STOCKS = 0.60
