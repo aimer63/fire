@@ -78,8 +78,9 @@ def run_single_fire_simulation(
         real_bank_lower_bound (float): Minimum desired real bank balance.
         real_bank_upper_bound (float): Maximum desired real bank balance.
         C_real_monthly_initial (float): Initial monthly contribution in real terms.
-        TER_ANNUAL_PERCENTAGE (float): Annual Total Expense Ratio as a percentage of relevant investments. # <--- NEW DOCSTRING
-        shock_events:
+        TER_ANNUAL_PERCENTAGE (float): Annual Total Expense Ratio as a percentage of relevant investments.
+        shock_events (list of dict): List of dictionaries, each with 'year', 'asset' (e.g., 'Stocks', 'Bonds'),
+                             and 'magnitude' (the new annual return for that asset in that year).
 
     Returns:
         tuple: A tuple containing simulation results:
@@ -279,7 +280,6 @@ def run_single_fire_simulation(
                 success = False
                 break # Simulation failed, exit loop
 
-        # --- NEW LOGIC: Move excess from Bank Account to Investments if above Real Upper Bound ---
         # Re-calculate real_current_b in case it was topped up in the previous step
         real_current_b = current_b / cumulative_inflation_factor_up_to_current_month
 
@@ -346,7 +346,6 @@ def run_single_fire_simulation(
                 current_fun += nominal_c_amount * current_W_FUN
                 current_real_estate += nominal_c_amount * current_W_REAL_ESTATE
 
-        # NEW LOGIC FOR C_real_monthly_initial (Fixed Monthly Contribution)
         # Apply C_real_monthly_initial every month
         if C_real_monthly_initial > 0: # Only if a positive contribution is set
             # Determine current portfolio weights for allocation

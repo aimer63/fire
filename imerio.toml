@@ -9,8 +9,8 @@
 # 5 2030
 # 6                               
 #
-# --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 
+# --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 [deterministic_inputs]
 I0 = 323_700 # Initial Investment Value (e.g., EUR)
 b0 = 24_000  # Initial Bank Account Balance (e.g., EUR)
@@ -59,7 +59,7 @@ C_planned = [
 # Out flows
 TER_ANNUAL_PERCENTAGE = 0.002 # 2%
 # Fixed monthly exepense for the life level you want to keep
-X_real_monthly_initial = 3500
+X_real_monthly_initial = 3300
 
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
@@ -97,20 +97,13 @@ BOND_SIGMA = 0.0535
 STR_MU = 0.0085
 STR_SIGMA = 0.0197
 
-# "Fun Money" (50% Bitcoin, 50% Silver) parameters based on annual returns from 2011-2023.
-# Note: Bitcoin's limited history means this covers a shorter period than other assets.
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
-FUN_MU = 3.5133
-FUN_SIGMA = 7.5028
-
 # "Fun Money" (50% Ethereum, 50% Silver) parameters based on annual returns from 2016-2023.
 # Note: Ethereum's limited history means this covers a shorter period than other assets.
+# Calculated based on a 50/50 portfolio with no internal rebalancing of these two assets.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
-# FUN_MU = 6.7964
-# FUN_SIGMA = 15.6560
-
+FUN_MU = 0.7417
+FUN_SIGMA = 1.8615
 
 # A lot more conservative estimation
 # FUN_MU = 0.115
@@ -157,6 +150,15 @@ events = [
     {year = 20, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
 ]
 
+# events = [
+#     # Crypto shock
+#     {year = 10, asset = "Stocks", magnitude = -0.1},         
+#     {year = 10, asset = "Bonds", magnitude = 0.02},          
+#     {year = 10, asset = "STR", magnitude = 0.0},             
+#     {year = 10, asset = "Fun", magnitude = -0.9999},            
+#     {year = 10, asset = "Real Estate", magnitude = -0.05},   
+# ]
+
 # --- C. Portfolio Allocations (Weights) ---
 [portfolio_allocations]
 REBALANCING_YEAR_IDX = 5
@@ -166,10 +168,10 @@ W_P1_STR = 0.49
 W_P1_FUN = 0.05
 W_P1_REAL_ESTATE = 0.00
 
-W_P2_STOCKS = 0.80
-W_P2_BONDS = 0.15
+W_P2_STOCKS = 0.60
+W_P2_BONDS = 0.40
 W_P2_STR = 0.00
-W_P2_FUN = 0.05
+W_P2_FUN = 0.00
 W_P2_REAL_ESTATE = 0.00
 
 # W_P2_STOCKS = 0.60
