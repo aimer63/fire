@@ -3,19 +3,20 @@
 # The years are counted from zero, so, if we are 2025:
 # 0 2025
 # 1 2026
-# 2 ...
-# 3
-# 4
+# 2 2027
+# 3 2028
+# 4 2029
 # 5 2030
-# 6
+# 6                               
 #
-# --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 
+# --- A. Deterministic Inputs (Your Personal Financial Plan) ---
 [deterministic_inputs]
 I0 = 100_000 # Initial Investment Value (e.g., EUR)
-b0 = 0 # Initial Bank Account Balance (e.g., EUR)
+b0 = 0  # Initial Bank Account Balance (e.g., EUR)
 
-# Bank account lower bound in real monaey if it goes below it will be topped
+# Bank account lower and upper bound in real monaey 
+# if it goes below it will be topped, if it goes above it will be invested
 # from the investment
 REAL_BANK_LOWER_BOUND_EUROS = 0
 REAL_BANK_UPPER_BOUND_EUROS = 0
@@ -26,70 +27,150 @@ T_ret_years = 20
 # In flows
 
 # To the bank:
-S_real_monthly = 0                               # Initial real monthly salary (e.g., 2500 EUR in today's money)
-SALARY_INFLATION_ADJUSTMENT_FACTOR = 1.0         # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
-Y_S_start_idx = 0                                # Year index when salary starts (e.g., 0 for immediate start)
-Y_S_end_idx = 0                                  # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+S_real_monthly = 0                                  # Initial real monthly salary (e.g., 2500 EUR in today's money)   
+SALARY_INFLATION_ADJUSTMENT_FACTOR = 1.0            # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
+Y_S_start_idx = 0                                   # Year index when salary starts (e.g., 0 for immediate start)
+Y_S_end_idx = 0                                     # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+
+# The pension when it will arrive... if
+P_real_monthly = 0
+PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
+Y_P_start_idx = 0
 
 # To the investment:
-# Fixed monthly contribution to the invested assets, like a pak in today money
-C_real_monthly_initial = 0   # Example: 500€ per month in today's money
+# Fixed monthly contribution to the invested assets, like a pak in today money.
+# Models something something is coming from outside
+C_real_monthly_initial = 0 # Example: 500€ per month in today's money
 
-# Planned Contributions, real amount. [[contrib, year], ...]
-C_planned = [[0, 0]]
+# Planned Contributions, real amount at the time of the contribution
+# [[contrib, year], ...]
+C_planned = []
+# C_planned = [
+#     [10_000, 2],
+#     [25_000, 3],
+#     [5430, 4],
+# ]
 
 # Out flows
-TER_ANNUAL_PERCENTAGE = 0.03  # Example: 0.25% Total Expense Ratio per year
-
+TER_ANNUAL_PERCENTAGE = 0.002 # 2%
 # Fixed monthly exepense for the life level you want to keep
 X_real_monthly_initial = 0
-# Planned Extra Expenses real_amount. [[X, year], ...]
+
+# Planned Extra Expenses real_amount at the time of the expense. [[X, year], ...]
 # 0	1,00	100.000,00
 # 1	1,02	98.039,22
 # 2	1,04	96.116,88
 # 3	1,06	94.232,23
 # 4	1,08	92.384,54
 # 5	1,10	90.573,08
+X_planned_extra = [
+    [0, 0],
+]
 
-X_planned_extra = [[0, 0]]
-
-H0_real_cost = 0 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
-
-# The pension
-P_real_monthly = 0
-PENSION_INFLATION_ADJUSTMENT_FACTOR = 0.6
-Y_P_start_idx = 0
+# Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
+H0_real_cost = 0
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
 # Nominal values
 [economic_assumptions]
-STOCK_MU = 0.095
-STOCK_SIGMA = 0.14
-BOND_MU = 0.05
-BOND_SIGMA = 0.03
-STR_MU = 0.008
-STR_SIGMA = 0.012
-FUN_MU = 0.253
-FUN_SIGMA = 0.328
-REAL_ESTATE_MU = -0.01
-REAL_ESTATE_SIGMA = 0.08
-mu_pi = 0.02
-sigma_pi = 0.015
+# Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+STOCK_MU = 0.1017
+STOCK_SIGMA = 0.1478
+
+# European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR) annual total returns from 2004-2023.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+BOND_MU = 0.0193
+BOND_SIGMA = 0.0535
+
+# Short-Term Reserves (STR) parameters based on historical Eurozone overnight rates (EONIA/€STR) from 2004-2023.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+STR_MU = 0.0085
+STR_SIGMA = 0.0197
+
+# "Fun Money" (50% Ethereum, 50% Silver) parameters based on annual returns from 2016-2023.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+# FUN_MU = 1.2438
+# FUN_SIGMA = 0.6805
+
+# Ethereum from 2016 to 2025
+FUN_MU = 2.3755
+FUN_SIGMA = 1.3320
+
+# Silver from 2016 to 2025
+# FUN_MU = 0.1120
+# FUN_SIGMA = 0.2794
+
+
+# Real Estate (Italy) parameters based on annual capital gains from 2004-2023, net of 1.5% annual maintenance.
+# Note: Excludes rental income. Maintenance cost is an assumed average.
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+REAL_ESTATE_MU = -0.0054
+REAL_ESTATE_SIGMA = 0.0416
+
+# Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
+# MU_PI: Arithmetic Mean of inflation
+# SIGMA_PI: Arithmetic Standard Deviation of inflation
+MU_PI = 0.0220
+SIGMA_PI = 0.0229
+
+# Injects market shocks/crisis
+[shocks]
+events = []
+# events = [
+      # Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
+      # Note: Without a 'month' field, this shock will be applied based on how your
+      # simulation.py handles year-only shocks (e.g., at the start of Year 0).
+      # The specific 'October' timing of Black Friday is not preserved here.
+#     {year = 15, asset = "Stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
+#     {year = 15, asset = "Bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
+#     {year = 15, asset = "STR", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
+#     {year = 15, asset = "Fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
+#     {year = 15, asset = "Real Estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
+
+#     # Internet Bubble Burst (e.g., representing a year like 2000-2002)
+#     {year = 10, asset = "Stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
+#     {year = 10, asset = "Bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
+#     {year = 10, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+#     {year = 10, asset = "Fun", magnitude = -0.10},          # Fun (50% Bitcoin, 50% Silver)
+#     {year = 10, asset = "Real Estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
+
+#     # Great Recession (Worst year, e.g., 2008)
+#     {year = 20, asset = "Stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
+#     {year = 20, asset = "Bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
+#     {year = 20, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+#     {year = 20, asset = "Fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
+#     {year = 20, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
+#]
+
+# events = [
+#     # Crypto shock
+#     {year = 10, asset = "Stocks", magnitude = -0.1},         
+#     {year = 10, asset = "Bonds", magnitude = 0.02},          
+#     {year = 10, asset = "STR", magnitude = 0.0},             
+#     {year = 10, asset = "Fun", magnitude = -0.9999},            
+#     {year = 10, asset = "Real Estate", magnitude = -0.05},   
+# ]
 
 # --- C. Portfolio Allocations (Weights) ---
 [portfolio_allocations]
 REBALANCING_YEAR_IDX = 5
-W_P1_STOCKS = 0.80
-W_P1_BONDS = 0.20
+W_P1_STOCKS = 0.60
+W_P1_BONDS = 0.35
 W_P1_STR = 0.00
-W_P1_FUN = 0.00
+W_P1_FUN = 0.05
 W_P1_REAL_ESTATE = 0.00
 
 W_P2_STOCKS = 0.80
-W_P2_BONDS = 0.20
+W_P2_BONDS = 0.15
 W_P2_STR = 0.00
-W_P2_FUN = 0.00
-W_P2_REAL_ESTATE = 0.0
+W_P2_FUN = 0.05
+W_P2_REAL_ESTATE = 0.00
 
 # W_P2_STOCKS = 0.60
 # W_P2_BONDS = 0.40

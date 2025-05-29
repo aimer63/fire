@@ -148,12 +148,14 @@ def run_single_fire_simulation(
                 annual_stocks_returns_seq[shock_year] = shock_magnitude
             elif shock_asset == 'Bonds':
                 annual_bonds_returns_seq[shock_year] = shock_magnitude
-            elif shock_asset == 'STR': # Assuming 'STR' for short-term rate
+            elif shock_asset == 'STR':
                 annual_str_returns_seq[shock_year] = shock_magnitude
-            elif shock_asset == 'Fun': # Assuming 'Fun' for fun money
+            elif shock_asset == 'Fun': 
                 annual_fun_returns_seq[shock_year] = shock_magnitude
             elif shock_asset == 'Real Estate':
                 annual_real_estate_returns_seq[shock_year] = shock_magnitude
+            elif shock_asset == 'Inflation': 
+                annual_inflations_seq[shock_year] = shock_magnitude
             # else:
             #     Optional: Add a warning if an unknown asset is specified in config.toml
             #     print(f"Warning: Unknown asset '{shock_asset}' in shock definition for year {shock_year}.")
