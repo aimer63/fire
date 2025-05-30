@@ -130,13 +130,15 @@ def main():
         mu_log_bonds, sigma_log_bonds,
         mu_log_str, sigma_log_str,
         mu_log_fun, sigma_log_fun,
-        mu_log_real_estate, sigma_log_real_estate
+        mu_log_real_estate, sigma_log_real_estate,
+        mu_log_pi, sigma_log_pi,
     ) = calculate_log_normal_params(
         STOCK_MU, STOCK_SIGMA,
         BOND_MU, BOND_SIGMA,
         STR_MU, STR_SIGMA,
         FUN_MU, FUN_SIGMA,
-        REAL_ESTATE_MU, REAL_ESTATE_SIGMA
+        REAL_ESTATE_MU, REAL_ESTATE_SIGMA,
+        mu_pi, sigma_pi,
     )
 
     (
@@ -185,7 +187,8 @@ def main():
     print(f"mu_log_str: {mu_log_str:.6f}, sigma_log_str: {sigma_log_str:.6f}")
     print(f"mu_log_fun: {mu_log_fun:.6f}, sigma_log_fun: {sigma_log_fun:.6f}")
     print(f"mu_log_real_estate: {mu_log_real_estate:.6f}, sigma_log_real_estate: {sigma_log_real_estate:.6f}")
-
+    print(f"mu_log_pi: {mu_log_pi:.6f}, sigma_log_pi: {sigma_log_pi:.6f}")
+    
     print("\n--- Portfolio Allocations ---")
     print(f"REBALANCING_YEAR_IDX: {REBALANCING_YEAR_IDX}")
     print(f"W_P1_STOCKS: {W_P1_STOCKS:.4f}, W_P1_BONDS: {W_P1_BONDS:.4f}, W_P1_STR: {W_P1_STR:.4f}, W_P1_FUN: {W_P1_FUN:.4f}, W_P1_REAL_ESTATE: {W_P1_REAL_ESTATE:.4f}")
@@ -221,7 +224,7 @@ def main():
             list(X_planned_extra),
             P_real_monthly, PENSION_INFLATION_ADJUSTMENT_FACTOR, Y_P_start_idx,
             S_real_monthly, SALARY_INFLATION_ADJUSTMENT_FACTOR, Y_S_start_idx, Y_S_end_idx,
-            mu_pi, sigma_pi,
+            mu_log_pi, sigma_log_pi,
             REBALANCING_YEAR_IDX,
             W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE,
             W_P2_STOCKS, W_P2_BONDS, W_P2_STR, W_P2_FUN, W_P2_REAL_ESTATE,

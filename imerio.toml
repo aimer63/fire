@@ -59,7 +59,7 @@ C_planned = [
 # Out flows
 TER_ANNUAL_PERCENTAGE = 0.002 # 2%
 # Fixed monthly exepense for the life level you want to keep
-X_real_monthly_initial = 3300
+X_real_monthly_initial = 4000
 
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
@@ -128,9 +128,8 @@ REAL_ESTATE_SIGMA = 0.0416
 MU_PI = 0.0220
 SIGMA_PI = 0.0229
 
-
 [shocks]
-# events = []
+events = []
 # events = [
       # Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
       # Note: Without a 'month' field, this shock will be applied based on how your
@@ -142,7 +141,7 @@ SIGMA_PI = 0.0229
 #     {year = 15, asset = "Fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
 #     {year = 15, asset = "Real Estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
 
-#     # Internet Bubble Burst (e.g., representing a year like 2000-2002)
+    # Internet Bubble Burst (e.g., representing a year like 2000-2002)
 #     {year = 10, asset = "Stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
 #     {year = 10, asset = "Bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
 #     {year = 10, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
@@ -150,12 +149,12 @@ SIGMA_PI = 0.0229
 #     {year = 10, asset = "Real Estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
 
 #     # Great Recession (Worst year, e.g., 2008)
-#     {year = 20, asset = "Stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
-#     {year = 20, asset = "Bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
-#     {year = 20, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
-#     {year = 20, asset = "Fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
-#     {year = 20, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
-#]
+#     {year = 15, asset = "Stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
+#     {year = 15, asset = "Bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
+#     {year = 15, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+#     {year = 15, asset = "Fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
+#     {year = 15, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
+# ]
 
 # events = [
 #     # Crypto shock
@@ -176,51 +175,57 @@ SIGMA_PI = 0.0229
 #     {year = 32, asset = "Real Estate", magnitude = -0.05},   
 # ]
 
-events = [
-    # Stagflation
-    {year = 4, asset = "Stocks", magnitude = -0.1},         
-    {year = 4, asset = "Bonds", magnitude = 0.06},          
-    {year = 4, asset = "STR", magnitude = 0.0},             
-    {year = 4, asset = "Fun", magnitude = 0.0},            
-    {year = 4, asset = "Real Estate", magnitude = -0.05},
-    {year = 4, asset = "Inflation", magnitude = 0.05},   
+# events = [
+#     # Stagflation
+#     {year = 10, asset = "Stocks", magnitude = -0.1},         
+#     {year = 10, asset = "Bonds", magnitude = 0.06},          
+#     {year = 10, asset = "STR", magnitude = 0.0},             
+#     {year = 10, asset = "Fun", magnitude = 0.0},            
+#     {year = 10, asset = "Real Estate", magnitude = -0.05},
+#     {year = 10, asset = "Inflation", magnitude = 0.05},   
 
-    {year = 5, asset = "Stocks", magnitude = 0.0002},
-    {year = 5, asset = "Bonds", magnitude = 0.012},          
-    {year = 5, asset = "STR", magnitude = 0.0},             
-    {year = 5, asset = "Fun", magnitude = 0.0},            
-    {year = 5, asset = "Real Estate", magnitude = -0.05},   
-    {year = 5, asset = "Inflation", magnitude = 0.15},   
+#     {year = 11, asset = "Stocks", magnitude = 0.0002},
+#     {year = 11, asset = "Bonds", magnitude = 0.012},          
+#     {year = 11, asset = "STR", magnitude = 0.0},             
+#     {year = 11, asset = "Fun", magnitude = 0.0},            
+#     {year = 11, asset = "Real Estate", magnitude = -0.05},   
+#     {year = 11, asset = "Inflation", magnitude = 0.15},   
 
-    {year = 6, asset = "Stocks", magnitude = 0.003},         
-    {year = 6, asset = "Bonds", magnitude = 0.019},          
-    {year = 6, asset = "STR", magnitude = 0.0085},             
-    {year = 6, asset = "Fun", magnitude = 0.0},            
-    {year = 6, asset = "Real Estate", magnitude = -0.05},   
-    {year = 6, asset = "Inflation", magnitude = 0.08},   
-]
+#     {year = 12, asset = "Stocks", magnitude = 0.003},         
+#     {year = 12, asset = "Bonds", magnitude = 0.019},          
+#     {year = 12, asset = "STR", magnitude = 0.0085},             
+#     {year = 12, asset = "Fun", magnitude = 0.0},            
+#     {year = 12, asset = "Real Estate", magnitude = -0.05},   
+#     {year = 12, asset = "Inflation", magnitude = 0.08},   
+# ]
 
 
 # --- C. Portfolio Allocations (Weights) ---
 [portfolio_allocations]
 REBALANCING_YEAR_IDX = 5
-W_P1_STOCKS = 0.18
-W_P1_BONDS = 0.28
-W_P1_STR = 0.49
-W_P1_FUN = 0.05
+# W_P1_STOCKS = 0.18
+# W_P1_BONDS = 0.28
+# W_P1_STR = 0.49
+# W_P1_FUN = 0.05
+# W_P1_REAL_ESTATE = 0.00
+
+W_P1_STOCKS = 0.20
+W_P1_BONDS = 0.30
+W_P1_STR = 0.50
+W_P1_FUN = 0.0
 W_P1_REAL_ESTATE = 0.00
+
+# W_P2_STOCKS = 0.80
+# W_P2_BONDS = 0.20
+# W_P2_STR = 0.00
+# W_P2_FUN = 0.00
+# W_P2_REAL_ESTATE = 0.00
 
 W_P2_STOCKS = 0.60
 W_P2_BONDS = 0.40
 W_P2_STR = 0.00
 W_P2_FUN = 0.00
-W_P2_REAL_ESTATE = 0.00
-
-# W_P2_STOCKS = 0.60
-# W_P2_BONDS = 0.40
-# W_P2_STR = 0.00
-# W_P2_FUN = 0.00
-# W_P2_REAL_ESTATE = 0.0
+W_P2_REAL_ESTATE = 0.0
 
 # W_P2_STOCKS = 0.03
 # W_P2_BONDS = 0.30

@@ -223,7 +223,8 @@ def plot_wealth_evolution_samples_nominal(results_df, plot_lines_data, filename=
         # Adjust label to reflect nominal final wealth for the nominal plot, and handle _nolegend_
         adjusted_label = label
         if label != '_nolegend_':
-            current_final_nominal_wealth = nominal_history[-1] if nominal_history else 0 
+            # current_final_nominal_wealth = nominal_history[-1] if nominal_history else 0 
+            current_final_nominal_wealth = nominal_history[-1] if nominal_history.size > 0 else 0            
             
             if "Failed" in label:
                 adjusted_label = label

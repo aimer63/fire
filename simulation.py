@@ -2,8 +2,8 @@
 
 import numpy as np
 
-# Import helper functions from the helpers module
-from helpers import annual_to_monthly_compounded_rate, inflate_amount_over_years
+# Import helper functions
+from helpers import annual_to_monthly_compounded_rate, inflate_amount_over_years 
 
 def run_single_fire_simulation(
     b0,
@@ -14,7 +14,7 @@ def run_single_fire_simulation(
     X_planned_extra,
     P_real_monthly, PENSION_INFLATION_ADJUSTMENT_FACTOR, Y_P_start_idx,
     S_real_monthly, SALARY_INFLATION_ADJUSTMENT_FACTOR, Y_S_start_idx, Y_S_end_idx,
-    mu_pi, sigma_pi,
+    mu_log_pi, sigma_log_pi,
     REBALANCING_YEAR_IDX,
     W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE,
     W_P2_STOCKS, W_P2_BONDS, W_P2_STR, W_P2_FUN, W_P2_REAL_ESTATE,
@@ -32,66 +32,9 @@ def run_single_fire_simulation(
 ):
     """
     Runs a single Monte Carlo simulation of a financial independence retirement plan.
-
-    Args:
-        b0 (float): Initial bank account balance (nominal).
-        initial_stocks_value (float): Initial value of stocks.
-        initial_bonds_value (float): Initial value of bonds.
-        initial_str_value (float): Initial value of short-term rate (cash equivalent).
-        initial_fun_value (float): Initial value of 'fun money' speculative assets.
-        initial_real_estate_value (float): Initial value of real estate.
-        T_ret_months (int): Total retirement duration in months.
-        T_ret_years (int): Total retirement duration in years.
-        X_real_monthly_initial (float): Initial monthly expenditure in real terms.
-        C_planned (list of tuples): List of planned contributions (real_amount, year_idx).
-        X_planned_extra (list of tuples): List of planned extra expenses (real_amount, year_idx).
-        P_real_monthly (float): Monthly pension income in real terms.
-        PENSION_INFLATION_ADJUSTMENT_FACTOR (float): Factor by which pension adjusts to inflation.
-        Y_P_start_idx (int): Year index when pension starts (0-indexed).
-        S_real_monthly (float): Monthly salary income in real terms.
-        SALARY_INFLATION_ADJUSTMENT_FACTOR (float): Factor by which salary adjusts to inflation.
-        Y_S_start_idx (int): Year index when salary starts (0-indexed).
-        Y_S_end_idx (int): Year index when salary ends (0-indexed, exclusive).
-        mu_pi (float): Mean of annual inflation rate.
-        sigma_pi (float): Standard deviation of annual inflation rate.
-        REBALANCING_YEAR_IDX (int): Year index when portfolio rebalances to Phase 2 weights.
-        W_P1_STOCKS (float): Phase 1 stock weight.
-        W_P1_BONDS (float): Phase 1 bond weight.
-        W_P1_STR (float): Phase 1 short-term rate weight.
-        W_P1_FUN (float): Phase 1 fun money weight.
-        W_P1_REAL_ESTATE (float): Phase 1 real estate weight.
-        W_P2_STOCKS (float): Phase 2 stock weight.
-        W_P2_BONDS (float): Phase 2 bond weight.
-        W_P2_STR (float): Phase 2 short-term rate weight.
-        W_P2_FUN (float): Phase 2 fun money weight.
-        W_P2_REAL_ESTATE (float): Phase 2 real estate weight.
-        mu_log_stocks (float): Log-normal mean for stocks.
-        sigma_log_stocks (float): Log-normal sigma for stocks.
-        mu_log_bonds (float): Log-normal mean for bonds.
-        sigma_log_bonds (float): Log-normal sigma for bonds.
-        mu_log_str (float): Log-normal mean for STR.
-        sigma_log_str (float): Log-normal sigma for STR.
-        mu_log_fun (float): Log-normal mean for fun money.
-        sigma_log_fun (float): Log-normal sigma for fun money.
-        mu_log_real_estate (float): Log-normal mean for real estate.
-        sigma_log_real_estate (float): Log-normal sigma for real estate.
-        real_bank_lower_bound (float): Minimum desired real bank balance.
-        real_bank_upper_bound (float): Maximum desired real bank balance.
-        C_real_monthly_initial (float): Initial monthly contribution in real terms.
-        TER_ANNUAL_PERCENTAGE (float): Annual Total Expense Ratio as a percentage of relevant investments.
-        shock_events (list of dict): List of dictionaries, each with 'year', 'asset' (e.g., 'Stocks', 'Bonds'),
-                             and 'magnitude' (the new annual return for that asset in that year).
-
-    Returns:
-        tuple: A tuple containing simulation results:
-            (success, months_lasted, final_investment, final_bank_balance,
-             annual_inflations_seq, nominal_wealth_history, bank_balance_history,
-             pre_rebalancing_allocations_nominal, pre_rebalancing_allocations_real,
-             rebalancing_allocations_nominal, rebalancing_allocations_real,
-             final_allocations_nominal, final_allocations_real)
     """
 
-    # Initialize balances and history
+    # Initialize balances and pre-allocate history arrays for performance
     current_b = b0
     current_stocks = initial_stocks_value
     current_bonds = initial_bonds_value
@@ -99,9 +42,8 @@ def run_single_fire_simulation(
     current_fun = initial_fun_value
     current_real_estate = initial_real_estate_value
 
-    nominal_wealth_history = []
-    bank_balance_history = [] 
-    annual_inflations_seq = np.zeros(T_ret_years) # Placeholder for actual sequence
+    nominal_wealth_history = np.zeros(T_ret_months) # Pre-allocated
+    bank_balance_history = np.zeros(T_ret_months)   # Pre-allocated
 
     success = True
     months_lasted = 0
@@ -114,35 +56,20 @@ def run_single_fire_simulation(
     final_allocations_nominal = {}
     final_allocations_real = {}
 
-    # Pre-generate full sequence of annual returns for each asset and inflation
-    # for the entire retirement duration of this single simulation trial
-    annual_inflations_seq = np.random.lognormal(
-        np.log(1 + mu_pi) - 0.5 * sigma_pi**2, sigma_pi, T_ret_years
-    ) - 1
+    # Pre-generate full sequence of annual returns for each asset and inflation for the entire retirement duration
+    annual_inflations_seq = np.random.lognormal(mu_log_pi, sigma_log_pi, T_ret_years) - 1
+    annual_stocks_returns_seq = np.random.lognormal(mu_log_stocks, sigma_log_stocks, T_ret_years) - 1
+    annual_bonds_returns_seq = np.random.lognormal(mu_log_bonds, sigma_log_bonds, T_ret_years) - 1
+    annual_str_returns_seq = np.random.lognormal(mu_log_str, sigma_log_str, T_ret_years) - 1
+    annual_fun_returns_seq = np.random.lognormal(mu_log_fun, sigma_log_fun, T_ret_years) - 1
+    annual_real_estate_returns_seq = np.random.lognormal(mu_log_real_estate, sigma_log_real_estate, T_ret_years) - 1
 
-    # Generate annual returns for each asset class
-    annual_stocks_returns_seq = np.random.lognormal(
-        mu_log_stocks, sigma_log_stocks, T_ret_years
-    ) - 1
-    annual_bonds_returns_seq = np.random.lognormal(
-        mu_log_bonds, sigma_log_bonds, T_ret_years
-    ) - 1
-    annual_str_returns_seq = np.random.lognormal(
-        mu_log_str, sigma_log_str, T_ret_years
-    ) - 1
-    annual_fun_returns_seq = np.random.lognormal(
-        mu_log_fun, sigma_log_fun, T_ret_years
-    ) - 1
-    annual_real_estate_returns_seq = np.random.lognormal(
-        mu_log_real_estate, sigma_log_real_estate, T_ret_years
-    ) - 1
-
+    # Apply shock events to the pre-generated annual sequences
     for shock in shock_events:
         shock_year = shock['year']
         shock_asset = shock['asset']
         shock_magnitude = shock['magnitude']
 
-        # Ensure the shock year is within the simulation duration
         if 0 <= shock_year < T_ret_years:
             if shock_asset == 'Stocks':
                 annual_stocks_returns_seq[shock_year] = shock_magnitude
@@ -150,80 +77,116 @@ def run_single_fire_simulation(
                 annual_bonds_returns_seq[shock_year] = shock_magnitude
             elif shock_asset == 'STR':
                 annual_str_returns_seq[shock_year] = shock_magnitude
-            elif shock_asset == 'Fun': 
+            elif shock_asset == 'Fun':
                 annual_fun_returns_seq[shock_year] = shock_magnitude
             elif shock_asset == 'Real Estate':
                 annual_real_estate_returns_seq[shock_year] = shock_magnitude
-            elif shock_asset == 'Inflation': 
+            elif shock_asset == 'Inflation':
                 annual_inflations_seq[shock_year] = shock_magnitude
-            # else:
-            #     Optional: Add a warning if an unknown asset is specified in config.toml
-            #     print(f"Warning: Unknown asset '{shock_asset}' in shock definition for year {shock_year}.")
 
-    # Pre-calculate nominal planned contributions and pension start year based on this trial's inflation
+
+    # --- OPTIMIZATION 1: Pre-calculate cumulative inflation factors ---
+    cumulative_inflation_factors_annual = np.ones(T_ret_years + 1)
+    for y in range(T_ret_years):
+        cumulative_inflation_factors_annual[y+1] = cumulative_inflation_factors_annual[y] * (1 + annual_inflations_seq[y])
+
+    # --- OPTIMIZATION 2: Pre-calculate all monthly returns for all assets ---
+    monthly_returns_lookup = {
+        'Stocks': np.zeros(T_ret_months),
+        'Bonds': np.zeros(T_ret_months),
+        'STR': np.zeros(T_ret_months),
+        'Fun': np.zeros(T_ret_months),
+        'Real Estate': np.zeros(T_ret_months)
+    }
+    
+    for y_idx in range(T_ret_years):
+        m_stocks_rate = annual_to_monthly_compounded_rate(annual_stocks_returns_seq[y_idx])
+        m_bonds_rate = annual_to_monthly_compounded_rate(annual_bonds_returns_seq[y_idx])
+        m_str_rate = annual_to_monthly_compounded_rate(annual_str_returns_seq[y_idx])
+        m_fun_rate = annual_to_monthly_compounded_rate(annual_fun_returns_seq[y_idx])
+        m_real_estate_rate = annual_to_monthly_compounded_rate(annual_real_estate_returns_seq[y_idx])
+        
+        start_month = y_idx * 12
+        end_month = min((y_idx + 1) * 12, T_ret_months)
+
+        monthly_returns_lookup['Stocks'][start_month:end_month] = m_stocks_rate
+        monthly_returns_lookup['Bonds'][start_month:end_month] = m_bonds_rate
+        monthly_returns_lookup['STR'][start_month:end_month] = m_str_rate
+        monthly_returns_lookup['Fun'][start_month:end_month] = m_fun_rate
+        monthly_returns_lookup['Real Estate'][start_month:end_month] = m_real_estate_rate
+
+
+    # --- OPTIMIZATION 3: Pre-calculate nominal planned contributions/expenses ---
     nominal_c_planned_amounts = []
     for real_amount, year_idx in C_planned:
-        nominal_c_amount = inflate_amount_over_years(
-            real_amount, year_idx, annual_inflations_seq
-        )
+        nominal_c_amount = real_amount * cumulative_inflation_factors_annual[year_idx]
         nominal_c_planned_amounts.append((nominal_c_amount, year_idx))
 
-    # Pre-calculate nominal planned extra expenses based on this trial's inflation
     nominal_x_planned_extra_amounts = []
-    # Create a local mutable copy to safely remove items after they're applied
-    # This ensures the original X_planned_extra list passed from the calling scope isn't modified
-    local_x_planned_extra = list(X_planned_extra) 
-    for real_amount, year_idx in local_x_planned_extra: # Iterate over the local copy
-        nominal_x_amount = inflate_amount_over_years(
-            real_amount, year_idx, annual_inflations_seq
-        )
+    local_x_planned_extra = list(X_planned_extra)
+    for real_amount, year_idx in local_x_planned_extra:
+        nominal_x_amount = real_amount * cumulative_inflation_factors_annual[year_idx]
         nominal_x_planned_extra_amounts.append((nominal_x_amount, year_idx))
 
-    nominal_pension_start_amount = inflate_amount_over_years(
-        P_real_monthly, Y_P_start_idx, annual_inflations_seq
-    )
+    # --- OPTIMIZATION 4: Pre-calculate nominal pension/salary per year ---
+    nominal_pension_annual_seq = np.zeros(T_ret_years)
+    nominal_salary_annual_seq = np.zeros(T_ret_years)
 
-    nominal_salary_start_amount = inflate_amount_over_years(
-        S_real_monthly, Y_S_start_idx, annual_inflations_seq
-    )
+    for y_idx in range(T_ret_years):
+        if y_idx >= Y_P_start_idx:
+            factor = np.prod(1 + (annual_inflations_seq[Y_P_start_idx:y_idx] * PENSION_INFLATION_ADJUSTMENT_FACTOR)) if y_idx > Y_P_start_idx else 1.0
+            nominal_pension_annual_seq[y_idx] = P_real_monthly * cumulative_inflation_factors_annual[Y_P_start_idx] * factor
 
+        if Y_S_start_idx <= y_idx < Y_S_end_idx:
+            factor = np.prod(1 + (annual_inflations_seq[Y_S_start_idx:y_idx] * SALARY_INFLATION_ADJUSTMENT_FACTOR)) if y_idx > Y_S_start_idx else 1.0
+            nominal_salary_annual_seq[y_idx] = S_real_monthly * cumulative_inflation_factors_annual[Y_S_start_idx] * factor
+            
     ter_monthly_factor = TER_ANNUAL_PERCENTAGE / 12.0
 
     # Simulation loop
     for current_month_idx in range(T_ret_months):
-        months_lasted += 1
+        months_lasted += 1 # Incremented at start of month
         current_year_idx = current_month_idx // 12
         month_in_year_idx = current_month_idx % 12
 
-        # 1. Add pension if applicable (starts at the beginning of the pension year)
+        # --- OPTIMIZATION: Determine current weights once per year ---
+        if month_in_year_idx == 0:
+            if current_year_idx < REBALANCING_YEAR_IDX:
+                current_W_STOCKS = W_P1_STOCKS
+                current_W_BONDS = W_P1_BONDS
+                current_W_STR = W_P1_STR
+                current_W_FUN = W_P1_FUN
+                current_W_REAL_ESTATE = W_P1_REAL_ESTATE
+            else:
+                current_W_STOCKS = W_P2_STOCKS
+                current_W_BONDS = W_P2_BONDS
+                current_W_STR = W_P2_STR
+                current_W_FUN = W_P2_FUN
+                current_W_REAL_ESTATE = W_P2_REAL_ESTATE
+
+            liquid_weights_sum = current_W_STOCKS + current_W_BONDS + current_W_STR + current_W_FUN
+            norm_W_STOCKS = current_W_STOCKS / liquid_weights_sum if liquid_weights_sum > 0 else 0
+            norm_W_BONDS = current_W_BONDS / liquid_weights_sum if liquid_weights_sum > 0 else 0
+            norm_W_STR = current_W_STR / liquid_weights_sum if liquid_weights_sum > 0 else 0
+            norm_W_FUN = current_W_FUN / liquid_weights_sum if liquid_weights_sum > 0 else 0
+
+
+        # 1. Add pension if applicable
         nominal_pension_monthly = 0
         if current_year_idx >= Y_P_start_idx:
-            # Adjust pension by its specific inflation factor from start year
-            pension_inflation_factor = np.prod(1 + (annual_inflations_seq[Y_P_start_idx:current_year_idx] * PENSION_INFLATION_ADJUSTMENT_FACTOR)) if current_year_idx > Y_P_start_idx else 1
-            
-            nominal_pension_monthly = nominal_pension_start_amount * pension_inflation_factor
-            current_b += nominal_pension_monthly # Pension directly to bank account
+            nominal_pension_monthly = nominal_pension_annual_seq[current_year_idx]
+            current_b += nominal_pension_monthly
 
         # 2. Add monthly salary if applicable
         nominal_salary_monthly = 0
-        # Check if current year is within the salary start and end range (exclusive end year)
         if Y_S_start_idx <= current_year_idx < Y_S_end_idx:
-            # Adjust salary by its specific inflation factor from start year
-            salary_inflation_factor_period = 1
-            if current_year_idx > Y_S_start_idx:
-                # If SALARY_INFLATION_ADJUSTMENT_FACTOR is 1.0, this calculates regular inflation.
-                # If it's > 1.0, it means salary grows faster than inflation.
-                # If it's < 1.0, it means salary grows slower than inflation.
-                salary_inflation_factor_period = np.prod(1 + (annual_inflations_seq[Y_S_start_idx:current_year_idx] * SALARY_INFLATION_ADJUSTMENT_FACTOR))
-
-            nominal_salary_monthly = nominal_salary_start_amount * salary_inflation_factor_period
-            current_b += nominal_salary_monthly # Salary directly to bank account
+            nominal_salary_monthly = nominal_salary_annual_seq[current_year_idx]
+            current_b += nominal_salary_monthly
 
 
         # --- Check and Top-Up Bank Account if below Real Lower Bound ---
-        # Calculate current cumulative inflation factor for real value assessment
         monthly_inflation_rate_this_year = annual_to_monthly_compounded_rate(annual_inflations_seq[current_year_idx])
-        cumulative_inflation_factor_up_to_current_month = np.prod(1 + annual_inflations_seq[:current_year_idx]) * ((1 + monthly_inflation_rate_this_year)**(month_in_year_idx + 1))
+        cumulative_inflation_factor_up_to_current_month = cumulative_inflation_factors_annual[current_year_idx] * ((1 + monthly_inflation_rate_this_year)**(month_in_year_idx + 1))
         
         real_current_b = current_b / cumulative_inflation_factor_up_to_current_month
 
@@ -240,7 +203,7 @@ def run_single_fire_simulation(
                     current_b += amount_to_liquidate_for_top_up
                     amount_to_liquidate_for_top_up = 0
                 else:
-                    current_b += current_str # Take all of STR
+                    current_b += current_str
                     amount_to_liquidate_for_top_up -= current_str
                     current_str = 0
 
@@ -251,7 +214,7 @@ def run_single_fire_simulation(
                     current_b += amount_to_liquidate_for_top_up
                     amount_to_liquidate_for_top_up = 0
                 else:
-                    current_b += current_bonds # Take all of Bonds
+                    current_b += current_bonds
                     amount_to_liquidate_for_top_up -= current_bonds
                     current_bonds = 0
 
@@ -262,7 +225,7 @@ def run_single_fire_simulation(
                     current_b += amount_to_liquidate_for_top_up
                     amount_to_liquidate_for_top_up = 0
                 else:
-                    current_b += current_stocks # Take all of Stocks
+                    current_b += current_stocks
                     amount_to_liquidate_for_top_up -= current_stocks
                     current_stocks = 0
 
@@ -273,105 +236,45 @@ def run_single_fire_simulation(
                     current_b += amount_to_liquidate_for_top_up
                     amount_to_liquidate_for_top_up = 0
                 else:
-                    current_b += current_fun # Take all of Fun Money
+                    current_b += current_fun
                     amount_to_liquidate_for_top_up -= current_fun
                     current_fun = 0
 
-            # CRITICAL FAILURE CHECK: If still needed after all liquid assets (excluding Real Estate)
+            # CRITICAL FAILURE CHECK 1: If still needed after all liquid assets (excluding Real Estate)
             if amount_to_liquidate_for_top_up > 0:
                 success = False
+                # REMOVED: Recording nominal_wealth_history[current_month_idx] here.
+                # It will now be handled by the post-loop fill using the last successful month's value.
                 break # Simulation failed, exit loop
 
-        # Re-calculate real_current_b in case it was topped up in the previous step
+        # Re-calculate real_current_b in case it was topped up
         real_current_b = current_b / cumulative_inflation_factor_up_to_current_month
 
         if real_current_b > real_bank_upper_bound:
             real_excess_to_invest = real_current_b - real_bank_upper_bound
             nominal_excess_to_invest = real_excess_to_invest * cumulative_inflation_factor_up_to_current_month
-
-            # Determine current portfolio weights for allocation
-            if current_year_idx < REBALANCING_YEAR_IDX:
-                current_W_STOCKS = W_P1_STOCKS
-                current_W_BONDS = W_P1_BONDS
-                current_W_STR = W_P1_STR
-                current_W_FUN = W_P1_FUN
-                # W_P1_REAL_ESTATE is intentionally skipped for this allocation
-            else:
-                current_W_STOCKS = W_P2_STOCKS
-                current_W_BONDS = W_P2_BONDS
-                current_W_STR = W_P2_STR
-                current_W_FUN = W_P2_FUN
-                # W_P2_REAL_ESTATE is intentionally skipped for this allocation
             
-            # Calculate the sum of the *liquid* weights to normalize them
-            # This ensures the excess cash is distributed only among liquid assets
-            liquid_weights_sum = current_W_STOCKS + current_W_BONDS + current_W_STR + current_W_FUN
-
-            if liquid_weights_sum > 0: # Avoid division by zero
-                # Normalize the liquid weights to sum to 1
-                norm_W_STOCKS = current_W_STOCKS / liquid_weights_sum
-                norm_W_BONDS = current_W_BONDS / liquid_weights_sum
-                norm_W_STR = current_W_STR / liquid_weights_sum
-                norm_W_FUN = current_W_FUN / liquid_weights_sum
-
-                # Distribute the nominal excess across the liquid assets
+            if liquid_weights_sum > 0:
                 current_stocks += nominal_excess_to_invest * norm_W_STOCKS
                 current_bonds += nominal_excess_to_invest * norm_W_BONDS
                 current_str += nominal_excess_to_invest * norm_W_STR
                 current_fun += nominal_excess_to_invest * norm_W_FUN
-
-                # Subtract the invested amount from the bank account
                 current_b -= nominal_excess_to_invest
-            # Else (if liquid_weights_sum is 0), nothing to do, excess stays in bank
 
         # 2. Handle planned contributions
-        for nominal_c_amount, c_year_idx in nominal_c_planned_amounts:
-            if current_year_idx == c_year_idx and month_in_year_idx == 0: # Apply contribution at start of the year
-                # Determine current portfolio weights for contribution allocation
-                if current_year_idx < REBALANCING_YEAR_IDX:
-                    current_W_STOCKS = W_P1_STOCKS
-                    current_W_BONDS = W_P1_BONDS
-                    current_W_STR = W_P1_STR
-                    current_W_FUN = W_P1_FUN
-                    current_W_REAL_ESTATE = W_P1_REAL_ESTATE
-                else:
-                    current_W_STOCKS = W_P2_STOCKS
-                    current_W_BONDS = W_P2_BONDS
-                    current_W_STR = W_P2_STR
-                    current_W_FUN = W_P2_FUN
-                    current_W_REAL_ESTATE = W_P2_REAL_ESTATE
-                
-                # Allocate contribution across assets based on weights
+        c_planned_applied_for_year = False
+        for i, (nominal_c_amount, c_year_idx) in enumerate(nominal_c_planned_amounts):
+            if current_year_idx == c_year_idx and month_in_year_idx == 0 and not c_planned_applied_for_year:
                 current_stocks += nominal_c_amount * current_W_STOCKS
                 current_bonds += nominal_c_amount * current_W_BONDS
                 current_str += nominal_c_amount * current_W_STR
                 current_fun += nominal_c_amount * current_W_FUN
                 current_real_estate += nominal_c_amount * current_W_REAL_ESTATE
+                c_planned_applied_for_year = True
 
         # Apply C_real_monthly_initial every month
-        if C_real_monthly_initial > 0: # Only if a positive contribution is set
-            # Determine current portfolio weights for allocation
-            if current_year_idx < REBALANCING_YEAR_IDX:
-                current_W_STOCKS = W_P1_STOCKS
-                current_W_BONDS = W_P1_BONDS
-                current_W_STR = W_P1_STR
-                current_W_FUN = W_P1_FUN
-                current_W_REAL_ESTATE = W_P1_REAL_ESTATE
-            else:
-                current_W_STOCKS = W_P2_STOCKS
-                current_W_BONDS = W_P2_BONDS
-                current_W_STR = W_P2_STR
-                current_W_FUN = W_P2_FUN
-                current_W_REAL_ESTATE = W_P2_REAL_ESTATE
-
-            # Inflate the real monthly contribution to its nominal value for the current year
-            nominal_c_monthly = inflate_amount_over_years(
-                C_real_monthly_initial,
-                current_year_idx,
-                annual_inflations_seq # Use this trial's inflation sequence
-            )
-            
-            # Allocate the nominal monthly contribution across assets based on weights
+        if C_real_monthly_initial > 0:
+            nominal_c_monthly = C_real_monthly_initial * cumulative_inflation_factors_annual[current_year_idx]
             current_stocks += nominal_c_monthly * current_W_STOCKS
             current_bonds += nominal_c_monthly * current_W_BONDS
             current_str += nominal_c_monthly * current_W_STR
@@ -379,35 +282,23 @@ def run_single_fire_simulation(
             current_real_estate += nominal_c_monthly * current_W_REAL_ESTATE
 
         # 3. Calculate nominal monthly withdrawal amount (includes X_real_monthly_initial)
-        # Inflate the initial real withdrawal to current month's nominal value
-        nominal_x_monthly = inflate_amount_over_years(
-            X_real_monthly_initial,
-            current_year_idx,
-            annual_inflations_seq # Use this trial's inflation sequence
-        )
+        nominal_x_monthly = X_real_monthly_initial * cumulative_inflation_factors_annual[current_year_idx]
         
         # Add planned extra expenses for this month/year
         extra_expense_for_this_month = 0
         expenses_to_remove_indices = [] 
 
-        # Iterate over the pre-calculated nominal planned extra expenses
-        # Note: We iterate over a copy or pre-calculated list to avoid issues when popping
-        # `nominal_x_planned_extra_amounts` is already a pre-calculated list for this simulation run.
         for i, (nominal_x_amount, x_year_idx) in enumerate(nominal_x_planned_extra_amounts):
-            if current_year_idx == x_year_idx and month_in_year_idx == 0: # Apply expense at start of the year
+            if current_year_idx == x_year_idx and month_in_year_idx == 0:
                 extra_expense_for_this_month += nominal_x_amount
-                expenses_to_remove_indices.append(i) # Mark for removal
+                expenses_to_remove_indices.append(i)
 
-        # Remove applied expenses from the list to prevent them from being applied again
-        # Iterate in reverse to avoid index shifting issues when popping
         for idx in sorted(expenses_to_remove_indices, reverse=True):
-            nominal_x_planned_extra_amounts.pop(idx) # This modifies the list for the current simulation run
+            nominal_x_planned_extra_amounts.pop(idx) 
 
         # 4. Process monthly withdrawals (Prioritized)
-        # Sum normal monthly expense and any extra planned expenses for this month
         withdrawal_needed = nominal_x_monthly + extra_expense_for_this_month
         
-        # Withdraw from bank account
         if current_b >= withdrawal_needed:
             current_b -= withdrawal_needed
             withdrawal_needed = 0
@@ -415,7 +306,6 @@ def run_single_fire_simulation(
             withdrawal_needed -= current_b
             current_b = 0
 
-        # Withdraw from STR
         if withdrawal_needed > 0:
             if current_str >= withdrawal_needed:
                 current_str -= withdrawal_needed
@@ -424,7 +314,6 @@ def run_single_fire_simulation(
                 withdrawal_needed -= current_str
                 current_str = 0
         
-        # Withdraw from Bonds
         if withdrawal_needed > 0:
             if current_bonds >= withdrawal_needed:
                 current_bonds -= withdrawal_needed
@@ -433,7 +322,6 @@ def run_single_fire_simulation(
                 withdrawal_needed -= current_bonds
                 current_bonds = 0
 
-        # Withdraw from Stocks
         if withdrawal_needed > 0:
             if current_stocks >= withdrawal_needed:
                 current_stocks -= withdrawal_needed
@@ -442,7 +330,6 @@ def run_single_fire_simulation(
                 withdrawal_needed -= current_stocks
                 current_stocks = 0
 
-        # Withdraw from Fun Money
         if withdrawal_needed > 0:
             if current_fun >= withdrawal_needed:
                 current_fun -= withdrawal_needed
@@ -451,55 +338,40 @@ def run_single_fire_simulation(
                 withdrawal_needed -= current_fun
                 current_fun = 0
 
-        # Check for failure (if Real Estate would be needed)
+        # CRITICAL FAILURE CHECK 2: If still needed after all liquid assets (excluding Real Estate)
         if withdrawal_needed > 0:
             success = False
+            # REMOVED: Recording nominal_wealth_history[current_month_idx] here.
             break # Exit simulation early if plan fails
 
         # 5. Apply monthly returns to investments (at end of month)
-        # Calculate monthly returns for this year for each asset
-        monthly_stocks_return = annual_to_monthly_compounded_rate(annual_stocks_returns_seq[current_year_idx])
-        monthly_bonds_return = annual_to_monthly_compounded_rate(annual_bonds_returns_seq[current_year_idx])
-        monthly_str_return = annual_to_monthly_compounded_rate(annual_str_returns_seq[current_year_idx])
-        monthly_fun_return = annual_to_monthly_compounded_rate(annual_fun_returns_seq[current_year_idx])
-        monthly_real_estate_return = annual_to_monthly_compounded_rate(annual_real_estate_returns_seq[current_year_idx])
+        current_stocks *= (1 + monthly_returns_lookup['Stocks'][current_month_idx])
+        current_bonds *= (1 + monthly_returns_lookup['Bonds'][current_month_idx])
+        current_str *= (1 + monthly_returns_lookup['STR'][current_month_idx])
+        current_fun *= (1 + monthly_returns_lookup['Fun'][current_month_idx])
+        current_real_estate *= (1 + monthly_returns_lookup['Real Estate'][current_month_idx])
 
-        # Apply returns
-        current_stocks *= (1 + monthly_stocks_return)
-        current_bonds *= (1 + monthly_bonds_return)
-        current_str *= (1 + monthly_str_return)
-        current_fun *= (1 + monthly_fun_return)
-        current_real_estate *= (1 + monthly_real_estate_return)
-
-        # TER is applied as a reduction in the value of the assets themselves.
-        # It's based on current value AFTER growth for the month.
+        # Apply TER
         current_stocks *= (1 - ter_monthly_factor)
         current_bonds *= (1 - ter_monthly_factor)
         current_str *= (1 - ter_monthly_factor)
-        current_fun *= (1 - ter_monthly_factor) # Assuming fun money is part of "invested capital" for TER
-        # Real estate is explicitly excluded as per requirement.
+        current_fun *= (1 - ter_monthly_factor)
 
-        # Ensure no asset values drop below zero due to fees (unlikely with small TER but good practice)
+        # Ensure no asset values drop below zero due to fees
         current_stocks = max(0, current_stocks)
         current_bonds = max(0, current_bonds)
         current_str = max(0, current_str)
         current_fun = max(0, current_fun)
-        # current_real_estate is also max(0, current_real_estate) by apply_asset_returns_to_nominal_values usually.
 
         # 6. Rebalance at the start of REBALANCING_YEAR_IDX
-        if current_year_idx == REBALANCING_YEAR_IDX and month_in_year_idx == 0 and REBALANCING_YEAR_IDX > 0: # Ensure rebalancing only happens once at the start of the year
+        if current_year_idx == REBALANCING_YEAR_IDX and month_in_year_idx == 0 and REBALANCING_YEAR_IDX > 0:
             total_investment_value_pre_rebalance = current_stocks + current_bonds + current_str + current_fun + current_real_estate
             
-            # Calculate cumulative inflation up to rebalancing year to get real values
-            cumulative_inflation_rebalance_year = np.prod(1 + annual_inflations_seq[:REBALANCING_YEAR_IDX]) if REBALANCING_YEAR_IDX > 0 else 1.0
+            cumulative_inflation_rebalance_year = cumulative_inflation_factors_annual[REBALANCING_YEAR_IDX]
 
-            # Record nominal and real portfolio allocation *just before* rebalancing
             pre_rebalancing_allocations_nominal = {
-                'Stocks': current_stocks,
-                'Bonds': current_bonds,
-                'STR': current_str,
-                'Fun': current_fun,
-                'Real Estate': current_real_estate
+                'Stocks': current_stocks, 'Bonds': current_bonds, 'STR': current_str,
+                'Fun': current_fun, 'Real Estate': current_real_estate
             }
             pre_rebalancing_allocations_real = {
                 'Stocks': current_stocks / cumulative_inflation_rebalance_year,
@@ -510,22 +382,17 @@ def run_single_fire_simulation(
             }
 
             # --- START HOUSE PURCHASE LOGIC ---
-            if H0_real_cost > 0: # Only execute if a house purchase cost is specified
-                nominal_house_cost = inflate_amount_over_years(H0_real_cost, REBALANCING_YEAR_IDX, annual_inflations_seq)
-                
-                # Calculate liquid assets available for purchase BEFORE rebalancing
+            if H0_real_cost > 0:
+                nominal_house_cost = H0_real_cost * cumulative_inflation_factors_annual[REBALANCING_YEAR_IDX]
                 liquid_assets_pre_house = current_str + current_bonds + current_stocks + current_fun
 
-                # Check if enough liquid assets are available
                 if liquid_assets_pre_house < nominal_house_cost:
-                    success = False # Mark simulation as failed
-                    # Optional: print(f"Simulation failed: Insufficient liquid assets ({liquid_assets_pre_house:,.2f}) to purchase house ({nominal_house_cost:,.2f}) in year {current_year_idx}")
-                    break # Exit this simulation trial (the loop will stop)
-
-                # Perform liquidation to buy the house (prioritize from most liquid/lowest risk)
+                    success = False
+                    # REMOVED: Recording nominal_wealth_history[current_month_idx] here.
+                    break # Exit loop
+                
                 remaining_to_buy = nominal_house_cost
                 
-                # Liquidate from STR (Short-Term Rate / Cash Equivalent)
                 if current_str >= remaining_to_buy:
                     current_str -= remaining_to_buy
                     remaining_to_buy = 0
@@ -533,7 +400,6 @@ def run_single_fire_simulation(
                     remaining_to_buy -= current_str
                     current_str = 0
                 
-                # If funds still needed, liquidate from Bonds
                 if remaining_to_buy > 0:
                     if current_bonds >= remaining_to_buy:
                         current_bonds -= remaining_to_buy
@@ -542,7 +408,6 @@ def run_single_fire_simulation(
                         remaining_to_buy -= current_bonds
                         current_bonds = 0
                         
-                # If funds still needed, liquidate from Stocks
                 if remaining_to_buy > 0:
                     if current_stocks >= remaining_to_buy:
                         current_stocks -= remaining_to_buy
@@ -551,7 +416,6 @@ def run_single_fire_simulation(
                         remaining_to_buy -= current_stocks
                         current_stocks = 0
                         
-                # If funds still needed, liquidate from Fun Money (highest risk, last resort)
                 if remaining_to_buy > 0:
                     if current_fun >= remaining_to_buy:
                         current_fun -= remaining_to_buy
@@ -560,59 +424,38 @@ def run_single_fire_simulation(
                         remaining_to_buy -= current_fun
                         current_fun = 0
                 
-                # After successful liquidation, add the value to the real estate asset
                 current_real_estate += nominal_house_cost
-                # print(f"DEBUG: House of {nominal_house_cost:,.2f} bought. New RE: {current_real_estate:,.2f}") # Optional debug line
+
             # --- END HOUSE PURCHASE LOGIC ---
 
-            # Recalculate total_investment_value_pre_rebalance *after* the house purchase
             total_investment_value_pre_rebalance = current_stocks + current_bonds + current_str + current_fun + current_real_estate
 
             # --- START CONDITIONAL REBALANCING LOGIC ---
             if H0_real_cost > 0:
-                # Scenario: House was purchased, now distribute *remaining liquid assets*
-                # The house value (current_real_estate) is now fixed for this rebalance.
-                
-                # Calculate the value of the liquid portfolio remaining
                 liquid_portfolio_value_for_rebalance = total_investment_value_pre_rebalance - current_real_estate
-                
-                # Calculate the sum of the 'target' liquid weights from P2
                 sum_liquid_p2_weights = W_P2_STOCKS + W_P2_BONDS + W_P2_STR + W_P2_FUN
                 
-                if sum_liquid_p2_weights == 0: # Avoid division by zero if all liquid weights are zero
-                    # This case means the entire remaining portfolio goes to real estate, or there's nothing left.
-                    # This might need custom handling depending on what you want to do.
-                    # For now, we'll assume there are some liquid weights.
+                if sum_liquid_p2_weights == 0:
                     current_stocks = 0.0
                     current_bonds = 0.0
                     current_str = 0.0
                     current_fun = 0.0
                 else:
-                    # Normalize the liquid P2 weights to sum to 1
                     norm_W_P2_STOCKS = W_P2_STOCKS / sum_liquid_p2_weights
                     norm_W_P2_BONDS = W_P2_BONDS / sum_liquid_p2_weights
                     norm_W_P2_STR = W_P2_STR / sum_liquid_p2_weights
                     norm_W_P2_FUN = W_P2_FUN / sum_liquid_p2_weights
 
-                    # Apply these normalized weights to the remaining liquid portfolio
-                    # These are the *new* current asset values after rebalancing
                     current_stocks = liquid_portfolio_value_for_rebalance * norm_W_P2_STOCKS
                     current_bonds = liquid_portfolio_value_for_rebalance * norm_W_P2_BONDS
                     current_str = liquid_portfolio_value_for_rebalance * norm_W_P2_STR
                     current_fun = liquid_portfolio_value_for_rebalance * norm_W_P2_FUN
                 
-                # For rebalancing_allocations_nominal, calculate based on the new final allocations
-                # Here, W_P2_REAL_ESTATE is implicitly current_real_estate / total_investment_value_pre_rebalance
                 rebalancing_allocations_nominal = {
-                    'Stocks': current_stocks,
-                    'Bonds': current_bonds,
-                    'STR': current_str,
-                    'Fun': current_fun,
-                    'Real Estate': current_real_estate # This is the house value
+                    'Stocks': current_stocks, 'Bonds': current_bonds, 'STR': current_str,
+                    'Fun': current_fun, 'Real Estate': current_real_estate
                 }
-
             else:
-                # Scenario: No house was purchased (H0_real_cost is 0), proceed with standard P2 rebalancing for all assets
                 rebalancing_allocations_nominal = {
                     'Stocks': total_investment_value_pre_rebalance * W_P2_STOCKS,
                     'Bonds': total_investment_value_pre_rebalance * W_P2_BONDS,
@@ -625,10 +468,9 @@ def run_single_fire_simulation(
                 current_bonds = rebalancing_allocations_nominal['Bonds']
                 current_str = rebalancing_allocations_nominal['STR']
                 current_fun = rebalancing_allocations_nominal['Fun']
-                current_real_estate = rebalancing_allocations_nominal['Real Estate'] # This will be 0 if W_P1_REAL_ESTATE was 0 and no house was bought
+                current_real_estate = rebalancing_allocations_nominal['Real Estate']
 
             # --- END CONDITIONAL REBALANCING LOGIC ---
-
 
             rebalancing_allocations_real = {
                 'Stocks': rebalancing_allocations_nominal['Stocks'] / cumulative_inflation_rebalance_year,
@@ -639,29 +481,40 @@ def run_single_fire_simulation(
             }
 
 
-        # Record nominal wealth at the end of the month
-        nominal_wealth_history.append(current_b + current_stocks + current_bonds + current_str + current_fun + current_real_estate)
-        bank_balance_history.append(current_b)
+        # Record nominal wealth at the end of the month (only for successful months)
+        nominal_wealth_history[current_month_idx] = current_b + current_stocks + current_bonds + current_str + current_fun + current_real_estate
+        bank_balance_history[current_month_idx] = current_b
 
-    # --- ADD THIS DEBUG LINE HERE ---
-    #   print(f"DEBUG RE: Year {current_year_idx}, Month {month_in_year_idx}: Real Estate = {current_real_estate:,.2f}")
-    # --- END DEBUG LINE ---
-
-    # Final results for this simulation
+    # --- MODIFIED: Handle history for failed simulations by filling with last value ---
+    if not success:
+        # Fill the remaining part of the history arrays with the value from the LAST *SUCCESSFUL* month.
+        if months_lasted > 1: # Ensures there was at least one successful month before failure
+            # If current_month_idx was the failing month, then months_lasted = current_month_idx + 1.
+            # So, (months_lasted - 1) is current_month_idx (the failing month's index)
+            # And (months_lasted - 2) is current_month_idx - 1 (the last successful month's index).
+            #last_recorded_wealth = nominal_wealth_history[months_lasted - 2]
+            last_recorded_bank_balance = bank_balance_history[months_lasted - 2]
+            
+            # Fill from the failing month's index (months_lasted - 1) onwards
+            nominal_wealth_history[months_lasted - 1:] = np.nan # last_recorded_wealth
+            bank_balance_history[months_lasted - 1:] = np.nan # last_recorded_bank_balance
+        elif months_lasted == 1: # Simulation failed in the very first month (current_month_idx = 0)
+            # In this case, nominal_wealth_history[0] would be the initial wealth if it was recorded before failure,
+            # but if it failed immediately, it might still be 0 or initial.
+            # We'll just leave it as it is (likely initial 0 or initial wealth if recorded).
+            # If nominal_wealth_history[0] was recorded successfully before failure, then it would be used.
+            # If it failed before recording, it would be 0, and filling with 0 is appropriate.
+            pass # The array would already be all zeros from initialization if no values were recorded.
+    
     final_investment = current_stocks + current_bonds + current_str + current_fun + current_real_estate
     final_bank_balance = current_b
 
-    # Record nominal and real portfolio allocation at the end of the simulation
     final_allocations_nominal = {
-        'Stocks': current_stocks,
-        'Bonds': current_bonds,
-        'STR': current_str,
-        'Fun': current_fun,
-        'Real Estate': current_real_estate
+        'Stocks': current_stocks, 'Bonds': current_bonds, 'STR': current_str,
+        'Fun': current_fun, 'Real Estate': current_real_estate
     }
 
-    # Calculate cumulative inflation for the entire simulation duration
-    cumulative_inflation_end_of_sim = np.prod(1 + annual_inflations_seq) if T_ret_years > 0 else 1.0
+    cumulative_inflation_end_of_sim = cumulative_inflation_factors_annual[T_ret_years]
     final_allocations_real = {
         'Stocks': current_stocks / cumulative_inflation_end_of_sim,
         'Bonds': current_bonds / cumulative_inflation_end_of_sim,
