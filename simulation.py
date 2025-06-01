@@ -493,7 +493,7 @@ def run_single_fire_simulation(
             # So, (months_lasted - 1) is current_month_idx (the failing month's index)
             # And (months_lasted - 2) is current_month_idx - 1 (the last successful month's index).
             #last_recorded_wealth = nominal_wealth_history[months_lasted - 2]
-            last_recorded_bank_balance = bank_balance_history[months_lasted - 2]
+            # last_recorded_bank_balance = bank_balance_history[months_lasted - 2]
             
             # Fill from the failing month's index (months_lasted - 1) onwards
             nominal_wealth_history[months_lasted - 1:] = np.nan # last_recorded_wealth

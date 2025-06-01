@@ -59,7 +59,7 @@ C_planned = [
 # Out flows
 TER_ANNUAL_PERCENTAGE = 0.002 # 2%
 # Fixed monthly exepense for the life level you want to keep
-X_real_monthly_initial = 4000
+X_real_monthly_initial = 3300
 
 # Planned Extra Expenses real_amount. [[X, year], ...]
 # 0	1,00	100.000,00
@@ -82,14 +82,28 @@ H0_real_cost = 150_000
 # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
-STOCK_MU = 0.1017
-STOCK_SIGMA = 0.1478
+# STOCK_MU = 0.1017
+# STOCK_SIGMA = 0.1478
 
-# European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR) annual total returns from 2004-2023.
+# The 2016-2025 period was exceptionally strong for global equities. 
+# For a long-term simulation (30+ years), it's advisable to temper expectations
+# based on very long-term historical averages and current market valuations.
+STOCK_MU = 0.07
+STOCK_SIGMA = 0.15
+
+# European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR) 
+# annual total returns from 2004-2023.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
-BOND_MU = 0.0193
-BOND_SIGMA = 0.0535
+# BOND_MU = 0.0193
+# BOND_SIGMA = 0.0535
+
+# The 2004-2023 period includes many years of historically very low and even 
+# negative interest rates in Europe. The environment has shifted, and current 
+# yields are significantly higher.
+BOND_MU = 0.03
+BOND_SIGMA = 0.055
+
 
 # Short-Term Reserves (STR) parameters based on historical Eurozone overnight rates (EONIA/€STR) from 2004-2023.
 # MU: Arithmetic Mean
@@ -97,23 +111,33 @@ BOND_SIGMA = 0.0535
 STR_MU = 0.0085
 STR_SIGMA = 0.0197
 
-# "Fun Money" (50% Ethereum, 50% Silver) parameters based on annual returns from 2016-2023.
+# "Fun Money" (50% Ethereum, 50% Silver) Parameters based on annual returns from 2016-2023.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
 # FUN_MU = 1.2438
 # FUN_SIGMA = 0.6805
 
-# Ethereum from 2016 to 2025
+# "Fun Money" (50% Ethereum, 50% Silver): Based on the conservative values below
+# MU: Arithmetic Mean
+# SIGMA: Arithmetic Standard Deviation
+FUN_MU = 0.16
+FUN_SIGMA = 0.45
+
+# Ethereum: from 2016 to 2025
 # FUN_MU = 2.3755
 # FUN_SIGMA = 1.3320
 
-# Silver from 2016 to 2025
+# Ethereum: Conservative values remembering regression to the min
+# FUN_MU = 0.25
+# FUN_SIGMA = 0.90
+
+# Silver: from 2016 to 2025
 # FUN_MU = 0.1120
 # FUN_SIGMA = 0.2794
 
-# Prudent
-FUN_MU = 0.25
-FUN_SIGMA = 0.5
+# Silver: Conservative values remembering regression to the min
+# FUN_MU = 0.07
+# FUN_SIGMA = 0.32
 
 # Real Estate (Italy) parameters based on annual capital gains from 2004-2023, net of 1.5% annual maintenance.
 # Note: Excludes rental income. Maintenance cost is an assumed average.
@@ -125,8 +149,12 @@ REAL_ESTATE_SIGMA = 0.0416
 # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
 # MU_PI: Arithmetic Mean of inflation
 # SIGMA_PI: Arithmetic Standard Deviation of inflation
-MU_PI = 0.0220
-SIGMA_PI = 0.0229
+# MU_PI = 0.0220
+# SIGMA_PI = 0.0229
+
+# More relistics for the future
+MU_PI = 0.025
+SIGMA_PI = 0.025
 
 [shocks]
 events = []
