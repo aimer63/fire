@@ -6,9 +6,9 @@ from helpers import calculate_cagr, annual_to_monthly_compounded_rate, calculate
 # Removed: print_allocations function (no longer needed)
 
 def perform_analysis_and_prepare_plots_data(
-    simulation_results, T_ret_years, I0,
-    W_P1_STOCKS, W_P1_BONDS, W_P1_STR, W_P1_FUN, W_P1_REAL_ESTATE,
-    REBALANCING_YEAR_IDX, num_simulations, mu_pi
+    simulation_results, t_ret_years, i0,
+    w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate,
+    rebalancing_year_idx, num_simulations, mu_pi
 ):
     """
     Performs post-simulation analysis, identifies key scenarios, and prepares data
@@ -18,10 +18,10 @@ def perform_analysis_and_prepare_plots_data(
 
     Args:
         simulation_results (list of tuples): Raw results from run_single_fire_simulation.
-        T_ret_years (int): Total simulation duration in years.
-        I0 (float): Initial investment.
-        W_P1_STOCKS, W_P1_BONDS, ...: Phase 1 portfolio weights for initial allocation.
-        REBALANCING_YEAR_IDX (int): Year index for rebalancing.
+        t_ret_years (int): Total simulation duration in years.
+        i0 (float): Initial investment.
+        w_p1_stocks, w_p1_bonds, ...: Phase 1 portfolio weights for initial allocation.
+        rebalancing_year_idx (int): Year index for rebalancing.
         num_simulations (int): Total number of simulations run.
         mu_pi (float): Average annual inflation rate (for plotting fallback).
 
@@ -81,30 +81,30 @@ def perform_analysis_and_prepare_plots_data(
 
     if len(successful_sims_for_plotting) > 0:
         successful_sims_sorted_for_plotting = successful_sims_for_plotting.sort_values(by='real_final_wealth', ascending=True)
-        
+
         percentile_bins = [0, 20, 40, 60, 80, 100]
         num_samples_per_bin = 5
-        
+
         for i in range(len(percentile_bins) - 1):
             lower_percentile = percentile_bins[i]
             upper_percentile = percentile_bins[i+1]
-            
+
             start_idx_in_sorted = int(np.percentile(np.arange(len(successful_sims_sorted_for_plotting)), lower_percentile))
             if upper_percentile == 100:
                 end_idx_in_sorted = len(successful_sims_sorted_for_plotting)
             else:
                 end_idx_in_sorted = int(np.percentile(np.arange(len(successful_sims_sorted_for_plotting)), upper_percentile))
-            
+
             range_indices = successful_sims_sorted_for_plotting.iloc[start_idx_in_sorted:end_idx_in_sorted].index.tolist()
-            
+
             existing_indices = [data['sim_idx'] for data in plot_lines_data]
             range_indices = [idx for idx in range_indices if idx not in existing_indices]
 
             if len(range_indices) > 0:
-                sampled_indices = np.random.choice(range_indices, 
-                                                   min(len(range_indices), num_samples_per_bin), 
+                sampled_indices = np.random.choice(range_indices,
+                                                   min(len(range_indices), num_samples_per_bin),
                                                    replace=False).tolist()
-                
+
                 if upper_percentile <= 20: current_color = 'darkorange'
                 elif upper_percentile <= 40: current_color = 'gold'
                 elif upper_percentile <= 60: current_color = 'forestgreen'
@@ -157,7 +157,7 @@ def perform_analysis_and_prepare_plots_data(
     return results_df, plot_data_dict
 
 
-def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal, T_ret_years):
+def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal, t_ret_years):
     """
     Analyzes simulation results and generates a single, formatted summary string
     containing success rate, average wealth, CAGR, and best/worst/average cases,
@@ -166,7 +166,7 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
     Args:
         simulation_results (list): List of tuples, each containing results from a single simulation.
         initial_total_wealth_nominal (float): The starting total nominal wealth for CAGR calculation.
-        T_ret_years (int): The total number of retirement years simulated.
+        t_ret_years (int): The total number of retirement years simulated.
 
     Returns:
         str: A multi-line string containing the formatted simulation summary.
@@ -174,7 +174,7 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
     successful_simulations_count = 0
     failed_simulations_count = 0
     months_lasted_in_failed_simulations = []
-    
+
     # Store the actual result tuples for successful simulations to retrieve allocation data later
     successful_results_data = []
 
@@ -194,7 +194,7 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
             final_total_wealth_nominal = final_investment + final_bank_balance
             # Note: We don't append to successful_final_wealth_nominal/real/cagrs directly here anymore
             # as we'll derive them from the specific result tuples identified later.
-            
+
             # Store the full result tuple for successful simulations
             successful_results_data.append(result)
 
@@ -220,10 +220,10 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
             # Re-unpack only what's needed for sorting
             _, _, final_inv, final_bank, annual_infl, *_ = res
             final_nom_wealth = final_inv + final_bank
-            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if T_ret_years > 0 else 1.0
+            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if t_ret_years > 0 else 1.0
             real_wealth = final_nom_wealth / cum_infl_factor
             temp_successful_sorted.append((real_wealth, res))
-        
+
         temp_successful_sorted.sort(key=lambda x: x[0]) # Sort by real wealth
 
         worst_successful_result = temp_successful_sorted[0][1] # Smallest real wealth
@@ -231,7 +231,7 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
 
         # Find Average Case (closest to median real_final_wealth among successful sims)
         median_real_wealth_among_successful = np.median([x[0] for x in temp_successful_sorted])
-        
+
         closest_to_median = min(temp_successful_sorted, key=lambda x: np.abs(x[0] - median_real_wealth_among_successful))
         average_successful_result = closest_to_median[1]
 
@@ -240,11 +240,11 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
     def _format_allocations_as_percentages(allocations_nominal_dict):
         if not allocations_nominal_dict:
             return "N/A"
-        
+
         total_nominal = sum(allocations_nominal_dict.values())
         if total_nominal == 0:
             return "All zero"
-            
+
         percentage_strings = []
         for asset, nom_val in allocations_nominal_dict.items():
             percentage = (nom_val / total_nominal) * 100
@@ -272,9 +272,9 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
             # Unpack specific result tuple for its final values and allocations
             _, _, final_inv, final_bank, annual_infl, *_, _, _, _, _, _, final_allocs_nom = worst_successful_result
             final_total_wealth_nominal = final_inv + final_bank
-            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if T_ret_years > 0 else 1.0
+            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if t_ret_years > 0 else 1.0
             final_total_wealth_real = final_total_wealth_nominal / cum_infl_factor
-            cagr = calculate_cagr(initial_total_wealth_nominal, final_total_wealth_nominal, T_ret_years)
+            cagr = calculate_cagr(initial_total_wealth_nominal, final_total_wealth_nominal, t_ret_years)
 
             summary_lines.append(f"Worst Successful Case:")
             summary_lines.append(f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR")
@@ -286,9 +286,9 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
         if average_successful_result:
             _, _, final_inv, final_bank, annual_infl, *_, _, _, _, _, _, final_allocs_nom = average_successful_result
             final_total_wealth_nominal = final_inv + final_bank
-            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if T_ret_years > 0 else 1.0
+            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if t_ret_years > 0 else 1.0
             final_total_wealth_real = final_total_wealth_nominal / cum_infl_factor
-            cagr = calculate_cagr(initial_total_wealth_nominal, final_total_wealth_nominal, T_ret_years)
+            cagr = calculate_cagr(initial_total_wealth_nominal, final_total_wealth_nominal, t_ret_years)
 
             summary_lines.append(f"\nAverage Successful Case:")
             summary_lines.append(f"  (Simulation closest to median real final wealth)")
@@ -301,9 +301,9 @@ def generate_fire_plan_summary(simulation_results, initial_total_wealth_nominal,
         if best_successful_result:
             _, _, final_inv, final_bank, annual_infl, *_, _, _, _, _, _, final_allocs_nom = best_successful_result
             final_total_wealth_nominal = final_inv + final_bank
-            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if T_ret_years > 0 else 1.0
+            cum_infl_factor = np.prod(1 + np.array(annual_infl)) if t_ret_years > 0 else 1.0
             final_total_wealth_real = final_total_wealth_nominal / cum_infl_factor
-            cagr = calculate_cagr(initial_total_wealth_nominal, final_total_wealth_nominal, T_ret_years)
+            cagr = calculate_cagr(initial_total_wealth_nominal, final_total_wealth_nominal, t_ret_years)
 
             summary_lines.append(f"\nBest Successful Case:")
             summary_lines.append(f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR")
