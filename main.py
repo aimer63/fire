@@ -287,9 +287,8 @@ def main():
 
     # --- 7. Perform Analysis and Prepare Plotting Data ---
     results_df, plot_data = analysis.perform_analysis_and_prepare_plots_data(
-        simulation_results, t_ret_years, i0,
-        w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate,
-        rebalancing_year_idx, num_simulations, mu_pi
+        simulation_results,
+        num_simulations
     )
 
     # Generate and print the consolidated FIRE plan summary
