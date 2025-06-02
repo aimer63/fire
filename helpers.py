@@ -47,15 +47,15 @@ def calculate_log_normal_params(
         if arith_mu <= -1:
             raise ValueError(f"Arithmetic mean ({arith_mu}) must be strictly greater than -1 to convert to log-normal parameters.")
 
-        EX = 1 + arith_mu
+        ex = 1 + arith_mu
         StdX = arith_sigma
 
         if StdX == 0:
             sigma_log = 0.0
         else:
-            sigma_log = np.sqrt(np.log(1 + (StdX / EX)**2))
+            sigma_log = np.sqrt(np.log(1 + (StdX / ex)**2))
 
-        mu_log = np.log(EX) - 0.5 * sigma_log**2
+        mu_log = np.log(ex) - 0.5 * sigma_log**2
 
         return mu_log, sigma_log
 

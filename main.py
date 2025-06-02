@@ -51,64 +51,64 @@ def main():
     print("Configuration file parsed successfully. Extracting parameters...")
 
     det_inputs = config_data['deterministic_inputs']
-    i0 = det_inputs['i0'] # Renamed
+    i0 = det_inputs['i0']
     b0 = det_inputs['b0']
-    real_bank_lower_bound = det_inputs['real_bank_lower_bound'] # Renamed
-    real_bank_upper_bound = det_inputs['real_bank_upper_bound'] # Renamed
-    t_ret_years = det_inputs['t_ret_years'] # Renamed
-    t_ret_months = t_ret_years * 12 # Renamed
+    real_bank_lower_bound = det_inputs['real_bank_lower_bound']
+    real_bank_upper_bound = det_inputs['real_bank_upper_bound']
+    t_ret_years = det_inputs['t_ret_years']
+    t_ret_months = t_ret_years * 12
 
-    x_real_monthly_initial = det_inputs['x_real_monthly_initial'] # Renamed
-    x_planned_extra = [tuple(item) for item in det_inputs['x_planned_extra']] # Renamed
+    x_real_monthly_initial = det_inputs['x_real_monthly_initial']
+    x_planned_extra = [tuple(item) for item in det_inputs['x_planned_extra']]
 
-    c_real_monthly_initial = det_inputs['c_real_monthly_initial'] # Renamed
-    c_planned = [tuple(item) for item in det_inputs['c_planned']] # Renamed
-    ter_annual_percentage = det_inputs['ter_annual_percentage'] # Renamed
+    c_real_monthly_initial = det_inputs['c_real_monthly_initial']
+    c_planned = [tuple(item) for item in det_inputs['c_planned']]
+    ter_annual_percentage = det_inputs['ter_annual_percentage']
 
-    h0_real_cost = det_inputs['h0_real_cost'] # Renamed
+    h0_real_cost = det_inputs['h0_real_cost']
 
-    p_real_monthly = det_inputs['p_real_monthly'] # Renamed
-    pension_inflation_adjustment_factor = det_inputs['pension_inflation_adjustment_factor'] # Renamed
-    y_p_start_idx = det_inputs['y_p_start_idx'] # Renamed
+    p_real_monthly = det_inputs['p_real_monthly']
+    pension_inflation_adjustment_factor = det_inputs['pension_inflation_adjustment_factor']
+    y_p_start_idx = det_inputs['y_p_start_idx']
 
-    s_real_monthly = det_inputs['s_real_monthly'] # Renamed
-    salary_inflation_adjustment_factor = det_inputs['salary_inflation_adjustment_factor'] # Renamed
-    y_s_start_idx = det_inputs['y_s_start_idx'] # Renamed
-    y_s_end_idx = det_inputs['y_s_end_idx'] # Renamed
+    s_real_monthly = det_inputs['s_real_monthly']
+    salary_inflation_adjustment_factor = det_inputs['salary_inflation_adjustment_factor']
+    y_s_start_idx = det_inputs['y_s_start_idx']
+    y_s_end_idx = det_inputs['y_s_end_idx']
 
     eco_assumptions = config_data['economic_assumptions']
-    stock_mu = eco_assumptions['stock_mu'] # Renamed
-    stock_sigma = eco_assumptions['stock_sigma'] # Renamed
-    bond_mu = eco_assumptions['bond_mu'] # Renamed
-    bond_sigma = eco_assumptions['bond_sigma'] # Renamed
-    str_mu = eco_assumptions['str_mu'] # Renamed
-    str_sigma = eco_assumptions['str_sigma'] # Renamed
-    fun_mu = eco_assumptions['fun_mu'] # Renamed
-    fun_sigma = eco_assumptions['fun_sigma'] # Renamed
-    real_estate_mu = eco_assumptions['real_estate_mu'] # Renamed
-    real_estate_sigma = eco_assumptions['real_estate_sigma'] # Renamed
-    mu_pi = eco_assumptions['mu_pi'] # Renamed
-    sigma_pi = eco_assumptions['sigma_pi'] # Renamed
+    stock_mu = eco_assumptions['stock_mu']
+    stock_sigma = eco_assumptions['stock_sigma']
+    bond_mu = eco_assumptions['bond_mu']
+    bond_sigma = eco_assumptions['bond_sigma']
+    str_mu = eco_assumptions['str_mu']
+    str_sigma = eco_assumptions['str_sigma']
+    fun_mu = eco_assumptions['fun_mu']
+    fun_sigma = eco_assumptions['fun_sigma']
+    real_estate_mu = eco_assumptions['real_estate_mu']
+    real_estate_sigma = eco_assumptions['real_estate_sigma']
+    mu_pi = eco_assumptions['mu_pi']
+    sigma_pi = eco_assumptions['sigma_pi']
 
     # Load historical shock events
     shocks_config = config_data.get('shocks', {})
-    shock_events = shocks_config.get('events', []) # 'events' is TOML key, 'shock_events' is Python variable
+    shock_events = shocks_config.get('events', [])
 
     port_allocs = config_data['portfolio_allocations']
-    rebalancing_year_idx = port_allocs['rebalancing_year_idx'] # Renamed
-    w_p1_stocks = port_allocs['w_p1_stocks'] # Renamed
-    w_p1_bonds = port_allocs['w_p1_bonds'] # Renamed
-    w_p1_str = port_allocs['w_p1_str'] # Renamed
-    w_p1_fun = port_allocs['w_p1_fun'] # Renamed
-    w_p1_real_estate = port_allocs['w_p1_real_estate'] # Renamed
-    w_p2_stocks = port_allocs['w_p2_stocks'] # Renamed
-    w_p2_bonds = port_allocs['w_p2_bonds'] # Renamed
-    w_p2_str = port_allocs['w_p2_str'] # Renamed
-    w_p2_fun = port_allocs['w_p2_fun'] # Renamed
-    w_p2_real_estate = port_allocs['w_p2_real_estate'] # Renamed
+    rebalancing_year_idx = port_allocs['rebalancing_year_idx']
+    w_p1_stocks = port_allocs['w_p1_stocks']
+    w_p1_bonds = port_allocs['w_p1_bonds']
+    w_p1_str = port_allocs['w_p1_str']
+    w_p1_fun = port_allocs['w_p1_fun']
+    w_p1_real_estate = port_allocs['w_p1_real_estate']
+    w_p2_stocks = port_allocs['w_p2_stocks']
+    w_p2_bonds = port_allocs['w_p2_bonds']
+    w_p2_str = port_allocs['w_p2_str']
+    w_p2_fun = port_allocs['w_p2_fun']
+    w_p2_real_estate = port_allocs['w_p2_real_estate']
 
-    p1_sum = w_p1_stocks + w_p1_bonds + w_p1_str + w_p1_fun + w_p1_real_estate # Renamed
-    p2_sum = w_p2_stocks + w_p2_bonds + w_p2_str + w_p2_fun + w_p2_real_estate # Renamed
+    p1_sum = w_p1_stocks + w_p1_bonds + w_p1_str + w_p1_fun + w_p1_real_estate
+    p2_sum = w_p2_stocks + w_p2_bonds + w_p2_str + w_p2_fun + w_p2_real_estate
 
     assert np.isclose(p1_sum, 1.0), f"Error: Phase 1 portfolio weights sum to {p1_sum:.4f}, but should sum to 1.0."
     assert np.isclose(p2_sum, 1.0), f"Error: Phase 2 portfolio weights sum to {p2_sum:.4f}, but should sum to 1.0."
@@ -132,11 +132,11 @@ def main():
         mu_log_real_estate, sigma_log_real_estate,
         mu_log_pi, sigma_log_pi,
     ) = calculate_log_normal_params(
-        stock_mu, stock_sigma, # Renamed
-        bond_mu, bond_sigma, # Renamed
-        str_mu, str_sigma, # Renamed
-        fun_mu, fun_sigma, # Renamed
-        real_estate_mu, real_estate_sigma, # Renamed
+        stock_mu, stock_sigma,
+        bond_mu, bond_sigma,
+        str_mu, str_sigma,
+        fun_mu, fun_sigma,
+        real_estate_mu, real_estate_sigma,
         mu_pi, sigma_pi,
     )
 
@@ -144,41 +144,41 @@ def main():
         initial_stocks_value, initial_bonds_value, initial_str_value,
         initial_fun_value, initial_real_estate_value
     ) = calculate_initial_asset_values(
-        i0, # Renamed
-        w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate # Renamed
+        i0,
+        w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate
     )
 
     print("All parameters successfully extracted and assigned to Python variables, including derived ones.")
 
     # --- Print all parameters for verification ---
     print("\n--- Loaded Parameters Summary (from config.toml) ---")
-    print(f"i0: {i0:,.2f}") # Renamed
+    print(f"i0: {i0:,.2f}")
     print(f"b0: {b0:,.2f}")
-    print(f"real_bank_lower_bound: {real_bank_lower_bound:,.2f}") # Renamed
-    print(f"real_bank_upper_bound: {real_bank_upper_bound:,.2f}") # Renamed
-    print(f"t_ret_years: {t_ret_years}") # Renamed
-    print(f"t_ret_months: {t_ret_months}") # Renamed
-    print(f"x_real_monthly_initial: {x_real_monthly_initial:,.2f}") # Renamed
-    print(f"x_planned_extra: {x_planned_extra}") # Renamed
-    print(f"c_planned: {c_planned}") # Renamed
-    print(f"c_real_monthly_initial: {c_real_monthly_initial:,.2f}") # Renamed
-    print(f"ter_annual_percentage: {ter_annual_percentage:.4f}") # Renamed
-    print(f"h0_real_cost: {h0_real_cost:,.2f}") # Renamed
-    print(f"p_real_monthly: {p_real_monthly:,.2f}") # Renamed
-    print(f"pension_inflation_adjustment_factor: {pension_inflation_adjustment_factor}") # Renamed
-    print(f"y_p_start_idx: {y_p_start_idx}") # Renamed
-    print(f"s_real_monthly: {s_real_monthly:,.2f}") # Renamed
-    print(f"salary_inflation_adjustment_factor: {salary_inflation_adjustment_factor}") # Renamed
-    print(f"y_s_start_idx: {y_s_start_idx}") # Renamed
-    print(f"y_s_end_idx: {y_s_end_idx}") # Renamed
+    print(f"real_bank_lower_bound: {real_bank_lower_bound:,.2f}")
+    print(f"real_bank_upper_bound: {real_bank_upper_bound:,.2f}")
+    print(f"t_ret_years: {t_ret_years}")
+    print(f"t_ret_months: {t_ret_months}")
+    print(f"x_real_monthly_initial: {x_real_monthly_initial:,.2f}")
+    print(f"x_planned_extra: {x_planned_extra}")
+    print(f"c_planned: {c_planned}")
+    print(f"c_real_monthly_initial: {c_real_monthly_initial:,.2f}")
+    print(f"ter_annual_percentage: {ter_annual_percentage:.4f}")
+    print(f"h0_real_cost: {h0_real_cost:,.2f}")
+    print(f"p_real_monthly: {p_real_monthly:,.2f}")
+    print(f"pension_inflation_adjustment_factor: {pension_inflation_adjustment_factor}")
+    print(f"y_p_start_idx: {y_p_start_idx}")
+    print(f"s_real_monthly: {s_real_monthly:,.2f}")
+    print(f"salary_inflation_adjustment_factor: {salary_inflation_adjustment_factor}")
+    print(f"y_s_start_idx: {y_s_start_idx}")
+    print(f"y_s_end_idx: {y_s_end_idx}")
 
     print("\n--- Economic Assumptions ---")
-    print(f"stock_mu: {stock_mu:.4f}, stock_sigma: {stock_sigma:.4f}") # Renamed
-    print(f"bond_mu: {bond_mu:.4f}, bond_sigma: {bond_sigma:.4f}") # Renamed
-    print(f"str_mu: {str_mu:.4f}, str_sigma: {str_sigma:.4f}") # Renamed
-    print(f"fun_mu: {fun_mu:.4f}, fun_sigma: {fun_sigma:.4f}") # Renamed
-    print(f"real_estate_mu: {real_estate_mu:.4f}, real_estate_sigma: {real_estate_sigma:.4f}") # Renamed
-    print(f"mu_pi: {mu_pi:.4f}, sigma_pi: {sigma_pi:.4f}") # Renamed
+    print(f"stock_mu: {stock_mu:.4f}, stock_sigma: {stock_sigma:.4f}")
+    print(f"bond_mu: {bond_mu:.4f}, bond_sigma: {bond_sigma:.4f}")
+    print(f"str_mu: {str_mu:.4f}, str_sigma: {str_sigma:.4f}")
+    print(f"fun_mu: {fun_mu:.4f}, fun_sigma: {fun_sigma:.4f}")
+    print(f"real_estate_mu: {real_estate_mu:.4f}, real_estate_sigma: {real_estate_sigma:.4f}")
+    print(f"mu_pi: {mu_pi:.4f}, sigma_pi: {sigma_pi:.4f}")
 
     print("\n--- Derived Log-Normal Parameters ---")
     print(f"mu_log_stocks: {mu_log_stocks:.6f}, sigma_log_stocks: {sigma_log_stocks:.6f}")
@@ -189,9 +189,9 @@ def main():
     print(f"mu_log_pi: {mu_log_pi:.6f}, sigma_log_pi: {sigma_log_pi:.6f}")
 
     print("\n--- Portfolio Allocations ---")
-    print(f"rebalancing_year_idx: {rebalancing_year_idx}") # Renamed
-    print(f"w_p1_stocks: {w_p1_stocks:.4f}, w_p1_bonds: {w_p1_bonds:.4f}, w_p1_str: {w_p1_str:.4f}, w_p1_fun: {w_p1_fun:.4f}, w_p1_real_estate: {w_p1_real_estate:.4f}") # Renamed
-    print(f"w_p2_stocks: {w_p2_stocks:.4f}, w_p2_bonds: {w_p2_bonds:.4f}, w_p2_str: {w_p2_str:.4f}, w_p2_fun: {w_p2_fun:.4f}, w_p2_real_estate: {w_p2_real_estate:.4f}") # Renamed
+    print(f"rebalancing_year_idx: {rebalancing_year_idx}")
+    print(f"w_p1_stocks: {w_p1_stocks:.4f}, w_p1_bonds: {w_p1_bonds:.4f}, w_p1_str: {w_p1_str:.4f}, w_p1_fun: {w_p1_fun:.4f}, w_p1_real_estate: {w_p1_real_estate:.4f}")
+    print(f"w_p2_stocks: {w_p2_stocks:.4f}, w_p2_bonds: {w_p2_bonds:.4f}, w_p2_str: {w_p2_str:.4f}, w_p2_fun: {w_p2_fun:.4f}, w_p2_real_estate: {w_p2_real_estate:.4f}")
 
     print("\n--- Initial Asset Values ---")
     print(f"initial_stocks_value: {initial_stocks_value:,.2f}")
@@ -212,31 +212,31 @@ def main():
     spinner = itertools.cycle(['-', '\\', '|', '/'])
     start_time = time.time()
 
-    print(f"\nRunning {num_simulations} Monte Carlo simulations (T={t_ret_years} years)...") # Renamed
+    print(f"\nRunning {num_simulations} Monte Carlo simulations (T={t_ret_years} years)...")
     for i in range(num_simulations):
         result = run_single_fire_simulation(
-            b0,
-            initial_stocks_value, initial_bonds_value, initial_str_value, initial_fun_value, initial_real_estate_value,
-            t_ret_months, t_ret_years, # Renamed
-            x_real_monthly_initial, # Renamed
-            list(c_planned), # Renamed
-            list(x_planned_extra), # Renamed
-            p_real_monthly, pension_inflation_adjustment_factor, y_p_start_idx, # Renamed
-            s_real_monthly, salary_inflation_adjustment_factor, y_s_start_idx, y_s_end_idx, # Renamed
+            i0, b0,
+            # initial_stocks_value, initial_bonds_value, initial_str_value, initial_fun_value, initial_real_estate_value,
+            t_ret_months, t_ret_years,
+            x_real_monthly_initial,
+            list(c_planned),
+            list(x_planned_extra),
+            p_real_monthly, pension_inflation_adjustment_factor, y_p_start_idx,
+            s_real_monthly, salary_inflation_adjustment_factor, y_s_start_idx, y_s_end_idx,
             mu_log_pi, sigma_log_pi,
-            rebalancing_year_idx, # Renamed
-            w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate, # Renamed
-            w_p2_stocks, w_p2_bonds, w_p2_str, w_p2_fun, w_p2_real_estate, # Renamed
+            rebalancing_year_idx,
+            w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate,
+            w_p2_stocks, w_p2_bonds, w_p2_str, w_p2_fun, w_p2_real_estate,
             mu_log_stocks, sigma_log_stocks,
             mu_log_bonds, sigma_log_bonds,
             mu_log_str, sigma_log_str,
             mu_log_fun, sigma_log_fun,
             mu_log_real_estate, sigma_log_real_estate,
-            real_bank_lower_bound, # Renamed
-            real_bank_upper_bound, # Renamed
-            c_real_monthly_initial, # Renamed
-            h0_real_cost, # Renamed
-            ter_annual_percentage, # Renamed
+            real_bank_lower_bound,
+            real_bank_upper_bound,
+            c_real_monthly_initial,
+            h0_real_cost,
+            ter_annual_percentage,
             shock_events,
         )
         simulation_results.append(result)
@@ -255,14 +255,14 @@ def main():
 
     # --- 7. Perform Analysis and Prepare Plotting Data ---
     results_df, plot_data = analysis.perform_analysis_and_prepare_plots_data(
-        simulation_results, t_ret_years, i0, # Renamed
-        w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate, # Renamed
-        rebalancing_year_idx, num_simulations, mu_pi # Renamed
+        simulation_results, t_ret_years, i0,
+        w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate,
+        rebalancing_year_idx, num_simulations, mu_pi
     )
 
     # Generate and print the consolidated FIRE plan summary
-    initial_total_wealth = i0 + b0 # Renamed
-    fire_summary_string = analysis.generate_fire_plan_summary(simulation_results, initial_total_wealth, t_ret_years) # Renamed
+    initial_total_wealth = i0 + b0
+    fire_summary_string = analysis.generate_fire_plan_summary(simulation_results, initial_total_wealth, t_ret_years)
 
     # Print the consolidated summary, including the total simulation time here
     print(f"\nTotal simulations run: {num_simulations}")
@@ -279,7 +279,7 @@ def main():
     bank_account_plot_indices = plot_data['bank_account_plot_indices']
 
     # Plotting Historical Distributions
-    plot_retirement_duration_distribution(failed_sims, t_ret_years) # Renamed
+    plot_retirement_duration_distribution(failed_sims, t_ret_years)
     plot_final_wealth_distribution_nominal(successful_sims)
     plot_final_wealth_distribution_real(successful_sims)
 
@@ -288,8 +288,8 @@ def main():
     plot_wealth_evolution_samples_nominal(results_df, plot_lines_data)
 
     # Plotting Bank Account Trajectories
-    plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, real_bank_lower_bound) # Renamed
-    plot_bank_account_trajectories_nominal(results_df, bank_account_plot_indices, real_bank_lower_bound) # Renamed
+    plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, real_bank_lower_bound)
+    plot_bank_account_trajectories_nominal(results_df, bank_account_plot_indices, real_bank_lower_bound)
 
     print("\nAll requested plots generated and saved to the current directory.")
 
