@@ -228,7 +228,7 @@ def plot_wealth_evolution_samples_real(
             linewidth=linewidth
         )
 
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='medium')
     plt.tight_layout(rect=[0, 0, 0.85, 1])
 
     _save_and_store_figure(fig, filename)

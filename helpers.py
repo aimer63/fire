@@ -1,4 +1,24 @@
-# helpers.py
+"""
+helpers.py
+
+This module contains a collection of utility functions designed to assist
+in financial calculations and data transformations required for the
+Personal Financial Independence / Early Retirement (FIRE) simulation project.
+
+Key functionalities include:
+- Converting annual interest rates to monthly compounded rates.
+- Inflating monetary amounts over time using a sequence of inflation rates.
+- Transforming arithmetic mean and standard deviation to log-normal
+  distribution parameters, crucial for Monte Carlo simulations of returns
+  and inflation.
+- Calculating the initial monetary value of assets based on total investment
+  and portfolio weights.
+- Computing the Compound Annual Growth Rate (CAGR) for investment performance
+  analysis.
+
+These helper functions standardize common financial calculations and data
+pre-processing steps across the simulation, analysis, and plotting modules.
+"""
 
 import numpy as np
 
@@ -35,8 +55,9 @@ def calculate_log_normal_params(
     distributions of asset returns AND inflation. It assumes that the input MU and SIGMA
     are the ARITHMETIC mean and ARITHMETIC standard deviation.
 
-    Returns a tuple of (mu_log_stocks, sigma_log_stocks, ..., mu_log_real_estate, sigma_log_real_estate,
-                         mu_log_pi, sigma_log_pi).
+    Returns a tuple of (mu_log_stocks, sigma_log_stocks, ..., 
+                        mu_log_real_estate, sigma_log_real_estate,
+                        mu_log_pi, sigma_log_pi).
     """
 
     def _convert_arithmetic_to_lognormal(arith_mu, arith_sigma):
@@ -45,15 +66,18 @@ def calculate_log_normal_params(
         to log-normal parameters (mu_log, sigma_log).
         """
         if arith_mu <= -1:
-            raise ValueError(f"Arithmetic mean ({arith_mu}) must be strictly greater than -1 to convert to log-normal parameters.")
+            raise ValueError(
+                f"Arithmetic mean ({arith_mu}) must be strictly "
+                "greater than -1 to convert to log-normal parameters."
+                )
 
         ex = 1 + arith_mu
-        StdX = arith_sigma
+        stdx = arith_sigma
 
-        if StdX == 0:
+        if stdx == 0:
             sigma_log = 0.0
         else:
-            sigma_log = np.sqrt(np.log(1 + (StdX / ex)**2))
+            sigma_log = np.sqrt(np.log(1 + (stdx / ex)**2))
 
         mu_log = np.log(ex) - 0.5 * sigma_log**2
 
@@ -64,11 +88,12 @@ def calculate_log_normal_params(
     mu_log_bonds, sigma_log_bonds = _convert_arithmetic_to_lognormal(bond_mu, bond_sigma)
     mu_log_str, sigma_log_str = _convert_arithmetic_to_lognormal(str_mu, str_sigma)
     mu_log_fun, sigma_log_fun = _convert_arithmetic_to_lognormal(fun_mu, fun_sigma)
-    mu_log_real_estate, sigma_log_real_estate = _convert_arithmetic_to_lognormal(real_estate_mu, real_estate_sigma)
+    mu_log_real_estate, sigma_log_real_estate = _convert_arithmetic_to_lognormal(
+        real_estate_mu, real_estate_sigma
+        )
 
     # Apply the conversion for inflation
     mu_log_pi, sigma_log_pi = _convert_arithmetic_to_lognormal(mu_pi, sigma_pi)
-
 
     return (
         mu_log_stocks, sigma_log_stocks,
@@ -81,8 +106,7 @@ def calculate_log_normal_params(
 
 
 def calculate_initial_asset_values(
-    i0,
-    w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate
+    i0, w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate
 ):
     """
     Calculates the initial monetary value of each asset based on total initial investment (i0)
@@ -123,9 +147,10 @@ def calculate_cagr(initial_value, final_value, num_years):
         # 0 for 0 final_value, or -1.0 (complete loss) for negative final_value.
         # If initial_value is negative, CAGR is ill-defined.
         # For simplicity in financial models, often treated as complete loss.
-        return -1.0
+        return np.nan
 
-    # If final_value is 0 or negative, while initial_value was positive, it represents a complete loss.
+    # If final_value is 0 or negative, while initial_value was positive,
+    # it represents a complete loss.
     if final_value <= 0:
         return -1.0
 

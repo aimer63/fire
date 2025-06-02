@@ -168,16 +168,16 @@ def perform_analysis_and_prepare_plots_data(
         best_sim_row_for_plot = successful_sims_sorted_for_plotting.iloc[-1]
         best_sim_idx_for_plot = best_sim_row_for_plot.name
         existing_indices = [data['sim_idx'] for data in plot_lines_data]
-        if best_sim_idx_for_plot not in existing_indices:
-            plot_lines_data.append({
-                'sim_idx': best_sim_idx_for_plot,
-                'label': (
-                    f"Best Successful (Final Real: "
-                    f"{best_sim_row_for_plot['real_final_wealth']:,.0f}€)"
-                ),
-                'color': 'green',
-                'linewidth': 2.5
-            })
+        # if best_sim_idx_for_plot not in existing_indices:
+        plot_lines_data.append({
+            'sim_idx': best_sim_idx_for_plot,
+            'label': (
+                f"Best Successful (Final Real: "
+                f"{best_sim_row_for_plot['real_final_wealth']:,.0f}€)"
+            ),
+            'color': 'green',
+            'linewidth': 2.5
+        })
 
     # --- Prepare data for Bank Account Trajectories ---
     num_trajectories_to_plot = 20
