@@ -1,4 +1,19 @@
-# main.py
+"""
+main.py
+
+This is the main entry point for the Personal Financial Independence / Early
+Retirement (FIRE) plan Monte Carlo simulation application.
+
+It orchestrates the entire simulation process, including:
+- Loading simulation parameters and configurations from 'config.toml'.
+- Running multiple iterations of the financial simulation.
+- Performing post-simulation analysis on the results.
+- Generating various plots to visualize the simulation outcomes.
+
+This script brings together functionalities from the 'helpers', 'simulation',
+'analysis', and 'plots' modules to provide a comprehensive tool for
+FIRE planning.
+"""
 import sys
 import os
 import tomllib
@@ -110,12 +125,14 @@ def main():
     p1_sum = w_p1_stocks + w_p1_bonds + w_p1_str + w_p1_fun + w_p1_real_estate
     p2_sum = w_p2_stocks + w_p2_bonds + w_p2_str + w_p2_fun + w_p2_real_estate
 
-    assert np.isclose(p1_sum, 1.0), f"Error: Phase 1 portfolio weights sum to {p1_sum:.4f}, but should sum to 1.0."
-    assert np.isclose(p2_sum, 1.0), f"Error: Phase 2 portfolio weights sum to {p2_sum:.4f}, but should sum to 1.0."
+    assert np.isclose(p1_sum, 1.0), f"Phase 1 weights sum to {p1_sum:.4f}, not 1.0."
+    assert np.isclose(p2_sum, 1.0), f"Phase 1 weights sum to {p2_sum:.4f}, not 1.0."
     print("Portfolio weights (w_p1, w_p2) successfully validated: sum to 1.0.")
 
-    assert real_bank_upper_bound >= real_bank_lower_bound, \
-        f"Error: real_bank_upper_bound ({real_bank_upper_bound:,.2f}) must be greater than or equal to real_bank_lower_bound ({real_bank_lower_bound:,.2f})."
+    assert real_bank_upper_bound >= real_bank_lower_bound, (
+        f"Bounds invalid: Upper ({real_bank_upper_bound:,.0f}) "
+        f"< Lower ({real_bank_lower_bound:,.0f})."
+    )
     print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
 
 
@@ -148,7 +165,10 @@ def main():
         w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate
     )
 
-    print("All parameters successfully extracted and assigned to Python variables, including derived ones.")
+    print(
+        "All parameters successfully extracted and assigned to Python variables, "
+        "including derived ones."
+    )
 
     # --- Print all parameters for verification ---
     print("\n--- Loaded Parameters Summary (from config.toml) ---")
@@ -185,13 +205,21 @@ def main():
     print(f"mu_log_bonds: {mu_log_bonds:.6f}, sigma_log_bonds: {sigma_log_bonds:.6f}")
     print(f"mu_log_str: {mu_log_str:.6f}, sigma_log_str: {sigma_log_str:.6f}")
     print(f"mu_log_fun: {mu_log_fun:.6f}, sigma_log_fun: {sigma_log_fun:.6f}")
-    print(f"mu_log_real_estate: {mu_log_real_estate:.6f}, sigma_log_real_estate: {sigma_log_real_estate:.6f}")
+    print(f"mu_log_real_estate: {mu_log_real_estate:.6f}, "
+          f"sigma_log_real_estate: {sigma_log_real_estate:.6f}"
+    )
     print(f"mu_log_pi: {mu_log_pi:.6f}, sigma_log_pi: {sigma_log_pi:.6f}")
 
     print("\n--- Portfolio Allocations ---")
     print(f"rebalancing_year_idx: {rebalancing_year_idx}")
-    print(f"w_p1_stocks: {w_p1_stocks:.4f}, w_p1_bonds: {w_p1_bonds:.4f}, w_p1_str: {w_p1_str:.4f}, w_p1_fun: {w_p1_fun:.4f}, w_p1_real_estate: {w_p1_real_estate:.4f}")
-    print(f"w_p2_stocks: {w_p2_stocks:.4f}, w_p2_bonds: {w_p2_bonds:.4f}, w_p2_str: {w_p2_str:.4f}, w_p2_fun: {w_p2_fun:.4f}, w_p2_real_estate: {w_p2_real_estate:.4f}")
+    print(f"w_p1_stocks: {w_p1_stocks:.4f}, w_p1_bonds: {w_p1_bonds:.4f}, "
+          f"w_p1_str: {w_p1_str:.4f}, w_p1_fun: {w_p1_fun:.4f}, "
+          f"w_p1_real_estate: {w_p1_real_estate:.4f}"
+    )
+    print(f"w_p1_stocks: {w_p2_stocks:.4f}, w_p1_bonds: {w_p2_bonds:.4f}, "
+          f"w_p1_str: {w_p2_str:.4f}, w_p1_fun: {w_p2_fun:.4f}, "
+          f"w_p1_real_estate: {w_p2_real_estate:.4f}"
+    )
 
     print("\n--- Initial Asset Values ---")
     print(f"initial_stocks_value: {initial_stocks_value:,.2f}")
@@ -216,7 +244,6 @@ def main():
     for i in range(num_simulations):
         result = run_single_fire_simulation(
             i0, b0,
-            # initial_stocks_value, initial_bonds_value, initial_str_value, initial_fun_value, initial_real_estate_value,
             t_ret_months, t_ret_years,
             x_real_monthly_initial,
             list(c_planned),
@@ -242,7 +269,10 @@ def main():
         simulation_results.append(result)
 
         elapsed_time = time.time() - start_time
-        sys.stdout.write(f"\r{next(spinner)} Running simulation {i+1}/{num_simulations} | Elapsed: {elapsed_time:.2f}s")
+        sys.stdout.write(
+           f"\r{next(spinner)} Running sim {i+1}/{num_simulations} | "
+            f"Elapsed: {elapsed_time:.2f}s"
+        )
         sys.stdout.flush()
 
     sys.stdout.write('\n')
@@ -251,7 +281,9 @@ def main():
     end_simulation_time = time.time()
     total_simulation_elapsed_time = end_simulation_time - start_time
 
-    print(f"\nMonte Carlo Simulation Complete. Total time elapsed: {total_simulation_elapsed_time:.2f} seconds.")
+    print(f"\nMonte Carlo Simulation Complete. "
+          f"Total time elapsed: {total_simulation_elapsed_time:.2f} seconds."
+    )
 
     # --- 7. Perform Analysis and Prepare Plotting Data ---
     results_df, plot_data = analysis.perform_analysis_and_prepare_plots_data(
@@ -262,7 +294,11 @@ def main():
 
     # Generate and print the consolidated FIRE plan summary
     initial_total_wealth = i0 + b0
-    fire_summary_string = analysis.generate_fire_plan_summary(simulation_results, initial_total_wealth, t_ret_years)
+    fire_summary_string = analysis.generate_fire_plan_summary(
+        simulation_results,
+        initial_total_wealth,
+        t_ret_years
+    )
 
     # Print the consolidated summary, including the total simulation time here
     print(f"\nTotal simulations run: {num_simulations}")
@@ -288,8 +324,16 @@ def main():
     plot_wealth_evolution_samples_nominal(results_df, plot_lines_data)
 
     # Plotting Bank Account Trajectories
-    plot_bank_account_trajectories_real(results_df, bank_account_plot_indices, real_bank_lower_bound)
-    plot_bank_account_trajectories_nominal(results_df, bank_account_plot_indices, real_bank_lower_bound)
+    plot_bank_account_trajectories_real(
+        results_df,
+        bank_account_plot_indices,
+        real_bank_lower_bound
+    )
+    plot_bank_account_trajectories_nominal(
+        results_df,
+        bank_account_plot_indices,
+        real_bank_lower_bound
+    )
 
     print("\nAll requested plots generated and saved to the current directory.")
 

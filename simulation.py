@@ -47,7 +47,77 @@ def run_single_fire_simulation(
     shock_events,
 ):
     """
-    Runs a single Monte Carlo simulation of a financial independence retirement plan.
+    Runs a single Monte Carlo simulation for a Financial Independence/Retirement plan.
+    Simulates wealth evolution, income, expenses, and asset allocations over time.
+
+    Args:
+        i0 (float): Initial investment value.
+        b0 (float): Initial bank account balance.
+        t_ret_months (int): Total simulation duration in months.
+        t_ret_years (int): Total simulation duration in years.
+        x_real_monthly_initial (float): Initial real monthly expenses.
+        c_planned (list): List of [amount, year_idx] for planned contributions.
+        x_planned_extra (list): List of [amount, year_idx] for planned extra
+            expenses.
+        p_real_monthly (float): Initial real monthly pension.
+        pension_inflation_adjustment_factor (float): Factor for pension inflation
+            adjustment.
+        y_p_start_idx (int): Year index when pension starts.
+        s_real_monthly (float): Initial real monthly salary.
+        salary_inflation_adjustment_factor (float): Factor for salary inflation
+            adjustment.
+        y_s_start_idx (int): Year index when salary starts.
+        y_s_end_idx (int): Year index when salary ends (exclusive).
+        mu_log_pi (float): Log-normal mean for inflation.
+        sigma_log_pi (float): Log-normal std dev for inflation.
+        rebalancing_year_idx (int): Year index for portfolio rebalancing.
+        w_p1_stocks (float): Phase 1 stock weight.
+        w_p1_bonds (float): Phase 1 bond weight.
+        w_p1_str (float): Phase 1 short-term reserve weight.
+        w_p1_fun (float): Phase 1 alternative asset weight.
+        w_p1_real_estate (float): Phase 1 real estate weight.
+        w_p2_stocks (float): Phase 2 stock weight.
+        w_p2_bonds (float): Phase 2 bond weight.
+        w_p2_str (float): Phase 2 short-term reserve weight.
+        w_p2_fun (float): Phase 2 alternative asset weight.
+        w_p2_real_estate (float): Phase 2 real estate weight.
+        mu_log_stocks (float): Log-normal mean for stock returns.
+        sigma_log_stocks (float): Log-normal std dev for stock returns.
+        mu_log_bonds (float): Log-normal mean for bond returns.
+        sigma_log_bonds (float): Log-normal std dev for bond returns.
+        mu_log_str (float): Log-normal mean for STR returns.
+        sigma_log_str (float): Log-normal std dev for STR returns.
+        mu_log_fun (float): Log-normal mean for alternative asset returns.
+        sigma_log_fun (float): Log-normal std dev for alternative asset returns.
+        mu_log_real_estate (float): Log-normal mean for real estate returns.
+        sigma_log_real_estate (float): Log-normal std dev for real estate returns.
+        real_bank_lower_bound (float): Lower threshold for bank balance (real).
+        real_bank_upper_bound (float): Upper threshold for bank balance (real).
+        c_real_monthly_initial (float): Initial real monthly contribution to
+            investments.
+        h0_real_cost (float): Initial real cost of house to be purchased.
+        ter_annual_percentage (float): Total Expense Ratio (TER) for investments.
+        shock_events (list): List of dicts, each defining a market shock.
+
+    Returns:
+        tuple: A tuple containing the results of the simulation:
+            - success (bool): True if the simulation lasted for t_ret_months.
+            - months_lasted (int): Number of months the simulation lasted.
+            - final_investment (float): Final nominal investment value.
+            - final_bank_balance (float): Final nominal bank balance.
+            - annual_inflations_seq (list): Sequence of annual inflation rates.
+            - nominal_wealth_history (np.array): Total nominal wealth history.
+            - bank_balance_history (np.array): Nominal bank balance history.
+            - pre_rebalancing_allocations_nominal (dict): Nominal allocation
+              before rebalancing (at rebalancing_year_idx).
+            - pre_rebalancing_allocations_real (dict): Real allocation
+              before rebalancing (at rebalancing_year_idx).
+            - rebalancing_allocations_nominal (dict): Nominal allocation
+              after rebalancing (at rebalancing_year_idx).
+            - rebalancing_allocations_real (dict): Real allocation
+              after rebalancing (at rebalancing_year_idx).
+            - final_allocations_nominal (dict): Final nominal asset allocations.
+            - final_allocations_real (dict): Final real asset allocations.
     """
     current_bank_balance = b0
     (
