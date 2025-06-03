@@ -21,14 +21,23 @@ pre-processing steps across the simulation, analysis, and plotting modules.
 """
 
 import numpy as np
+from numpy.typing import NDArray  # Import for NumPy array type hints
 
-def annual_to_monthly_compounded_rate(annual_rate):
+
+def annual_to_monthly_compounded_rate(annual_rate: float) -> float:
     """
     Converts an annual compounded rate to a monthly compounded rate.
     """
-    return (1 + annual_rate)**(1/12) - 1
+    # Ensure float literals for calculations for type consistency
+    intermediate_result: float = (1.0 + annual_rate) ** (1.0 / 12.0) - 1.0
+    return float(intermediate_result)  # Explicit cast to ensure Python float
 
-def inflate_amount_over_years(initial_real_amount, years_to_inflate, annual_inflation_sequence):
+
+def inflate_amount_over_years(
+    initial_real_amount: float,
+    years_to_inflate: int,
+    annual_inflation_sequence: NDArray[np.float64],  # Type hint for NumPy array
+) -> float:
     """
     Inflates a real amount to its nominal value over a given number of years
     using a sequence of annual inflation rates.
@@ -38,76 +47,109 @@ def inflate_amount_over_years(initial_real_amount, years_to_inflate, annual_infl
 
     # Calculate the cumulative inflation factor up to the target year
     # Ensure we don't go out of bounds for the inflation sequence
-    inflation_factor = np.prod(1 + annual_inflation_sequence[:years_to_inflate])
+    inflation_factor: np.float64 = np.prod(
+        1.0 + annual_inflation_sequence[:years_to_inflate]
+    )  # Ensure float literal, NDArray output
 
-    return initial_real_amount * inflation_factor
+    return float(
+        initial_real_amount * inflation_factor
+    )  # Explicit cast to ensure Python float
+
 
 def calculate_log_normal_params(
-    stock_mu, stock_sigma,
-    bond_mu, bond_sigma,
-    str_mu, str_sigma,
-    fun_mu, fun_sigma,
-    real_estate_mu, real_estate_sigma,
-    mu_pi, sigma_pi
-):
+    stock_mu: float,
+    stock_sigma: float,
+    bond_mu: float,
+    bond_sigma: float,
+    str_mu: float,
+    str_sigma: float,
+    fun_mu: float,
+    fun_sigma: float,
+    real_estate_mu: float,
+    real_estate_sigma: float,
+    mu_pi: float,
+    sigma_pi: float,
+) -> tuple[
+    float, float, float, float, float, float, float, float, float, float, float, float
+]:
     """
     Calculates the mu (mean) and sigma (standard deviation) for log-normal
     distributions of asset returns AND inflation. It assumes that the input MU and SIGMA
     are the ARITHMETIC mean and ARITHMETIC standard deviation.
 
-    Returns a tuple of (mu_log_stocks, sigma_log_stocks, ..., 
+    Returns a tuple of (mu_log_stocks, sigma_log_stocks, ...,
                         mu_log_real_estate, sigma_log_real_estate,
                         mu_log_pi, sigma_log_pi).
     """
 
-    def _convert_arithmetic_to_lognormal(arith_mu, arith_sigma):
+    def _convert_arithmetic_to_lognormal(
+        arith_mu: float, arith_sigma: float
+    ) -> tuple[float, float]:
         """
         Helper function to convert arithmetic mean and standard deviation
         to log-normal parameters (mu_log, sigma_log).
         """
-        if arith_mu <= -1:
+        if arith_mu <= -1.0:  # Use float literal
             raise ValueError(
-                f"Arithmetic mean ({arith_mu}) must be strictly "
-                "greater than -1 to convert to log-normal parameters."
-                )
+                f"Arithmetic mean ({arith_mu}) must be strictly "  # Fix implicit string concatenation
+                + "greater than -1 to convert to log-normal parameters."
+            )
 
-        ex = 1 + arith_mu
-        stdx = arith_sigma
+        ex: float = 1.0 + arith_mu  # Use float literal
+        stdx: float = arith_sigma
 
-        if stdx == 0:
-            sigma_log = 0.0
+        if stdx == 0.0:  # Use float literal
+            sigma_log: float = 0.0  # Use float literal
         else:
-            sigma_log = np.sqrt(np.log(1 + (stdx / ex)**2))
+            # Ensure calculations result in float64 from numpy, then cast to Python float
+            sigma_log = float(
+                np.sqrt(np.log(1.0 + (stdx / ex) ** 2))
+            )  # Use float literal
 
-        mu_log = np.log(ex) - 0.5 * sigma_log**2
+        mu_log: float = float(np.log(ex) - 0.5 * sigma_log**2)  # Use float literal
 
         return mu_log, sigma_log
 
     # Apply the conversion to each asset class
-    mu_log_stocks, sigma_log_stocks = _convert_arithmetic_to_lognormal(stock_mu, stock_sigma)
-    mu_log_bonds, sigma_log_bonds = _convert_arithmetic_to_lognormal(bond_mu, bond_sigma)
+    mu_log_stocks, sigma_log_stocks = _convert_arithmetic_to_lognormal(
+        stock_mu, stock_sigma
+    )
+    mu_log_bonds, sigma_log_bonds = _convert_arithmetic_to_lognormal(
+        bond_mu, bond_sigma
+    )
     mu_log_str, sigma_log_str = _convert_arithmetic_to_lognormal(str_mu, str_sigma)
     mu_log_fun, sigma_log_fun = _convert_arithmetic_to_lognormal(fun_mu, fun_sigma)
     mu_log_real_estate, sigma_log_real_estate = _convert_arithmetic_to_lognormal(
         real_estate_mu, real_estate_sigma
-        )
+    )
 
     # Apply the conversion for inflation
     mu_log_pi, sigma_log_pi = _convert_arithmetic_to_lognormal(mu_pi, sigma_pi)
 
     return (
-        mu_log_stocks, sigma_log_stocks,
-        mu_log_bonds, sigma_log_bonds,
-        mu_log_str, sigma_log_str,
-        mu_log_fun, sigma_log_fun,
-        mu_log_real_estate, sigma_log_real_estate,
-        mu_log_pi, sigma_log_pi
+        mu_log_stocks,
+        sigma_log_stocks,
+        mu_log_bonds,
+        sigma_log_bonds,
+        mu_log_str,
+        sigma_log_str,
+        mu_log_fun,
+        sigma_log_fun,
+        mu_log_real_estate,
+        sigma_log_real_estate,
+        mu_log_pi,
+        sigma_log_pi,
     )
 
 
 def calculate_initial_asset_values(
-    i0, w_p1_stocks, w_p1_bonds, w_p1_str, w_p1_fun, w_p1_real_estate
-):
+    i0: float,
+    w_p1_stocks: float,
+    w_p1_bonds: float,
+    w_p1_str: float,
+    w_p1_fun: float,
+    w_p1_real_estate: float,
+) -> tuple[float, float, float, float, float]:
     """
     Calculates the initial monetary value of each asset based on total initial investment (i0)
     and Phase 1 portfolio weights.
@@ -115,18 +157,22 @@ def calculate_initial_asset_values(
     Returns a tuple of (initial_stocks_value, initial_bonds_value, initial_str_value,
                         initial_fun_value, initial_real_estate_value).
     """
-    initial_stocks_value = i0 * w_p1_stocks
-    initial_bonds_value = i0 * w_p1_bonds
-    initial_str_value = i0 * w_p1_str
-    initial_fun_value = i0 * w_p1_fun
-    initial_real_estate_value = i0 * w_p1_real_estate
+    initial_stocks_value: float = i0 * w_p1_stocks
+    initial_bonds_value: float = i0 * w_p1_bonds
+    initial_str_value: float = i0 * w_p1_str
+    initial_fun_value: float = i0 * w_p1_fun
+    initial_real_estate_value: float = i0 * w_p1_real_estate
 
     return (
-        initial_stocks_value, initial_bonds_value, initial_str_value,
-        initial_fun_value, initial_real_estate_value
+        initial_stocks_value,
+        initial_bonds_value,
+        initial_str_value,
+        initial_fun_value,
+        initial_real_estate_value,
     )
 
-def calculate_cagr(initial_value, final_value, num_years):
+
+def calculate_cagr(initial_value: float, final_value: float, num_years: int) -> float:
     """
     Calculates the Compound Annual Growth Rate (CAGR).
 
@@ -136,22 +182,22 @@ def calculate_cagr(initial_value, final_value, num_years):
         num_years (int): The number of years over which the growth occurred.
 
     Returns:
-        float: The Compound Annual Growth Rate (CAGR). Returns -1.0 if calculation
-               is not possible or represents a complete loss (e.g., initial_value is zero/negative
-               or final_value is zero/negative while initial is positive).
+        float: The Compound Annual Growth Rate (CAGR). Returns np.nan if calculation
+               is not possible (e.g., num_years <= 0 or initial_value <= 0).
+               Returns -1.0 if it represents a complete loss (final_value <= 0 while
+               initial_value > 0).
     """
     if num_years <= 0:
-        return -1.0 # CAGR is undefined for non-positive years
-    if initial_value <= 0:
-        # If initial_value is 0, CAGR is infinite for positive final_value,
-        # 0 for 0 final_value, or -1.0 (complete loss) for negative final_value.
-        # If initial_value is negative, CAGR is ill-defined.
-        # For simplicity in financial models, often treated as complete loss.
-        return np.nan
+        return np.nan  # Use np.nan for undefined numerical results
+    if initial_value <= 0.0:  # Use float literal
+        return np.nan  # Use np.nan for undefined numerical results
 
     # If final_value is 0 or negative, while initial_value was positive,
     # it represents a complete loss.
-    if final_value <= 0:
-        return -1.0
+    if final_value <= 0.0:  # Use float literal
+        return -1.0  # Return -1.0 for complete loss, as per docstring
 
-    return (final_value / initial_value)**(1 / num_years) - 1
+    # Ensure result is explicitly a Python float
+    return float(
+        (final_value / initial_value) ** (1.0 / num_years) - 1.0
+    )  # Use float literals
