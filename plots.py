@@ -60,7 +60,7 @@ def plot_retirement_duration_distribution(
 
     title = 'Distribution of Retirement Duration for Failed Simulations'
     print(f"Generating plot: {title}")
-    fig = plt.figure(figsize=(10, 6)) # REMOVED: visible=False
+    fig = plt.figure(figsize=(10, 6))
     plt.hist(
         failed_sims['months_lasted'] / 12,
         bins=np.arange(0, t_ret_years + 1, 1),

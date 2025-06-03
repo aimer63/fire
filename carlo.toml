@@ -27,7 +27,7 @@ t_ret_years = 20
 # In flows
 
 # To the bank:
-s_real_monthly = 5000                               # Initial real monthly salary (e.g., 2500 EUR in today's money)
+s_real_monthly = 10_000                             # Initial real monthly salary (e.g., 2500 EUR in today's money)
 salary_inflation_adjustment_factor = 1.0            # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
 y_s_start_idx = 0                                   # Year index when salary starts (e.g., 0 for immediate start)
 y_s_end_idx = 20                                    # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
@@ -52,9 +52,9 @@ c_planned = []
 # ]
 
 # Out flows
-ter_annual_percentage = 0.002 # 2%
+ter_annual_percentage = 0.002
 # Fixed monthly exepense for the life level you want to keep
-x_real_monthly_initial = 4000
+x_real_monthly_initial = 5000
 
 # Planned Extra Expenses real_amount at the time of the expense. [[X, year], ...]
 # 0 1,00    100.000,00
@@ -68,7 +68,7 @@ x_planned_extra = [
 ]
 
 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
-h0_real_cost = 0
+h0_real_cost = 100_000
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
 # Nominal values

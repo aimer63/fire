@@ -18,8 +18,8 @@ b0 = 24_000  # Initial Bank Account Balance (e.g., EUR)
 # Bank account lower and upper bound in real monaey
 # if it goes below it will be topped, if it goes above it will be invested
 # from the investment
-real_bank_lower_bound = 10_000
-real_bank_upper_bound = 20_000
+real_bank_lower_bound = 5_000
+real_bank_upper_bound = 10_000
 
 # Number of years the simulation will run
 t_ret_years = 38
@@ -27,10 +27,10 @@ t_ret_years = 38
 # In flows
 
 # To the bank:
-s_real_monthly = 0                               # Initial real monthly salary (e.g., 2500 EUR in today's money)
-salary_inflation_adjustment_factor = 1.0         # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
-y_s_start_idx = 0                                # Year index when salary starts (e.g., 0 for immediate start)
-y_s_end_idx = 0                                  # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+s_real_monthly = 0                       # Initial real monthly salary (e.g., 2500 EUR in today's money)
+salary_inflation_adjustment_factor = 1.0 # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
+y_s_start_idx = 0                        # Year index when salary starts (e.g., 0 for immediate start)
+y_s_end_idx = 0                          # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
 
 # The pension
 p_real_monthly = 4225
@@ -43,17 +43,17 @@ c_real_monthly_initial = 0 # Example: 500€ per month in today's money
 
 # Planned Contributions, real amount. [[contrib, year], ...]
 c_planned = [
-    # Equivalent to 60,000€ nominal in Year 2 (assuming 2% inflation)
-    # 60000 / (1.02)^2 = 60000 / 1.0404 = 57669.93 plus 16088 naspi already
-    # deflated
-    [73_758, 2],
-    # Equivalent to 60,000€ nominal in Year 3 (assuming 2% inflation)
-    # 60000 / (1.02)^3 = 60000 / 1.061208 = 56538.96 plus 11382 naspi already
-    # deflated
-    [67_920, 3],
-    # Equivalent to 60,000€ nominal in Year 4 (assuming 2% inflation)
-    # 60000 / (1.02)^4 = 60000 / 1.08243216 = 55430.35
-    [55_430, 4],
+  # Equivalent to 60,000€ nominal in Year 2 (assuming 2% inflation)
+  # 60000 / (1.02)^2 = 60000 / 1.0404 = 57669.93 plus 16088 naspi already
+  # deflated
+  [73_758, 2],
+  # Equivalent to 60,000€ nominal in Year 3 (assuming 2% inflation)
+  # 60000 / (1.02)^3 = 60000 / 1.061208 = 56538.96 plus 11382 naspi already
+  # deflated
+  [67_920, 3],
+  # Equivalent to 60,000€ nominal in Year 4 (assuming 2% inflation)
+  # 60000 / (1.02)^4 = 60000 / 1.08243216 = 55430.35
+  [55_430, 4],
 ]
 
 # Out flows
@@ -69,9 +69,7 @@ x_real_monthly_initial = 3300
 # 4 1,08    92.384,54
 # 5 1,10    90.573,08
 
-x_planned_extra = [
-    [100_000, 1],
-]
+x_planned_extra = [[100_000, 1]]
 
 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
 h0_real_cost = 150_000
@@ -104,12 +102,11 @@ stock_sigma = 0.15
 bond_mu = 0.03
 bond_sigma = 0.055
 
-
-# Short-Term Reserves (STR) parameters based on historical Eurozone overnight rates (EONIA/€STR) from 2004-2023.
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
-str_mu = 0.0085
-str_sigma = 0.0197
+# Statistical parameters for Euro Short-Term Rate (STR), derived from
+# historical EONIA (1999-Sep 2019) and ESTR (Oct 2019-May 2025) annual average rates.
+# These are annual arithmetic mean and standard deviation.
+str_mu = 0.0152    # Annual arithmetic mean of ~1.52%
+str_sigma = 0.0181 # Annual standard deviation of ~1.81%
 
 # "Fun Money" (50% Ethereum, 50% Silver) Parameters based on annual returns from 2016-2023.
 # MU: Arithmetic Mean
@@ -159,17 +156,17 @@ sigma_pi = 0.025
 [shocks]
 events = []
 # events = [
-      # Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
-      # Note: Without a 'month' field, this shock will be applied based on how your
-      # simulation.py handles year-only shocks (e.g., at the start of Year 0).
-      # The specific 'October' timing of Black Friday is not preserved here.
+# Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
+# Note: Without a 'month' field, this shock will be applied based on how your
+# simulation.py handles year-only shocks (e.g., at the start of Year 0).
+# The specific 'October' timing of Black Friday is not preserved here.
 #     {year = 15, asset = "Stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
 #     {year = 15, asset = "Bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
 #     {year = 15, asset = "STR", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
 #     {year = 15, asset = "Fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
 #     {year = 15, asset = "Real Estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
 
-    # Internet Bubble Burst (e.g., representing a year like 2000-2002)
+# Internet Bubble Burst (e.g., representing a year like 2000-2002)
 #     {year = 10, asset = "Stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
 #     {year = 10, asset = "Bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
 #     {year = 10, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
@@ -270,3 +267,4 @@ w_p2_real_estate = 0.00
 # --- D. Simulation Parameters ---
 [simulation_parameters]
 num_simulations = 10000
+
