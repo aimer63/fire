@@ -24,6 +24,9 @@ from numpy.typing import NDArray
 # Import helper functions
 from helpers import annual_to_monthly_compounded_rate, calculate_initial_asset_values
 
+# Import the DeterministicInputs Pydantic model
+from config import DeterministicInputs
+
 
 # Define a TypedDict for the return value of run_single_fire_simulation
 class SimulationRunResult(TypedDict):
@@ -47,20 +50,7 @@ class SimulationRunResult(TypedDict):
 
 
 def run_single_fire_simulation(
-    initial_investment: float,
-    initial_bank_balance: float,
-    total_retirement_months: int,
-    total_retirement_years: int,
-    initial_real_monthly_expenses: float,
-    planned_contributions: list[tuple[float, int]],
-    planned_extra_expenses: list[tuple[float, int]],
-    initial_real_monthly_pension: float,
-    pension_inflation_adjustment_factor: float,
-    pension_start_year_idx: int,
-    initial_real_monthly_salary: float,
-    salary_inflation_adjustment_factor: float,
-    salary_start_year_idx: int,
-    salary_end_year_idx: int,
+    det_inputs: DeterministicInputs,
     mu_log_inflation: float,
     sigma_log_inflation: float,
     rebalancing_trigger_year_idx: int,
@@ -84,11 +74,6 @@ def run_single_fire_simulation(
     sigma_log_fun: float,
     mu_log_real_estate: float,
     sigma_log_real_estate: float,
-    real_bank_lower_bound: float,
-    real_bank_upper_bound: float,
-    initial_real_monthly_contribution: float,
-    initial_real_house_cost: float,
-    ter_annual_percentage: float,
     shock_events: list[dict[str, Any]],
 ) -> SimulationRunResult:
     """
@@ -147,7 +132,7 @@ def run_single_fire_simulation(
     Returns:
         SimulationRunResult: A TypedDict containing the results of the simulation.
     """
-    current_bank_balance: float = initial_bank_balance
+    current_bank_balance: float = det_inputs.b0
     (
         current_stocks_value,
         current_bonds_value,
@@ -155,7 +140,7 @@ def run_single_fire_simulation(
         current_fun_value,
         current_real_estate_value,
     ) = calculate_initial_asset_values(
-        initial_investment,
+        det_inputs.i0,
         phase1_stocks_weight,
         phase1_bonds_weight,
         phase1_str_weight,
@@ -194,12 +179,41 @@ def run_single_fire_simulation(
         normalized_weights_str = 0.0
         normalized_weights_fun = 0.0
 
+    real_bank_lower_bound: float = det_inputs.real_bank_lower_bound
+    real_bank_upper_bound: float = det_inputs.real_bank_upper_bound
+    total_retirement_years = det_inputs.t_ret_years
+    total_retirement_months: int = total_retirement_years * 12
     nominal_wealth_history: NDArray[np.float64] = np.zeros(
         total_retirement_months, dtype=np.float64
     )
     bank_balance_history: NDArray[np.float64] = np.zeros(
         total_retirement_months, dtype=np.float64
     )
+
+    initial_real_monthly_expenses: float = det_inputs.x_real_monthly_initial
+    planned_contributions: list[tuple[float, int]] = det_inputs.c_planned
+
+    planned_extra_expenses: list[tuple[float, int]] = det_inputs.x_planned_extra
+
+    initial_real_monthly_contribution: float = det_inputs.c_real_monthly_initial
+    # Pydantic already handles the type conversion for planned_contributions
+    planned_contributions: list[tuple[float, int]] = det_inputs.c_planned
+    ter_annual_percentage: float = det_inputs.ter_annual_percentage
+
+    initial_real_house_cost: float = det_inputs.h0_real_cost
+
+    initial_real_monthly_pension: float = det_inputs.p_real_monthly
+    pension_inflation_adjustment_factor: float = (
+        det_inputs.pension_inflation_adjustment_factor
+    )
+    pension_start_year_idx: int = det_inputs.y_p_start_idx
+
+    initial_real_monthly_salary: float = det_inputs.s_real_monthly
+    salary_inflation_adjustment_factor: float = (
+        det_inputs.salary_inflation_adjustment_factor
+    )
+    salary_start_year_idx: int = det_inputs.y_s_start_idx
+    salary_end_year_idx: int = det_inputs.y_s_end_idx
 
     success: bool = True
     months_lasted: int = 0

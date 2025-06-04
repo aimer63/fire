@@ -8,8 +8,8 @@ class DeterministicInputs(BaseModel):
     These parameters are loaded from the 'deterministic_inputs' section of config.toml.
     """
 
-    i0: float = Field(..., description="Initial investment portfolio value in EUR.")
-    b0: float = Field(..., description="Initial bank account balance in EUR.")
+    i0: float = Field(..., description="Initial investment portfolio value.")
+    b0: float = Field(..., description="Initial bank account balance.")
 
     real_bank_lower_bound: float = Field(
         ...,
@@ -42,7 +42,10 @@ class DeterministicInputs(BaseModel):
     )
     y_s_start_idx: int = Field(
         ...,
-        description="Year index (0-indexed) when salary income starts. E.g., 0 for immediate start.",
+        description=(
+            "Year index (0-indexed) when salary income starts. "
+            "E.g., 0 for immediate start."
+        ),
     )
     y_s_end_idx: int = Field(
         ...,
