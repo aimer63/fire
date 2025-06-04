@@ -300,10 +300,12 @@ def main() -> None:
         results_df,
         bank_account_plot_indices,
         det_inputs.real_bank_lower_bound,
+        plot_lines_data,  # Pass plot_lines_data for color/label consistency
     )
     plot_bank_account_trajectories_nominal(
         results_df,
         bank_account_plot_indices,
+        plot_lines_data,  # Pass plot_lines_data for color/label consistency
         det_inputs.real_bank_lower_bound,
     )
 

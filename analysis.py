@@ -24,10 +24,9 @@ The module utilizes pandas for efficient data manipulation and numpy for
 numerical operations on the simulation results.
 """
 
-import random
 import pandas as pd
 import numpy as np
-from typing import Any, TypedDict  # Import TypedDict for structured dictionaries
+from typing import TypedDict  # Import TypedDict for structured dictionaries
 from numpy.typing import NDArray
 
 from helpers import calculate_cagr
@@ -61,9 +60,7 @@ class PlotDataDict(TypedDict):
 def perform_analysis_and_prepare_plots_data(
     simulation_results: list[SimulationRunResult],  # Use the imported TypedDict
     num_simulations: int,
-) -> tuple[
-    pd.DataFrame, PlotDataDict
-]:  # Explicitly use pd.DataFrame and the new TypedDict
+) -> tuple[pd.DataFrame, PlotDataDict]:  # Explicitly use pd.DataFrame and the new TypedDict
     """
     Performs post-simulation analysis, identifies key scenarios, and prepares data
     structures needed for comprehensive plotting. This function now focuses ONLY
@@ -85,29 +82,23 @@ def perform_analysis_and_prepare_plots_data(
     results_df: pd.DataFrame = pd.DataFrame(simulation_results)
 
     real_final_wealths_all_sims: list[float] = []
-    # It's better to iterate rows using `itertuples` for performance and explicit types
     for row_tuple in results_df.itertuples(index=True, name="SimulationRow"):
-        # Access attributes using ._1, ._2 etc. or by name if DataFrame columns allow
-        # Assuming SimulationRunResult keys map directly to DataFrame columns
-        row_idx: int = row_tuple.Index
         row_success: bool = row_tuple.success
         row_final_investment: float = row_tuple.final_investment
         row_final_bank_balance: float = row_tuple.final_bank_balance
         row_annual_inflations_seq: NDArray[np.float64] = row_tuple.annual_inflations_seq
 
         if row_success:
-            # t_ret_years is implicitly used here via the length of annual_inflations_seq
-            # and by the fact that successful simulations complete the full period.
             cumulative_inflation_factor: np.float64 = (
                 np.prod(1.0 + row_annual_inflations_seq)
                 if len(row_annual_inflations_seq) > 0
-                else 1.0  # Ensure float literal
+                else 1.0
             )
             real_wealth: float = (
                 row_final_investment + row_final_bank_balance
             ) / cumulative_inflation_factor
         else:
-            real_wealth = 0.0  # Use float literal
+            real_wealth = 0.0
         real_final_wealths_all_sims.append(real_wealth)
 
     results_df["real_final_wealth"] = real_final_wealths_all_sims
@@ -124,38 +115,34 @@ def perform_analysis_and_prepare_plots_data(
     if not all_sims_sorted_by_real_wealth.empty:
         worst_sim_row_for_plot: pd.Series = all_sims_sorted_by_real_wealth.iloc[0]
         worst_sim_idx_for_plot: int = worst_sim_row_for_plot.name
-        if not bool(
-            worst_sim_row_for_plot["success"]
-        ):  # Explicit cast to bool for clarity
+        if not bool(worst_sim_row_for_plot["success"]):
             plot_lines_data.append(
-                PlotLineData(  # Use TypedDict constructor
+                PlotLineData(
                     sim_idx=worst_sim_idx_for_plot,
                     label=(
                         f"Worst Case (Failed Year "
-                        f"{worst_sim_row_for_plot['months_lasted'] / 12.0:.1f})"  # Use float literal
+                        f"{worst_sim_row_for_plot['months_lasted'] / 12.0:.1f})"
                     ),
                     color="red",
-                    linewidth=2.5,  # Use float literal
+                    linewidth=2.5,
                 )
             )
         else:
             plot_lines_data.append(
-                PlotLineData(  # Use TypedDict constructor
+                PlotLineData(
                     sim_idx=worst_sim_idx_for_plot,
                     label=(
                         f"Worst Successful (Final Real: "
                         f"{worst_sim_row_for_plot['real_final_wealth']:,.0f}€)"
                     ),
                     color="darkred",
-                    linewidth=2.0,  # Use float literal
+                    linewidth=2.0,
                 )
             )
 
     if len(successful_sims_for_plotting) > 0:
         successful_sims_sorted_for_plotting: pd.DataFrame = (
-            successful_sims_for_plotting.sort_values(
-                by="real_final_wealth", ascending=True
-            )
+            successful_sims_for_plotting.sort_values(by="real_final_wealth", ascending=True)
         )
 
         percentile_bins: list[int] = [0, 20, 40, 60, 80, 100]
@@ -165,12 +152,9 @@ def perform_analysis_and_prepare_plots_data(
             lower_percentile: int = percentile_bins[i]
             upper_percentile: int = percentile_bins[i + 1]
 
-            # Ensure np.arange is passed an integer and result is float64
             start_idx_in_sorted: int = int(
                 np.percentile(
-                    np.arange(
-                        len(successful_sims_sorted_for_plotting), dtype=np.intp
-                    ),  # Use np.intp
+                    np.arange(len(successful_sims_sorted_for_plotting), dtype=np.intp),
                     lower_percentile,
                 )
             )
@@ -179,9 +163,7 @@ def perform_analysis_and_prepare_plots_data(
             else:
                 end_idx_in_sorted: int = int(
                     np.percentile(
-                        np.arange(
-                            len(successful_sims_sorted_for_plotting), dtype=np.intp
-                        ),  # Use np.intp
+                        np.arange(len(successful_sims_sorted_for_plotting), dtype=np.intp),
                         upper_percentile,
                     )
                 )
@@ -191,9 +173,7 @@ def perform_analysis_and_prepare_plots_data(
             ].index.tolist()
 
             existing_indices: list[int] = [data["sim_idx"] for data in plot_lines_data]
-            range_indices = [
-                idx for idx in range_indices if idx not in existing_indices
-            ]
+            range_indices = [idx for idx in range_indices if idx not in existing_indices]
 
             if len(range_indices) > 0:
                 sampled_indices: list[int] = np.random.choice(
@@ -221,67 +201,36 @@ def perform_analysis_and_prepare_plots_data(
                         else "_nolegend_"
                     )
                     plot_lines_data.append(
-                        PlotLineData(  # Use TypedDict constructor
+                        PlotLineData(
                             sim_idx=sim_idx,
                             label=label_to_use,
                             color=current_color,
-                            linewidth=1.0,  # Use float literal
+                            linewidth=1.0,
                         )
                     )
 
     if not successful_sims_for_plotting.empty:
         best_sim_row_for_plot: pd.Series = successful_sims_sorted_for_plotting.iloc[-1]
         best_sim_idx_for_plot: int = best_sim_row_for_plot.name
-        # existing_indices = [data['sim_idx'] for data in plot_lines_data] # This was commented out in original
-        # if best_sim_idx_for_plot not in existing_indices: # This was commented out in original
         plot_lines_data.append(
-            PlotLineData(  # Use TypedDict constructor
+            PlotLineData(
                 sim_idx=best_sim_idx_for_plot,
                 label=(
                     f"Best Successful (Final Real: "
                     f"{best_sim_row_for_plot['real_final_wealth']:,.0f}€)"
                 ),
                 color="green",
-                linewidth=2.5,  # Use float literal
+                linewidth=2.5,
             )
         )
 
     # --- Prepare data for Bank Account Trajectories ---
-    num_trajectories_to_plot: int = 20
-    bank_account_plot_indices: NDArray[np.intp]  # Use np.intp for indices
+    # Use the same indices as plot_lines_data for bank account trajectories
+    bank_account_plot_indices: NDArray[np.intp] = np.array(
+        [d["sim_idx"] for d in plot_lines_data], dtype=np.intp
+    )
 
-    if num_simulations < num_trajectories_to_plot:
-        print(
-            f"Warning: Only {num_simulations} simulations available, "  # Fix implicit string concatenation
-            + f"plotting all bank account trajectories."
-        )
-        bank_account_plot_indices = np.array(
-            results_df.index.tolist(), dtype=np.intp
-        )  # Explicit dtype
-    else:
-        if len(successful_sims_for_plotting) >= num_trajectories_to_plot:
-            bank_account_plot_indices = np.random.choice(
-                successful_sims_for_plotting.index,
-                num_trajectories_to_plot,
-                replace=False,
-            ).astype(np.intp)  # Explicit dtype
-        else:
-            failed_indices: list[int] = results_df[
-                ~results_df["success"]
-            ].index.tolist()
-            random.shuffle(failed_indices)
-            bank_account_plot_indices = np.array(  # Convert to NDArray
-                successful_sims_for_plotting.index.tolist()
-                + failed_indices[
-                    : (num_trajectories_to_plot - len(successful_sims_for_plotting))
-                ],
-                dtype=np.intp,
-            )  # Explicit dtype
-            np.random.shuffle(
-                bank_account_plot_indices
-            )  # Shuffle directly on numpy array
-
-    plot_data_dict: PlotDataDict = PlotDataDict(  # Use TypedDict constructor
+    plot_data_dict: PlotDataDict = PlotDataDict(
         results_df=results_df,
         successful_sims=successful_sims_for_plotting,
         failed_sims=results_df[~results_df["success"]],
@@ -315,7 +264,8 @@ def generate_fire_plan_summary(
     failed_simulations_count: int = 0
     months_lasted_in_failed_simulations: list[int] = []
 
-    # Store the actual result TypedDicts for successful simulations to retrieve allocation data later
+    # Store the actual result TypedDicts for successful simulations to retrieve
+    # allocation data later
     successful_results_data: list[SimulationRunResult] = []
 
     # Iterate through all simulation results to collect data for the summary
@@ -324,11 +274,12 @@ def generate_fire_plan_summary(
         # pylint: disable=unused-variable (can remove if pylint is configured to ignore)
         success: bool = result["success"]
         months_lasted: int = result["months_lasted"]
-        final_investment: float = result["final_investment"]
-        final_bank_balance: float = result["final_bank_balance"]
-        annual_inflations_seq: NDArray[np.float64] = result["annual_inflations_seq"]
-        # The other fields like nominal_wealth_history etc. are not needed for this loop's direct logic,
-        # but are correctly typed in SimulationRunResult.
+        # final_investment: float = result["final_investment"]
+        # final_bank_balance: float = result["final_bank_balance"]
+        # annual_inflations_seq: NDArray[np.float64] = result["annual_inflations_seq"]
+
+        # The other fields like nominal_wealth_history etc. are not needed for
+        # this loop's direct logic but are correctly typed in SimulationRunResult.
 
         if success:
             successful_simulations_count += 1
@@ -365,9 +316,7 @@ def generate_fire_plan_summary(
         temp_successful_sorted: list[tuple[float, SimulationRunResult]] = []
         for res in successful_results_data:
             # Unpack only what's needed for sorting from the TypedDict
-            final_nom_wealth: float = (
-                res["final_investment"] + res["final_bank_balance"]
-            )
+            final_nom_wealth: float = res["final_investment"] + res["final_bank_balance"]
             # Ensure correct type for annual_inflations_seq
             annual_infl: NDArray[np.float64] = res["annual_inflations_seq"]
             cum_infl_factor: np.float64 = (
@@ -375,9 +324,7 @@ def generate_fire_plan_summary(
                 if total_retirement_years > 0
                 else 1.0  # Ensure float literal
             )
-            real_wealth: float = final_nom_wealth / float(
-                cum_infl_factor
-            )  # Explicit cast
+            real_wealth: float = final_nom_wealth / float(cum_infl_factor)  # Explicit cast
             temp_successful_sorted.append((real_wealth, res))
 
         temp_successful_sorted.sort(key=lambda x: x[0])  # Sort by real wealth
@@ -388,9 +335,7 @@ def generate_fire_plan_summary(
         # Find Average Case (closest to median real_final_wealth among
         # successful sims)
         median_real_wealth_among_successful: float = float(
-            np.median(  # Explicit cast
-                [x[0] for x in temp_successful_sorted]
-            )
+            np.median([x[0] for x in temp_successful_sorted])  # Explicit cast
         )
 
         # Use an explicit float comparison
@@ -416,13 +361,9 @@ def generate_fire_plan_summary(
             percentage: float = (nom_val / total_nominal) * 100.0  # Use float literal
             # Only include if percentage is significant or if it's explicitly
             # zero (not just tiny float)
-            if percentage >= 0.1 or (
-                percentage == 0.0 and nom_val == 0.0
-            ):  # Use float literals
+            if percentage >= 0.1 or (percentage == 0.0 and nom_val == 0.0):  # Use float literals
                 percentage_strings.append(f"{asset}: {percentage:.1f}%")
-            elif (
-                percentage > 0.0
-            ):  # Handle very small non-zero percentages # Use float literal
+            elif percentage > 0.0:  # Handle very small non-zero percentages # Use float literal
                 percentage_strings.append(f"{asset}: <0.1%")
         return ", ".join(percentage_strings)
 
@@ -434,8 +375,7 @@ def generate_fire_plan_summary(
     ]
     if failed_simulations_count > 0:
         summary_lines.append(
-            f"Average months lasted in failed simulations: "  # Fix implicit string concatenation
-            + f"{avg_months_failed:.1f}"
+            "Average months lasted in failed simulations: " + f"{avg_months_failed:.1f}"
         )
 
     if successful_simulations_count > 0:
@@ -453,9 +393,7 @@ def generate_fire_plan_summary(
                 if total_retirement_years > 0
                 else 1.0
             )
-            final_total_wealth_real: float = final_total_wealth_nominal / float(
-                cum_infl_factor_np
-            )
+            final_total_wealth_real: float = final_total_wealth_nominal / float(cum_infl_factor_np)
             cagr: float = calculate_cagr(
                 initial_total_wealth_nominal,
                 final_total_wealth_nominal,
@@ -463,16 +401,14 @@ def generate_fire_plan_summary(
             )
 
             summary_lines.append("Worst Successful Case:")
-            summary_lines.append(
-                f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR"
-            )
-            summary_lines.append(
-                f"  Final Wealth (Real): {final_total_wealth_real:,.2f} EUR"
-            )
+            summary_lines.append(f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR")
+            summary_lines.append(f"  Final Wealth (Real): {final_total_wealth_real:,.2f} EUR")
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
-                f"  Final Allocations: "  # Fix implicit string concatenation
-                + f"{_format_allocations_as_percentages(worst_successful_result['final_allocations_nominal'])}"
+                "  Final Allocations: "
+                + f"{_format_allocations_as_percentages(
+                        worst_successful_result['final_allocations_nominal']
+                    )}"
             )
 
         # Average Successful Case
@@ -487,9 +423,7 @@ def generate_fire_plan_summary(
                 if total_retirement_years > 0
                 else 1.0
             )
-            final_total_wealth_real: float = final_total_wealth_nominal / float(
-                cum_infl_factor_np
-            )
+            final_total_wealth_real: float = final_total_wealth_nominal / float(cum_infl_factor_np)
             cagr: float = calculate_cagr(
                 initial_total_wealth_nominal,
                 final_total_wealth_nominal,
@@ -498,16 +432,14 @@ def generate_fire_plan_summary(
 
             summary_lines.append("\nAverage Successful Case:")
             summary_lines.append("  (Simulation closest to median real final wealth)")
-            summary_lines.append(
-                f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR"
-            )
-            summary_lines.append(
-                f"  Final Wealth (Real): {final_total_wealth_real:,.2f} EUR"
-            )
+            summary_lines.append(f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR")
+            summary_lines.append(f"  Final Wealth (Real): {final_total_wealth_real:,.2f} EUR")
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
-                f"  Final Allocations: "  # Fix implicit string concatenation
-                + f"{_format_allocations_as_percentages(average_successful_result['final_allocations_nominal'])}"
+                "  Final Allocations: "
+                + f"{_format_allocations_as_percentages(
+                        average_successful_result['final_allocations_nominal']
+                    )}"
             )
 
         # Best Successful Case
@@ -522,9 +454,7 @@ def generate_fire_plan_summary(
                 if total_retirement_years > 0
                 else 1.0
             )
-            final_total_wealth_real: float = final_total_wealth_nominal / float(
-                cum_infl_factor_np
-            )
+            final_total_wealth_real: float = final_total_wealth_nominal / float(cum_infl_factor_np)
             cagr: float = calculate_cagr(
                 initial_total_wealth_nominal,
                 final_total_wealth_nominal,
@@ -532,16 +462,14 @@ def generate_fire_plan_summary(
             )
 
             summary_lines.append("\nBest Successful Case:")
-            summary_lines.append(
-                f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR"
-            )
-            summary_lines.append(
-                f"  Final Wealth (Real): {final_total_wealth_real:,.2f} EUR"
-            )
+            summary_lines.append(f"  Final Wealth (Nominal): {final_total_wealth_nominal:,.2f} EUR")
+            summary_lines.append(f"  Final Wealth (Real): {final_total_wealth_real:,.2f} EUR")
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
-                f"  Final Allocations: "  # Fix implicit string concatenation
-                + f"{_format_allocations_as_percentages(best_successful_result['final_allocations_nominal'])}"
+                "  Final Allocations: "
+                + f"{_format_allocations_as_percentages(
+                        best_successful_result['final_allocations_nominal']
+                    )}"
             )
 
     else:
