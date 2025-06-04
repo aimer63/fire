@@ -17,13 +17,13 @@ FIRE planning.
 
 import sys
 import os
+from typing import Any
 import tomllib
 import time
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 
-from typing import Any
 from numpy.typing import NDArray
 import pandas as pd
 
@@ -49,7 +49,7 @@ from plots import (
 )
 
 # Import the DeterministicInputs Pydantic model
-from config import DeterministicInputs
+from config import DeterministicInputs, EconomicAssumptions
 
 
 def main() -> None:
@@ -78,8 +78,12 @@ def main() -> None:
 
     # --- Pydantic: Load and validate deterministic inputs ---
     # This replaces the manual extraction of 'det_inputs' dictionary and individual assignments
-    deterministic_inputs: DeterministicInputs = DeterministicInputs(
-        **config_data["deterministic_inputs"]
+    det_inputs: DeterministicInputs = DeterministicInputs(**config_data["deterministic_inputs"])
+
+    # --- Pydantic: Load and validate Economic Assumption ---
+    # This replaces the manual extraction of 'det_inputs' dictionary and individual assignments
+    econ_assumptions: EconomicAssumptions = EconomicAssumptions(
+        **config_data["economic_assumptions"]
     )
 
     eco_assumptions: dict[str, Any] = config_data["economic_assumptions"]
@@ -132,12 +136,9 @@ def main() -> None:
     assert np.isclose(p2_sum, 1.0), f"Phase 2 weights sum to {p2_sum:.4f}, not 1.0."
     print("Portfolio weights (w_p1, w_p2) successfully validated: sum to 1.0.")
 
-    assert (
-        deterministic_inputs.real_bank_upper_bound
-        >= deterministic_inputs.real_bank_lower_bound
-    ), (
-        f"Bounds invalid: Upper ({deterministic_inputs.real_bank_upper_bound:,.0f}) "
-        + f"< Lower ({deterministic_inputs.real_bank_lower_bound:,.0f})."
+    assert det_inputs.real_bank_upper_bound >= det_inputs.real_bank_lower_bound, (
+        f"Bounds invalid: Upper ({det_inputs.real_bank_upper_bound:,.0f}) "
+        + f"< Lower ({det_inputs.real_bank_lower_bound:,.0f})."
     )
     print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
 
@@ -179,7 +180,7 @@ def main() -> None:
         initial_fun_value,
         initial_real_estate_value,
     ) = calculate_initial_asset_values(
-        deterministic_inputs.i0,
+        det_inputs.i0,
         phase1_stocks_weight,
         phase1_bonds_weight,
         phase1_str_weight,
@@ -195,50 +196,38 @@ def main() -> None:
     # --- Print all parameters for verification ---
     # These print statements now pull directly from the deterministic_inputs object
     print("\n--- Loaded Parameters Summary (from config.toml) ---")
-    print(f"initial_investment: {deterministic_inputs.i0:,.2f}")
-    print(f"initial_bank_balance: {deterministic_inputs.b0:,.2f}")
-    print(f"real_bank_lower_bound: {deterministic_inputs.real_bank_lower_bound:,.2f}")
-    print(f"real_bank_upper_bound: {deterministic_inputs.real_bank_upper_bound:,.2f}")
-    print(f"total_retirement_years: {deterministic_inputs.t_ret_years}")
+    print(f"initial_investment: {det_inputs.i0:,.2f}")
+    print(f"initial_bank_balance: {det_inputs.b0:,.2f}")
+    print(f"real_bank_lower_bound: {det_inputs.real_bank_lower_bound:,.2f}")
+    print(f"real_bank_upper_bound: {det_inputs.real_bank_upper_bound:,.2f}")
+    print(f"total_retirement_years: {det_inputs.t_ret_years}")
+    print(f"total_retirement_months: {det_inputs.t_ret_years * 12}")  # Derived value
+    print(f"initial_real_monthly_expenses: {det_inputs.x_real_monthly_initial:,.2f}")
+    print(f"planned_extra_expenses: {det_inputs.x_planned_extra}")
+    print(f"planned_contributions: {det_inputs.c_planned}")
+    print(f"initial_real_monthly_contribution: {det_inputs.c_real_monthly_initial:,.2f}")
+    print(f"ter_annual_percentage: {det_inputs.ter_annual_percentage:.4f}")
+    print(f"initial_real_house_cost: {det_inputs.h0_real_cost:,.2f}")
+    print(f"initial_real_monthly_pension: {det_inputs.p_real_monthly:,.2f}")
     print(
-        f"total_retirement_months: {deterministic_inputs.t_ret_years * 12}"
-    )  # Derived value
-    print(
-        f"initial_real_monthly_expenses: {deterministic_inputs.x_real_monthly_initial:,.2f}"
+        "pension_inflation_adjustment_factor: " f"{det_inputs.pension_inflation_adjustment_factor}"
     )
-    print(f"planned_extra_expenses: {deterministic_inputs.x_planned_extra}")
-    print(f"planned_contributions: {deterministic_inputs.c_planned}")
-    print(
-        f"initial_real_monthly_contribution: {deterministic_inputs.c_real_monthly_initial:,.2f}"
-    )
-    print(f"ter_annual_percentage: {deterministic_inputs.ter_annual_percentage:.4f}")
-    print(f"initial_real_house_cost: {deterministic_inputs.h0_real_cost:,.2f}")
-    print(f"initial_real_monthly_pension: {deterministic_inputs.p_real_monthly:,.2f}")
-    print(
-        f"pension_inflation_adjustment_factor: {deterministic_inputs.pension_inflation_adjustment_factor}"
-    )
-    print(f"pension_start_year_idx: {deterministic_inputs.y_p_start_idx}")
-    print(f"initial_real_monthly_salary: {deterministic_inputs.s_real_monthly:,.2f}")
-    print(
-        f"salary_inflation_adjustment_factor: {deterministic_inputs.salary_inflation_adjustment_factor}"
-    )
-    print(f"salary_start_year_idx: {deterministic_inputs.y_s_start_idx}")
-    print(f"salary_end_year_idx: {deterministic_inputs.y_s_end_idx}")
+    print(f"pension_start_year_idx: {det_inputs.y_p_start_idx}")
+    print(f"initial_real_monthly_salary: {det_inputs.s_real_monthly:,.2f}")
+    print("salary_inflation_adjustment_factor: " f"{det_inputs.salary_inflation_adjustment_factor}")
+    print(f"salary_start_year_idx: {det_inputs.y_s_start_idx}")
+    print(f"salary_end_year_idx: {det_inputs.y_s_end_idx}")
 
     print("\n--- Economic Assumptions ---")
     print(f"stock_mu: {stock_mu:.4f}, stock_sigma: {stock_sigma:.4f}")
     print(f"bond_mu: {bond_mu:.4f}, bond_sigma: {bond_sigma:.4f}")
     print(f"str_mu: {str_mu:.4f}, str_sigma: {str_sigma:.4f}")
     print(f"fun_mu: {fun_mu:.4f}, fun_sigma: {fun_sigma:.4f}")
-    print(
-        f"real_estate_mu: {real_estate_mu:.4f}, real_estate_sigma: {real_estate_sigma:.4f}"
-    )
+    print(f"real_estate_mu: {real_estate_mu:.4f}, real_estate_sigma: {real_estate_sigma:.4f}")
     print(f"mu_pi: {mu_pi:.4f}, sigma_pi: {sigma_pi:.4f}")
 
     print("\n--- Derived Log-Normal Parameters ---")
-    print(
-        f"mu_log_stocks: {mu_log_stocks:.6f}, sigma_log_stocks: {sigma_log_stocks:.6f}"
-    )
+    print(f"mu_log_stocks: {mu_log_stocks:.6f}, sigma_log_stocks: {sigma_log_stocks:.6f}")
     print(f"mu_log_bonds: {mu_log_bonds:.6f}, sigma_log_bonds: {sigma_log_bonds:.6f}")
     print(f"mu_log_str: {mu_log_str:.6f}, sigma_log_str: {sigma_log_str:.6f}")
     print(f"mu_log_fun: {mu_log_fun:.6f}, sigma_log_fun: {sigma_log_fun:.6f}")
@@ -253,13 +242,17 @@ def main() -> None:
     print("\n--- Portfolio Allocations ---")
     print(f"rebalancing_trigger_year_idx: {rebalancing_trigger_year_idx}")
     print(
-        f"phase1_stocks_weight: {phase1_stocks_weight:.4f}, phase1_bonds_weight: {phase1_bonds_weight:.4f}, "
-        + f"phase1_str_weight: {phase1_str_weight:.4f}, phase1_fun_weight: {phase1_fun_weight:.4f}, "
+        f"phase1_stocks_weight: {phase1_stocks_weight:.4f}, "
+        + f"phase1_bonds_weight: {phase1_bonds_weight:.4f}, "
+        + f"phase1_str_weight: {phase1_str_weight:.4f}, "
+        + f"phase1_fun_weight: {phase1_fun_weight:.4f}, "
         + f"phase1_real_estate_weight: {phase1_real_estate_weight:.4f}"
     )
     print(
-        f"phase2_stocks_weight: {phase2_stocks_weight:.4f}, phase2_bonds_weight: {phase2_bonds_weight:.4f}, "
-        + f"phase2_str_weight: {phase2_str_weight:.4f}, phase2_fun_weight: {phase2_fun_weight:.4f}, "
+        f"phase2_stocks_weight: {phase2_stocks_weight:.4f}, "
+        + f"phase2_bonds_weight: {phase2_bonds_weight:.4f}, "
+        + f"phase2_str_weight: {phase2_str_weight:.4f}, "
+        + f"phase2_fun_weight: {phase2_fun_weight:.4f}, "
         + f"phase2_real_estate_weight: {phase2_real_estate_weight:.4f}"
     )
 
@@ -278,15 +271,16 @@ def main() -> None:
     # --- 6. Run Monte Carlo Simulations ---
     simulation_results: list[SimulationRunResult] = []
 
-    spinner: itertools.cycle[str] = itertools.cycle(["-", "\\", "|", "/"])
+    spinner = itertools.cycle(["-", "\\", "|", "/"])
     start_time: float = time.time()
 
     print(
-        f"\nRunning {num_simulations} Monte Carlo simulations (T={deterministic_inputs.t_ret_years} years)..."
+        f"\nRunning {num_simulations} Monte Carlo simulations "
+        + f"(T={det_inputs.t_ret_years} years)..."
     )
     for i in range(num_simulations):
         result: SimulationRunResult = run_single_fire_simulation(
-            deterministic_inputs,
+            det_inputs,
             mu_log_inflation,
             sigma_log_inflation,
             rebalancing_trigger_year_idx,
@@ -340,11 +334,11 @@ def main() -> None:
     )
 
     # Generate and print the consolidated FIRE plan summary
-    initial_total_wealth: float = deterministic_inputs.i0 + deterministic_inputs.b0
+    initial_total_wealth: float = det_inputs.i0 + det_inputs.b0
     fire_summary_string: str = analysis.generate_fire_plan_summary(
         simulation_results,
         initial_total_wealth,
-        deterministic_inputs.t_ret_years,
+        det_inputs.t_ret_years,
     )
 
     # Print the consolidated summary, including the total simulation time here
@@ -362,7 +356,7 @@ def main() -> None:
     bank_account_plot_indices: NDArray[np.intp] = plot_data["bank_account_plot_indices"]
 
     # Plotting Historical Distributions
-    plot_retirement_duration_distribution(failed_sims, deterministic_inputs.t_ret_years)
+    plot_retirement_duration_distribution(failed_sims, det_inputs.t_ret_years)
     plot_final_wealth_distribution_nominal(successful_sims)
     plot_final_wealth_distribution_real(successful_sims)
 
@@ -374,12 +368,12 @@ def main() -> None:
     plot_bank_account_trajectories_real(
         results_df,
         bank_account_plot_indices,
-        deterministic_inputs.real_bank_lower_bound,
+        det_inputs.real_bank_lower_bound,
     )
     plot_bank_account_trajectories_nominal(
         results_df,
         bank_account_plot_indices,
-        deterministic_inputs.real_bank_lower_bound,
+        det_inputs.real_bank_lower_bound,
     )
 
     print("\nAll requested plots generated and saved to the current directory.")

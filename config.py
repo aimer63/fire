@@ -1,3 +1,20 @@
+"""
+Configuration models for the FIRE Monte Carlo simulation tool.
+
+This module defines Pydantic models for validating and loading user-supplied
+configuration data from TOML files. The models correspond to sections in the
+configuration file and ensure that all required parameters for the simulation
+are present and correctly typed.
+
+Classes:
+    - DeterministicInputs: User-controllable financial plan parameters loaded from the
+      [deterministic_inputs] section of config.toml.
+    - EconomicAssumptions: Economic and market return assumptions loaded from the
+      [economic_assumptions] section of config.toml.
+
+These models provide type safety and validation for the simulation engine.
+"""
+
 # config.py
 from pydantic import BaseModel, Field
 
@@ -30,9 +47,7 @@ class DeterministicInputs(BaseModel):
         ..., description="Total number of years the retirement simulation will run."
     )
 
-    s_real_monthly: float = Field(
-        ..., description="Initial real (today's money) monthly salary."
-    )
+    s_real_monthly: float = Field(..., description="Initial real (today's money) monthly salary.")
     salary_inflation_adjustment_factor: float = Field(
         ...,
         description=(
@@ -43,8 +58,7 @@ class DeterministicInputs(BaseModel):
     y_s_start_idx: int = Field(
         ...,
         description=(
-            "Year index (0-indexed) when salary income starts. "
-            "E.g., 0 for immediate start."
+            "Year index (0-indexed) when salary income starts. " "E.g., 0 for immediate start."
         ),
     )
     y_s_end_idx: int = Field(
@@ -55,9 +69,7 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    p_real_monthly: float = Field(
-        ..., description="Initial real (today's money) monthly pension."
-    )
+    p_real_monthly: float = Field(..., description="Initial real (today's money) monthly pension.")
     pension_inflation_adjustment_factor: float = Field(
         ...,
         description=(
@@ -104,10 +116,57 @@ class DeterministicInputs(BaseModel):
 
     h0_real_cost: float = Field(
         ...,
-        description="Initial real (today's money) cost of a house to be purchased at rebalancing_year_idx.",
+        description=(
+            "Initial real (today's money) cost of a house "
+            "to be purchased at rebalancing_year_idx."
+        ),
     )
 
     class Config:
         """Pydantic configuration for the DeterministicInputs model."""
+
+        # Ensures no unexpected fields are present in the config.toml section.
+        extra = "forbid"
+
+
+class EconomicAssumptions(BaseModel):
+    """
+    Pydantic model representing the economic assumptions for the simulation.
+    These parameters are loaded from the 'economic_assumptions' section of config.toml.
+    """
+
+    stock_mu: float = Field(..., description="Arithmetic mean annual return for stocks.")
+    stock_sigma: float = Field(..., description="Standard deviation of annual returns for stocks.")
+
+    bond_mu: float = Field(..., description="Arithmetic mean annual return for bonds.")
+    bond_sigma: float = Field(..., description="Standard deviation of annual returns for bonds.")
+
+    str_mu: float = Field(
+        ..., description="Arithmetic mean annual return for short-term reserves (STR)."
+    )
+    str_sigma: float = Field(..., description="Standard deviation of annual returns for STR.")
+
+    fun_mu: float = Field(
+        ..., description="Arithmetic mean annual return for 'fun money' (e.g., crypto/silver)."
+    )
+    fun_sigma: float = Field(
+        ..., description="Standard deviation of annual returns for 'fun money'."
+    )
+
+    real_estate_mu: float = Field(
+        ...,
+        description=(
+            "Arithmetic mean annual return for real estate " "(capital gains, net of maintenance)."
+        ),
+    )
+    real_estate_sigma: float = Field(
+        ..., description="Standard deviation of annual returns for real estate."
+    )
+
+    mu_pi: float = Field(..., description="Arithmetic mean of annual inflation rate.")
+    sigma_pi: float = Field(..., description="Standard deviation of annual inflation rate.")
+
+    class Config:
+        """Pydantic configuration for the EconomicAssumptions model."""
 
         extra = "forbid"  # Ensures no unexpected fields are present in the config.toml section.
