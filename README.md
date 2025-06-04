@@ -5,17 +5,13 @@ This project is a Monte Carlo simulation tool for FIRE (Financial Independence /
 ## Key Components
 
 - **Configuration**  
-  User inputs are provided in TOML files (e.g., `config.toml`, `carlo.toml`, `imerio.toml`). These files specify initial wealth, income, expenses, planned contributions, asset allocation, economic assumptions (returns, inflation), and simulation parameters.
-
-- **DeterministicInputs Model**  
-  The `DeterministicInputs` class in `config.py` defines all user-controllable parameters, such as:
-  - Initial investment and bank balance
-  - Bank account bounds (for liquidity management)
-  - Simulation duration
-  - Salary and pension details (amounts, inflation adjustment, timing)
-  - Regular and planned contributions/expenses
-  - House purchase cost
-  - Total Expense Ratio (TER)
+  User inputs are provided in TOML files (e.g., `config.toml`, `carlo.toml`, `imerio.toml`). These files specify initial wealth, income, expenses, planned contributions, asset allocation, economic assumptions (returns, inflation), simulation parameters, and market shocks.  
+  All configuration sections are validated and parsed using Pydantic models in `config.py`:
+  - `DeterministicInputs`: User-controllable parameters (wealth, expenses, salary, pension, etc.)
+  - `EconomicAssumptions`: Asset return/inflation means and standard deviations
+  - `PortfolioAllocations`: Asset allocation weights and rebalancing schedule
+  - `SimulationParameters`: Number of simulations and other global settings
+  - `Shocks`: List of market shock events (year, asset, magnitude)
 
 - **Simulation Engine**  
   The main simulation logic is in `simulation.py`. For each run, it:
@@ -23,7 +19,7 @@ This project is a Monte Carlo simulation tool for FIRE (Financial Independence /
   - Simulates monthly/annual investment returns, inflation, and expenses
   - Handles salary, pension, contributions, and planned extra expenses
   - Manages liquidity (bank account bounds, topping up or investing excess)
-  - Applies market shocks if configured
+  - Applies market shocks if configured (using the `Shocks` model)
   - Optionally simulates a house purchase at a specified time
   - Tracks asset allocation and rebalancing
 
@@ -36,14 +32,14 @@ This project is a Monte Carlo simulation tool for FIRE (Financial Independence /
 
 - **Main Script**  
   `main.py` orchestrates the workflow:
-  1. Loads configuration and validates inputs
+  1. Loads and validates configuration using Pydantic models
   2. Runs the specified number of Monte Carlo simulations
   3. Analyzes results and prints a summary
   4. Generates and displays plots
 
 ## Typical Workflow
 
-1. **Configure your plan** in a TOML file (e.g., `config.toml`), specifying your starting wealth, income, expenses, and investment strategy.
+1. **Configure your plan** in a TOML file (e.g., `config.toml`), specifying your starting wealth, income, expenses, investment strategy, simulation parameters, and any market shocks.
 2. **Run the simulation** via `main.py`. It will simulate thousands of possible retirement scenarios.
 3. **Review the results**:  
    - Success rate (probability of not running out of money)
@@ -59,7 +55,7 @@ The project helps users understand the likelihood of their retirement plan succe
 
 **Key files to explore:**
 
-- `config.py`: Defines user input schema
+- `config.py`: Defines user input schema and Pydantic models for all config sections
 - `main.py`: Entry point and workflow
 - `simulation.py`: Simulation logic
 - `analysis.py`: Post-simulation analysis

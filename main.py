@@ -28,7 +28,7 @@ from numpy.typing import NDArray
 import pandas as pd
 
 # Import helper functions
-from helpers import calculate_log_normal_params, calculate_initial_asset_values
+from helpers import calculate_initial_asset_values
 
 # Import the main simulation function and its return type
 from simulation import run_single_fire_simulation, SimulationRunResult
@@ -49,7 +49,13 @@ from plots import (
 )
 
 # Import the DeterministicInputs Pydantic model
-from config import DeterministicInputs, EconomicAssumptions
+from config import (
+    DeterministicInputs,
+    EconomicAssumptions,
+    PortfolioAllocations,
+    SimulationParameters,
+    Shocks,
+)
 
 
 def main() -> None:
@@ -77,59 +83,40 @@ def main() -> None:
     print("Configuration file parsed successfully. Extracting parameters...")
 
     # --- Pydantic: Load and validate deterministic inputs ---
-    # This replaces the manual extraction of 'det_inputs' dictionary and individual assignments
     det_inputs: DeterministicInputs = DeterministicInputs(**config_data["deterministic_inputs"])
 
     # --- Pydantic: Load and validate Economic Assumption ---
-    # This replaces the manual extraction of 'det_inputs' dictionary and individual assignments
     econ_assumptions: EconomicAssumptions = EconomicAssumptions(
         **config_data["economic_assumptions"]
     )
 
-    eco_assumptions: dict[str, Any] = config_data["economic_assumptions"]
-    stock_mu: float = eco_assumptions["stock_mu"]
-    stock_sigma: float = eco_assumptions["stock_sigma"]
-    bond_mu: float = eco_assumptions["bond_mu"]
-    bond_sigma: float = eco_assumptions["bond_sigma"]
-    str_mu: float = eco_assumptions["str_mu"]
-    str_sigma: float = eco_assumptions["str_sigma"]
-    fun_mu: float = eco_assumptions["fun_mu"]
-    fun_sigma: float = eco_assumptions["fun_sigma"]
-    real_estate_mu: float = eco_assumptions["real_estate_mu"]
-    real_estate_sigma: float = eco_assumptions["real_estate_sigma"]
-    mu_pi: float = eco_assumptions["mu_pi"]
-    sigma_pi: float = eco_assumptions["sigma_pi"]
+    # --- Pydantic: Load and validate Portfolio Allocations ---
+    portfolio_allocs: PortfolioAllocations = PortfolioAllocations(
+        **config_data["portfolio_allocations"]
+    )
 
-    # Load historical shock events
-    shocks_config: dict[str, Any] = config_data.get("shocks", {})
-    shock_events: list[dict[str, Any]] = shocks_config.get("events", [])
+    # --- Pydantic: Load and validate Simulation Parameters ---
+    sim_params: SimulationParameters = SimulationParameters(**config_data["simulation_parameters"])
+    num_simulations: int = sim_params.num_simulations
 
-    port_allocs: dict[str, Any] = config_data["portfolio_allocations"]
-    rebalancing_trigger_year_idx: int = port_allocs["rebalancing_year_idx"]
-    phase1_stocks_weight: float = port_allocs["w_p1_stocks"]
-    phase1_bonds_weight: float = port_allocs["w_p1_bonds"]
-    phase1_str_weight: float = port_allocs["w_p1_str"]
-    phase1_fun_weight: float = port_allocs["w_p1_fun"]
-    phase1_real_estate_weight: float = port_allocs["w_p1_real_estate"]
-    phase2_stocks_weight: float = port_allocs["w_p2_stocks"]
-    phase2_bonds_weight: float = port_allocs["w_p2_bonds"]
-    phase2_str_weight: float = port_allocs["w_p2_str"]
-    phase2_fun_weight: float = port_allocs["w_p2_fun"]
-    phase2_real_estate_weight: float = port_allocs["w_p2_real_estate"]
+    # --- Pydantic: Load and validate Shocks ---
+    shocks: Shocks = Shocks(**config_data.get("shocks", {}))
+    shock_events: list[dict[str, Any]] = [event.dict() for event in shocks.events]
 
+    # Validate portfolio weights
     p1_sum: float = (
-        phase1_stocks_weight
-        + phase1_bonds_weight
-        + phase1_str_weight
-        + phase1_fun_weight
-        + phase1_real_estate_weight
+        portfolio_allocs.w_p1_stocks
+        + portfolio_allocs.w_p1_bonds
+        + portfolio_allocs.w_p1_str
+        + portfolio_allocs.w_p1_fun
+        + portfolio_allocs.w_p1_real_estate
     )
     p2_sum: float = (
-        phase2_stocks_weight
-        + phase2_bonds_weight
-        + phase2_str_weight
-        + phase2_fun_weight
-        + phase2_real_estate_weight
+        portfolio_allocs.w_p2_stocks
+        + portfolio_allocs.w_p2_bonds
+        + portfolio_allocs.w_p2_str
+        + portfolio_allocs.w_p2_fun
+        + portfolio_allocs.w_p2_real_estate
     )
 
     assert np.isclose(p1_sum, 1.0), f"Phase 1 weights sum to {p1_sum:.4f}, not 1.0."
@@ -142,37 +129,6 @@ def main() -> None:
     )
     print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
 
-    sim_params: dict[str, Any] = config_data["simulation_parameters"]
-    num_simulations: int = sim_params["num_simulations"]
-
-    (
-        mu_log_stocks,
-        sigma_log_stocks,
-        mu_log_bonds,
-        sigma_log_bonds,
-        mu_log_str,
-        sigma_log_str,
-        mu_log_fun,
-        sigma_log_fun,
-        mu_log_real_estate,
-        sigma_log_real_estate,
-        mu_log_inflation,
-        sigma_log_inflation,
-    ) = calculate_log_normal_params(
-        stock_mu,
-        stock_sigma,
-        bond_mu,
-        bond_sigma,
-        str_mu,
-        str_sigma,
-        fun_mu,
-        fun_sigma,
-        real_estate_mu,
-        real_estate_sigma,
-        mu_pi,
-        sigma_pi,
-    )
-
     (
         initial_stocks_value,
         initial_bonds_value,
@@ -181,11 +137,11 @@ def main() -> None:
         initial_real_estate_value,
     ) = calculate_initial_asset_values(
         det_inputs.i0,
-        phase1_stocks_weight,
-        phase1_bonds_weight,
-        phase1_str_weight,
-        phase1_fun_weight,
-        phase1_real_estate_weight,
+        portfolio_allocs.w_p1_stocks,
+        portfolio_allocs.w_p1_bonds,
+        portfolio_allocs.w_p1_str,
+        portfolio_allocs.w_p1_fun,
+        portfolio_allocs.w_p1_real_estate,
     )
 
     print(
@@ -194,7 +150,6 @@ def main() -> None:
     )
 
     # --- Print all parameters for verification ---
-    # These print statements now pull directly from the deterministic_inputs object
     print("\n--- Loaded Parameters Summary (from config.toml) ---")
     print(f"initial_investment: {det_inputs.i0:,.2f}")
     print(f"initial_bank_balance: {det_inputs.b0:,.2f}")
@@ -219,41 +174,38 @@ def main() -> None:
     print(f"salary_end_year_idx: {det_inputs.y_s_end_idx}")
 
     print("\n--- Economic Assumptions ---")
-    print(f"stock_mu: {stock_mu:.4f}, stock_sigma: {stock_sigma:.4f}")
-    print(f"bond_mu: {bond_mu:.4f}, bond_sigma: {bond_sigma:.4f}")
-    print(f"str_mu: {str_mu:.4f}, str_sigma: {str_sigma:.4f}")
-    print(f"fun_mu: {fun_mu:.4f}, fun_sigma: {fun_sigma:.4f}")
-    print(f"real_estate_mu: {real_estate_mu:.4f}, real_estate_sigma: {real_estate_sigma:.4f}")
-    print(f"mu_pi: {mu_pi:.4f}, sigma_pi: {sigma_pi:.4f}")
+    print(
+        f"stock_mu: {econ_assumptions.stock_mu:.4f}, "
+        + f"stock_sigma: {econ_assumptions.stock_sigma:.4f}"
+    )
+    print(f"bond_mu: {econ_assumptions.bond_mu:.4f}, bond_sigma: {econ_assumptions.bond_sigma:.4f}")
+    print(f"str_mu: {econ_assumptions.str_mu:.4f}, str_sigma: {econ_assumptions.str_sigma:.4f}")
+    print(f"fun_mu: {econ_assumptions.fun_mu:.4f}, fun_sigma: {econ_assumptions.fun_sigma:.4f}")
+    print(
+        f"real_estate_mu: {econ_assumptions.real_estate_mu:.4f}, "
+        + f"real_estate_sigma: {econ_assumptions.real_estate_sigma:.4f}"
+    )
+    print(f"mu_pi: {econ_assumptions.mu_pi:.4f}, sigma_pi: {econ_assumptions.sigma_pi:.4f}")
 
     print("\n--- Derived Log-Normal Parameters ---")
-    print(f"mu_log_stocks: {mu_log_stocks:.6f}, sigma_log_stocks: {sigma_log_stocks:.6f}")
-    print(f"mu_log_bonds: {mu_log_bonds:.6f}, sigma_log_bonds: {sigma_log_bonds:.6f}")
-    print(f"mu_log_str: {mu_log_str:.6f}, sigma_log_str: {sigma_log_str:.6f}")
-    print(f"mu_log_fun: {mu_log_fun:.6f}, sigma_log_fun: {sigma_log_fun:.6f}")
-    print(
-        f"mu_log_real_estate: {mu_log_real_estate:.6f}, "
-        + f"sigma_log_real_estate: {sigma_log_real_estate:.6f}"
-    )
-    print(
-        f"mu_log_inflation: {mu_log_inflation:.6f}, sigma_log_inflation: {sigma_log_inflation:.6f}"
-    )
+    for asset, (mu_log, sigma_log) in econ_assumptions.lognormal.items():
+        print(f"{asset}: mu_log = {mu_log:.6f}, sigma_log = {sigma_log:.6f}")
 
     print("\n--- Portfolio Allocations ---")
-    print(f"rebalancing_trigger_year_idx: {rebalancing_trigger_year_idx}")
+    print(f"rebalancing_trigger_year_idx: {portfolio_allocs.rebalancing_year_idx}")
     print(
-        f"phase1_stocks_weight: {phase1_stocks_weight:.4f}, "
-        + f"phase1_bonds_weight: {phase1_bonds_weight:.4f}, "
-        + f"phase1_str_weight: {phase1_str_weight:.4f}, "
-        + f"phase1_fun_weight: {phase1_fun_weight:.4f}, "
-        + f"phase1_real_estate_weight: {phase1_real_estate_weight:.4f}"
+        f"phase1_stocks_weight: {portfolio_allocs.w_p1_stocks:.4f}, "
+        + f"phase1_bonds_weight: {portfolio_allocs.w_p1_bonds:.4f}, "
+        + f"phase1_str_weight: {portfolio_allocs.w_p1_str:.4f}, "
+        + f"phase1_fun_weight: {portfolio_allocs.w_p1_fun:.4f}, "
+        + f"phase1_real_estate_weight: {portfolio_allocs.w_p1_real_estate:.4f}"
     )
     print(
-        f"phase2_stocks_weight: {phase2_stocks_weight:.4f}, "
-        + f"phase2_bonds_weight: {phase2_bonds_weight:.4f}, "
-        + f"phase2_str_weight: {phase2_str_weight:.4f}, "
-        + f"phase2_fun_weight: {phase2_fun_weight:.4f}, "
-        + f"phase2_real_estate_weight: {phase2_real_estate_weight:.4f}"
+        f"phase2_stocks_weight: {portfolio_allocs.w_p2_stocks:.4f}, "
+        + f"phase2_bonds_weight: {portfolio_allocs.w_p2_bonds:.4f}, "
+        + f"phase2_str_weight: {portfolio_allocs.w_p2_str:.4f}, "
+        + f"phase2_fun_weight: {portfolio_allocs.w_p2_fun:.4f}, "
+        + f"phase2_real_estate_weight: {portfolio_allocs.w_p2_real_estate:.4f}"
     )
 
     print("\n--- Initial Asset Values ---")
@@ -281,29 +233,8 @@ def main() -> None:
     for i in range(num_simulations):
         result: SimulationRunResult = run_single_fire_simulation(
             det_inputs,
-            mu_log_inflation,
-            sigma_log_inflation,
-            rebalancing_trigger_year_idx,
-            phase1_stocks_weight,
-            phase1_bonds_weight,
-            phase1_str_weight,
-            phase1_fun_weight,
-            phase1_real_estate_weight,
-            phase2_stocks_weight,
-            phase2_bonds_weight,
-            phase2_str_weight,
-            phase2_fun_weight,
-            phase2_real_estate_weight,
-            mu_log_stocks,
-            sigma_log_stocks,
-            mu_log_bonds,
-            sigma_log_bonds,
-            mu_log_str,
-            sigma_log_str,
-            mu_log_fun,
-            sigma_log_fun,
-            mu_log_real_estate,
-            sigma_log_real_estate,
+            econ_assumptions,
+            portfolio_allocs,
             shock_events,
         )
         simulation_results.append(result)
@@ -361,7 +292,7 @@ def main() -> None:
     plot_final_wealth_distribution_real(successful_sims)
 
     # Plotting Time Evolution Samples
-    plot_wealth_evolution_samples_real(results_df, plot_lines_data, mu_pi)
+    plot_wealth_evolution_samples_real(results_df, plot_lines_data, econ_assumptions.mu_pi)
     plot_wealth_evolution_samples_nominal(results_df, plot_lines_data)
 
     # Plotting Bank Account Trajectories

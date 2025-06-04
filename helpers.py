@@ -51,9 +51,7 @@ def inflate_amount_over_years(
         1.0 + annual_inflation_sequence[:years_to_inflate]
     )  # Ensure float literal, NDArray output
 
-    return float(
-        initial_real_amount * inflation_factor
-    )  # Explicit cast to ensure Python float
+    return float(initial_real_amount * inflation_factor)  # Explicit cast to ensure Python float
 
 
 def calculate_log_normal_params(
@@ -69,9 +67,7 @@ def calculate_log_normal_params(
     real_estate_sigma: float,
     mu_pi: float,
     sigma_pi: float,
-) -> tuple[
-    float, float, float, float, float, float, float, float, float, float, float, float
-]:
+) -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
     """
     Calculates the mu (mean) and sigma (standard deviation) for log-normal
     distributions of asset returns AND inflation. It assumes that the input MU and SIGMA
@@ -89,34 +85,28 @@ def calculate_log_normal_params(
         Helper function to convert arithmetic mean and standard deviation
         to log-normal parameters (mu_log, sigma_log).
         """
-        if arith_mu <= -1.0:  # Use float literal
+        if arith_mu <= -1.0:
             raise ValueError(
-                f"Arithmetic mean ({arith_mu}) must be strictly "  # Fix implicit string concatenation
+                f"Arithmetic mean ({arith_mu}) must be strictly "
                 + "greater than -1 to convert to log-normal parameters."
             )
 
-        ex: float = 1.0 + arith_mu  # Use float literal
+        ex: float = 1.0 + arith_mu
         stdx: float = arith_sigma
 
-        if stdx == 0.0:  # Use float literal
-            sigma_log: float = 0.0  # Use float literal
+        if stdx == 0.0:
+            sigma_log: float = 0.0
         else:
             # Ensure calculations result in float64 from numpy, then cast to Python float
-            sigma_log = float(
-                np.sqrt(np.log(1.0 + (stdx / ex) ** 2))
-            )  # Use float literal
+            sigma_log = float(np.sqrt(np.log(1.0 + (stdx / ex) ** 2)))
 
-        mu_log: float = float(np.log(ex) - 0.5 * sigma_log**2)  # Use float literal
+        mu_log: float = float(np.log(ex) - 0.5 * sigma_log**2)
 
         return mu_log, sigma_log
 
     # Apply the conversion to each asset class
-    mu_log_stocks, sigma_log_stocks = _convert_arithmetic_to_lognormal(
-        stock_mu, stock_sigma
-    )
-    mu_log_bonds, sigma_log_bonds = _convert_arithmetic_to_lognormal(
-        bond_mu, bond_sigma
-    )
+    mu_log_stocks, sigma_log_stocks = _convert_arithmetic_to_lognormal(stock_mu, stock_sigma)
+    mu_log_bonds, sigma_log_bonds = _convert_arithmetic_to_lognormal(bond_mu, bond_sigma)
     mu_log_str, sigma_log_str = _convert_arithmetic_to_lognormal(str_mu, str_sigma)
     mu_log_fun, sigma_log_fun = _convert_arithmetic_to_lognormal(fun_mu, fun_sigma)
     mu_log_real_estate, sigma_log_real_estate = _convert_arithmetic_to_lognormal(
@@ -198,6 +188,4 @@ def calculate_cagr(initial_value: float, final_value: float, num_years: int) -> 
         return -1.0  # Return -1.0 for complete loss, as per docstring
 
     # Ensure result is explicitly a Python float
-    return float(
-        (final_value / initial_value) ** (1.0 / num_years) - 1.0
-    )  # Use float literals
+    return float((final_value / initial_value) ** (1.0 / num_years) - 1.0)  # Use float literals
