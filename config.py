@@ -119,7 +119,14 @@ class DeterministicInputs(BaseModel):
         ...,
         description=(
             "Initial real (today's money) cost of a house "
-            "to be purchased at rebalancing_year_idx."
+            "to be purchased at house_purchase_year_idx (or rebalancing_year_idx if not set)."
+        ),
+    )
+    house_purchase_year_idx: int | None = Field(
+        default=None,
+        description=(
+            "Year index (0-based) when the house is purchased. "
+            "If None, defaults to rebalancing_year_idx."
         ),
     )
 

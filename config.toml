@@ -61,6 +61,7 @@ x_planned_extra = [
 
 # Initial real cost of the house to be purchased at rebalancing_year_idx
 h0_real_cost = 0
+house_purchase_year_idx = 0
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
 # Nominal values

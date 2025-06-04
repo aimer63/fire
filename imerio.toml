@@ -68,11 +68,11 @@ x_real_monthly_initial = 3300
 # 3 1,06    94.232,23
 # 4 1,08    92.384,54
 # 5 1,10    90.573,08
-
 x_planned_extra = [[100_000, 1]]
 
 # Initial real cost of the house to be purchased at REBALANCING_YEAR_IDX
 h0_real_cost = 150_000
+house_purchase_year_idx = 10
 
 # --- B. Economic Assumptions (Averages and Volatilities) ---
 # Nominal values

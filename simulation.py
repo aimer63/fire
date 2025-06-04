@@ -342,6 +342,11 @@ def run_single_fire_simulation(
 
     ter_monthly_factor: float = ter_annual_percentage / 12.0
 
+    # --- House purchase year logic: configurable ---
+    house_purchase_year_idx = det_inputs.house_purchase_year_idx
+    if house_purchase_year_idx is None:
+        house_purchase_year_idx = portfolio_allocs.rebalancing_year_idx
+
     # Simulation loop
     for current_month_idx in range(total_retirement_months):
         months_lasted += 1
@@ -582,6 +587,88 @@ def run_single_fire_simulation(
             success = False
             break  # Exit simulation early if plan fails
 
+        # --- HOUSE PURCHASE LOGIC (now independent of rebalancing) ---
+        if (
+            current_year_idx == house_purchase_year_idx
+            and month_in_year_idx == 0
+            and initial_real_house_cost > 0.0
+        ):
+            nominal_house_cost: float = float(
+                initial_real_house_cost
+                * cumulative_inflation_factors_annual[house_purchase_year_idx]
+            )
+            liquid_assets_pre_house: float = (
+                current_str_value + current_bonds_value + current_stocks_value + current_fun_value
+            )
+
+            if liquid_assets_pre_house < nominal_house_cost:
+                success = False
+                break  # Exit loop
+
+            remaining_to_buy: float = nominal_house_cost
+
+            if current_str_value >= remaining_to_buy:
+                current_str_value -= remaining_to_buy
+                remaining_to_buy = 0.0
+            else:
+                remaining_to_buy -= current_str_value
+                current_str_value = 0.0
+
+            if remaining_to_buy > 0.0:
+                if current_bonds_value >= remaining_to_buy:
+                    current_bonds_value -= remaining_to_buy
+                    remaining_to_buy = 0.0
+                else:
+                    remaining_to_buy -= current_bonds_value
+                    current_bonds_value = 0.0
+
+            if remaining_to_buy > 0.0:
+                if current_stocks_value >= remaining_to_buy:
+                    current_stocks_value -= remaining_to_buy
+                    remaining_to_buy = 0.0
+                else:
+                    remaining_to_buy -= current_stocks_value
+                    current_stocks_value = 0.0
+
+            if remaining_to_buy > 0.0:
+                if current_fun_value >= remaining_to_buy:
+                    current_fun_value -= remaining_to_buy
+                    remaining_to_buy = 0.0
+                else:
+                    remaining_to_buy -= current_fun_value
+                    current_fun_value = 0.0
+
+            current_real_estate_value += nominal_house_cost
+
+            # --- IMMEDIATE REBALANCE OF LIQUID ASSETS AFTER HOUSE PURCHASE ---
+            liquid_assets_after_house = (
+                current_str_value + current_bonds_value + current_stocks_value + current_fun_value
+            )
+            liquid_weights_sum = (
+                current_weights_stocks
+                + current_weights_bonds
+                + current_weights_str
+                + current_weights_fun
+            )
+            if liquid_weights_sum > 0.0 and liquid_assets_after_house > 0.0:
+                current_stocks_value = liquid_assets_after_house * (
+                    current_weights_stocks / liquid_weights_sum
+                )
+                current_bonds_value = liquid_assets_after_house * (
+                    current_weights_bonds / liquid_weights_sum
+                )
+                current_str_value = liquid_assets_after_house * (
+                    current_weights_str / liquid_weights_sum
+                )
+                current_fun_value = liquid_assets_after_house * (
+                    current_weights_fun / liquid_weights_sum
+                )
+            else:
+                current_stocks_value = 0.0
+                current_bonds_value = 0.0
+                current_str_value = 0.0
+                current_fun_value = 0.0
+
         # 5. Apply monthly returns to investments (at end of month)
         current_stocks_value *= 1.0 + monthly_returns_lookup["Stocks"][current_month_idx]
         current_bonds_value *= 1.0 + monthly_returns_lookup["Bonds"][current_month_idx]
@@ -607,13 +694,6 @@ def run_single_fire_simulation(
             and month_in_year_idx == 0
             and portfolio_allocs.rebalancing_year_idx > 0
         ):
-            total_investment_value_pre_rebalance: float = (
-                current_stocks_value
-                + current_bonds_value
-                + current_str_value
-                + current_fun_value
-                + current_real_estate_value
-            )
 
             cumulative_inflation_rebalance_year: np.float64 = cumulative_inflation_factors_annual[
                 portfolio_allocs.rebalancing_year_idx
@@ -636,137 +716,48 @@ def run_single_fire_simulation(
                 ),
             }
 
-            # --- START HOUSE PURCHASE LOGIC ---
-            if initial_real_house_cost > 0.0:
-                nominal_house_cost: float = float(
-                    initial_real_house_cost
-                    * cumulative_inflation_factors_annual[portfolio_allocs.rebalancing_year_idx]
-                )
-                liquid_assets_pre_house: float = (
-                    current_str_value
-                    + current_bonds_value
-                    + current_stocks_value
-                    + current_fun_value
-                )
-
-                if liquid_assets_pre_house < nominal_house_cost:
-                    success = False
-                    break  # Exit loop
-
-                remaining_to_buy: float = nominal_house_cost
-
-                if current_str_value >= remaining_to_buy:
-                    current_str_value -= remaining_to_buy
-                    remaining_to_buy = 0.0
-                else:
-                    remaining_to_buy -= current_str_value
-                    current_str_value = 0.0
-
-                if remaining_to_buy > 0.0:
-                    if current_bonds_value >= remaining_to_buy:
-                        current_bonds_value -= remaining_to_buy
-                        remaining_to_buy = 0.0
-                    else:
-                        remaining_to_buy -= current_bonds_value
-                        current_bonds_value = 0.0
-
-                if remaining_to_buy > 0.0:
-                    if current_stocks_value >= remaining_to_buy:
-                        current_stocks_value -= remaining_to_buy
-                        remaining_to_buy = 0.0
-                    else:
-                        remaining_to_buy -= current_stocks_value
-                        current_stocks_value = 0.0
-
-                if remaining_to_buy > 0.0:
-                    if current_fun_value >= remaining_to_buy:
-                        current_fun_value -= remaining_to_buy
-                        remaining_to_buy = 0.0
-                    else:
-                        remaining_to_buy -= current_fun_value
-                        current_fun_value = 0.0
-
-                current_real_estate_value += nominal_house_cost
-
-            # --- END HOUSE PURCHASE LOGIC ---
-
-            # Recalculate total_investment_value_pre_rebalance AFTER potential house purchase
-            total_investment_value_pre_rebalance = (
-                current_stocks_value
-                + current_bonds_value
-                + current_str_value
-                + current_fun_value
-                + current_real_estate_value
+            # --- STANDARD REBALANCING LOGIC ONLY ---
+            total_liquid_assets = (
+                current_stocks_value + current_bonds_value + current_str_value + current_fun_value
+            )
+            sum_liquid_p2_weights: float = (
+                portfolio_allocs.w_p2_stocks
+                + portfolio_allocs.w_p2_bonds
+                + portfolio_allocs.w_p2_str
+                + portfolio_allocs.w_p2_fun
             )
 
-            # --- START CONDITIONAL REBALANCING LOGIC ---
-            if initial_real_house_cost > 0.0:
-                liquid_portfolio_value_for_rebalance: float = (
-                    total_investment_value_pre_rebalance - current_real_estate_value
-                )
-                sum_liquid_p2_weights: float = (
-                    portfolio_allocs.w_p2_stocks
-                    + portfolio_allocs.w_p2_bonds
-                    + portfolio_allocs.w_p2_str
-                    + portfolio_allocs.w_p2_fun
-                )
-
-                if sum_liquid_p2_weights == 0.0:
-                    current_stocks_value = 0.0
-                    current_bonds_value = 0.0
-                    current_str_value = 0.0
-                    current_fun_value = 0.0
-                else:
-                    normalized_weights_phase2_stocks: float = (
-                        portfolio_allocs.w_p2_stocks / sum_liquid_p2_weights
-                    )
-                    normalized_weights_phase2_bonds: float = (
-                        portfolio_allocs.w_p2_bonds / sum_liquid_p2_weights
-                    )
-                    normalized_weights_phase2_str: float = (
-                        portfolio_allocs.w_p2_str / sum_liquid_p2_weights
-                    )
-                    normalized_weights_phase2_fun: float = (
-                        portfolio_allocs.w_p2_fun / sum_liquid_p2_weights
-                    )
-
-                    current_stocks_value = (
-                        liquid_portfolio_value_for_rebalance * normalized_weights_phase2_stocks
-                    )
-                    current_bonds_value = (
-                        liquid_portfolio_value_for_rebalance * normalized_weights_phase2_bonds
-                    )
-                    current_str_value = (
-                        liquid_portfolio_value_for_rebalance * normalized_weights_phase2_str
-                    )
-                    current_fun_value = (
-                        liquid_portfolio_value_for_rebalance * normalized_weights_phase2_fun
-                    )
-
-                rebalancing_allocations_nominal = {
-                    "Stocks": current_stocks_value,
-                    "Bonds": current_bonds_value,
-                    "STR": current_str_value,
-                    "Fun": current_fun_value,
-                    "Real Estate": current_real_estate_value,
-                }
+            if sum_liquid_p2_weights == 0.0 or total_liquid_assets == 0.0:
+                current_stocks_value = 0.0
+                current_bonds_value = 0.0
+                current_str_value = 0.0
+                current_fun_value = 0.0
             else:
-                rebalancing_allocations_nominal = {
-                    "Stocks": total_investment_value_pre_rebalance * portfolio_allocs.w_p2_stocks,
-                    "Bonds": total_investment_value_pre_rebalance * portfolio_allocs.w_p2_bonds,
-                    "STR": total_investment_value_pre_rebalance * portfolio_allocs.w_p2_str,
-                    "Fun": total_investment_value_pre_rebalance * portfolio_allocs.w_p2_fun,
-                    "Real Estate": total_investment_value_pre_rebalance
-                    * portfolio_allocs.w_p2_real_estate,
-                }
+                normalized_weights_phase2_stocks: float = (
+                    portfolio_allocs.w_p2_stocks / sum_liquid_p2_weights
+                )
+                normalized_weights_phase2_bonds: float = (
+                    portfolio_allocs.w_p2_bonds / sum_liquid_p2_weights
+                )
+                normalized_weights_phase2_str: float = (
+                    portfolio_allocs.w_p2_str / sum_liquid_p2_weights
+                )
+                normalized_weights_phase2_fun: float = (
+                    portfolio_allocs.w_p2_fun / sum_liquid_p2_weights
+                )
 
-                current_stocks_value = rebalancing_allocations_nominal["Stocks"]
-                current_bonds_value = rebalancing_allocations_nominal["Bonds"]
-                current_str_value = rebalancing_allocations_nominal["STR"]
-                current_fun_value = rebalancing_allocations_nominal["Fun"]
-                current_real_estate_value = rebalancing_allocations_nominal["Real Estate"]
+                current_stocks_value = total_liquid_assets * normalized_weights_phase2_stocks
+                current_bonds_value = total_liquid_assets * normalized_weights_phase2_bonds
+                current_str_value = total_liquid_assets * normalized_weights_phase2_str
+                current_fun_value = total_liquid_assets * normalized_weights_phase2_fun
 
-            # --- END CONDITIONAL REBALANCING LOGIC ---
+            rebalancing_allocations_nominal = {
+                "Stocks": current_stocks_value,
+                "Bonds": current_bonds_value,
+                "STR": current_str_value,
+                "Fun": current_fun_value,
+                "Real Estate": current_real_estate_value,
+            }
 
             inflation_factor: np.float64 = cumulative_inflation_rebalance_year
             rebalancing_allocations_real = {
