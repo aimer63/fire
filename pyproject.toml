@@ -1,2 +1,19 @@
 [tool.black]
 line-length = 100
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fire-montecarlo"
+version = "0.1.0"
+description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
+authors = [{ name = "Aimer63", email = "your@email.com" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy", "pandas", "matplotlib", "pydantic", "jinja2", "tomli"]
+
+[project.scripts]
+fire = "ignite.main:main"
