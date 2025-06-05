@@ -4,3 +4,10 @@ __pycache__/
 
 # C extensions
 *.so
+
+# Ignore config files you don't want to commit
+configs/imerio.toml
+configs/carlo.toml
+
+# Ignore all output files and directories
+output/
