@@ -18,6 +18,10 @@ FIRE planning.
 import sys
 import os
 from typing import Any
+
+# from ignite.version import __version__
+from ignite.analysis.reporting import generate_markdown_report
+
 import tomllib
 import time
 import itertools
@@ -28,17 +32,17 @@ from numpy.typing import NDArray
 import pandas as pd
 
 # Import helper functions
-from helpers import calculate_initial_asset_values
+from ignite.core.helpers import calculate_initial_asset_values
 
 # Import the main simulation function and its return type
-from simulation import run_single_fire_simulation, SimulationRunResult
+from ignite.core.simulation import run_single_fire_simulation, SimulationRunResult
 
 # Import the new analysis module functions and its plotting data TypedDict
-import analysis
-from analysis import PlotDataDict
+import ignite.analysis.analysis as analysis
+from ignite.analysis.analysis import PlotDataDict
 
 # Import plotting functions
-from plots import (
+from ignite.plots.plots import (
     plot_retirement_duration_distribution,
     plot_final_wealth_distribution_nominal,
     plot_final_wealth_distribution_real,
@@ -49,7 +53,7 @@ from plots import (
 )
 
 # Import the DeterministicInputs Pydantic model
-from config import (
+from ignite.config.config import (
     DeterministicInputs,
     EconomicAssumptions,
     PortfolioAllocations,
@@ -276,6 +280,40 @@ def main() -> None:
     print(f"\nTotal simulations run: {num_simulations}")
     print(f"Total simulation time: {total_simulation_elapsed_time:.2f} seconds")
     print(fire_summary_string)
+
+    # Prepare summary_stats dictionary (customize as needed)
+    # summary_stats = {
+    #     "simulation_count": num_simulations,
+    #     "parameters": {
+    #         "Initial Wealth": det_inputs.i0,
+    #         "Initial Bank Balance": det_inputs.b0,
+    #         "Total Retirement Years": det_inputs.t_ret_years,
+    #         "Initial Real Monthly Expenses": det_inputs.x_real_monthly_initial,
+    #     },
+    #     "success_rate": plot_data.get("success_rate", None),
+    #     "median_final_wealth": plot_data.get("median_final_wealth", None),
+    #     "worst_final_wealth": plot_data.get("worst_final_wealth", None),
+    #     "best_final_wealth": plot_data.get("best_final_wealth", None),
+    # }
+
+    # plots = {
+    #     "Retirement Duration Distribution": "output/plots/retirement_duration_distribution.png",
+    #     "Final Wealth Distribution (Nominal)": "output/plots/final_wealth_distribution_nominal.png",
+    #     "Final Wealth Distribution (Real)": "output/plots/final_wealth_distribution_real.png",
+    #     "Wealth Evolution Samples (Real)": "output/plots/wealth_evolution_samples_real.png",
+    #     "Wealth Evolution Samples (Nominal)": "output/plots/wealth_evolution_samples_nominal.png",
+    #     "Bank Account Trajectories (Real)": "output/plots/bank_account_trajectories_real.png",
+    #     "Bank Account Trajectories (Nominal)": "output/plots/bank_account_trajectories_nominal.png",
+    # }
+
+    # report_path = generate_markdown_report(
+    #     config_path=config_file_path,
+    #     summary_stats=summary_stats,
+    #     output_dir="output/reports",
+    #     plots=plots,
+    # )
+
+    # print(f"\nMarkdown report generated: {report_path}")
 
     # --- 8. Generate Plots ---
     print("\n--- Generating Plots ---")

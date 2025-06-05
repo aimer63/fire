@@ -28,10 +28,15 @@ from typing import TypedDict
 from numpy.typing import NDArray
 
 # Import helper functions
-from helpers import annual_to_monthly_compounded_rate, calculate_initial_asset_values
+from ignite.core.helpers import annual_to_monthly_compounded_rate, calculate_initial_asset_values
 
 # Import the DeterministicInputs Pydantic model
-from config import DeterministicInputs, EconomicAssumptions, PortfolioAllocations, ShockEvent
+from ignite.config.config import (
+    DeterministicInputs,
+    EconomicAssumptions,
+    PortfolioAllocations,
+    ShockEvent,
+)
 
 
 # Define a TypedDict for the return value of run_single_fire_simulation

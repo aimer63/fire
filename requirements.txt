@@ -1,0 +1,6 @@
+numpy
+pandas
+matplotlib
+pydantic
+tomli
+jinja2

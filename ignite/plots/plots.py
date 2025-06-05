@@ -28,29 +28,33 @@ import pandas as pd
 from typing import Any
 from numpy.typing import NDArray
 
-from helpers import annual_to_monthly_compounded_rate
-from analysis import PlotLineData
+from ignite.core.helpers import annual_to_monthly_compounded_rate
+from ignite.analysis.analysis import PlotLineData
 
 
 plt.ion()  # Turn on interactive mode
 
-OUTPUT_DIR: str = "output"
+# Set OUTPUT_DIR relative to the project root (or wherever you want)
+OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output/plots"))
 
 
 def ensure_output_directory_exists() -> None:
     """Ensures the output directory exists."""
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR)
-        print(f"Created output directory: {OUTPUT_DIR}")
+    try:
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+    except Exception as e:
+        print(f"Error creating output directory {OUTPUT_DIR}: {e}")
 
 
 def _save_and_store_figure(fig: Any, filename: str) -> None:
     """Internal helper to save a figure to disk."""
     ensure_output_directory_exists()
-    full_path: str = os.path.join(OUTPUT_DIR, filename)
-
-    fig.savefig(full_path)
-    print(f"Saved {full_path}")
+    full_path = os.path.join(OUTPUT_DIR, filename)
+    try:
+        fig.savefig(full_path)
+        print(f"Saved {os.path.abspath(full_path)}")
+    except Exception as e:
+        print(f"Error saving figure to {full_path}: {e}")
 
 
 def plot_retirement_duration_distribution(
