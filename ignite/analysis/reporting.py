@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 2024 Aimer63
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from ignite.version import __version__
 from datetime import datetime
 from pathlib import Path

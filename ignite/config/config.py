@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 2024 Aimer63
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Configuration models for the FIRE Monte Carlo simulation tool.
 
