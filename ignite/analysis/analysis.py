@@ -475,4 +475,38 @@ def generate_fire_plan_summary(
     else:
         summary_lines.append("\nNo successful simulations to report details.")
 
-    return "\n".join(summary_lines)
+    stats_dict = {
+        "success_rate": fire_success_rate,
+        "failed_simulations_count": failed_simulations_count,
+        "avg_months_failed": avg_months_failed,
+    }
+
+    if worst_successful_result:
+        stats_dict["worst_successful"] = {
+            "final_wealth_nominal": final_total_wealth_nominal,
+            "final_wealth_real": final_total_wealth_real,
+            "cagr": cagr,
+            "allocations": _format_allocations_as_percentages(
+                worst_successful_result["final_allocations_nominal"]
+            ),
+        }
+    if average_successful_result:
+        stats_dict["average_successful"] = {
+            "final_wealth_nominal": final_total_wealth_nominal,
+            "final_wealth_real": final_total_wealth_real,
+            "cagr": cagr,
+            "allocations": _format_allocations_as_percentages(
+                average_successful_result["final_allocations_nominal"]
+            ),
+        }
+    if best_successful_result:
+        stats_dict["best_successful"] = {
+            "final_wealth_nominal": final_total_wealth_nominal,
+            "final_wealth_real": final_total_wealth_real,
+            "cagr": cagr,
+            "allocations": _format_allocations_as_percentages(
+                best_successful_result["final_allocations_nominal"]
+            ),
+        }
+
+    return "\n".join(summary_lines), stats_dict

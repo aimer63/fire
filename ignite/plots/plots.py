@@ -35,11 +35,19 @@ from ignite.analysis.analysis import PlotLineData
 plt.ion()  # Turn on interactive mode
 
 # Set OUTPUT_DIR relative to the project root (or wherever you want)
-OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output/plots"))
+OUTPUT_DIR = None  # Will be set from main.py
+
+
+def set_output_dir(output_dir: str):
+    """Set the output directory for all plots."""
+    global OUTPUT_DIR
+    OUTPUT_DIR = output_dir
 
 
 def ensure_output_directory_exists() -> None:
     """Ensures the output directory exists."""
+    if OUTPUT_DIR is None:
+        raise RuntimeError("OUTPUT_DIR is not set. Call set_output_dir() before plotting.")
     try:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
     except Exception as e:

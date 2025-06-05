@@ -1,4 +1,13 @@
 # config.toml
+
+# --- Simulation Parameters ---
+[simulation_parameters]
+num_simulations = 10000
+
+# --- Outputs ---
+[paths]
+output_root = "output"
+
 # The years are counted from zero, so, if we are 2025:
 # 0 2025
 # 1 2026
@@ -7,8 +16,7 @@
 # 4 2029
 # 5 2030
 # 6
-
-# --- A. Deterministic Inputs (Your Personal Financial Plan) ---
+# --- Deterministic Inputs (Your Personal Financial Plan) ---
 [deterministic_inputs]
 i0 = 100_000 # Initial Investment Value (e.g., EUR)
 b0 = 0  # Initial Bank Account Balance (e.g., EUR)
@@ -63,7 +71,7 @@ x_planned_extra = [
 h0_real_cost = 0
 house_purchase_year_idx = 0
 
-# --- B. Economic Assumptions (Averages and Volatilities) ---
+# --- Economic Assumptions (Averages and Volatilities) ---
 # Nominal values
 [economic_assumptions]
 # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
@@ -181,7 +189,7 @@ events = []
 #     {year = 10, asset = "Real Estate", magnitude = -0.05},
 # ]
 
-# --- C. Portfolio Allocations (Weights) ---
+# --- Portfolio Allocations (Weights) ---
 [portfolio_allocations]
 rebalancing_year_idx = 0
 w_p1_stocks = 0.60
@@ -195,7 +203,3 @@ w_p2_bonds = 0.35
 w_p2_str = 0.00
 w_p2_fun = 0.05
 w_p2_real_estate = 0.00
-
-# --- D. Simulation Parameters ---
-[simulation_parameters]
-num_simulations = 10000
