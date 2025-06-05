@@ -52,6 +52,8 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - [ ] Export results to CSV/Excel.
 - [ ] Add CLI options for common tasks (e.g., `--config`, `--output`).
 - [ ] Add interactive or web-based visualization.
+- [ ] Enable multiple portfolio rebalances:
+  - Allow users to specify a set of rebalance years, each associated with a set of portfolio weights (e.g., rebalance at year 5 and 10 with different allocations).
 
 ---
 

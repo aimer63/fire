@@ -222,7 +222,7 @@ Monte Carlo simulation is a robust and flexible tool for FIRE planning, allowing
 
 ## References
 
-- Robert, C. P., & Casella, G. (2013). _Monte Carlo Statistical Methods_. Springer.
+- Robert, C. P., & Casella, G. (2005). _Monte Carlo Statistical Methods_. Springer.
 - Glasserman, P. (2004). _Monte Carlo Methods in Financial Engineering_. Springer.
 - Wikipedia: [Monte Carlo method](https://en.wikipedia.org/wiki/Monte_Carlo_method)
 
