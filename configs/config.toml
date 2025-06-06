@@ -18,61 +18,60 @@ output_root = "output"
 # 6
 # --- Deterministic Inputs (Your Personal Financial Plan) ---
 [deterministic_inputs]
-i0 = 100_000 # Initial Investment Value (e.g., EUR)
-b0 = 0  # Initial Bank Account Balance (e.g., EUR)
+initial_investment = 100_000 # Initial Investment Value (e.g., EUR)
+initial_bank_balance = 0  # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower and upper bound in real money
 # if it goes below it will be topped, if it goes above it will be invested
 # from the investment
-real_bank_lower_bound = 0
-real_bank_upper_bound = 0
+bank_lower_bound = 0
+bank_upper_bound = 0
 
 # Number of years the simulation will run
-t_ret_years = 20
+years_to_simulate = 20
 
 # In flows
 
 # To the bank:
-s_real_monthly = 0                                  # Initial real monthly salary (e.g., 2500 EUR in today's money)
-salary_inflation_adjustment_factor = 1.0            # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
-y_s_start_idx = 0                                   # Year index when salary starts (e.g., 0 for immediate start)
-y_s_end_idx = 0                                     # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+monthly_salary = 0                                  # Initial real monthly salary (e.g., 2500 EUR in today's money)
+salary_inflation_factor = 1.0                       # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
+salary_start_year = 0                               # Year index when salary starts (e.g., 0 for immediate start)
+salary_end_year = 0                                 # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
 
 # The pension when it will arrive... if
-p_real_monthly = 0
-pension_inflation_adjustment_factor = 0.6
-y_p_start_idx = 0
+monthly_pension = 0
+pension_inflation_factor = 0.6
+pension_start_year = 0
 
 # To the investment:
 # Fixed monthly contribution to the invested assets, like a pak in today money.
 # Models something something is coming from outside
-c_real_monthly_initial = 0 # Example: 500€ per month in today's money
+monthly_investment_contribution = 0 # Example: 500€ per month in today's money
 
 # Planned Contributions, real amount at the time of the contribution
 # [[contrib, year], ...]
-c_planned = []
-# c_planned = [
+planned_contributions = []
+# planned_contributions = [
 #     [10_000, 2],
 #     [25_000, 3],
 #     [5430, 4],
 # ]
 
 # Out flows
-ter_annual_percentage = 0.002 # 2%
+annual_fund_fee = 0.002 # 2%
 # Fixed monthly exepense for the life level you want to keep
-x_real_monthly_initial = 0
+monthly_expenses = 0
 
 # Planned Extra Expenses real_amount at the time of the expense. [[X, year], ...]
-x_planned_extra = [
+planned_extra_expenses = [
     [0, 0],
 ]
 
 # Initial real cost of the house to be purchased at rebalancing_year_idx
-h0_real_cost = 0
-house_purchase_year_idx = 0
+planned_house_purchase_cost = 0
+house_purchase_year = 0
 
 # --- Economic Assumptions (Averages and Volatilities) ---
-# Nominal values
 [economic_assumptions]
 # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
 # MU: Arithmetic Mean
@@ -148,8 +147,8 @@ real_estate_sigma = 0.0416
 # sigma_pi = 0.0229
 
 # More relistics for the future
-mu_pi = 0.025
-sigma_pi = 0.025
+pi_mu = 0.025
+pi_sigma = 0.025
 
 # Injects market shocks/crisis
 [shocks]
@@ -191,15 +190,15 @@ events = []
 
 # --- Portfolio Allocations (Weights) ---
 [portfolio_allocations]
-rebalancing_year_idx = 0
-w_p1_stocks = 0.60
-w_p1_bonds = 0.35
-w_p1_str = 0.00
-w_p1_fun = 0.05
-w_p1_real_estate = 0.00
+rebalancing_year = 0
+phase1_stocks = 0.60
+phase1_bonds = 0.35
+phase1_str = 0.00
+phase1_fun = 0.05
+phase1_real_estate = 0.00
 
-w_p2_stocks = 0.60
-w_p2_bonds = 0.35
-w_p2_str = 0.00
-w_p2_fun = 0.05
-w_p2_real_estate = 0.00
+phase2_stocks = 0.60
+phase2_bonds = 0.35
+phase2_str = 0.00
+phase2_fun = 0.05
+phase2_real_estate = 0.00
