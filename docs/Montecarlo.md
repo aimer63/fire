@@ -26,9 +26,7 @@ Monte Carlo methods are grounded in the **Law of Large Numbers (LLN)**, which st
 
 Let $X_1, X_2, \ldots, X_n$ be i.i.d. random variables with mean $\mu$:
 
-$$
-\overline{X}_n = \frac{1}{n} \sum_{i=1}^n X_i
-$$
+The sample mean is $\overline{X}_n = \frac{1}{n} \sum_{i=1}^n X_i$.
 
 Then, as $n \to \infty$:
 
