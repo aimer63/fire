@@ -47,6 +47,7 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - [ ] **Performance & Usability**
   - Progress bar or better feedback for long simulations.
   - Optionally parallelize simulations for speed.
+  - Optimize house purchase and rebalance: if both occur in the same month, perform only one rebalance after the house purchase using the new year's weights.
 - [ ] **Parameter Summary Output**
   - Print all loaded parameters to the console in a section titled `--- Loaded Parameters Summary (from config.toml) ---` after config parsing.
   - Add a section to the Markdown report listing the value of all parameters loaded from the config file.
