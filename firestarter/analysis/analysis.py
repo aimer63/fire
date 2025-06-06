@@ -248,23 +248,16 @@ def perform_analysis_and_prepare_plots_data(
 
 
 def generate_fire_plan_summary(
-    simulation_results: list[SimulationRunResult],  # Use the imported TypedDict
+    simulation_results: list[SimulationRunResult],
     initial_total_wealth_nominal: float,
-    total_retirement_years: int,  # Renamed t_ret_years for clarity and PEP 8
+    total_retirement_years: int,
 ) -> str:
     """
-    Analyzes simulation results and generates a single, formatted summary string
-    containing success rate, average wealth, CAGR, and best/worst/average cases,
-    including final asset allocations as percentages.
+    Generate a summary of the FIRE simulation results.
 
-    Args:
-        simulation_results (list[SimulationRunResult]): List of simulation run results.
-        initial_total_wealth_nominal (float): The starting total nominal wealth
-        for CAGR calculation.
-        total_retirement_years (int): The total number of retirement years simulated.
-
-    Returns:
-        str: A multi-line string containing the formatted simulation summary.
+    - Computes statistics such as success rate, average months failed, and final wealth.
+    - Reports final allocations for worst, average, and best successful scenarios.
+    - All allocations refer to liquid assets only; real estate is tracked separately.
     """
     successful_simulations_count: int = 0
     failed_simulations_count: int = 0
@@ -277,21 +270,12 @@ def generate_fire_plan_summary(
     # Iterate through all simulation results to collect data for the summary
     for result in simulation_results:
         # Unpack directly from TypedDict. Pyright can now track types.
-        # pylint: disable=unused-variable (can remove if pylint is configured to ignore)
         success: bool = result["success"]
         months_lasted: int = result["months_lasted"]
-        # final_investment: float = result["final_investment"]
-        # final_bank_balance: float = result["final_bank_balance"]
-        # annual_inflations_seq: NDArray[np.float64] = result["annual_inflations_seq"]
-
-        # The other fields like nominal_wealth_history etc. are not needed for
-        # this loop's direct logic but are correctly typed in SimulationRunResult.
 
         if success:
             successful_simulations_count += 1
-            # Store the full result TypedDict for successful simulations
             successful_results_data.append(result)
-
         else:
             failed_simulations_count += 1
             months_lasted_in_failed_simulations.append(months_lasted)
@@ -299,16 +283,13 @@ def generate_fire_plan_summary(
     # --- Summary Calculations ---
     total_simulations: int = len(simulation_results)
     fire_success_rate: float = (
-        (float(successful_simulations_count) / total_simulations)
-        * 100.0  # Ensure float division and literal
+        (float(successful_simulations_count) / total_simulations) * 100.0
         if total_simulations > 0
-        else 0.0  # Ensure float literal
+        else 0.0
     )
 
-    avg_months_failed: float = (  # Type hint for mean
-        float(np.mean(months_lasted_in_failed_simulations))  # Explicit cast
-        if failed_simulations_count > 0
-        else 0.0  # Ensure float literal
+    avg_months_failed: float = (
+        float(np.mean(months_lasted_in_failed_simulations)) if failed_simulations_count > 0 else 0.0
     )
 
     # Initialize variables to hold the *full result TypedDicts* for key scenarios
@@ -317,41 +298,31 @@ def generate_fire_plan_summary(
     best_successful_result: SimulationRunResult | None = None
 
     if successful_simulations_count > 0:
-        # Create a temporary list of (real_final_wealth, SimulationRunResult) from
-        # successful_results_data
         temp_successful_sorted: list[tuple[float, SimulationRunResult]] = []
         for res in successful_results_data:
-            # Unpack only what's needed for sorting from the TypedDict
             final_nom_wealth: float = res["final_investment"] + res["final_bank_balance"]
-            # Ensure correct type for annual_inflations_seq
             annual_infl: NDArray[np.float64] = res["annual_inflations_seq"]
-            cum_infl_factor: np.float64 = (
-                np.prod(1.0 + annual_infl)
-                if total_retirement_years > 0
-                else 1.0  # Ensure float literal
+            cum_infl_factor: float = (
+                np.prod(1.0 + annual_infl) if total_retirement_years > 0 else 1.0
             )
-            real_wealth: float = final_nom_wealth / float(cum_infl_factor)  # Explicit cast
+            real_wealth: float = final_nom_wealth / float(cum_infl_factor)
             temp_successful_sorted.append((real_wealth, res))
 
-        temp_successful_sorted.sort(key=lambda x: x[0])  # Sort by real wealth
+        temp_successful_sorted.sort(key=lambda x: x[0])
 
-        worst_successful_result = temp_successful_sorted[0][1]  # Smallest real wealth
-        best_successful_result = temp_successful_sorted[-1][1]  # Largest real wealth
+        worst_successful_result = temp_successful_sorted[0][1]
+        best_successful_result = temp_successful_sorted[-1][1]
 
-        # Find Average Case (closest to median real_final_wealth among
-        # successful sims)
         median_real_wealth_among_successful: float = float(
-            np.median([x[0] for x in temp_successful_sorted])  # Explicit cast
+            np.median([x[0] for x in temp_successful_sorted])
         )
 
-        # Use an explicit float comparison
         closest_to_median: tuple[float, SimulationRunResult] = min(
             temp_successful_sorted,
             key=lambda x: abs(x[0] - median_real_wealth_among_successful),
         )
         average_successful_result = closest_to_median[1]
 
-    # Helper function to format allocations as percentages
     def _format_allocations_as_percentages(
         allocations_nominal_dict: dict[str, float],
     ) -> str:
@@ -359,21 +330,18 @@ def generate_fire_plan_summary(
             return "N/A"
 
         total_nominal: float = sum(allocations_nominal_dict.values())
-        if total_nominal == 0.0:  # Use float literal
+        if total_nominal == 0.0:
             return "All zero"
 
         percentage_strings: list[str] = []
         for asset, nom_val in allocations_nominal_dict.items():
-            percentage: float = (nom_val / total_nominal) * 100.0  # Use float literal
-            # Only include if percentage is significant or if it's explicitly
-            # zero (not just tiny float)
-            if percentage >= 0.1 or (percentage == 0.0 and nom_val == 0.0):  # Use float literals
+            percentage: float = (nom_val / total_nominal) * 100.0
+            if percentage >= 0.1 or (percentage == 0.0 and nom_val == 0.0):
                 percentage_strings.append(f"{asset}: {percentage:.1f}%")
-            elif percentage > 0.0:  # Handle very small non-zero percentages # Use float literal
+            elif percentage > 0.0:
                 percentage_strings.append(f"{asset}: <0.1%")
         return ", ".join(percentage_strings)
 
-    # --- Construct the summary string ---
     summary_lines: list[str] = [
         "\n--- FIRE Plan Simulation Summary ---",
         f"FIRE Plan Success Rate: {fire_success_rate:.2f}%",
@@ -389,12 +357,11 @@ def generate_fire_plan_summary(
 
         # Worst Successful Case
         if worst_successful_result:
-            # Access values directly from TypedDict
             final_total_wealth_nominal: float = (
                 worst_successful_result["final_investment"]
                 + worst_successful_result["final_bank_balance"]
             )
-            cum_infl_factor_np: np.float64 = (
+            cum_infl_factor_np: float = (
                 np.prod(1.0 + worst_successful_result["annual_inflations_seq"])
                 if total_retirement_years > 0
                 else 1.0
@@ -412,19 +379,16 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(
-                        worst_successful_result['final_allocations_nominal']
-                    )}"
+                + f"{_format_allocations_as_percentages(worst_successful_result['final_allocations_nominal'])}"
             )
 
         # Average Successful Case
         if average_successful_result:
-            # Access values directly from TypedDict
             final_total_wealth_nominal: float = (
                 average_successful_result["final_investment"]
                 + average_successful_result["final_bank_balance"]
             )
-            cum_infl_factor_np: np.float64 = (
+            cum_infl_factor_np: float = (
                 np.prod(1.0 + average_successful_result["annual_inflations_seq"])
                 if total_retirement_years > 0
                 else 1.0
@@ -443,19 +407,16 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(
-                        average_successful_result['final_allocations_nominal']
-                    )}"
+                + f"{_format_allocations_as_percentages(average_successful_result['final_allocations_nominal'])}"
             )
 
         # Best Successful Case
         if best_successful_result:
-            # Access values directly from TypedDict
             final_total_wealth_nominal: float = (
                 best_successful_result["final_investment"]
                 + best_successful_result["final_bank_balance"]
             )
-            cum_infl_factor_np: np.float64 = (
+            cum_infl_factor_np: float = (
                 np.prod(1.0 + best_successful_result["annual_inflations_seq"])
                 if total_retirement_years > 0
                 else 1.0
@@ -473,9 +434,7 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(
-                        best_successful_result['final_allocations_nominal']
-                    )}"
+                + f"{_format_allocations_as_percentages(best_successful_result['final_allocations_nominal'])}"
             )
 
     else:

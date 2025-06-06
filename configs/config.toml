@@ -68,8 +68,8 @@ planned_extra_expenses = [
 ]
 
 # Initial real cost of the house to be purchased at rebalancing_year_idx
-planned_house_purchase_cost = 0
-house_purchase_year = 0
+planned_house_purchase_cost = 100_000
+house_purchase_year = 10
 
 # --- Economic Assumptions (Averages and Volatilities) ---
 [economic_assumptions]
@@ -189,16 +189,22 @@ events = []
 # ]
 
 # --- Portfolio Allocations (Weights) ---
-[portfolio_allocations]
-rebalancing_year = 0
-phase1_stocks = 0.60
-phase1_bonds = 0.35
-phase1_str = 0.00
-phase1_fun = 0.05
-phase1_real_estate = 0.00
+# [portfolio_allocations]
+# rebalancing_year = 0
+# phase1_stocks = 0.60
+# phase1_bonds = 0.35
+# phase1_str = 0.00
+# phase1_fun = 0.05
+# phase1_real_estate = 0.00
+#
+# phase2_stocks = 0.60
+# phase2_bonds = 0.35
+# phase2_str = 0.00
+# phase2_fun = 0.05
+# phase2_real_estate = 0.00
 
-phase2_stocks = 0.60
-phase2_bonds = 0.35
-phase2_str = 0.00
-phase2_fun = 0.05
-phase2_real_estate = 0.00
+[portfolio_rebalances]
+rebalances = [
+  { year = 0,  stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
+  { year = 10, stocks = 0.40, bonds = 0.50, str = 0.05, fun = 0.05 }
+]

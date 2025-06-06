@@ -5,18 +5,12 @@
 """
 main.py
 
-This is the main entry point for the Personal Financial Independence / Early
-Retirement (FIRE) plan Monte Carlo simulation application.
+Main entry point for running FIRE Monte Carlo simulations.
 
-It orchestrates the entire simulation process, including:
-- Loading simulation parameters and configurations from 'config.toml'.
-- Running multiple iterations of the financial simulation.
-- Performing post-simulation analysis on the results.
-- Generating various plots to visualize the simulation outcomes.
-
-This script brings together functionalities from the 'helpers', 'simulation',
-'analysis', and 'plots' modules to provide a comprehensive tool for
-FIRE planning.
+- Loads configuration from TOML files.
+- Validates parameters using Pydantic models.
+- Supports multiple scheduled portfolio rebalances.
+- Runs simulations and generates reports and plots.
 """
 
 import sys
@@ -56,7 +50,7 @@ from firestarter.plots.plots import (
 from firestarter.config.config import (
     DeterministicInputs,
     EconomicAssumptions,
-    PortfolioAllocations,
+    PortfolioRebalances,
     SimulationParameters,
     Shocks,
 )
@@ -68,8 +62,12 @@ import firestarter.plots.plots as plots_module
 
 def main() -> None:
     """
-    Main function to orchestrate the Monte Carlo retirement simulation,
-    analysis, and plotting.
+    Main workflow for the FIRE simulation tool.
+
+    - Loads and validates configuration.
+    - Validates portfolio rebalance weights.
+    - Runs Monte Carlo simulations using the current rebalance schedule.
+    - Performs analysis and generates reports and plots.
     """
     # --- 1-5. Config Loading, Parameter Assignment, Derived Calculations, and Assertions ---
     config_file_path: str = "config.toml"
@@ -101,10 +99,11 @@ def main() -> None:
         **config_data["economic_assumptions"]
     )
 
-    # --- Pydantic: Load and validate Portfolio Allocations ---
-    portfolio_allocs: PortfolioAllocations = PortfolioAllocations(
-        **config_data["portfolio_allocations"]
+    # --- Pydantic: Load and validate Portfolio Rebalances ---
+    portfolio_rebalances: PortfolioRebalances = PortfolioRebalances(
+        **config_data["portfolio_rebalances"]
     )
+    # print(config_data["portfolio_rebalances"])
 
     # --- Pydantic: Load and validate Simulation Parameters ---
     sim_params: SimulationParameters = SimulationParameters(**config_data["simulation_parameters"])
@@ -114,32 +113,26 @@ def main() -> None:
     shocks: Shocks = Shocks(**config_data.get("shocks", {}))
     shock_events: list[dict[str, Any]] = [event.dict() for event in shocks.events]
 
-    # Validate portfolio weights
-    p1_sum: float = (
-        portfolio_allocs.w_p1_stocks
-        + portfolio_allocs.w_p1_bonds
-        + portfolio_allocs.w_p1_str
-        + portfolio_allocs.w_p1_fun
-        + portfolio_allocs.w_p1_real_estate
-    )
-    p2_sum: float = (
-        portfolio_allocs.w_p2_stocks
-        + portfolio_allocs.w_p2_bonds
-        + portfolio_allocs.w_p2_str
-        + portfolio_allocs.w_p2_fun
-        + portfolio_allocs.w_p2_real_estate
-    )
+    print("Number of rebalances:", len(portfolio_rebalances.rebalances))
+    print("All rebalances:", portfolio_rebalances.rebalances)
+    print(portfolio_rebalances.rebalances[0].dict())
+    # Validate portfolio rebalance weights
+    for reb in portfolio_rebalances.rebalances:
+        reb_sum = reb.stocks + reb.bonds + reb.str + reb.fun
+        assert np.isclose(
+            reb_sum, 1.0
+        ), f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
+    print("All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance.")
 
-    assert np.isclose(p1_sum, 1.0), f"Phase 1 weights sum to {p1_sum:.4f}, not 1.0."
-    assert np.isclose(p2_sum, 1.0), f"Phase 2 weights sum to {p2_sum:.4f}, not 1.0."
-    print("Portfolio weights (w_p1, w_p2) successfully validated: sum to 1.0.")
-
-    assert det_inputs.real_bank_upper_bound >= det_inputs.real_bank_lower_bound, (
-        f"Bounds invalid: Upper ({det_inputs.real_bank_upper_bound:,.0f}) "
-        + f"< Lower ({det_inputs.real_bank_lower_bound:,.0f})."
+    assert det_inputs.bank_upper_bound >= det_inputs.bank_lower_bound, (
+        f"Bounds invalid: Upper ({det_inputs.bank_upper_bound:,.0f}) "
+        + f"< Lower ({det_inputs.bank_lower_bound:,.0f})."
     )
     print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
 
+    # Remove all uses of portfolio_allocs and initial asset value calculation based on it.
+    # If you need initial asset values, calculate them based on the first rebalance weights:
+    first_reb = portfolio_rebalances.rebalances[0]
     (
         initial_stocks_value,
         initial_bonds_value,
@@ -147,12 +140,12 @@ def main() -> None:
         initial_fun_value,
         initial_real_estate_value,
     ) = calculate_initial_asset_values(
-        det_inputs.i0,
-        portfolio_allocs.w_p1_stocks,
-        portfolio_allocs.w_p1_bonds,
-        portfolio_allocs.w_p1_str,
-        portfolio_allocs.w_p1_fun,
-        portfolio_allocs.w_p1_real_estate,
+        det_inputs.initial_investment,
+        first_reb.stocks,
+        first_reb.bonds,
+        first_reb.str,
+        first_reb.fun,
+        0.0,  # real estate is always 0 in liquid allocations
     )
 
     print(
@@ -162,27 +155,25 @@ def main() -> None:
 
     # --- Print all parameters for verification ---
     print("\n--- Loaded Parameters Summary (from config.toml) ---")
-    print(f"initial_investment: {det_inputs.i0:,.2f}")
-    print(f"initial_bank_balance: {det_inputs.b0:,.2f}")
-    print(f"real_bank_lower_bound: {det_inputs.real_bank_lower_bound:,.2f}")
-    print(f"real_bank_upper_bound: {det_inputs.real_bank_upper_bound:,.2f}")
-    print(f"total_retirement_years: {det_inputs.t_ret_years}")
-    print(f"total_retirement_months: {det_inputs.t_ret_years * 12}")  # Derived value
-    print(f"initial_real_monthly_expenses: {det_inputs.x_real_monthly_initial:,.2f}")
-    print(f"planned_extra_expenses: {det_inputs.x_planned_extra}")
-    print(f"planned_contributions: {det_inputs.c_planned}")
-    print(f"initial_real_monthly_contribution: {det_inputs.c_real_monthly_initial:,.2f}")
-    print(f"ter_annual_percentage: {det_inputs.ter_annual_percentage:.4f}")
-    print(f"initial_real_house_cost: {det_inputs.h0_real_cost:,.2f}")
-    print(f"initial_real_monthly_pension: {det_inputs.p_real_monthly:,.2f}")
-    print(
-        "pension_inflation_adjustment_factor: " f"{det_inputs.pension_inflation_adjustment_factor}"
-    )
-    print(f"pension_start_year_idx: {det_inputs.y_p_start_idx}")
-    print(f"initial_real_monthly_salary: {det_inputs.s_real_monthly:,.2f}")
-    print("salary_inflation_adjustment_factor: " f"{det_inputs.salary_inflation_adjustment_factor}")
-    print(f"salary_start_year_idx: {det_inputs.y_s_start_idx}")
-    print(f"salary_end_year_idx: {det_inputs.y_s_end_idx}")
+    print(f"initial_investment: {det_inputs.initial_investment:,.2f}")
+    print(f"initial_bank_balance: {det_inputs.initial_bank_balance:,.2f}")
+    print(f"bank_lower_bound: {det_inputs.bank_lower_bound:,.2f}")
+    print(f"bank_upper_bound: {det_inputs.bank_upper_bound:,.2f}")
+    print(f"years_to_simulate: {det_inputs.years_to_simulate}")
+    print(f"total_retirement_months: {det_inputs.years_to_simulate * 12}")  # Derived value
+    print(f"monthly_expenses: {det_inputs.monthly_expenses:,.2f}")
+    print(f"planned_extra_expenses: {det_inputs.planned_extra_expenses}")
+    print(f"planned_contributions: {det_inputs.planned_contributions}")
+    print(f"monthly_investment_contribution: {det_inputs.monthly_investment_contribution:,.2f}")
+    print(f"annual_fund_fee: {det_inputs.annual_fund_fee:.4f}")
+    print(f"planned_house_purchase_cost: {det_inputs.planned_house_purchase_cost:,.2f}")
+    print(f"monthly_pension: {det_inputs.monthly_pension:,.2f}")
+    print("pension_inflation_factor: " f"{det_inputs.pension_inflation_factor}")
+    print(f"pension_start_year: {det_inputs.pension_start_year}")
+    print(f"monthly_salary: {det_inputs.monthly_salary:,.2f}")
+    print("salary_inflation_factor: " f"{det_inputs.salary_inflation_factor}")
+    print(f"salary_start_year: {det_inputs.salary_start_year}")
+    print(f"salary_end_year: {det_inputs.salary_end_year}")
 
     print("\n--- Economic Assumptions ---")
     print(
@@ -196,28 +187,11 @@ def main() -> None:
         f"real_estate_mu: {econ_assumptions.real_estate_mu:.4f}, "
         + f"real_estate_sigma: {econ_assumptions.real_estate_sigma:.4f}"
     )
-    print(f"mu_pi: {econ_assumptions.mu_pi:.4f}, sigma_pi: {econ_assumptions.sigma_pi:.4f}")
+    print(f"pi_mu: {econ_assumptions.pi_mu:.4f}, pi_sigma: {econ_assumptions.pi_sigma:.4f}")
 
     print("\n--- Derived Log-Normal Parameters ---")
     for asset, (mu_log, sigma_log) in econ_assumptions.lognormal.items():
         print(f"{asset}: mu_log = {mu_log:.6f}, sigma_log = {sigma_log:.6f}")
-
-    print("\n--- Portfolio Allocations ---")
-    print(f"rebalancing_trigger_year_idx: {portfolio_allocs.rebalancing_year_idx}")
-    print(
-        f"phase1_stocks_weight: {portfolio_allocs.w_p1_stocks:.4f}, "
-        + f"phase1_bonds_weight: {portfolio_allocs.w_p1_bonds:.4f}, "
-        + f"phase1_str_weight: {portfolio_allocs.w_p1_str:.4f}, "
-        + f"phase1_fun_weight: {portfolio_allocs.w_p1_fun:.4f}, "
-        + f"phase1_real_estate_weight: {portfolio_allocs.w_p1_real_estate:.4f}"
-    )
-    print(
-        f"phase2_stocks_weight: {portfolio_allocs.w_p2_stocks:.4f}, "
-        + f"phase2_bonds_weight: {portfolio_allocs.w_p2_bonds:.4f}, "
-        + f"phase2_str_weight: {portfolio_allocs.w_p2_str:.4f}, "
-        + f"phase2_fun_weight: {portfolio_allocs.w_p2_fun:.4f}, "
-        + f"phase2_real_estate_weight: {portfolio_allocs.w_p2_real_estate:.4f}"
-    )
 
     print("\n--- Initial Asset Values ---")
     print(f"initial_stocks_value: {initial_stocks_value:,.2f}")
@@ -239,13 +213,13 @@ def main() -> None:
 
     print(
         f"\nRunning {num_simulations} Monte Carlo simulations "
-        + f"(T={det_inputs.t_ret_years} years)..."
+        + f"(T={det_inputs.years_to_simulate} years)..."
     )
     for i in range(num_simulations):
         result: SimulationRunResult = run_single_fire_simulation(
             det_inputs,
             econ_assumptions,
-            portfolio_allocs,
+            portfolio_rebalances,
             shock_events,
         )
         simulation_results.append(result)
@@ -276,11 +250,11 @@ def main() -> None:
     )
 
     # Generate and print the consolidated FIRE plan summary
-    initial_total_wealth: float = det_inputs.i0 + det_inputs.b0
+    initial_total_wealth: float = det_inputs.initial_investment + det_inputs.initial_bank_balance
     fire_summary_string, fire_stats = analysis.generate_fire_plan_summary(
         simulation_results,
         initial_total_wealth,
-        det_inputs.t_ret_years,
+        det_inputs.years_to_simulate,
     )
 
     # Print the consolidated summary, including the total simulation time here
@@ -332,26 +306,26 @@ def main() -> None:
     bank_account_plot_indices: NDArray[np.intp] = plot_data["bank_account_plot_indices"]
 
     # Plotting Historical Distributions
-    plot_retirement_duration_distribution(failed_sims, det_inputs.t_ret_years)
+    plot_retirement_duration_distribution(failed_sims, det_inputs.years_to_simulate)
     plot_final_wealth_distribution_nominal(successful_sims)
     plot_final_wealth_distribution_real(successful_sims)
 
     # Plotting Time Evolution Samples
-    plot_wealth_evolution_samples_real(results_df, plot_lines_data, econ_assumptions.mu_pi)
+    plot_wealth_evolution_samples_real(results_df, plot_lines_data, econ_assumptions.pi_mu)
     plot_wealth_evolution_samples_nominal(results_df, plot_lines_data)
 
     # Plotting Bank Account Trajectories
     plot_bank_account_trajectories_real(
         results_df,
         bank_account_plot_indices,
-        det_inputs.real_bank_lower_bound,
+        det_inputs.bank_lower_bound,
         plot_lines_data,  # Pass plot_lines_data for color/label consistency
     )
     plot_bank_account_trajectories_nominal(
         results_df,
         bank_account_plot_indices,
         plot_lines_data,  # Pass plot_lines_data for color/label consistency
-        det_inputs.real_bank_lower_bound,
+        det_inputs.bank_lower_bound,
     )
 
     print("\nAll requested plots generated and saved to the current directory.")

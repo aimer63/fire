@@ -93,24 +93,30 @@ output_root = "output"
 num_simulations = 10000
 
 [deterministic_inputs]
-i0 = 100_000
-b0 = 0
-real_bank_lower_bound = 0
-real_bank_upper_bound = 0
-t_ret_years = 20
-# ... (other parameters) ...
+initial_investment = 100_000
+initial_bank_balance = 0
+bank_lower_bound = 0
+bank_upper_bound = 0
+years_to_simulate = 20
+# ... (other parameters, renamed for clarity) ...
 
 [economic_assumptions]
 stock_mu = 0.07
 stock_sigma = 0.15
 # ... (other parameters) ...
 
-[portfolio_allocations]
-rebalancing_year_idx = 0
-w_p1_stocks = 0.60
-w_p1_bonds = 0.35
-# ... (other weights) ...
+[portfolio_rebalances]
+rebalances = [
+  { year = 0, stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
+  { year = 10, stocks = 0.40, bonds = 0.50, str = 0.05, fun = 0.05 }
+]
 ```
+
+**Note:**  
+
+- The old `[portfolio_allocations]` section and all `phase1_*`/`phase2_*` parameters have been removed.
+- All portfolio weights are now specified in the `[portfolio_rebalances]` section as a list of rebalances, each with a `year` and weights for liquid assets (`stocks`, `bonds`, `str`, `fun`).  
+- There is no `real_estate` weight; real estate is handled separately at the time of house purchase.
 
 ---
 

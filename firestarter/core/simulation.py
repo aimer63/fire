@@ -41,7 +41,7 @@ from firestarter.core.helpers import (
 from firestarter.config.config import (
     DeterministicInputs,
     EconomicAssumptions,
-    PortfolioAllocations,
+    PortfolioRebalances,
     ShockEvent,
 )
 
@@ -70,15 +70,16 @@ class SimulationRunResult(TypedDict):
 def run_single_fire_simulation(
     det_inputs: DeterministicInputs,
     econ_assumptions: EconomicAssumptions,
-    portfolio_allocs: PortfolioAllocations,
+    portfolio_rebalances: PortfolioRebalances,
     shock_events: list[ShockEvent],
 ) -> SimulationRunResult:
     """
     Simulate a single FIRE scenario using validated config models.
 
-    Models monthly investment returns, inflation, expenses, income, asset allocation,
-    rebalancing, and market shocks over the retirement horizon. Returns a detailed
-    result dictionary with wealth history, allocations, and success status.
+    - Applies a schedule of portfolio rebalances, each with user-defined weights for liquid assets.
+    - Handles house purchase as a one-time withdrawal from liquid assets, tracked separately as real estate.
+    - Models monthly investment returns, inflation, expenses, income, asset allocation, rebalancing, and market shocks.
+    - Returns a detailed result dictionary with wealth history, allocations, and success status.
     """
     # --- Get log-normal parameters from econ_assumptions ---
     lognormal = econ_assumptions.lognormal
@@ -89,7 +90,7 @@ def run_single_fire_simulation(
     mu_log_real_estate, sigma_log_real_estate = lognormal["real_estate"]
     mu_log_inflation, sigma_log_inflation = lognormal["inflation"]
 
-    current_bank_balance: float = det_inputs.b0
+    current_bank_balance: float = det_inputs.initial_bank_balance
     (
         current_stocks_value,
         current_bonds_value,
@@ -97,27 +98,27 @@ def run_single_fire_simulation(
         current_fun_value,
         current_real_estate_value,
     ) = calculate_initial_asset_values(
-        det_inputs.i0,
-        portfolio_allocs.w_p1_stocks,
-        portfolio_allocs.w_p1_bonds,
-        portfolio_allocs.w_p1_str,
-        portfolio_allocs.w_p1_fun,
-        portfolio_allocs.w_p1_real_estate,
+        det_inputs.initial_investment,
+        portfolio_rebalances.rebalances[0].stocks,
+        portfolio_rebalances.rebalances[0].bonds,
+        portfolio_rebalances.rebalances[0].str,
+        portfolio_rebalances.rebalances[0].fun,
+        0.0,  # real estate is always 0 in liquid allocations
     )
 
     # Initialize current weights for all assets (Phase 1 weights initially)
-    current_weights_stocks: float = portfolio_allocs.w_p1_stocks
-    current_weights_bonds: float = portfolio_allocs.w_p1_bonds
-    current_weights_str: float = portfolio_allocs.w_p1_str
-    current_weights_fun: float = portfolio_allocs.w_p1_fun
-    current_weights_real_estate: float = portfolio_allocs.w_p1_real_estate
+    current_weights_stocks: float = portfolio_rebalances.rebalances[0].stocks
+    current_weights_bonds: float = portfolio_rebalances.rebalances[0].bonds
+    current_weights_str: float = portfolio_rebalances.rebalances[0].str
+    current_weights_fun: float = portfolio_rebalances.rebalances[0].fun
+    current_weights_real_estate: float = 0.0  # <-- REMOVE lookup, always 0.0
 
     # Initialize normalized weights for investment (from Phase 1 liquid weights)
     liquid_weights_sum: float = (
-        portfolio_allocs.w_p1_stocks
-        + portfolio_allocs.w_p1_bonds
-        + portfolio_allocs.w_p1_str
-        + portfolio_allocs.w_p1_fun
+        portfolio_rebalances.rebalances[0].stocks
+        + portfolio_rebalances.rebalances[0].bonds
+        + portfolio_rebalances.rebalances[0].str
+        + portfolio_rebalances.rebalances[0].fun
     )
 
     normalized_weights_stocks: float
@@ -136,35 +137,35 @@ def run_single_fire_simulation(
         normalized_weights_str = 0.0
         normalized_weights_fun = 0.0
 
-    real_bank_lower_bound: float = det_inputs.real_bank_lower_bound
-    real_bank_upper_bound: float = det_inputs.real_bank_upper_bound
-    total_retirement_years = det_inputs.t_ret_years
+    real_bank_lower_bound: float = det_inputs.bank_lower_bound
+    real_bank_upper_bound: float = det_inputs.bank_upper_bound
+    total_retirement_years = det_inputs.years_to_simulate
     total_retirement_months: int = total_retirement_years * 12
     nominal_wealth_history: NDArray[np.float64] = np.zeros(
         total_retirement_months, dtype=np.float64
     )
     bank_balance_history: NDArray[np.float64] = np.zeros(total_retirement_months, dtype=np.float64)
 
-    initial_real_monthly_expenses: float = det_inputs.x_real_monthly_initial
-    planned_contributions: list[tuple[float, int]] = det_inputs.c_planned
+    initial_real_monthly_expenses: float = det_inputs.monthly_expenses
+    planned_contributions: list[tuple[float, int]] = det_inputs.planned_contributions
 
-    planned_extra_expenses: list[tuple[float, int]] = det_inputs.x_planned_extra
+    planned_extra_expenses: list[tuple[float, int]] = det_inputs.planned_extra_expenses
 
-    initial_real_monthly_contribution: float = det_inputs.c_real_monthly_initial
+    initial_real_monthly_contribution: float = det_inputs.monthly_investment_contribution
     # Pydantic already handles the type conversion for planned_contributions
-    planned_contributions: list[tuple[float, int]] = det_inputs.c_planned
-    ter_annual_percentage: float = det_inputs.ter_annual_percentage
+    planned_contributions: list[tuple[float, int]] = det_inputs.planned_contributions
+    ter_annual_percentage: float = det_inputs.annual_fund_fee
 
-    initial_real_house_cost: float = det_inputs.h0_real_cost
+    initial_real_house_cost: float = det_inputs.planned_house_purchase_cost
 
-    initial_real_monthly_pension: float = det_inputs.p_real_monthly
-    pension_inflation_adjustment_factor: float = det_inputs.pension_inflation_adjustment_factor
-    pension_start_year_idx: int = det_inputs.y_p_start_idx
+    initial_real_monthly_pension: float = det_inputs.monthly_pension
+    pension_inflation_adjustment_factor: float = det_inputs.pension_inflation_factor
+    pension_start_year_idx: int = det_inputs.pension_start_year
 
-    initial_real_monthly_salary: float = det_inputs.s_real_monthly
-    salary_inflation_adjustment_factor: float = det_inputs.salary_inflation_adjustment_factor
-    salary_start_year_idx: int = det_inputs.y_s_start_idx
-    salary_end_year_idx: int = det_inputs.y_s_end_idx
+    initial_real_monthly_salary: float = det_inputs.monthly_salary
+    salary_inflation_adjustment_factor: float = det_inputs.salary_inflation_factor
+    salary_start_year_idx: int = det_inputs.salary_start_year
+    salary_end_year_idx: int = det_inputs.salary_end_year
 
     success: bool = True
     months_lasted: int = 0
@@ -355,9 +356,19 @@ def run_single_fire_simulation(
     ter_monthly_factor: float = ter_annual_percentage / 12.0
 
     # --- House purchase year logic: configurable ---
-    house_purchase_year_idx = det_inputs.house_purchase_year_idx
-    if house_purchase_year_idx is None:
-        house_purchase_year_idx = portfolio_allocs.rebalancing_year_idx
+    house_purchase_year_idx = det_inputs.house_purchase_year
+    # if house_purchase_year_idx is None:
+    #     house_purchase_year_idx = portfolio_rebalances.rebalances[0].year
+
+    # --- Prepare rebalance schedule ---
+    # Map: year_idx -> PortfolioRebalance
+    rebalance_schedule = {reb.year: reb for reb in portfolio_rebalances.rebalances}
+    # Start with the first rebalance weights
+    current_reb = rebalance_schedule.get(0, portfolio_rebalances.rebalances[0])
+    current_weights_stocks = current_reb.stocks
+    current_weights_bonds = current_reb.bonds
+    current_weights_str = current_reb.str
+    current_weights_fun = current_reb.fun
 
     # Simulation loop
     for current_month_idx in range(total_retirement_months):
@@ -365,39 +376,13 @@ def run_single_fire_simulation(
         current_year_idx: int = current_month_idx // 12
         month_in_year_idx: int = current_month_idx % 12
 
-        # --- OPTIMIZATION: Determine current weights once per year ---
-        if month_in_year_idx == 0:
-            if current_year_idx < portfolio_allocs.rebalancing_year_idx:
-                current_weights_stocks = portfolio_allocs.w_p1_stocks
-                current_weights_bonds = portfolio_allocs.w_p1_bonds
-                current_weights_str = portfolio_allocs.w_p1_str
-                current_weights_fun = portfolio_allocs.w_p1_fun
-                current_weights_real_estate = portfolio_allocs.w_p1_real_estate
-            else:
-                current_weights_stocks = portfolio_allocs.w_p2_stocks
-                current_weights_bonds = portfolio_allocs.w_p2_bonds
-                current_weights_str = portfolio_allocs.w_p2_str
-                current_weights_fun = portfolio_allocs.w_p2_fun
-                current_weights_real_estate = portfolio_allocs.w_p2_real_estate
-
-            liquid_weights_sum = (
-                current_weights_stocks
-                + current_weights_bonds
-                + current_weights_str
-                + current_weights_fun
-            )
-            normalized_weights_stocks = (
-                current_weights_stocks / liquid_weights_sum if liquid_weights_sum > 0.0 else 0.0
-            )
-            normalized_weights_bonds = (
-                current_weights_bonds / liquid_weights_sum if liquid_weights_sum > 0.0 else 0.0
-            )
-            normalized_weights_str = (
-                current_weights_str / liquid_weights_sum if liquid_weights_sum > 0.0 else 0.0
-            )
-            normalized_weights_fun = (
-                current_weights_fun / liquid_weights_sum if liquid_weights_sum > 0.0 else 0.0
-            )
+        # --- Rebalance at the start of any scheduled rebalance year ---
+        if month_in_year_idx == 0 and current_year_idx in rebalance_schedule:
+            current_reb = rebalance_schedule[current_year_idx]
+            current_weights_stocks = current_reb.stocks
+            current_weights_bonds = current_reb.bonds
+            current_weights_str = current_reb.str
+            current_weights_fun = current_reb.fun
 
         # 1. Add pension if applicable
         nominal_pension_monthly: float = 0.0
@@ -702,13 +687,13 @@ def run_single_fire_simulation(
 
         # 6. Rebalance at the start of REBALANCING_TRIGGER_YEAR_IDX
         if (
-            current_year_idx == portfolio_allocs.rebalancing_year_idx
+            current_year_idx == portfolio_rebalances.rebalances[0].year
             and month_in_year_idx == 0
-            and portfolio_allocs.rebalancing_year_idx > 0
+            and portfolio_rebalances.rebalances[0].year > 0
         ):
 
             cumulative_inflation_rebalance_year: np.float64 = cumulative_inflation_factors_annual[
-                portfolio_allocs.rebalancing_year_idx
+                portfolio_rebalances.rebalances[0].year
             ]
 
             pre_rebalancing_allocations_nominal = {
@@ -733,10 +718,10 @@ def run_single_fire_simulation(
                 current_stocks_value + current_bonds_value + current_str_value + current_fun_value
             )
             sum_liquid_p2_weights: float = (
-                portfolio_allocs.w_p2_stocks
-                + portfolio_allocs.w_p2_bonds
-                + portfolio_allocs.w_p2_str
-                + portfolio_allocs.w_p2_fun
+                portfolio_rebalances.rebalances[0].stocks
+                + portfolio_rebalances.rebalances[0].bonds
+                + portfolio_rebalances.rebalances[0].str
+                + portfolio_rebalances.rebalances[0].fun
             )
 
             if sum_liquid_p2_weights == 0.0 or total_liquid_assets == 0.0:
@@ -746,16 +731,16 @@ def run_single_fire_simulation(
                 current_fun_value = 0.0
             else:
                 normalized_weights_phase2_stocks: float = (
-                    portfolio_allocs.w_p2_stocks / sum_liquid_p2_weights
+                    portfolio_rebalances.rebalances[0].stocks / sum_liquid_p2_weights
                 )
                 normalized_weights_phase2_bonds: float = (
-                    portfolio_allocs.w_p2_bonds / sum_liquid_p2_weights
+                    portfolio_rebalances.rebalances[0].bonds / sum_liquid_p2_weights
                 )
                 normalized_weights_phase2_str: float = (
-                    portfolio_allocs.w_p2_str / sum_liquid_p2_weights
+                    portfolio_rebalances.rebalances[0].str / sum_liquid_p2_weights
                 )
                 normalized_weights_phase2_fun: float = (
-                    portfolio_allocs.w_p2_fun / sum_liquid_p2_weights
+                    portfolio_rebalances.rebalances[0].fun / sum_liquid_p2_weights
                 )
 
                 current_stocks_value = total_liquid_assets * normalized_weights_phase2_stocks

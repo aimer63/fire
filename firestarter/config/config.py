@@ -22,6 +22,7 @@ These models provide type safety and validation for the simulation engine.
 # config.py
 from pydantic import BaseModel, Field
 import numpy as np
+from typing import List
 
 
 class DeterministicInputs(BaseModel):
@@ -30,17 +31,17 @@ class DeterministicInputs(BaseModel):
     These parameters are loaded from the 'deterministic_inputs' section of config.toml.
     """
 
-    i0: float = Field(..., description="Initial investment portfolio value.")
-    b0: float = Field(..., description="Initial bank account balance.")
+    initial_investment: float = Field(..., description="Initial investment portfolio value.")
+    initial_bank_balance: float = Field(..., description="Initial bank account balance.")
 
-    real_bank_lower_bound: float = Field(
+    bank_lower_bound: float = Field(
         ...,
         description=(
             "Minimum desired bank balance in real (today's money) terms. "
             "If balance drops below this, funds are transferred from investment."
         ),
     )
-    real_bank_upper_bound: float = Field(
+    bank_upper_bound: float = Field(
         ...,
         description=(
             "Maximum desired bank balance in real (today's money) terms. "
@@ -48,25 +49,25 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    t_ret_years: int = Field(
+    years_to_simulate: int = Field(
         ..., description="Total number of years the retirement simulation will run."
     )
 
-    s_real_monthly: float = Field(..., description="Initial real (today's money) monthly salary.")
-    salary_inflation_adjustment_factor: float = Field(
+    monthly_salary: float = Field(..., description="Initial real (today's money) monthly salary.")
+    salary_inflation_factor: float = Field(
         ...,
         description=(
             "Factor by which salary adjusts to inflation (1.0 = tracks inflation, "
             "1.01 = 1% above inflation)."
         ),
     )
-    y_s_start_idx: int = Field(
+    salary_start_year: int = Field(
         ...,
         description=(
             "Year index (0-indexed) when salary income starts. " "E.g., 0 for immediate start."
         ),
     )
-    y_s_end_idx: int = Field(
+    salary_end_year: int = Field(
         ...,
         description=(
             "Year index (0-indexed) when salary income ends (exclusive). "
@@ -74,26 +75,26 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    p_real_monthly: float = Field(..., description="Initial real (today's money) monthly pension.")
-    pension_inflation_adjustment_factor: float = Field(
+    monthly_pension: float = Field(..., description="Initial real (today's money) monthly pension.")
+    pension_inflation_factor: float = Field(
         ...,
         description=(
             "Factor by which pension adjusts to inflation (e.g., 1.0 for full adjustment, "
             "0.6 for 60% adjustment)."
         ),
     )
-    y_p_start_idx: int = Field(
+    pension_start_year: int = Field(
         ..., description="Year index (0-indexed) when pension income starts."
     )
 
-    c_real_monthly_initial: float = Field(
+    monthly_investment_contribution: float = Field(
         ...,
         description=(
             "Fixed initial real (today's money) monthly contribution to invested assets. "
             "Models regular external contributions (e.g., a monthly savings plan)."
         ),
     )
-    c_planned: list[tuple[float, int]] = Field(
+    planned_contributions: list[tuple[float, int]] = Field(
         default_factory=list,
         description=(
             "List of planned one-time contributions to investments: "
@@ -102,15 +103,15 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    ter_annual_percentage: float = Field(
+    annual_fund_fee: float = Field(
         ...,
         description="Total Expense Ratio (TER) as an annual percentage of investment assets.",
     )
-    x_real_monthly_initial: float = Field(
+    monthly_expenses: float = Field(
         ...,
         description="Initial real (today's money) fixed monthly expenses for living costs.",
     )
-    x_planned_extra: list[tuple[float, int]] = Field(
+    planned_extra_expenses: list[tuple[float, int]] = Field(
         default_factory=list,
         description=(
             "List of planned one-time extra expenses: "
@@ -119,18 +120,18 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    h0_real_cost: float = Field(
+    planned_house_purchase_cost: float = Field(
         ...,
         description=(
             "Initial real (today's money) cost of a house "
-            "to be purchased at house_purchase_year_idx (or rebalancing_year_idx if not set)."
+            "to be purchased at house_purchase_year (or rebalancing_year if not set)."
         ),
     )
-    house_purchase_year_idx: int | None = Field(
+    house_purchase_year: int | None = Field(
         default=None,
         description=(
             "Year index (0-based) when the house is purchased. "
-            "If None, defaults to rebalancing_year_idx."
+            "If None, defaults to rebalancing_year."
         ),
     )
 
@@ -176,8 +177,8 @@ class EconomicAssumptions(BaseModel):
         ..., description="Standard deviation of annual returns for real estate."
     )
 
-    mu_pi: float = Field(..., description="Arithmetic mean of annual inflation rate.")
-    sigma_pi: float = Field(..., description="Standard deviation of annual inflation rate.")
+    pi_mu: float = Field(..., description="Arithmetic mean of annual inflation rate.")
+    pi_sigma: float = Field(..., description="Standard deviation of annual inflation rate.")
 
     @staticmethod
     def _convert_to_lognormal(arith_mu: float, arith_sigma: float) -> tuple[float, float]:
@@ -214,7 +215,7 @@ class EconomicAssumptions(BaseModel):
             "str": self._convert_to_lognormal(self.str_mu, self.str_sigma),
             "fun": self._convert_to_lognormal(self.fun_mu, self.fun_sigma),
             "real_estate": self._convert_to_lognormal(self.real_estate_mu, self.real_estate_sigma),
-            "inflation": self._convert_to_lognormal(self.mu_pi, self.sigma_pi),
+            "inflation": self._convert_to_lognormal(self.pi_mu, self.pi_sigma),  # <-- FIXED HERE
         }
 
     class Config:
@@ -224,35 +225,41 @@ class EconomicAssumptions(BaseModel):
         frozen = True  # This makes the model immutable
 
 
-class PortfolioAllocations(BaseModel):
+class PortfolioRebalance(BaseModel):
     """
-    Pydantic model representing the portfolio allocation weights and rebalancing trigger.
-    These parameters are loaded from the 'portfolio_allocations' section of config.toml.
+    Represents a single portfolio rebalance event.
+
+    Attributes:
+        year (int): The year (0-indexed) when this rebalance occurs.
+        stocks (float): Weight for stocks (liquid assets only).
+        bonds (float): Weight for bonds (liquid assets only).
+        str (float): Weight for short-term reserves (STR, liquid assets only).
+        fun (float): Weight for 'fun money' (liquid assets only).
     """
 
-    rebalancing_year_idx: int = Field(
-        ..., description="Year index (0-indexed) at which portfolio rebalancing occurs."
-    )
+    year: int
+    stocks: float
+    bonds: float
+    str: float
+    fun: float
 
-    w_p1_stocks: float = Field(..., description="Phase 1: Weight for stocks.")
-    w_p1_bonds: float = Field(..., description="Phase 1: Weight for bonds.")
-    w_p1_str: float = Field(..., description="Phase 1: Weight for short-term reserves (STR).")
-    w_p1_fun: float = Field(
-        ..., description="Phase 1: Weight for 'fun money' (e.g., crypto/silver)."
-    )
-    w_p1_real_estate: float = Field(..., description="Phase 1: Weight for real estate.")
 
-    w_p2_stocks: float = Field(..., description="Phase 2: Weight for stocks.")
-    w_p2_bonds: float = Field(..., description="Phase 2: Weight for bonds.")
-    w_p2_str: float = Field(..., description="Phase 2: Weight for short-term reserves (STR).")
-    w_p2_fun: float = Field(
-        ..., description="Phase 2: Weight for 'fun money' (e.g., crypto/silver)."
+class PortfolioRebalances(BaseModel):
+    """
+    Contains the list of all scheduled portfolio rebalances.
+
+    Attributes:
+        rebalances (List[PortfolioRebalance]): List of rebalance events, each specifying
+        the year and weights.
+    """
+
+    rebalances: List[PortfolioRebalance] = Field(
+        ..., description="List of portfolio rebalances with year and weights."
     )
-    w_p2_real_estate: float = Field(..., description="Phase 2: Weight for real estate.")
 
     class Config:
         extra = "forbid"
-        frozen = True  # Makes the model immutable
+        frozen = True
 
 
 class SimulationParameters(BaseModel):

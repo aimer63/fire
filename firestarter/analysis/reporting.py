@@ -18,6 +18,13 @@ def generate_markdown_report(
     output_dir: str,
     plots: dict[str, str] = None,
 ) -> str:
+    """
+    Generate a Markdown report summarizing the FIRE simulation results.
+
+    - Includes summary statistics and final allocations for key scenarios.
+    - Links to generated plots.
+    - All allocations refer to liquid assets only; real estate is tracked separately.
+    """
     if plots is None:
         plots = {}
 

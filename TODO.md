@@ -7,7 +7,7 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 ## ✅ Completed
 
 - **Project Structure Refactor**
-  - Modularized code into `ignite/`, `configs/`, `output/`, etc.
+  - Modularized code into `firestarter/`, `configs/`, `output/`, etc.
   - All outputs (plots, reports) are now relative to a configurable `output_root`.
 - **Configuration Management**
   - Centralized output directory in `config.toml`.
@@ -25,6 +25,11 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - **Git/GitHub Hygiene**
   - Removed large files from history.
   - Cleaned up `.gitignore`.
+- **Multiple Portfolio Rebalances**
+  - Removed `[portfolio_allocations]` and all `phase1_*`/`phase2_*` parameters.
+  - Added `[portfolio_rebalances]` section: users can specify a list of rebalances, each with a year and weights for liquid assets.
+  - Updated all code, config files, and documentation to use the new structure and parameter names.
+  - Real estate is now handled separately and never included in portfolio weights.
 
 ---
 
@@ -42,6 +47,9 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - [ ] **Performance & Usability**
   - Progress bar or better feedback for long simulations.
   - Optionally parallelize simulations for speed.
+- [ ] **Parameter Summary Output**
+  - Print all loaded parameters to the console in a section titled `--- Loaded Parameters Summary (from config.toml) ---` after config parsing.
+  - Add a section to the Markdown report listing the value of all parameters loaded from the config file.
 
 ---
 
@@ -52,8 +60,6 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - [ ] Export results to CSV/Excel.
 - [ ] Add CLI options for common tasks (e.g., `--config`, `--output`).
 - [ ] Add interactive or web-based visualization.
-- [ ] Enable multiple portfolio rebalances:
-  - Allow users to specify a set of rebalance years, each associated with a set of portfolio weights (e.g., rebalance at year 5 and 10 with different allocations).
 
 ---
 

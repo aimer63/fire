@@ -100,12 +100,12 @@ def plot_retirement_duration_distribution(
 
 
 def plot_final_wealth_distribution_nominal(
-    successful_sims: pd.DataFrame,
-    filename: str = "nominal_final_wealth_distribution.png",
+    successful_sims: pd.DataFrame, filename: str = "nominal_final_wealth_distribution.png"
 ) -> None:
     """
-    Plots a histogram of nominal final wealth for successful simulations on a log scale.
-    Saves to PNG and opens the figure interactively.
+    Plot the distribution of final nominal wealth for successful simulations.
+
+    Only liquid assets are included in the plotted wealth.
     """
     if successful_sims.empty:
         print("No successful simulations to plot nominal final wealth distribution.")
@@ -184,7 +184,7 @@ def plot_final_wealth_distribution_real(
 def plot_wealth_evolution_samples_real(
     results_df: pd.DataFrame,
     plot_lines_data: list[PlotLineData],
-    mu_pi: float,
+    pi_mu: float,
     filename: str = "wealth_evolution_real.png",
 ) -> None:
     """
@@ -211,11 +211,9 @@ def plot_wealth_evolution_samples_real(
 
         real_history: NDArray[np.float64] = np.zeros_like(nominal_history, dtype=np.float64)
 
-        current_cumulative_inflation_factor: float = (
-            1.0  # Initialize cumulative factor for this simulation
-        )
+        current_cumulative_inflation_factor: float = 1.0
 
-        for month_idx, nominal_balance in enumerate(nominal_history):  # Correctly iterate
+        for month_idx, nominal_balance in enumerate(nominal_history):
             year_idx: int = month_idx // 12
             monthly_inflation_rate: float
             if year_idx < len(row["annual_inflations_seq"]):
@@ -223,14 +221,12 @@ def plot_wealth_evolution_samples_real(
                     row["annual_inflations_seq"][year_idx]
                 )
             else:
-                # Fallback to average inflation if sequence is shorter than simulation
-                monthly_inflation_rate = annual_to_monthly_compounded_rate(mu_pi)
+                monthly_inflation_rate = annual_to_monthly_compounded_rate(pi_mu)
 
             current_cumulative_inflation_factor *= 1.0 + monthly_inflation_rate
 
             real_history[month_idx] = nominal_balance / current_cumulative_inflation_factor
 
-        # Replace non-positive with 1 for log plot
         real_history_positive: NDArray[np.float64] = np.where(
             real_history <= 0.0, 1.0, real_history
         )
@@ -359,7 +355,6 @@ def plot_bank_account_trajectories_real(
     plt.ylabel("Bank Account Balance (EUR in today's money)")
     plt.grid(True, linestyle="--", alpha=0.7)
 
-    # Build a mapping from sim_idx to color/label/linewidth for consistent coloring
     style_map = {d["sim_idx"]: d for d in plot_lines_data}
 
     for sim_idx in bank_account_plot_indices:
@@ -389,20 +384,18 @@ def plot_bank_account_trajectories_real(
             real_bank_history_np < 0.0, 0.0, real_bank_history_np
         )
 
-        # Use the same color/label/linewidth as in plot_lines_data
         style = style_map.get(sim_idx, {})
         color = style.get("color", None)
         label = style.get("label", f"Sim {sim_idx}")
         linewidth = style.get("linewidth", 1.5)
         show_label = label != "_nolegend_"
 
-        # Dynamically adjust label for best case to show final real value
         if label != "_nolegend_":
             final_real = (
                 float(plot_real_bank_history[-1]) if len(plot_real_bank_history) > 0 else 0.0
             )
             if "Failed" in label:
-                pass  # keep as is
+                pass
             elif "Best Successful" in label:
                 label = f"Best Successful (Final Real: {final_real:,.0f}€)"
             elif "Worst Successful" in label:
@@ -431,7 +424,6 @@ def plot_bank_account_trajectories_real(
         label="Real Bank Lower Bound",
     )
 
-    # Only show unique legend entries (avoid duplicate "_nolegend_")
     handles, labels = plt.gca().get_legend_handles_labels()
     unique = [
         (h, l)
@@ -485,13 +477,12 @@ def plot_bank_account_trajectories_nominal(
         linewidth = style.get("linewidth", 1.5)
         show_label = label != "_nolegend_"
 
-        # Dynamically adjust label for all cases to show final nominal value
         if label != "_nolegend_":
             final_nominal = (
                 float(plot_nominal_bank_history[-1]) if len(plot_nominal_bank_history) > 0 else 0.0
             )
             if "Failed" in label:
-                pass  # keep as is
+                pass
             elif "Best Successful" in label:
                 label = f"Best Successful (Final Nominal: {final_nominal:,.0f}€)"
             elif "Worst Successful" in label:
