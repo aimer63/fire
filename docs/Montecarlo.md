@@ -16,9 +16,7 @@ Let $(\Omega, \mathcal{F}, P)$ be a probability space, where:
 
 A **random variable** $X: \Omega \to \mathbb{R}$ is a measurable function. The expected value (mean) of $X$ is:
 
-$$
-\mathbb{E}[X] = \int_{\Omega} X(\omega) \, dP(\omega)
-$$
+$\mathbb{E}[X] = \int_{\Omega} X(\omega) \, dP(\omega)$
 
 ---
 
@@ -28,17 +26,13 @@ Monte Carlo methods are grounded in the **Law of Large Numbers (LLN)**, which st
 
 Let $X_1, X_2, \ldots, X_n$ be i.i.d. random variables with mean $\mu$:
 
-$$
-\overline{X}_n = \frac{1}{n} \sum_{i=1}^n X_i
-$$
+$\overline{X}_n = \frac{1}{n} \sum_{i=1}^n X_i$
 
 Then, as $n \to \infty$:
 
-$$
-\overline{X}_n \xrightarrow{a.s.} \mu
-$$
+$\overline{X}_n \to \mu$ (almost surely)
 
-where "$\xrightarrow{a.s.}$" denotes almost sure convergence.
+where "almost surely" denotes convergence with probability 1.
 
 ---
 
@@ -46,9 +40,7 @@ where "$\xrightarrow{a.s.}$" denotes almost sure convergence.
 
 Suppose we wish to estimate $\theta = \mathbb{E}[f(X)]$, where $f$ is a function and $X$ is a random variable with known distribution. The Monte Carlo estimator is:
 
-$$
-\hat{\theta}_n = \frac{1}{n} \sum_{i=1}^n f(X_i)
-$$
+$\hat{\theta}_n = \frac{1}{n} \sum_{i=1}^n f(X_i)$
 
 where $X_1, \ldots, X_n$ are i.i.d. samples from the distribution of $X$.
 
@@ -60,17 +52,13 @@ By the LLN, $\hat{\theta}_n \to \theta$ as $n \to \infty$.
 
 The **Central Limit Theorem (CLT)** provides a way to quantify the error of the Monte Carlo estimator:
 
-$$
-\sqrt{n}(\hat{\theta}_n - \theta) \xrightarrow{d} \mathcal{N}(0, \sigma^2)
-$$
+$\sqrt{n}(\hat{\theta}_n - \theta) \to \mathcal{N}(0, \sigma^2)$
 
-where $\sigma^2 = \mathrm{Var}(f(X))$ and "$\xrightarrow{d}$" denotes convergence in distribution.
+where $\sigma^2 = \mathrm{Var}(f(X))$ and the arrow denotes convergence in distribution.
 
 Thus, the standard error of the estimator is:
 
-$$
-\mathrm{SE}(\hat{\theta}_n) = \frac{\hat{\sigma}}{\sqrt{n}}
-$$
+$\mathrm{SE}(\hat{\theta}_n) = \frac{\hat{\sigma}}{\sqrt{n}}$
 
 where $\hat{\sigma}^2$ is the sample variance.
 
@@ -86,25 +74,15 @@ Monte Carlo simulation relies on high-quality pseudorandom number generators (PR
 
 A classic example is estimating $\pi$ by simulating random points in the unit square and counting how many fall inside the unit circle:
 
-$$
-\pi \approx 4 \cdot \frac{\text{Number of points inside circle}}{\text{Total number of points}}
-$$
+$\pi \approx 4 \cdot \frac{\text{Number of points inside circle}}{\text{Total number of points}}$
 
 Let $(X_i, Y_i)$ be i.i.d. samples from $\mathrm{Uniform}(0,1)$:
 
-$$
-I_i =
-\begin{cases}
-1 & \text{if } X_i^2 + Y_i^2 \leq 1 \\
-0 & \text{otherwise}
-\end{cases}
-$$
+$ I_i = 1 $ if $ X_i^2 + Y_i^2 \leq 1 $, $0$ otherwise.
 
 Then,
 
-$$
-\pi \approx 4 \cdot \frac{1}{n} \sum_{i=1}^n I_i
-$$
+$\pi \approx 4 \cdot \frac{1}{n} \sum_{i=1}^n I_i$
 
 ---
 
@@ -228,4 +206,4 @@ Monte Carlo simulation is a robust and flexible tool for FIRE planning, allowing
 
 ---
 
-_This document is typeset in Markdown with embedded LaTeX for mathematical clarity and is compatible with Obsidian._
+_This document is typeset in Markdown with embedded LaTeX for mathematical clarity and is compatible with Obsidian and GitHub._
