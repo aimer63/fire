@@ -32,10 +32,13 @@ from typing import TypedDict
 from numpy.typing import NDArray
 
 # Import helper functions
-from ignite.core.helpers import annual_to_monthly_compounded_rate, calculate_initial_asset_values
+from firestarter.core.helpers import (
+    annual_to_monthly_compounded_rate,
+    calculate_initial_asset_values,
+)
 
 # Import the DeterministicInputs Pydantic model
-from ignite.config.config import (
+from firestarter.config.config import (
     DeterministicInputs,
     EconomicAssumptions,
     PortfolioAllocations,

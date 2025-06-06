@@ -5,7 +5,7 @@
 # flake8: noqa
 
 import os
-from ignite.version import __version__
+from firestarter.version import __version__
 from datetime import datetime
 from pathlib import Path
 

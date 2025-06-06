@@ -32,17 +32,17 @@ from numpy.typing import NDArray
 import pandas as pd
 
 # Import helper functions
-from ignite.core.helpers import calculate_initial_asset_values
+from firestarter.core.helpers import calculate_initial_asset_values
 
 # Import the main simulation function and its return type
-from ignite.core.simulation import run_single_fire_simulation, SimulationRunResult
+from firestarter.core.simulation import run_single_fire_simulation, SimulationRunResult
 
 # Import the new analysis module functions and its plotting data TypedDict
-import ignite.analysis.analysis as analysis
-from ignite.analysis.analysis import PlotDataDict
+import firestarter.analysis.analysis as analysis
+from firestarter.analysis.analysis import PlotDataDict
 
 # Import plotting functions
-from ignite.plots.plots import (
+from firestarter.plots.plots import (
     plot_retirement_duration_distribution,
     plot_final_wealth_distribution_nominal,
     plot_final_wealth_distribution_real,
@@ -53,7 +53,7 @@ from ignite.plots.plots import (
 )
 
 # Import the DeterministicInputs Pydantic model
-from ignite.config.config import (
+from firestarter.config.config import (
     DeterministicInputs,
     EconomicAssumptions,
     PortfolioAllocations,
@@ -61,9 +61,9 @@ from ignite.config.config import (
     Shocks,
 )
 
-# from ignite.version import __version__
-from ignite.analysis.reporting import generate_markdown_report
-import ignite.plots.plots as plots_module
+# from firestarter.version import __version__
+from firestarter.analysis.reporting import generate_markdown_report
+import firestarter.plots.plots as plots_module
 
 
 def main() -> None:
@@ -94,9 +94,7 @@ def main() -> None:
     print("Configuration file parsed successfully. Extracting parameters...")
 
     # --- Pydantic: Load and validate deterministic inputs ---
-    det_inputs: DeterministicInputs = DeterministicInputs(
-        **config_data["deterministic_inputs"]
-    )
+    det_inputs: DeterministicInputs = DeterministicInputs(**config_data["deterministic_inputs"])
 
     # --- Pydantic: Load and validate Economic Assumption ---
     econ_assumptions: EconomicAssumptions = EconomicAssumptions(
@@ -109,9 +107,7 @@ def main() -> None:
     )
 
     # --- Pydantic: Load and validate Simulation Parameters ---
-    sim_params: SimulationParameters = SimulationParameters(
-        **config_data["simulation_parameters"]
-    )
+    sim_params: SimulationParameters = SimulationParameters(**config_data["simulation_parameters"])
     num_simulations: int = sim_params.num_simulations
 
     # --- Pydantic: Load and validate Shocks ---
@@ -175,22 +171,16 @@ def main() -> None:
     print(f"initial_real_monthly_expenses: {det_inputs.x_real_monthly_initial:,.2f}")
     print(f"planned_extra_expenses: {det_inputs.x_planned_extra}")
     print(f"planned_contributions: {det_inputs.c_planned}")
-    print(
-        f"initial_real_monthly_contribution: {det_inputs.c_real_monthly_initial:,.2f}"
-    )
+    print(f"initial_real_monthly_contribution: {det_inputs.c_real_monthly_initial:,.2f}")
     print(f"ter_annual_percentage: {det_inputs.ter_annual_percentage:.4f}")
     print(f"initial_real_house_cost: {det_inputs.h0_real_cost:,.2f}")
     print(f"initial_real_monthly_pension: {det_inputs.p_real_monthly:,.2f}")
     print(
-        "pension_inflation_adjustment_factor: "
-        f"{det_inputs.pension_inflation_adjustment_factor}"
+        "pension_inflation_adjustment_factor: " f"{det_inputs.pension_inflation_adjustment_factor}"
     )
     print(f"pension_start_year_idx: {det_inputs.y_p_start_idx}")
     print(f"initial_real_monthly_salary: {det_inputs.s_real_monthly:,.2f}")
-    print(
-        "salary_inflation_adjustment_factor: "
-        f"{det_inputs.salary_inflation_adjustment_factor}"
-    )
+    print("salary_inflation_adjustment_factor: " f"{det_inputs.salary_inflation_adjustment_factor}")
     print(f"salary_start_year_idx: {det_inputs.y_s_start_idx}")
     print(f"salary_end_year_idx: {det_inputs.y_s_end_idx}")
 
@@ -199,22 +189,14 @@ def main() -> None:
         f"stock_mu: {econ_assumptions.stock_mu:.4f}, "
         + f"stock_sigma: {econ_assumptions.stock_sigma:.4f}"
     )
-    print(
-        f"bond_mu: {econ_assumptions.bond_mu:.4f}, bond_sigma: {econ_assumptions.bond_sigma:.4f}"
-    )
-    print(
-        f"str_mu: {econ_assumptions.str_mu:.4f}, str_sigma: {econ_assumptions.str_sigma:.4f}"
-    )
-    print(
-        f"fun_mu: {econ_assumptions.fun_mu:.4f}, fun_sigma: {econ_assumptions.fun_sigma:.4f}"
-    )
+    print(f"bond_mu: {econ_assumptions.bond_mu:.4f}, bond_sigma: {econ_assumptions.bond_sigma:.4f}")
+    print(f"str_mu: {econ_assumptions.str_mu:.4f}, str_sigma: {econ_assumptions.str_sigma:.4f}")
+    print(f"fun_mu: {econ_assumptions.fun_mu:.4f}, fun_sigma: {econ_assumptions.fun_sigma:.4f}")
     print(
         f"real_estate_mu: {econ_assumptions.real_estate_mu:.4f}, "
         + f"real_estate_sigma: {econ_assumptions.real_estate_sigma:.4f}"
     )
-    print(
-        f"mu_pi: {econ_assumptions.mu_pi:.4f}, sigma_pi: {econ_assumptions.sigma_pi:.4f}"
-    )
+    print(f"mu_pi: {econ_assumptions.mu_pi:.4f}, sigma_pi: {econ_assumptions.sigma_pi:.4f}")
 
     print("\n--- Derived Log-Normal Parameters ---")
     for asset, (mu_log, sigma_log) in econ_assumptions.lognormal.items():
@@ -355,9 +337,7 @@ def main() -> None:
     plot_final_wealth_distribution_real(successful_sims)
 
     # Plotting Time Evolution Samples
-    plot_wealth_evolution_samples_real(
-        results_df, plot_lines_data, econ_assumptions.mu_pi
-    )
+    plot_wealth_evolution_samples_real(results_df, plot_lines_data, econ_assumptions.mu_pi)
     plot_wealth_evolution_samples_nominal(results_df, plot_lines_data)
 
     # Plotting Bank Account Trajectories

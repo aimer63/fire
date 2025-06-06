@@ -32,8 +32,8 @@ import pandas as pd
 from typing import Any
 from numpy.typing import NDArray
 
-from ignite.core.helpers import annual_to_monthly_compounded_rate
-from ignite.analysis.analysis import PlotLineData
+from firestarter.core.helpers import annual_to_monthly_compounded_rate
+from firestarter.analysis.analysis import PlotLineData
 
 
 plt.ion()  # Turn on interactive mode
@@ -480,17 +480,29 @@ def plot_bank_account_trajectories_nominal(
         )
 
         style = style_map.get(sim_idx, {})
-        color = style.get("color", None)
         label = style.get("label", f"Sim {sim_idx}")
+        color = style.get("color", None)
         linewidth = style.get("linewidth", 1.5)
         show_label = label != "_nolegend_"
 
-        # Dynamically adjust label for best case to show final nominal value
-        if "Best Successful" in label:
+        # Dynamically adjust label for all cases to show final nominal value
+        if label != "_nolegend_":
             final_nominal = (
-                float(nominal_bank_history[-1]) if len(nominal_bank_history) > 0 else 0.0
+                float(plot_nominal_bank_history[-1]) if len(plot_nominal_bank_history) > 0 else 0.0
             )
-            label = f"Best Successful (Final Nominal: {final_nominal:,.0f}€)"
+            if "Failed" in label:
+                pass  # keep as is
+            elif "Best Successful" in label:
+                label = f"Best Successful (Final Nominal: {final_nominal:,.0f}€)"
+            elif "Worst Successful" in label:
+                label = f"Worst Successful (Final Nominal: {final_nominal:,.0f}€)"
+            elif "Percentile Range" in label:
+                label = label.replace(
+                    "Percentile Range",
+                    f"Percentile Range (Final Nominal: {final_nominal:,.0f}€)",
+                )
+            else:
+                label = f"Sample (Final Nominal: {final_nominal:,.0f}€)"
 
         plt.plot(
             np.arange(0, len(nominal_bank_history)) / 12.0,

@@ -33,8 +33,10 @@ import numpy as np
 from typing import TypedDict  # Import TypedDict for structured dictionaries
 from numpy.typing import NDArray
 
-from ignite.core.helpers import calculate_cagr
-from ignite.core.simulation import SimulationRunResult  # Import the TypedDict from simulation.py
+from firestarter.core.helpers import calculate_cagr
+from firestarter.core.simulation import (
+    SimulationRunResult,
+)  # Import the TypedDict from simulation.py
 
 
 # Define TypedDicts for structured data within analysis and for plotting

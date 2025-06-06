@@ -8,7 +8,7 @@ This project is a Monte Carlo simulation tool for FIRE (Financial Independence /
 
 ```
 fire/
-├── ignite/                # Main Python package (all source code)
+├── firestarter/           # Main Python package (all source code)
 │   ├── core/              # Core simulation engine and helpers
 │   ├── analysis/          # Analysis and reporting modules
 │   ├── config/            # Pydantic config models and schema
@@ -22,7 +22,7 @@ fire/
 │   └── reports/           # Markdown reports
 ├── data/                  # (Optional) Historical data for assets
 ├── tests/                 # Unit and integration tests
-├── ignite.sh              # Bash script to run the simulation
+├── firestarter.sh         # Bash script to run the simulation
 ├── requirements.txt       # Python dependencies
 └── README.md              # This file
 ```
@@ -33,10 +33,10 @@ fire/
 
 - **Configuration**  
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial wealth, income, expenses, asset allocation, economic assumptions (returns, inflation), simulation parameters, and market shocks.  
-  Configuration is validated and parsed using Pydantic models in `ignite/config/config.py`.
+  Configuration is validated and parsed using Pydantic models in `firestarter/config/config.py`.
 
 - **Simulation Engine**  
-  The main simulation logic is in `ignite/core/simulation.py`. For each run, it:
+  The main simulation logic is in `firestarter/core/simulation.py`. For each run, it:
   - Initializes asset values and bank balance
   - Simulates monthly/annual investment returns, inflation, and expenses
   - Handles salary, pension, contributions, and planned extra expenses
@@ -46,11 +46,11 @@ fire/
   - Tracks asset allocation and rebalancing
 
 - **Analysis & Reporting**  
-  - `ignite/analysis/analysis.py` processes simulation results, computes statistics (success rate, final wealth, CAGR, etc.), and prepares data for visualization.
-  - `ignite/analysis/reporting.py` generates a Markdown report summarizing the simulation results, including links to generated plots.
+  - `firestarter/analysis/analysis.py` processes simulation results, computes statistics (success rate, final wealth, CAGR, etc.), and prepares data for visualization.
+  - `firestarter/analysis/reporting.py` generates a Markdown report summarizing the simulation results, including links to generated plots.
 
 - **Plotting**  
-  - `ignite/plots/plots.py` generates plots for wealth evolution, bank account trajectories, and distributions of outcomes.  
+  - `firestarter/plots/plots.py` generates plots for wealth evolution, bank account trajectories, and distributions of outcomes.  
   - Output directories for plots and reports are set via the config file and created automatically.
 
 - **Data**  
@@ -68,13 +68,13 @@ fire/
    From the project root, use the provided shell script or Python command:
 
    ```sh
-   ./ignite.sh configs/config.toml
+   ./firestarter.sh configs/config.toml
    ```
 
    or
 
    ```sh
-   python -m ignite.main configs/config.toml
+   python -m firestarter.main configs/config.toml
    ```
 
 3. **Review the results**  
