@@ -72,14 +72,10 @@ def run_single_fire_simulation(
     econ_assumptions: EconomicAssumptions,
     portfolio_rebalances: PortfolioRebalances,
     shock_events: list[ShockEvent],
+    initial_assets: dict[str, float],  # <-- Add this argument
 ) -> SimulationRunResult:
     """
     Simulate a single FIRE scenario using validated config models.
-
-    - Applies a schedule of portfolio rebalances, each with user-defined weights for liquid assets.
-    - Handles house purchase as a one-time withdrawal from liquid assets, tracked separately as real estate.
-    - Models monthly investment returns, inflation, expenses, income, asset allocation, rebalancing, and market shocks.
-    - Returns a detailed result dictionary with wealth history, allocations, and success status.
     """
     # --- Get log-normal parameters from econ_assumptions ---
     lognormal = econ_assumptions.lognormal
@@ -91,20 +87,12 @@ def run_single_fire_simulation(
     mu_log_inflation, sigma_log_inflation = lognormal["inflation"]
 
     current_bank_balance: float = det_inputs.initial_bank_balance
-    (
-        current_stocks_value,
-        current_bonds_value,
-        current_str_value,
-        current_fun_value,
-        current_real_estate_value,
-    ) = calculate_initial_asset_values(
-        det_inputs.initial_investment,
-        portfolio_rebalances.rebalances[0].stocks,
-        portfolio_rebalances.rebalances[0].bonds,
-        portfolio_rebalances.rebalances[0].str,
-        portfolio_rebalances.rebalances[0].fun,
-        0.0,  # real estate is always 0 in liquid allocations
-    )
+    # Use initial_assets passed from main.py
+    current_stocks_value: float = initial_assets["stocks"]
+    current_bonds_value: float = initial_assets["bonds"]
+    current_str_value: float = initial_assets["str"]
+    current_fun_value: float = initial_assets["fun"]
+    current_real_estate_value: float = initial_assets["real_estate"]
 
     # Initialize current weights for all assets (Phase 1 weights initially)
     current_weights_stocks: float = portfolio_rebalances.rebalances[0].stocks
@@ -215,9 +203,9 @@ def run_single_fire_simulation(
 
     # Apply SHOCK_EVENTS to the pre-generated annual sequences
     for shock in shock_events:
-        shock_year: int = shock["year"]
-        shock_asset: str = shock["asset"]
-        shock_magnitude: float = shock["magnitude"]
+        shock_year: int = shock.year
+        shock_asset: str = shock.asset
+        shock_magnitude: float = shock.magnitude
 
         if 0 <= shock_year < total_retirement_years:
             if shock_asset == "Stocks":

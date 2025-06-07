@@ -112,11 +112,8 @@ def main() -> None:
 
     # --- Pydantic: Load and validate Shocks ---
     shocks: Shocks = Shocks(**config_data.get("shocks", {}))
-    shock_events: list[dict[str, Any]] = [event.dict() for event in shocks.events]
+    shock_events = shocks.events  # <-- Pass Pydantic objects directly for type safety
 
-    print("Number of rebalances:", len(portfolio_rebalances.rebalances))
-    print("All rebalances:", portfolio_rebalances.rebalances)
-    print(portfolio_rebalances.rebalances[0].dict())
     # Validate portfolio rebalance weights
     for reb in portfolio_rebalances.rebalances:
         reb_sum = reb.stocks + reb.bonds + reb.str + reb.fun
@@ -208,7 +205,8 @@ def main() -> None:
             det_inputs,
             econ_assumptions,
             portfolio_rebalances,
-            shock_events,
+            shock_events,  # <-- Now passing Pydantic objects, not dicts
+            initial_assets,  # <-- add this argument
         )
         simulation_results.append(result)
 

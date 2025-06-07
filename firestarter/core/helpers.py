@@ -37,103 +37,103 @@ def annual_to_monthly_compounded_rate(annual_rate: float) -> float:
     return float(intermediate_result)  # Explicit cast to ensure Python float
 
 
-def inflate_amount_over_years(
-    initial_real_amount: float,
-    years_to_inflate: int,
-    annual_inflation_sequence: NDArray[np.float64],  # Type hint for NumPy array
-) -> float:
-    """
-    Inflates a real amount to its nominal value over a given number of years
-    using a sequence of annual inflation rates.
-    """
-    if years_to_inflate < 0:
-        raise ValueError("years_to_inflate cannot be negative.")
+# def inflate_amount_over_years(
+#     initial_real_amount: float,
+#     years_to_inflate: int,
+#     annual_inflation_sequence: NDArray[np.float64],  # Type hint for NumPy array
+# ) -> float:
+#     """
+#     Inflates a real amount to its nominal value over a given number of years
+#     using a sequence of annual inflation rates.
+#     """
+#     if years_to_inflate < 0:
+#         raise ValueError("years_to_inflate cannot be negative.")
 
-    # Calculate the cumulative inflation factor up to the target year
-    # Ensure we don't go out of bounds for the inflation sequence
-    inflation_factor: np.float64 = np.prod(
-        1.0 + annual_inflation_sequence[:years_to_inflate]
-    )  # Ensure float literal, NDArray output
+#     # Calculate the cumulative inflation factor up to the target year
+#     # Ensure we don't go out of bounds for the inflation sequence
+#     inflation_factor: np.float64 = np.prod(
+#         1.0 + annual_inflation_sequence[:years_to_inflate]
+#     )  # Ensure float literal, NDArray output
 
-    return float(initial_real_amount * inflation_factor)  # Explicit cast to ensure Python float
+#     return float(initial_real_amount * inflation_factor)  # Explicit cast to ensure Python float
 
 
-def calculate_log_normal_params(
-    stock_mu: float,
-    stock_sigma: float,
-    bond_mu: float,
-    bond_sigma: float,
-    str_mu: float,
-    str_sigma: float,
-    fun_mu: float,
-    fun_sigma: float,
-    real_estate_mu: float,
-    real_estate_sigma: float,
-    mu_pi: float,
-    sigma_pi: float,
-) -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
-    """
-    Calculates the mu (mean) and sigma (standard deviation) for log-normal
-    distributions of asset returns AND inflation. It assumes that the input MU and SIGMA
-    are the ARITHMETIC mean and ARITHMETIC standard deviation.
+# def calculate_log_normal_params(
+#     stock_mu: float,
+#     stock_sigma: float,
+#     bond_mu: float,
+#     bond_sigma: float,
+#     str_mu: float,
+#     str_sigma: float,
+#     fun_mu: float,
+#     fun_sigma: float,
+#     real_estate_mu: float,
+#     real_estate_sigma: float,
+#     mu_pi: float,
+#     sigma_pi: float,
+# ) -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
+#     """
+#     Calculates the mu (mean) and sigma (standard deviation) for log-normal
+#     distributions of asset returns AND inflation. It assumes that the input MU and SIGMA
+#     are the ARITHMETIC mean and ARITHMETIC standard deviation.
 
-    Returns a tuple of (mu_log_stocks, sigma_log_stocks, ...,
-                        mu_log_real_estate, sigma_log_real_estate,
-                        mu_log_pi, sigma_log_pi).
-    """
+#     Returns a tuple of (mu_log_stocks, sigma_log_stocks, ...,
+#                         mu_log_real_estate, sigma_log_real_estate,
+#                         mu_log_pi, sigma_log_pi).
+#     """
 
-    def _convert_arithmetic_to_lognormal(
-        arith_mu: float, arith_sigma: float
-    ) -> tuple[float, float]:
-        """
-        Helper function to convert arithmetic mean and standard deviation
-        to log-normal parameters (mu_log, sigma_log).
-        """
-        if arith_mu <= -1.0:
-            raise ValueError(
-                f"Arithmetic mean ({arith_mu}) must be strictly "
-                + "greater than -1 to convert to log-normal parameters."
-            )
+#     def _convert_arithmetic_to_lognormal(
+#         arith_mu: float, arith_sigma: float
+#     ) -> tuple[float, float]:
+#         """
+#         Helper function to convert arithmetic mean and standard deviation
+#         to log-normal parameters (mu_log, sigma_log).
+#         """
+#         if arith_mu <= -1.0:
+#             raise ValueError(
+#                 f"Arithmetic mean ({arith_mu}) must be strictly "
+#                 + "greater than -1 to convert to log-normal parameters."
+#             )
 
-        ex: float = 1.0 + arith_mu
-        stdx: float = arith_sigma
+#         ex: float = 1.0 + arith_mu
+#         stdx: float = arith_sigma
 
-        if stdx == 0.0:
-            sigma_log: float = 0.0
-        else:
-            # Ensure calculations result in float64 from numpy, then cast to Python float
-            sigma_log = float(np.sqrt(np.log(1.0 + (stdx / ex) ** 2)))
+#         if stdx == 0.0:
+#             sigma_log: float = 0.0
+#         else:
+#             # Ensure calculations result in float64 from numpy, then cast to Python float
+#             sigma_log = float(np.sqrt(np.log(1.0 + (stdx / ex) ** 2)))
 
-        mu_log: float = float(np.log(ex) - 0.5 * sigma_log**2)
+#         mu_log: float = float(np.log(ex) - 0.5 * sigma_log**2)
 
-        return mu_log, sigma_log
+#         return mu_log, sigma_log
 
-    # Apply the conversion to each asset class
-    mu_log_stocks, sigma_log_stocks = _convert_arithmetic_to_lognormal(stock_mu, stock_sigma)
-    mu_log_bonds, sigma_log_bonds = _convert_arithmetic_to_lognormal(bond_mu, bond_sigma)
-    mu_log_str, sigma_log_str = _convert_arithmetic_to_lognormal(str_mu, str_sigma)
-    mu_log_fun, sigma_log_fun = _convert_arithmetic_to_lognormal(fun_mu, fun_sigma)
-    mu_log_real_estate, sigma_log_real_estate = _convert_arithmetic_to_lognormal(
-        real_estate_mu, real_estate_sigma
-    )
+#     # Apply the conversion to each asset class
+#     mu_log_stocks, sigma_log_stocks = _convert_arithmetic_to_lognormal(stock_mu, stock_sigma)
+#     mu_log_bonds, sigma_log_bonds = _convert_arithmetic_to_lognormal(bond_mu, bond_sigma)
+#     mu_log_str, sigma_log_str = _convert_arithmetic_to_lognormal(str_mu, str_sigma)
+#     mu_log_fun, sigma_log_fun = _convert_arithmetic_to_lognormal(fun_mu, fun_sigma)
+#     mu_log_real_estate, sigma_log_real_estate = _convert_arithmetic_to_lognormal(
+#         real_estate_mu, real_estate_sigma
+#     )
 
-    # Apply the conversion for inflation
-    mu_log_pi, sigma_log_pi = _convert_arithmetic_to_lognormal(mu_pi, sigma_pi)
+#     # Apply the conversion for inflation
+#     mu_log_pi, sigma_log_pi = _convert_arithmetic_to_lognormal(mu_pi, sigma_pi)
 
-    return (
-        mu_log_stocks,
-        sigma_log_stocks,
-        mu_log_bonds,
-        sigma_log_bonds,
-        mu_log_str,
-        sigma_log_str,
-        mu_log_fun,
-        sigma_log_fun,
-        mu_log_real_estate,
-        sigma_log_real_estate,
-        mu_log_pi,
-        sigma_log_pi,
-    )
+#     return (
+#         mu_log_stocks,
+#         sigma_log_stocks,
+#         mu_log_bonds,
+#         sigma_log_bonds,
+#         mu_log_str,
+#         sigma_log_str,
+#         mu_log_fun,
+#         sigma_log_fun,
+#         mu_log_real_estate,
+#         sigma_log_real_estate,
+#         mu_log_pi,
+#         sigma_log_pi,
+#     )
 
 
 def calculate_initial_asset_values(
