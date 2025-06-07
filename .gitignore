@@ -12,5 +12,10 @@ configs/carlo.toml
 # Ignore all output files and directories
 output/
 
+# Ignore build artifacts
+dist/
+build/
+*.egg-info/
+
 # Ignore SPDX update script
 update_spdx_year.sh

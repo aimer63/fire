@@ -10,10 +10,14 @@ name = "firestarter"
 version = "0.1.0b1"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
 authors = [{ name = "aimer63", email = "imeriod@gmail.com" }]
-license = { file = "LICENSE" }
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["numpy", "pandas", "matplotlib", "pydantic", "jinja2", "tomli"]
 
 [project.scripts]
 fire = "firestarter.main:main"
+
+[tool.setuptools.packages.find]
+include = ["firestarter*"]

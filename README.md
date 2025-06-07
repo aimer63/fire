@@ -167,6 +167,8 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 - [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
 - [Monte Carlo Theory](docs/Montecarlo.md): Mathematical background and simulation theory.
 - [Real Estate Modeling](docs/real_estate.md): Details on how real estate is handled in the simulation.
+- [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a GitHub release.
+- [Release Process](docs/release.md): How to prepare and publish a new release.
 - [TODO & Improvement Plan](TODO.md): Roadmap and planned features.
 
 ---
