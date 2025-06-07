@@ -157,4 +157,18 @@ This tool helps users understand the likelihood of their retirement plan succeed
 
 ---
 
+## Documentation
+
+For mathematical background, advanced usage, and additional guides, see the [docs/](docs/) folder.
+
+### 📚 Documentation Index
+
+- [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
+- [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
+- [Monte Carlo Theory](docs/Montecarlo.md): Mathematical background and simulation theory.
+- [Real Estate Modeling](docs/real_estate.md): Details on how real estate is handled in the simulation.
+- [TODO & Improvement Plan](TODO.md): Roadmap and planned features.
+
+---
+
 **For more details, see the docstrings in each module or open an issue!**
