@@ -114,8 +114,7 @@ rebalances = [
 
 **Note:**  
 
-- The old `[portfolio_allocations]` section and all `phase1_*`/`phase2_*` parameters have been removed.
-- All portfolio weights are now specified in the `[portfolio_rebalances]` section as a list of rebalances, each with a `year` and weights for liquid assets (`stocks`, `bonds`, `str`, `fun`).  
+- The portfolio weights are specified in the `[portfolio_rebalances]` section as a list of rebalances, each with a `year` and weights for liquid assets (`stocks`, `bonds`, `str`, `fun`). There must be one at `year = 0` to give initial values at the portfolio assets.
 - There is no `real_estate` weight; real estate is handled separately at the time of house purchase.
 
 ---

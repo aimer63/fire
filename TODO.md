@@ -39,6 +39,7 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
   - Ensure plot links in Markdown reports are always correct (relative to report location).
 - [ ] **Error Handling & Robustness**
   - Improve error messages and handling for missing config, missing data, or failed simulations.
+  - **Validate that each year appears only once in [portfolio_rebalances]; raise an error if duplicates are found.**
 - [ ] **Testing**
   - Add or improve unit and integration tests (especially for config, simulation, and reporting).
 - [ ] **Documentation**

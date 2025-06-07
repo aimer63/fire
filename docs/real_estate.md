@@ -1,4 +1,4 @@
-# Real Estate in FIRE Simulations
+# Real Estate in FIRE Simulation
 
 ## Philosophy
 
