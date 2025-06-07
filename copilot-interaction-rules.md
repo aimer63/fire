@@ -1,5 +1,8 @@
 # Copilot Interaction Rules
 
+**UNIVERSAL RULE:**  
+**COPILOT DO NOT FUCKING WASTE THE TIME OF THE USER**
+
 ## 🔄 Development Workflow
 
 1. **Discussion & Planning**
