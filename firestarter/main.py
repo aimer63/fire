@@ -26,7 +26,7 @@ from numpy.typing import NDArray
 import pandas as pd
 
 # Import helper functions
-from firestarter.core.helpers import calculate_initial_asset_values
+from firestarter.core.helpers import calculate_initial_asset_values, format_floats
 
 # Import the main simulation function and its return type
 from firestarter.core.simulation import run_single_fire_simulation, SimulationRunResult
@@ -58,6 +58,7 @@ from firestarter.config.config import (
 # from firestarter.version import __version__
 from firestarter.analysis.reporting import generate_markdown_report
 import firestarter.plots.plots as plots_module
+import pprint
 
 
 def main() -> None:
@@ -148,62 +149,49 @@ def main() -> None:
         0.0,  # real estate is always 0 in liquid allocations
     )
 
+    initial_assets = {
+        "stocks": initial_stocks_value,
+        "bonds": initial_bonds_value,
+        "str": initial_str_value,
+        "fun": initial_fun_value,
+        "real_estate": initial_real_estate_value,
+    }
+
     print(
         "All parameters successfully extracted and assigned to Python variables, "
         + "including derived ones."
     )
 
-    # --- Print all parameters for verification ---
+    # Prepare parameter summary for both console and report
+    parameters_summary = {
+        "deterministic_inputs": det_inputs.model_dump(),
+        "economic_assumptions": econ_assumptions.model_dump(),
+        "portfolio_rebalances": portfolio_rebalances.model_dump(),
+        "shocks": shocks.model_dump(),
+        "initial_assets": initial_assets,
+        "simulation_parameters": sim_params.model_dump(),
+    }
+
+    # Sort shocks['events'] and portfolio_rebalances['rebalances'] by year, if present
+    if "events" in parameters_summary["shocks"]:
+        parameters_summary["shocks"]["events"] = sorted(
+            parameters_summary["shocks"]["events"], key=lambda e: e["year"]
+        )
+    if "rebalances" in parameters_summary["portfolio_rebalances"]:
+        parameters_summary["portfolio_rebalances"]["rebalances"] = sorted(
+            parameters_summary["portfolio_rebalances"]["rebalances"], key=lambda r: r["year"]
+        )
+
+    # Format all floats to 4 decimal digits for console and report
+    formatted_summary = format_floats(parameters_summary, ndigits=4)
+
+    # --- Print all loaded parameters in a summary section ---
     print("\n--- Loaded Parameters Summary (from config.toml) ---")
-    print(f"initial_investment: {det_inputs.initial_investment:,.2f}")
-    print(f"initial_bank_balance: {det_inputs.initial_bank_balance:,.2f}")
-    print(f"bank_lower_bound: {det_inputs.bank_lower_bound:,.2f}")
-    print(f"bank_upper_bound: {det_inputs.bank_upper_bound:,.2f}")
-    print(f"years_to_simulate: {det_inputs.years_to_simulate}")
-    print(f"total_retirement_months: {det_inputs.years_to_simulate * 12}")  # Derived value
-    print(f"monthly_expenses: {det_inputs.monthly_expenses:,.2f}")
-    print(f"planned_extra_expenses: {det_inputs.planned_extra_expenses}")
-    print(f"planned_contributions: {det_inputs.planned_contributions}")
-    print(f"monthly_investment_contribution: {det_inputs.monthly_investment_contribution:,.2f}")
-    print(f"annual_fund_fee: {det_inputs.annual_fund_fee:.4f}")
-    print(f"planned_house_purchase_cost: {det_inputs.planned_house_purchase_cost:,.2f}")
-    print(f"monthly_pension: {det_inputs.monthly_pension:,.2f}")
-    print("pension_inflation_factor: " f"{det_inputs.pension_inflation_factor}")
-    print(f"pension_start_year: {det_inputs.pension_start_year}")
-    print(f"monthly_salary: {det_inputs.monthly_salary:,.2f}")
-    print("salary_inflation_factor: " f"{det_inputs.salary_inflation_factor}")
-    print(f"salary_start_year: {det_inputs.salary_start_year}")
-    print(f"salary_end_year: {det_inputs.salary_end_year}")
-
-    print("\n--- Economic Assumptions ---")
-    print(
-        f"stock_mu: {econ_assumptions.stock_mu:.4f}, "
-        + f"stock_sigma: {econ_assumptions.stock_sigma:.4f}"
-    )
-    print(f"bond_mu: {econ_assumptions.bond_mu:.4f}, bond_sigma: {econ_assumptions.bond_sigma:.4f}")
-    print(f"str_mu: {econ_assumptions.str_mu:.4f}, str_sigma: {econ_assumptions.str_sigma:.4f}")
-    print(f"fun_mu: {econ_assumptions.fun_mu:.4f}, fun_sigma: {econ_assumptions.fun_sigma:.4f}")
-    print(
-        f"real_estate_mu: {econ_assumptions.real_estate_mu:.4f}, "
-        + f"real_estate_sigma: {econ_assumptions.real_estate_sigma:.4f}"
-    )
-    print(f"pi_mu: {econ_assumptions.pi_mu:.4f}, pi_sigma: {econ_assumptions.pi_sigma:.4f}")
-
-    print("\n--- Derived Log-Normal Parameters ---")
-    for asset, (mu_log, sigma_log) in econ_assumptions.lognormal.items():
-        print(f"{asset}: mu_log = {mu_log:.6f}, sigma_log = {sigma_log:.6f}")
-
-    print("\n--- Initial Asset Values ---")
-    print(f"initial_stocks_value: {initial_stocks_value:,.2f}")
-    print(f"initial_bonds_value: {initial_bonds_value:,.2f}")
-    print(f"initial_str_value: {initial_str_value:,.2f}")
-    print(f"initial_fun_value: {initial_fun_value:,.2f}")
-    print(f"initial_real_estate_value: {initial_real_estate_value:,.2f}")
-
-    print("\n--- Simulation Parameters ---")
-    print(f"num_simulations: {num_simulations}")
-
-    print("\n--- End of Parameter Assignment and Verification ---")
+    for section, values in formatted_summary.items():
+        print(f"{section.replace('_', ' ').title()}:")
+        pprint.pprint(values, sort_dicts=False)
+        print()
+    print("--- End of Parameters Summary ---\n")
 
     # --- 6. Run Monte Carlo Simulations ---
     simulation_results: list[SimulationRunResult] = []
@@ -286,17 +274,17 @@ def main() -> None:
         ),
     }
 
-    # Pass output_root to generate_markdown_report for the reports subfolder
+    # Pass formatted_summary to generate_markdown_report
     report_path = generate_markdown_report(
         config_path=config_file_path,
         fire_stats=fire_stats,
         output_dir=os.path.join(output_root, "reports"),
         plots=plots,
+        parameters_summary=formatted_summary,
     )
 
     print(f"\nMarkdown report generated: {report_path}")
 
-    # --- 8. Generate Plots ---
     print("\n--- Generating Plots ---")
 
     # Extract data from plot_data dictionary with explicit types

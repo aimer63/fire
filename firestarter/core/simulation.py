@@ -215,9 +215,9 @@ def run_single_fire_simulation(
 
     # Apply SHOCK_EVENTS to the pre-generated annual sequences
     for shock in shock_events:
-        shock_year: int = shock.year
-        shock_asset: str = shock.asset
-        shock_magnitude: float = shock.magnitude
+        shock_year: int = shock["year"]
+        shock_asset: str = shock["asset"]
+        shock_magnitude: float = shock["magnitude"]
 
         if 0 <= shock_year < total_retirement_years:
             if shock_asset == "Stocks":

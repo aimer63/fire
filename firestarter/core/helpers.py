@@ -193,3 +193,20 @@ def calculate_cagr(initial_value: float, final_value: float, num_years: int) -> 
 
     # Ensure result is explicitly a Python float
     return float((final_value / initial_value) ** (1.0 / num_years) - 1.0)  # Use float literals
+
+
+def format_floats(obj, ndigits=4):
+    """
+    Recursively format all floats in a nested structure (dicts/lists/tuples) as strings with fixed decimal digits.
+    Tuples are converted to lists for serialization compatibility.
+    """
+    if isinstance(obj, float):
+        return f"{obj:.{ndigits}f}"
+    elif isinstance(obj, dict):
+        return {k: format_floats(v, ndigits) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [format_floats(i, ndigits) for i in obj]
+    elif isinstance(obj, tuple):
+        return [format_floats(i, ndigits) for i in obj]  # Convert tuple to list
+    else:
+        return obj

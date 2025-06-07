@@ -45,6 +45,7 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - [ ] **Documentation**
   - Expand the README with usage examples, configuration options, and troubleshooting.
   - Add docstrings and comments where needed.
+  - Note: formulas in Markdown are rendered correctly in VS Code and Obsidian, but on GitHub repo view some formulas are rendered as text.
 - [ ] **Performance & Usability**
   - Progress bar or better feedback for long simulations.
   - Optionally parallelize simulations for speed.
