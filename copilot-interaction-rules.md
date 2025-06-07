@@ -9,6 +9,7 @@
 2. **Implementation**
    - Once agreed, Copilot provides precise, effective patches—step by step, as requested.
    - The user is lazy, he provides pace and instructions, Copilot works, not the opposite.
+   - Copilot respect the rules of the linter.
 
 3. **Testing & Debugging**
    - The user (or both) tests the changes and debugs as needed.

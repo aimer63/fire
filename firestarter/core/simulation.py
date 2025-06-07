@@ -34,7 +34,7 @@ from numpy.typing import NDArray
 # Import helper functions
 from firestarter.core.helpers import (
     annual_to_monthly_compounded_rate,
-    calculate_initial_asset_values,
+    # calculate_initial_asset_values,
 )
 
 # Import the DeterministicInputs Pydantic model

@@ -379,7 +379,9 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(worst_successful_result['final_allocations_nominal'])}"
+                + f"{_format_allocations_as_percentages(
+                        worst_successful_result['final_allocations_nominal']
+                    )}"
             )
 
         # Average Successful Case
@@ -407,7 +409,9 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(average_successful_result['final_allocations_nominal'])}"
+                + f"{_format_allocations_as_percentages(
+                        average_successful_result['final_allocations_nominal']
+                    )}"
             )
 
         # Best Successful Case
@@ -434,7 +438,9 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(best_successful_result['final_allocations_nominal'])}"
+                + f"{_format_allocations_as_percentages(
+                        best_successful_result['final_allocations_nominal']
+                    )}"
             )
 
     else:

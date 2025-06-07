@@ -25,7 +25,8 @@ pre-processing steps across the simulation, analysis, and plotting modules.
 """
 
 import numpy as np
-from numpy.typing import NDArray  # Import for NumPy array type hints
+
+# from numpy.typing import NDArray  # Import for NumPy array type hints
 
 
 def annual_to_monthly_compounded_rate(annual_rate: float) -> float:
@@ -197,7 +198,8 @@ def calculate_cagr(initial_value: float, final_value: float, num_years: int) -> 
 
 def format_floats(obj, ndigits=4):
     """
-    Recursively format all floats in a nested structure (dicts/lists/tuples) as strings with fixed decimal digits.
+    Recursively format all floats in a nested structure (dicts/lists/tuples) as strings with fixed
+    decimal digits.
     Tuples are converted to lists for serialization compatibility.
     """
     if isinstance(obj, float):
