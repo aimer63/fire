@@ -7,9 +7,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "firestarter"
-version = "0.1.0"
+version = "0.1.0b1"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
-authors = [{ name = "Aimer63", email = "your@email.com" }]
+authors = [{ name = "aimer63", email = "imeriod@gmail.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.10"

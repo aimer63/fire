@@ -53,6 +53,9 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - [ ] **Parameter Summary Output**
   - Print all loaded parameters to the console in a section titled `--- Loaded Parameters Summary (from config.toml) ---` after config parsing.
   - Add a section to the Markdown report listing the value of all parameters loaded from the config file.
+- [ ] **Refactor `run_single_fire_simulation` (Elephant in the Room)**
+  - **Problem:** The `run_single_fire_simulation` function in `simulation.py` is very large and monolithic. As features are added, it will become increasingly unmanageable, hard to read, maintain, and test.
+  - **Goals:** Improve readability, maintainability, modularity, and flexibility.
 
 ---
 
