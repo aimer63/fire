@@ -31,12 +31,12 @@ from firestarter.core.helpers import calculate_initial_asset_values, format_floa
 # Import the main simulation function and its return type
 # from firestarter.core.simulation import run_single_fire_simulation, SimulationRunResult
 
-# Import the new analysis module functions and its plotting data TypedDict
+# Import the legacy analysis module functions and its plotting data TypedDict
 import firestarter.analysis.analysis as analysis
 from firestarter.analysis.analysis import PlotDataDict
 
 # Import plotting functions
-from firestarter.plots.plots import (
+from firestarter.plots.plots_v1 import (  # PATCH: use plots_v1 instead of plots
     plot_retirement_duration_distribution,
     plot_final_wealth_distribution_nominal,
     plot_final_wealth_distribution_real,
@@ -57,7 +57,7 @@ from firestarter.config.config import (
 
 # from firestarter.version import __version__
 from firestarter.analysis.reporting import generate_markdown_report
-import firestarter.plots.plots as plots_module
+import firestarter.plots.plots_v1 as plots_module  # PATCH: use plots_v1 for set_output_dir
 import pprint
 
 from firestarter.core.simulation_v1 import SimulationBuilder

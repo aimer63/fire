@@ -453,28 +453,73 @@ def generate_fire_plan_summary(
     }
 
     if worst_successful_result:
+        ws_nom = (
+            worst_successful_result["final_investment"]
+            + worst_successful_result["final_bank_balance"]
+        )
+        ws_cum_infl = (
+            np.prod(1.0 + worst_successful_result["annual_inflations_seq"])
+            if total_retirement_years > 0
+            else 1.0
+        )
+        ws_real = ws_nom / float(ws_cum_infl)
+        ws_cagr = calculate_cagr(
+            initial_total_wealth_nominal,
+            ws_nom,
+            total_retirement_years,
+        )
         stats_dict["worst_successful"] = {
-            "final_wealth_nominal": final_total_wealth_nominal,
-            "final_wealth_real": final_total_wealth_real,
-            "cagr": cagr,
+            "final_wealth_nominal": ws_nom,
+            "final_wealth_real": ws_real,
+            "cagr": ws_cagr,
             "allocations": _format_allocations_as_percentages(
                 worst_successful_result["final_allocations_nominal"]
             ),
         }
     if average_successful_result:
+        av_nom = (
+            average_successful_result["final_investment"]
+            + average_successful_result["final_bank_balance"]
+        )
+        av_cum_infl = (
+            np.prod(1.0 + average_successful_result["annual_inflations_seq"])
+            if total_retirement_years > 0
+            else 1.0
+        )
+        av_real = av_nom / float(av_cum_infl)
+        av_cagr = calculate_cagr(
+            initial_total_wealth_nominal,
+            av_nom,
+            total_retirement_years,
+        )
         stats_dict["average_successful"] = {
-            "final_wealth_nominal": final_total_wealth_nominal,
-            "final_wealth_real": final_total_wealth_real,
-            "cagr": cagr,
+            "final_wealth_nominal": av_nom,
+            "final_wealth_real": av_real,
+            "cagr": av_cagr,
             "allocations": _format_allocations_as_percentages(
                 average_successful_result["final_allocations_nominal"]
             ),
         }
     if best_successful_result:
+        bs_nom = (
+            best_successful_result["final_investment"]
+            + best_successful_result["final_bank_balance"]
+        )
+        bs_cum_infl = (
+            np.prod(1.0 + best_successful_result["annual_inflations_seq"])
+            if total_retirement_years > 0
+            else 1.0
+        )
+        bs_real = bs_nom / float(bs_cum_infl)
+        bs_cagr = calculate_cagr(
+            initial_total_wealth_nominal,
+            bs_nom,
+            total_retirement_years,
+        )
         stats_dict["best_successful"] = {
-            "final_wealth_nominal": final_total_wealth_nominal,
-            "final_wealth_real": final_total_wealth_real,
-            "cagr": cagr,
+            "final_wealth_nominal": bs_nom,
+            "final_wealth_real": bs_real,
+            "cagr": bs_cagr,
             "allocations": _format_allocations_as_percentages(
                 best_successful_result["final_allocations_nominal"]
             ),
