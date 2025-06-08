@@ -33,7 +33,7 @@ import firestarter.analysis.analysis as analysis
 from firestarter.analysis.analysis import PlotDataDict
 
 # Import plotting functions
-from firestarter.plots.plots import (  # PATCH: use plots_v1 instead of plots
+from firestarter.plots.plots import (
     plot_retirement_duration_distribution,
     plot_final_wealth_distribution_nominal,
     plot_final_wealth_distribution_real,
@@ -54,7 +54,7 @@ from firestarter.config.config import (
 
 # from firestarter.version import __version__
 from firestarter.analysis.reporting import generate_markdown_report
-import firestarter.plots.plots as plots_module  # PATCH: use plots_v1 for set_output_dir
+import firestarter.plots.plots as plots_module  # Only needed for set_output_dir
 import pprint
 
 from firestarter.core.simulation import SimulationBuilder
@@ -210,7 +210,7 @@ def main() -> None:
             .build()
         )
         simulation.init()
-        result = simulation.run()
+        result = simulation.run()  # result is now the new dict structure
         simulation_results.append(result)
 
         elapsed_time = time.time() - start_time

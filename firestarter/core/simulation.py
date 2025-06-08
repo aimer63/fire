@@ -19,23 +19,6 @@ from typing import TypedDict
 import numpy as np
 
 
-class SimulationRunResult(TypedDict):
-    success: bool
-    months_lasted: int
-    final_investment: float
-    final_bank_balance: float
-    annual_inflations_seq: np.ndarray
-    nominal_wealth_history: np.ndarray
-    bank_balance_history: np.ndarray
-    pre_rebalancing_allocations_nominal: dict
-    pre_rebalancing_allocations_real: dict
-    rebalancing_allocations_nominal: dict
-    rebalancing_allocations_real: dict
-    final_allocations_nominal: dict
-    final_allocations_real: dict
-    cumulative_inflation_factors_monthly: np.ndarray  # <-- PATCH: add this line
-
-
 class SimulationBuilder:
     def __init__(self):
         self.det_inputs = None
@@ -237,25 +220,20 @@ class Simulation:
                     annual_inflations_sequence[shock_year] = shock_magnitude
 
         # Cumulative inflation factors (annual)
-        cumulative_inflation_factors_annual = np.ones(total_years + 1, dtype=np.float64)
+        annual_cumulative_inflation_factors = np.ones(total_years + 1, dtype=np.float64)
         for year_idx in range(total_years):
-            cumulative_inflation_factors_annual[year_idx + 1] = cumulative_inflation_factors_annual[
+            annual_cumulative_inflation_factors[year_idx + 1] = annual_cumulative_inflation_factors[
                 year_idx
             ] * (1.0 + annual_inflations_sequence[year_idx])
 
         # --- Uniform monthly inflation rate array and cumulative factors ---
-        monthly_inflation_rates = np.zeros(total_months, dtype=np.float64)
-        for year_idx in range(total_years):
-            monthly_rate = annual_to_monthly_compounded_rate(annual_inflations_sequence[year_idx])
-            start_month = year_idx * 12
-            end_month = min((year_idx + 1) * 12, total_months)
-            monthly_inflation_rates[start_month:end_month] = monthly_rate
-
-        cumulative_inflation_factors_monthly = np.ones(total_months + 1, dtype=np.float64)
+        monthly_cumulative_inflation_factors = np.ones(total_months + 1, dtype=np.float64)
         for month_idx in range(total_months):
-            cumulative_inflation_factors_monthly[month_idx + 1] = (
-                cumulative_inflation_factors_monthly[month_idx]
-                * (1.0 + monthly_inflation_rates[month_idx])
+            # Compute monthly rate on the fly
+            year_idx = month_idx // 12
+            monthly_rate = annual_to_monthly_compounded_rate(annual_inflations_sequence[year_idx])
+            monthly_cumulative_inflation_factors[month_idx + 1] = (
+                monthly_cumulative_inflation_factors[month_idx] * (1.0 + monthly_rate)
             )
 
         # Monthly returns lookup
@@ -298,7 +276,7 @@ class Simulation:
         nominal_planned_contributions_amounts = []
         for real_amount, year_idx in planned_contributions:
             nominal_contribution_amount = float(
-                real_amount * cumulative_inflation_factors_annual[year_idx]
+                real_amount * annual_cumulative_inflation_factors[year_idx]
             )
             nominal_planned_contributions_amounts.append((nominal_contribution_amount, year_idx))
 
@@ -306,7 +284,7 @@ class Simulation:
         local_planned_extra_expenses = list(planned_extra_expenses)
         for real_amount, year_idx in local_planned_extra_expenses:
             nominal_extra_expense_amount = float(
-                real_amount * cumulative_inflation_factors_annual[year_idx]
+                real_amount * annual_cumulative_inflation_factors[year_idx]
             )
             nominal_planned_extra_expenses_amounts.append((nominal_extra_expense_amount, year_idx))
 
@@ -331,7 +309,7 @@ class Simulation:
                     pension_factor = 1.0
                 nominal_pension_annual_sequence[year_idx] = (
                     det_inputs.monthly_pension
-                    * cumulative_inflation_factors_annual[pension_start_year_idx]
+                    * annual_cumulative_inflation_factors[pension_start_year_idx]
                     * pension_factor
                 )
             # Salary
@@ -346,7 +324,7 @@ class Simulation:
                     salary_factor = 1.0
                 nominal_salary_annual_sequence[year_idx] = (
                     det_inputs.monthly_salary
-                    * cumulative_inflation_factors_annual[salary_start_year_idx]
+                    * annual_cumulative_inflation_factors[salary_start_year_idx]
                     * salary_factor
                 )
 
@@ -357,9 +335,8 @@ class Simulation:
         self.state["annual_str_returns_sequence"] = annual_str_returns_sequence
         self.state["annual_fun_returns_sequence"] = annual_fun_returns_sequence
         self.state["annual_real_estate_returns_sequence"] = annual_real_estate_returns_sequence
-        self.state["cumulative_inflation_factors_annual"] = cumulative_inflation_factors_annual
-        self.state["monthly_inflation_rates"] = monthly_inflation_rates
-        self.state["cumulative_inflation_factors_monthly"] = cumulative_inflation_factors_monthly
+        self.state["annual_cumulative_inflation_factors"] = annual_cumulative_inflation_factors
+        self.state["monthly_cumulative_inflation_factors"] = monthly_cumulative_inflation_factors
         self.state["monthly_returns_lookup"] = monthly_returns_lookup
         self.state["nominal_planned_contributions_amounts"] = nominal_planned_contributions_amounts
         self.state["nominal_planned_extra_expenses_amounts"] = (
@@ -415,7 +392,7 @@ class Simulation:
         if det_inputs.monthly_investment_contribution > 0.0:
             monthly_contribution = (
                 det_inputs.monthly_investment_contribution
-                * self.state["cumulative_inflation_factors_annual"][current_year]
+                * self.state["annual_cumulative_inflation_factors"][current_year]
             )
             weights = self._get_current_portfolio_weights(current_year)
             self.state["current_stocks_value"] += monthly_contribution * weights["stocks"]
@@ -436,7 +413,7 @@ class Simulation:
         # Regular monthly expenses (inflation-adjusted)
         nominal_monthly_expenses = (
             det_inputs.monthly_expenses
-            * self.state["cumulative_inflation_factors_annual"][current_year]
+            * self.state["annual_cumulative_inflation_factors"][current_year]
         )
         total_expenses = nominal_monthly_expenses
 
@@ -472,7 +449,7 @@ class Simulation:
         # Only purchase at the first month of the scheduled year
         if current_year == house_purchase_year and month_in_year == 0:
             # Inflation-adjusted nominal house cost
-            cumulative_inflation = self.state["cumulative_inflation_factors_annual"][
+            cumulative_inflation = self.state["annual_cumulative_inflation_factors"][
                 house_purchase_year
             ]
             nominal_house_cost = house_cost_real * cumulative_inflation
@@ -517,7 +494,7 @@ class Simulation:
         The bounds are specified in real terms (today's money) and must be converted
         to nominal using the cumulative inflation factor for the current month.
         """
-        cumulative_inflation = self.state["cumulative_inflation_factors_monthly"][month]
+        cumulative_inflation = self.state["monthly_cumulative_inflation_factors"][month]
         lower = self.det_inputs.bank_lower_bound * cumulative_inflation
         upper = self.det_inputs.bank_upper_bound * cumulative_inflation
 
@@ -604,7 +581,7 @@ class Simulation:
         if self.results is None:
             total_months = self.simulation_months
             self.results = {
-                "nominal_wealth_history": [None] * total_months,
+                "wealth_history": [None] * total_months,  # <-- RENAMED
                 "bank_balance_history": [None] * total_months,
                 "stocks_history": [None] * total_months,
                 "bonds_history": [None] * total_months,
@@ -613,7 +590,7 @@ class Simulation:
                 "real_estate_history": [None] * total_months,
             }
 
-        self.results["nominal_wealth_history"][month] = (
+        self.results["wealth_history"][month] = (
             self.state["current_bank_balance"]
             + self.state["current_stocks_value"]
             + self.state["current_bonds_value"]
@@ -628,16 +605,13 @@ class Simulation:
         self.results["fun_history"][month] = self.state["current_fun_value"]
         self.results["real_estate_history"][month] = self.state["current_real_estate_value"]
 
-    import numpy as np
-    from firestarter.core.simulation import SimulationRunResult
-
     def build_result(self):
         """
-        Return the final simulation results in both legacy SimulationRunResult and new dict structure.
+        Return the final simulation results as a dict (result structure).
         """
         total_months = self.simulation_months
         months_lasted = next(
-            (i for i, v in enumerate(self.results["nominal_wealth_history"]) if v is None),
+            (i for i, v in enumerate(self.results["wealth_history"]) if v is None),
             total_months,
         )
         success = not self.state.get("simulation_failed", False)
@@ -650,11 +624,6 @@ class Simulation:
         )
         final_bank_balance = self.state["current_bank_balance"]
 
-        # --- Legacy SimulationRunResult fields ---
-        # Annual inflations sequence (legacy expects NDArray)
-        annual_inflations_seq = np.array(self.state["annual_inflations_sequence"], dtype=np.float64)
-
-        # Final allocations (nominal and real)
         final_allocations_nominal = {
             "Stocks": self.state["current_stocks_value"],
             "Bonds": self.state["current_bonds_value"],
@@ -662,48 +631,17 @@ class Simulation:
             "Fun": self.state["current_fun_value"],
             "Real Estate": self.state["current_real_estate_value"],
         }
-        # Real allocations: divide by cumulative inflation at end
-        cumulative_inflation = self.state["cumulative_inflation_factors_annual"][-1]
+        cumulative_inflation = self.state["annual_cumulative_inflation_factors"][-1]
         final_allocations_real = {
             k: float(v / cumulative_inflation) for k, v in final_allocations_nominal.items()
         }
 
-        # Fill in empty dicts for pre_rebalancing and rebalancing allocations for now
-        pre_rebalancing_allocations_nominal = {}
-        pre_rebalancing_allocations_real = {}
-        rebalancing_allocations_nominal = {}
-        rebalancing_allocations_real = {}
-
-        # Convert histories to np.ndarray for legacy compatibility
-        nominal_wealth_history = np.array(self.results["nominal_wealth_history"], dtype=np.float64)
-        bank_balance_history = np.array(self.results["bank_balance_history"], dtype=np.float64)
-
-        legacy_result = SimulationRunResult(
-            success=success,
-            months_lasted=months_lasted,
-            final_investment=final_investment,
-            final_bank_balance=final_bank_balance,
-            annual_inflations_seq=annual_inflations_seq,
-            nominal_wealth_history=nominal_wealth_history,
-            bank_balance_history=bank_balance_history,
-            pre_rebalancing_allocations_nominal=pre_rebalancing_allocations_nominal,
-            pre_rebalancing_allocations_real=pre_rebalancing_allocations_real,
-            rebalancing_allocations_nominal=rebalancing_allocations_nominal,
-            rebalancing_allocations_real=rebalancing_allocations_real,
-            final_allocations_nominal=final_allocations_nominal,
-            final_allocations_real=final_allocations_real,
-            cumulative_inflation_factors_monthly=self.state[
-                "cumulative_inflation_factors_monthly"
-            ],  # <-- PATCH: add this line
-        )
-
-        # --- New result structure (kept for future migration) ---
-        new_result = {
+        result = {
             "success": success,
             "months_lasted": months_lasted,
             "final_investment": final_investment,
             "final_bank_balance": final_bank_balance,
-            "nominal_wealth_history": self.results["nominal_wealth_history"],
+            "wealth_history": self.results["wealth_history"],
             "bank_balance_history": self.results["bank_balance_history"],
             "stocks_history": self.results["stocks_history"],
             "bonds_history": self.results["bonds_history"],
@@ -711,14 +649,14 @@ class Simulation:
             "fun_history": self.results["fun_history"],
             "real_estate_history": self.results["real_estate_history"],
             "annual_inflations_sequence": self.state["annual_inflations_sequence"],
+            "monthly_cumulative_inflation_factors": self.state[
+                "monthly_cumulative_inflation_factors"
+            ],
             "final_allocations_nominal": final_allocations_nominal,
             "final_allocations_real": final_allocations_real,
         }
 
-        # Return only the legacy result for now (for analysis compatibility)
-        # Optionally, you can return both as a tuple for debugging:
-        # return legacy_result, new_result
-        return legacy_result
+        return result
 
     def _get_current_portfolio_weights(self, year_idx):
         """

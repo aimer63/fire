@@ -32,7 +32,7 @@ import pandas as pd
 from typing import Any
 from numpy.typing import NDArray
 
-from firestarter.core.helpers import annual_to_monthly_compounded_rate
+# from firestarter.core.helpers import annual_to_monthly_compounded_rate
 from firestarter.analysis.analysis import PlotLineData
 
 
@@ -207,25 +207,15 @@ def plot_wealth_evolution_samples_real(
         linewidth: float = line_data["linewidth"]
 
         row: pd.Series = results_df.loc[sim_idx]
-        nominal_history: NDArray[np.float64] = row["nominal_wealth_history"]
+        wealth_history: NDArray[np.float64] = row["wealth_history"]
+        monthly_cumulative_inflation_factors: NDArray[np.float64] = row[
+            "monthly_cumulative_inflation_factors"
+        ]  # <-- RENAMED
 
-        real_history: NDArray[np.float64] = np.zeros_like(nominal_history, dtype=np.float64)
-
-        current_cumulative_inflation_factor: float = 1.0
-
-        for month_idx, nominal_balance in enumerate(nominal_history):
-            year_idx: int = month_idx // 12
-            monthly_inflation_rate: float
-            if year_idx < len(row["annual_inflations_seq"]):
-                monthly_inflation_rate = annual_to_monthly_compounded_rate(
-                    row["annual_inflations_seq"][year_idx]
-                )
-            else:
-                monthly_inflation_rate = annual_to_monthly_compounded_rate(pi_mu)
-
-            current_cumulative_inflation_factor *= 1.0 + monthly_inflation_rate
-
-            real_history[month_idx] = nominal_balance / current_cumulative_inflation_factor
+        n = len(wealth_history)
+        real_history: NDArray[np.float64] = (
+            wealth_history / monthly_cumulative_inflation_factors[:n]
+        )
 
         real_history_positive: NDArray[np.float64] = np.where(
             real_history <= 0.0, 1.0, real_history
@@ -252,7 +242,7 @@ def plot_wealth_evolution_samples_real(
                 adjusted_label = f"Sample (Final Real: {current_final_real_wealth:,.0f}€)"
 
         plt.plot(
-            np.arange(0, len(nominal_history)) / 12.0,
+            np.arange(0, len(wealth_history)) / 12.0,
             real_history_positive,
             label=adjusted_label,
             color=color,
@@ -290,13 +280,13 @@ def plot_wealth_evolution_samples_nominal(
         linewidth: float = line_data["linewidth"]
 
         row: pd.Series = results_df.loc[sim_idx]
-        nominal_history: NDArray[np.float64] = row["nominal_wealth_history"]
+        wealth_history = np.array(row["wealth_history"], dtype=np.float64)  # <-- RENAMED
 
         # Adjust label to reflect nominal final wealth for the nominal plot, and handle _nolegend_
         adjusted_label: str = label
         if label != "_nolegend_":
             current_final_nominal_wealth: float = (
-                float(nominal_history[-1]) if nominal_history.size > 0 else 0.0
+                float(wealth_history[-1]) if wealth_history.size > 0 else 0.0
             )
 
             if "Failed" in label:
@@ -317,13 +307,13 @@ def plot_wealth_evolution_samples_nominal(
             else:
                 adjusted_label = f"Sample (Final Nominal: {current_final_nominal_wealth:,.0f}€)"
 
-        nominal_history_positive: NDArray[np.float64] = np.where(
-            np.array(nominal_history) <= 0.0, 1.0, np.array(nominal_history)
+        wealth_history_positive: NDArray[np.float64] = np.where(
+            np.array(wealth_history) <= 0.0, 1.0, np.array(wealth_history)
         )
 
         plt.plot(
-            np.arange(0, len(nominal_history)) / 12.0,
-            nominal_history_positive,
+            np.arange(0, len(wealth_history)) / 12.0,
+            wealth_history_positive,
             label=adjusted_label,
             color=color,
             linewidth=linewidth,
@@ -360,14 +350,14 @@ def plot_bank_account_trajectories_real(
     for sim_idx in bank_account_plot_indices:
         row: pd.Series = results_df.loc[sim_idx]
         nominal_bank_history: NDArray[np.float64] = row["bank_balance_history"]
-        cumulative_inflation_factors_monthly: NDArray[np.float64] = row[
-            "cumulative_inflation_factors_monthly"
-        ]
+        monthly_cumulative_inflation_factors: NDArray[np.float64] = row[
+            "monthly_cumulative_inflation_factors"
+        ]  # <-- RENAMED
 
         # Ensure both arrays have the same length
         n = len(nominal_bank_history)
         real_bank_history: NDArray[np.float64] = (
-            nominal_bank_history / cumulative_inflation_factors_monthly[:n]
+            nominal_bank_history / monthly_cumulative_inflation_factors[:n]
         )
         plot_real_bank_history: NDArray[np.float64] = np.where(
             real_bank_history < 0.0, 0.0, real_bank_history

@@ -34,9 +34,6 @@ from typing import TypedDict  # Import TypedDict for structured dictionaries
 from numpy.typing import NDArray
 
 from firestarter.core.helpers import calculate_cagr
-from firestarter.core.simulation import (
-    SimulationRunResult,
-)  # Import the TypedDict from simulation.py
 
 
 # Define TypedDicts for structured data within analysis and for plotting
@@ -64,7 +61,7 @@ class PlotDataDict(TypedDict):
 
 
 def perform_analysis_and_prepare_plots_data(
-    simulation_results: list[SimulationRunResult],  # Use the imported TypedDict
+    simulation_results: list[dict],  # Use plain dict for new result structure
     num_simulations: int,
 ) -> tuple[pd.DataFrame, PlotDataDict]:  # Explicitly use pd.DataFrame and the new TypedDict
     """
@@ -74,7 +71,7 @@ def perform_analysis_and_prepare_plots_data(
     analyses (like allocations), which are moved to generate_fire_plan_summary.
 
     Args:
-        simulation_results (list[SimulationRunResult]): Raw results from run_single_fire_simulation.
+        simulation_results (list[dict]): Raw results from run_single_fire_simulation.
         num_simulations (int): Total number of simulations run.
 
     Returns:
@@ -92,12 +89,12 @@ def perform_analysis_and_prepare_plots_data(
         row_success: bool = row_tuple.success
         row_final_investment: float = row_tuple.final_investment
         row_final_bank_balance: float = row_tuple.final_bank_balance
-        row_annual_inflations_seq: NDArray[np.float64] = row_tuple.annual_inflations_seq
+        row_annual_inflations_sequence: NDArray[np.float64] = row_tuple.annual_inflations_sequence
 
         if row_success:
             cumulative_inflation_factor: np.float64 = (
-                np.prod(1.0 + row_annual_inflations_seq)
-                if len(row_annual_inflations_seq) > 0
+                np.prod(1.0 + row_annual_inflations_sequence)
+                if len(row_annual_inflations_sequence) > 0
                 else 1.0
             )
             real_wealth: float = (
@@ -248,7 +245,7 @@ def perform_analysis_and_prepare_plots_data(
 
 
 def generate_fire_plan_summary(
-    simulation_results: list[SimulationRunResult],
+    simulation_results: list[dict],  # Use plain dict for new result structure
     initial_total_wealth_nominal: float,
     total_retirement_years: int,
 ) -> str:
@@ -265,7 +262,7 @@ def generate_fire_plan_summary(
 
     # Store the actual result TypedDicts for successful simulations to retrieve
     # allocation data later
-    successful_results_data: list[SimulationRunResult] = []
+    successful_results_data: list[dict] = []
 
     # Iterate through all simulation results to collect data for the summary
     for result in simulation_results:
@@ -293,15 +290,15 @@ def generate_fire_plan_summary(
     )
 
     # Initialize variables to hold the *full result TypedDicts* for key scenarios
-    worst_successful_result: SimulationRunResult | None = None
-    average_successful_result: SimulationRunResult | None = None
-    best_successful_result: SimulationRunResult | None = None
+    worst_successful_result: dict | None = None
+    average_successful_result: dict | None = None
+    best_successful_result: dict | None = None
 
     if successful_simulations_count > 0:
-        temp_successful_sorted: list[tuple[float, SimulationRunResult]] = []
+        temp_successful_sorted: list[tuple[float, dict]] = []
         for res in successful_results_data:
             final_nom_wealth: float = res["final_investment"] + res["final_bank_balance"]
-            annual_infl: NDArray[np.float64] = res["annual_inflations_seq"]
+            annual_infl: NDArray[np.float64] = res["annual_inflations_sequence"]
             cum_infl_factor: float = (
                 np.prod(1.0 + annual_infl) if total_retirement_years > 0 else 1.0
             )
@@ -317,7 +314,7 @@ def generate_fire_plan_summary(
             np.median([x[0] for x in temp_successful_sorted])
         )
 
-        closest_to_median: tuple[float, SimulationRunResult] = min(
+        closest_to_median: tuple[float, dict] = min(
             temp_successful_sorted,
             key=lambda x: abs(x[0] - median_real_wealth_among_successful),
         )
@@ -362,7 +359,7 @@ def generate_fire_plan_summary(
                 + worst_successful_result["final_bank_balance"]
             )
             cum_infl_factor_np: float = (
-                np.prod(1.0 + worst_successful_result["annual_inflations_seq"])
+                np.prod(1.0 + worst_successful_result["annual_inflations_sequence"])
                 if total_retirement_years > 0
                 else 1.0
             )
@@ -391,7 +388,7 @@ def generate_fire_plan_summary(
                 + average_successful_result["final_bank_balance"]
             )
             cum_infl_factor_np: float = (
-                np.prod(1.0 + average_successful_result["annual_inflations_seq"])
+                np.prod(1.0 + average_successful_result["annual_inflations_sequence"])
                 if total_retirement_years > 0
                 else 1.0
             )
@@ -421,7 +418,7 @@ def generate_fire_plan_summary(
                 + best_successful_result["final_bank_balance"]
             )
             cum_infl_factor_np: float = (
-                np.prod(1.0 + best_successful_result["annual_inflations_seq"])
+                np.prod(1.0 + best_successful_result["annual_inflations_sequence"])
                 if total_retirement_years > 0
                 else 1.0
             )
@@ -458,7 +455,7 @@ def generate_fire_plan_summary(
             + worst_successful_result["final_bank_balance"]
         )
         ws_cum_infl = (
-            np.prod(1.0 + worst_successful_result["annual_inflations_seq"])
+            np.prod(1.0 + worst_successful_result["annual_inflations_sequence"])
             if total_retirement_years > 0
             else 1.0
         )
@@ -482,7 +479,7 @@ def generate_fire_plan_summary(
             + average_successful_result["final_bank_balance"]
         )
         av_cum_infl = (
-            np.prod(1.0 + average_successful_result["annual_inflations_seq"])
+            np.prod(1.0 + average_successful_result["annual_inflations_sequence"])
             if total_retirement_years > 0
             else 1.0
         )
@@ -506,7 +503,7 @@ def generate_fire_plan_summary(
             + best_successful_result["final_bank_balance"]
         )
         bs_cum_infl = (
-            np.prod(1.0 + best_successful_result["annual_inflations_seq"])
+            np.prod(1.0 + best_successful_result["annual_inflations_sequence"])
             if total_retirement_years > 0
             else 1.0
         )

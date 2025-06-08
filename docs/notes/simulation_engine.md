@@ -35,6 +35,15 @@ Key responsibilities:
 
 ---
 
+## Returns and Inflation
+
+For a detailed explanation of how **returns** and **inflation** are handled in the simulation, see:
+
+- [Notes on Monthly vs Annual Returns and Inflation](monthly_returns.md)
+- [Inflation Handling in the FIRE Simulation](inflation.md)
+
+---
+
 ## Simulation Workflow
 
 ### 1. **Initialization**
@@ -86,7 +95,15 @@ For each month:
   If a house purchase is scheduled, withdraws from assets to pay for it and adds the value to real estate.
 
 - **`handle_bank_account(month)`**  
-  Ensures the bank account stays within bounds by withdrawing from or investing into assets as needed.
+  Manages the bank account to ensure it stays within user-defined bounds:
+  - **Lower Bound:**  
+    If the bank balance falls below the lower bound (inflation-adjusted), the simulation automatically withdraws from liquid assets (in a specified order: STR, Bonds, Stocks, Fun) to top up the bank account. If there are not enough assets to cover the shortfall, the simulation is marked as failed and ends early.
+  - **Upper Bound:**  
+    If the bank balance rises above the upper bound (inflation-adjusted), the excess is automatically invested back into liquid assets according to the current portfolio weights. This prevents the bank account from holding more cash than necessary, keeping the portfolio efficiently invested.
+  - **No Action:**  
+    If the bank balance is within the bounds, no transfers occur.
+
+  This mechanism ensures liquidity for expenses while maximizing investment efficiency and is a key part of the simulation's monthly logic.
 
 - **`apply_monthly_returns(month)`**  
   Evolves all asset values according to precomputed monthly returns.
