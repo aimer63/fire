@@ -1,5 +1,11 @@
 # config.toml
 
+
+# NOTE:
+# The simulation assumes all assets, liabilities, incomes, expenses, and flows are denominated in a single currency.
+# There is no currency conversion or multi-currency support; all values must be provided and interpreted in the same 
+# currency throughout the simulation.
+
 # --- Simulation Parameters ---
 [simulation_parameters]
 num_simulations = 10000
@@ -121,7 +127,7 @@ fun_sigma = 0.45
 # fun_mu = 2.3755
 # fun_sigma = 1.3320
 
-# Ethereum: Conservative values remembering regression to the min
+# Ethereum: Conservative values
 # fun_mu = 0.25
 # fun_sigma = 0.90
 
@@ -129,7 +135,7 @@ fun_sigma = 0.45
 # fun_mu = 0.1120
 # fun_sigma = 0.2794
 
-# Silver: Conservative values remembering regression to the min
+# Silver: Conservative values
 # fun_mu = 0.07
 # fun_sigma = 0.32
 
