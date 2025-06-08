@@ -28,15 +28,12 @@ import pandas as pd
 # Import helper functions
 from firestarter.core.helpers import calculate_initial_asset_values, format_floats
 
-# Import the main simulation function and its return type
-from firestarter.core.simulation import run_single_fire_simulation, SimulationRunResult
-
-# Import the new analysis module functions and its plotting data TypedDict
+# Import the legacy analysis module functions and its plotting data TypedDict
 import firestarter.analysis.analysis as analysis
 from firestarter.analysis.analysis import PlotDataDict
 
 # Import plotting functions
-from firestarter.plots.plots import (
+from firestarter.plots.plots import (  # PATCH: use plots_v1 instead of plots
     plot_retirement_duration_distribution,
     plot_final_wealth_distribution_nominal,
     plot_final_wealth_distribution_real,
@@ -57,8 +54,10 @@ from firestarter.config.config import (
 
 # from firestarter.version import __version__
 from firestarter.analysis.reporting import generate_markdown_report
-import firestarter.plots.plots as plots_module
+import firestarter.plots.plots as plots_module  # PATCH: use plots_v1 for set_output_dir
 import pprint
+
+from firestarter.core.simulation import SimulationBuilder
 
 
 def main() -> None:
@@ -191,26 +190,30 @@ def main() -> None:
     print("--- End of Parameters Summary ---\n")
 
     # --- 6. Run Monte Carlo Simulations ---
-    simulation_results: list[SimulationRunResult] = []
+    simulation_results = []
 
     spinner = itertools.cycle(["-", "\\", "|", "/"])
-    start_time: float = time.time()
+    start_time = time.time()
 
     print(
         f"\nRunning {num_simulations} Monte Carlo simulations "
         + f"(T={det_inputs.years_to_simulate} years)..."
     )
     for i in range(num_simulations):
-        result: SimulationRunResult = run_single_fire_simulation(
-            det_inputs,
-            econ_assumptions,
-            portfolio_rebalances,
-            shock_events,  # <-- Now passing Pydantic objects, not dicts
-            initial_assets,  # <-- add this argument
+        builder = SimulationBuilder.new()
+        simulation = (
+            builder.set_det_inputs(det_inputs)
+            .set_econ_assumptions(econ_assumptions)
+            .set_portfolio_rebalances(portfolio_rebalances)
+            .set_shock_events(shock_events)
+            .set_initial_assets(initial_assets)
+            .build()
         )
+        simulation.init()
+        result = simulation.run()
         simulation_results.append(result)
 
-        elapsed_time: float = time.time() - start_time
+        elapsed_time = time.time() - start_time
         sys.stdout.write(
             f"\r{next(spinner)} Running sim {i + 1}/{num_simulations} | "
             + f"Elapsed: {elapsed_time:.2f}s"
@@ -220,8 +223,8 @@ def main() -> None:
     sys.stdout.write("\n")
     sys.stdout.flush()
 
-    end_simulation_time: float = time.time()
-    total_simulation_elapsed_time: float = end_simulation_time - start_time
+    end_simulation_time = time.time()
+    total_simulation_elapsed_time = end_simulation_time - start_time
 
     print(
         "\nMonte Carlo Simulation Complete. "

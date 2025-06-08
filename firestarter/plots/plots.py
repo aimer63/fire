@@ -360,28 +360,17 @@ def plot_bank_account_trajectories_real(
     for sim_idx in bank_account_plot_indices:
         row: pd.Series = results_df.loc[sim_idx]
         nominal_bank_history: NDArray[np.float64] = row["bank_balance_history"]
-        annual_inflations_seq: NDArray[np.float64] = row["annual_inflations_seq"]
+        cumulative_inflation_factors_monthly: NDArray[np.float64] = row[
+            "cumulative_inflation_factors_monthly"
+        ]
 
-        real_bank_history: list[float] = []
-        current_cumulative_inflation_factor: float = 1.0
-
-        for month_idx, nominal_balance in enumerate(nominal_bank_history):
-            year_idx: int = month_idx // 12
-            if year_idx < len(annual_inflations_seq):
-                monthly_inflation_rate_this_year = annual_to_monthly_compounded_rate(
-                    annual_inflations_seq[year_idx]
-                )
-            else:
-                monthly_inflation_rate_this_year = annual_to_monthly_compounded_rate(
-                    annual_inflations_seq[-1] if annual_inflations_seq.size > 0 else 0.0
-                )
-            current_cumulative_inflation_factor *= 1.0 + monthly_inflation_rate_this_year
-            real_balance: float = nominal_balance / current_cumulative_inflation_factor
-            real_bank_history.append(real_balance)
-
-        real_bank_history_np: NDArray[np.float64] = np.array(real_bank_history, dtype=np.float64)
+        # Ensure both arrays have the same length
+        n = len(nominal_bank_history)
+        real_bank_history: NDArray[np.float64] = (
+            nominal_bank_history / cumulative_inflation_factors_monthly[:n]
+        )
         plot_real_bank_history: NDArray[np.float64] = np.where(
-            real_bank_history_np < 0.0, 0.0, real_bank_history_np
+            real_bank_history < 0.0, 0.0, real_bank_history
         )
 
         style = style_map.get(sim_idx, {})
