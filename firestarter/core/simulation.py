@@ -125,6 +125,15 @@ class Simulation:
         Initialize all state variables for the simulation.
         Returns a dictionary or custom object holding the simulation state.
         """
+        # Find the initial target portfolio weights (from the first rebalance)
+        first_reb = self.portfolio_rebalances.rebalances[0]
+        initial_target_weights = {
+            "stocks": first_reb.stocks,
+            "bonds": first_reb.bonds,
+            "str": first_reb.str,
+            "fun": first_reb.fun,
+        }
+
         state = {
             "current_bank_balance": self.det_inputs.initial_bank_balance,
             "current_stocks_value": self.initial_assets["stocks"],
@@ -132,6 +141,7 @@ class Simulation:
             "current_str_value": self.initial_assets["str"],
             "current_fun_value": self.initial_assets["fun"],
             "current_real_estate_value": self.initial_assets["real_estate"],
+            "current_target_portfolio_weights": initial_target_weights,  # <-- ADDED
             # Optionally add more state variables as needed
         }
         return state
@@ -367,7 +377,7 @@ class Simulation:
     def handle_contributions(self, month):
         """
         Handles planned one-time contributions and regular monthly contributions.
-        Contributions are allocated according to the current portfolio weights,
+        Contributions are allocated according to the current target portfolio weights,
         but NEVER to real estate (see real_estate.md).
         """
         det_inputs = self.det_inputs
@@ -379,7 +389,7 @@ class Simulation:
             "nominal_planned_contributions_amounts"
         ]:
             if current_year == year_idx and month_in_year == 0:
-                weights = self._get_current_portfolio_weights(current_year)
+                weights = self.state["current_target_portfolio_weights"]
                 self.state["current_stocks_value"] += (
                     nominal_contribution_amount * weights["stocks"]
                 )
@@ -394,7 +404,7 @@ class Simulation:
                 det_inputs.monthly_investment_contribution
                 * self.state["annual_cumulative_inflation_factors"][current_year]
             )
-            weights = self._get_current_portfolio_weights(current_year)
+            weights = self.state["current_target_portfolio_weights"]
             self.state["current_stocks_value"] += monthly_contribution * weights["stocks"]
             self.state["current_bonds_value"] += monthly_contribution * weights["bonds"]
             self.state["current_str_value"] += monthly_contribution * weights["str"]
@@ -434,7 +444,7 @@ class Simulation:
         using the unified _withdraw_from_assets method.
         If assets are insufficient, marks the simulation as failed.
         Adds the house value to real estate holdings.
-        After purchase, rebalances remaining liquid assets according to current portfolio weights.
+        After purchase, rebalances remaining liquid assets according to current target portfolio weights.
         """
         det_inputs = self.det_inputs
         house_purchase_year = det_inputs.house_purchase_year
@@ -465,14 +475,14 @@ class Simulation:
             # Add house value to real estate
             self.state["current_real_estate_value"] += nominal_house_cost
 
-            # --- Rebalance remaining liquid assets according to current portfolio weights ---
+            # --- Rebalance remaining liquid assets according to current target portfolio weights ---
             total_liquid = (
                 self.state["current_stocks_value"]
                 + self.state["current_bonds_value"]
                 + self.state["current_str_value"]
                 + self.state["current_fun_value"]
             )
-            weights = self._get_current_portfolio_weights(current_year)
+            weights = self.state["current_target_portfolio_weights"]
             if total_liquid > 0:
                 self.state["current_stocks_value"] = total_liquid * weights["stocks"]
                 self.state["current_bonds_value"] = total_liquid * weights["bonds"]
@@ -510,7 +520,7 @@ class Simulation:
         # Invest excess if above upper bound
         if self.state["current_bank_balance"] > upper:
             excess = self.state["current_bank_balance"] - upper
-            weights = self._get_current_portfolio_weights(month // 12)
+            weights = self.state["current_target_portfolio_weights"]
             self.state["current_stocks_value"] += excess * weights["stocks"]
             self.state["current_bonds_value"] += excess * weights["bonds"]
             self.state["current_str_value"] += excess * weights["str"]
@@ -533,6 +543,7 @@ class Simulation:
         Rebalance liquid assets (stocks, bonds, str, fun) according to the current portfolio weights,
         if a rebalance is scheduled for this year and this is the first month of the year.
         Real estate is not included in rebalancing.
+        Also updates current_target_portfolio_weights if a rebalance occurs.
         """
         current_year = month // 12
         month_in_year = month % 12
@@ -545,6 +556,14 @@ class Simulation:
                 break
 
         if scheduled_rebalance is not None:
+            # Update current_target_portfolio_weights in state
+            self.state["current_target_portfolio_weights"] = {
+                "stocks": scheduled_rebalance.stocks,
+                "bonds": scheduled_rebalance.bonds,
+                "str": scheduled_rebalance.str,
+                "fun": scheduled_rebalance.fun,
+            }
+
             # Calculate total liquid assets
             total_liquid = (
                 self.state["current_stocks_value"]
@@ -552,12 +571,7 @@ class Simulation:
                 + self.state["current_str_value"]
                 + self.state["current_fun_value"]
             )
-            weights = {
-                "stocks": scheduled_rebalance.stocks,
-                "bonds": scheduled_rebalance.bonds,
-                "str": scheduled_rebalance.str,
-                "fun": scheduled_rebalance.fun,
-            }
+            weights = self.state["current_target_portfolio_weights"]
             sum_weights = sum(weights.values())
             if sum_weights > 0 and total_liquid > 0:
                 # Normalize weights and rebalance
@@ -666,30 +680,6 @@ class Simulation:
         }
 
         return result
-
-    def _get_current_portfolio_weights(self, year_idx: int) -> dict[str, float]:
-        """
-        Returns the portfolio weights in effect for the given year_idx,
-        according to the most recent rebalance at or before year_idx.
-        Real estate is excluded from liquid allocations.
-        """
-        # Find the latest rebalance at or before year_idx
-        applicable_rebalance = None
-        for reb in self.portfolio_rebalances.rebalances:
-            if reb.year <= year_idx:
-                if applicable_rebalance is None or reb.year > applicable_rebalance.year:
-                    applicable_rebalance = reb
-
-        if applicable_rebalance is None:
-            raise ValueError(f"No portfolio rebalance defined for year {year_idx} or earlier.")
-
-        return {
-            "stocks": applicable_rebalance.stocks,
-            "bonds": applicable_rebalance.bonds,
-            "str": applicable_rebalance.str,
-            "fun": applicable_rebalance.fun,
-            # Do NOT include real estate
-        }
 
     def _withdraw_from_assets(self, amount: float) -> None:
         """
