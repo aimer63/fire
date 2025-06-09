@@ -19,3 +19,6 @@ build/
 
 # Ignore SPDX update script
 update_spdx_year.sh
+
+# Ignore exercises
+learn.py

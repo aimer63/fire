@@ -3,6 +3,13 @@
 **UNIVERSAL RULE:**  
 **COPILOT DO NOT FUCKING WASTE THE TIME OF THE USER**
 
+## 🔒 Type Safety & Explicitness
+
+- **Strict type safety is preferred.**
+- Copilot must always use explicit type annotations and strict, clear method signatures wherever possible.
+- Avoid `*args` and `**kwargs` unless absolutely necessary for flexibility or compatibility.
+- Favor static, type-safe code throughout all code and suggestions.
+
 ## 🔄 Development Workflow
 
 1. **Discussion & Planning**

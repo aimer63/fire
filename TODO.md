@@ -30,6 +30,19 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
   - Added `[portfolio_rebalances]` section: users can specify a list of rebalances, each with a year and weights for liquid assets.
   - Updated all code, config files, and documentation to use the new structure and parameter names.
   - Real estate is now handled separately and never included in portfolio weights.
+- **Refactor `run_single_fire_simulation` (Elephant in the Room)**
+  - The `run_single_fire_simulation` function in `simulation.py` has been refactored for improved readability, maintainability, modularity, and flexibility.
+  - Unused inflation/return sequences removed, naming clarified, and documentation updated.
+  - Single-currency assumption is now clearly documented in config and docs.
+- **Inflation and Returns Refactor**
+  - Removed unused `monthly_inflation_rates` from the simulation.
+  - Ensured only necessary inflation/return sequences are stored and documented.
+  - Renamed inflation factor arrays for consistency and clarity.
+  - Updated documentation to reflect the new structure and clarify the handling of inflation and returns.
+  - Added explicit notes in config and docs about single-currency assumption.
+- **Parameter Summary Output**
+  - Print all loaded parameters to the console in a section titled `--- Loaded Parameters Summary (from config.toml) ---` after config parsing.
+  - Add a section to the Markdown report listing the value of all parameters loaded from the config file.
 
 ---
 
@@ -50,12 +63,6 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
   - Progress bar or better feedback for long simulations.
   - Optionally parallelize simulations for speed.
   - Optimize house purchase and rebalance: if both occur in the same month, perform only one rebalance after the house purchase using the new year's weights.
-- [ ] **Parameter Summary Output**
-  - Print all loaded parameters to the console in a section titled `--- Loaded Parameters Summary (from config.toml) ---` after config parsing.
-  - Add a section to the Markdown report listing the value of all parameters loaded from the config file.
-- [ ] **Refactor `run_single_fire_simulation` (Elephant in the Room)**
-  - **Problem:** The `run_single_fire_simulation` function in `simulation.py` is very large and monolithic. As features are added, it will become increasingly unmanageable, hard to read, maintain, and test.
-  - **Goals:** Improve readability, maintainability, modularity, and flexibility.
 
 ---
 
