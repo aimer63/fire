@@ -89,14 +89,9 @@ def perform_analysis_and_prepare_plots_data(
         row_success: bool = row_tuple.success
         row_final_investment: float = row_tuple.final_investment
         row_final_bank_balance: float = row_tuple.final_bank_balance
-        row_annual_inflations_sequence: NDArray[np.float64] = row_tuple.annual_inflations_sequence
 
         if row_success:
-            cumulative_inflation_factor: np.float64 = (
-                np.prod(1.0 + row_annual_inflations_sequence)
-                if len(row_annual_inflations_sequence) > 0
-                else 1.0
-            )
+            cumulative_inflation_factor: float = row_tuple.final_cumulative_inflation_factor
             real_wealth: float = (
                 row_final_investment + row_final_bank_balance
             ) / cumulative_inflation_factor
@@ -298,10 +293,7 @@ def generate_fire_plan_summary(
         temp_successful_sorted: list[tuple[float, dict]] = []
         for res in successful_results_data:
             final_nom_wealth: float = res["final_investment"] + res["final_bank_balance"]
-            annual_infl: NDArray[np.float64] = res["annual_inflations_sequence"]
-            cum_infl_factor: float = (
-                np.prod(1.0 + annual_infl) if total_retirement_years > 0 else 1.0
-            )
+            cum_infl_factor: float = res["final_cumulative_inflation_factor"]
             real_wealth: float = final_nom_wealth / float(cum_infl_factor)
             temp_successful_sorted.append((real_wealth, res))
 
@@ -358,11 +350,7 @@ def generate_fire_plan_summary(
                 worst_successful_result["final_investment"]
                 + worst_successful_result["final_bank_balance"]
             )
-            cum_infl_factor_np: float = (
-                np.prod(1.0 + worst_successful_result["annual_inflations_sequence"])
-                if total_retirement_years > 0
-                else 1.0
-            )
+            cum_infl_factor_np: float = worst_successful_result["final_cumulative_inflation_factor"]
             final_total_wealth_real: float = final_total_wealth_nominal / float(cum_infl_factor_np)
             cagr: float = calculate_cagr(
                 initial_total_wealth_nominal,
@@ -387,11 +375,9 @@ def generate_fire_plan_summary(
                 average_successful_result["final_investment"]
                 + average_successful_result["final_bank_balance"]
             )
-            cum_infl_factor_np: float = (
-                np.prod(1.0 + average_successful_result["annual_inflations_sequence"])
-                if total_retirement_years > 0
-                else 1.0
-            )
+            cum_infl_factor_np: float = average_successful_result[
+                "final_cumulative_inflation_factor"
+            ]
             final_total_wealth_real: float = final_total_wealth_nominal / float(cum_infl_factor_np)
             cagr: float = calculate_cagr(
                 initial_total_wealth_nominal,
@@ -417,11 +403,7 @@ def generate_fire_plan_summary(
                 best_successful_result["final_investment"]
                 + best_successful_result["final_bank_balance"]
             )
-            cum_infl_factor_np: float = (
-                np.prod(1.0 + best_successful_result["annual_inflations_sequence"])
-                if total_retirement_years > 0
-                else 1.0
-            )
+            cum_infl_factor_np: float = best_successful_result["final_cumulative_inflation_factor"]
             final_total_wealth_real: float = final_total_wealth_nominal / float(cum_infl_factor_np)
             cagr: float = calculate_cagr(
                 initial_total_wealth_nominal,
@@ -454,11 +436,7 @@ def generate_fire_plan_summary(
             worst_successful_result["final_investment"]
             + worst_successful_result["final_bank_balance"]
         )
-        ws_cum_infl = (
-            np.prod(1.0 + worst_successful_result["annual_inflations_sequence"])
-            if total_retirement_years > 0
-            else 1.0
-        )
+        ws_cum_infl = worst_successful_result["final_cumulative_inflation_factor"]
         ws_real = ws_nom / float(ws_cum_infl)
         ws_cagr = calculate_cagr(
             initial_total_wealth_nominal,
@@ -478,11 +456,7 @@ def generate_fire_plan_summary(
             average_successful_result["final_investment"]
             + average_successful_result["final_bank_balance"]
         )
-        av_cum_infl = (
-            np.prod(1.0 + average_successful_result["annual_inflations_sequence"])
-            if total_retirement_years > 0
-            else 1.0
-        )
+        av_cum_infl = average_successful_result["final_cumulative_inflation_factor"]
         av_real = av_nom / float(av_cum_infl)
         av_cagr = calculate_cagr(
             initial_total_wealth_nominal,
@@ -502,11 +476,7 @@ def generate_fire_plan_summary(
             best_successful_result["final_investment"]
             + best_successful_result["final_bank_balance"]
         )
-        bs_cum_infl = (
-            np.prod(1.0 + best_successful_result["annual_inflations_sequence"])
-            if total_retirement_years > 0
-            else 1.0
-        )
+        bs_cum_infl = best_successful_result["final_cumulative_inflation_factor"]
         bs_real = bs_nom / float(bs_cum_infl)
         bs_cagr = calculate_cagr(
             initial_total_wealth_nominal,

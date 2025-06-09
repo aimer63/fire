@@ -608,6 +608,7 @@ class Simulation:
     def build_result(self):
         """
         Return the final simulation results as a dict (result structure).
+        Truncates all history arrays to months_lasted to avoid None values.
         """
         total_months = self.simulation_months
         months_lasted = next(
@@ -623,6 +624,7 @@ class Simulation:
             + self.state["current_real_estate_value"]
         )
         final_bank_balance = self.state["current_bank_balance"]
+        cumulative_inflation = self.state["annual_cumulative_inflation_factors"][-1]
 
         final_allocations_nominal = {
             "Stocks": self.state["current_stocks_value"],
@@ -631,98 +633,88 @@ class Simulation:
             "Fun": self.state["current_fun_value"],
             "Real Estate": self.state["current_real_estate_value"],
         }
-        cumulative_inflation = self.state["annual_cumulative_inflation_factors"][-1]
         final_allocations_real = {
             k: float(v / cumulative_inflation) for k, v in final_allocations_nominal.items()
         }
 
+        # Truncate all histories to months_lasted
+        def trunc(arr):
+            return arr[:months_lasted]
+
         result = {
+            # --- Scalars first ---
             "success": success,
             "months_lasted": months_lasted,
             "final_investment": final_investment,
             "final_bank_balance": final_bank_balance,
-            "wealth_history": self.results["wealth_history"],
-            "bank_balance_history": self.results["bank_balance_history"],
-            "stocks_history": self.results["stocks_history"],
-            "bonds_history": self.results["bonds_history"],
-            "str_history": self.results["str_history"],
-            "fun_history": self.results["fun_history"],
-            "real_estate_history": self.results["real_estate_history"],
+            "final_cumulative_inflation_factor": cumulative_inflation,
+            # --- Non-state, derived or input data ---
+            "final_allocations_nominal": final_allocations_nominal,
+            "final_allocations_real": final_allocations_real,
+            # --- State and histories ---
             "annual_inflations_sequence": self.state["annual_inflations_sequence"],
             "monthly_cumulative_inflation_factors": self.state[
                 "monthly_cumulative_inflation_factors"
             ],
-            "final_allocations_nominal": final_allocations_nominal,
-            "final_allocations_real": final_allocations_real,
+            "wealth_history": trunc(self.results["wealth_history"]),
+            "bank_balance_history": trunc(self.results["bank_balance_history"]),
+            "stocks_history": trunc(self.results["stocks_history"]),
+            "bonds_history": trunc(self.results["bonds_history"]),
+            "str_history": trunc(self.results["str_history"]),
+            "fun_history": trunc(self.results["fun_history"]),
+            "real_estate_history": trunc(self.results["real_estate_history"]),
         }
 
         return result
 
-    def _get_current_portfolio_weights(self, year_idx):
+    def _get_current_portfolio_weights(self, year_idx: int) -> dict[str, float]:
         """
-        Helper to get the current portfolio weights for contributions.
-        Uses the initial rebalance weights (Phase 1) or the current phase if dynamic.
+        Returns the portfolio weights in effect for the given year_idx,
+        according to the most recent rebalance at or before year_idx.
         Real estate is excluded from liquid allocations.
         """
-        reb = self.portfolio_rebalances.rebalances[0]
+        # Find the latest rebalance at or before year_idx
+        applicable_rebalance = None
+        for reb in self.portfolio_rebalances.rebalances:
+            if reb.year <= year_idx:
+                if applicable_rebalance is None or reb.year > applicable_rebalance.year:
+                    applicable_rebalance = reb
+
+        if applicable_rebalance is None:
+            raise ValueError(f"No portfolio rebalance defined for year {year_idx} or earlier.")
+
         return {
-            "stocks": reb.stocks,
-            "bonds": reb.bonds,
-            "str": reb.str,
-            "fun": reb.fun,
+            "stocks": applicable_rebalance.stocks,
+            "bonds": applicable_rebalance.bonds,
+            "str": applicable_rebalance.str,
+            "fun": applicable_rebalance.fun,
             # Do NOT include real estate
         }
 
-    def _withdraw_from_assets(self, amount):
+    def _withdraw_from_assets(self, amount: float) -> None:
         """
         Withdraws from liquid assets in priority order (STR, Bonds, Stocks, Fun)
         to cover a bank shortfall. If assets are insufficient, marks the simulation as failed.
         """
         shortfall = amount
+        # Priority order for withdrawal
+        asset_keys = [
+            "current_str_value",
+            "current_bonds_value",
+            "current_stocks_value",
+            "current_fun_value",
+        ]
 
-        # Withdraw from STR
-        str_value = self.state["current_str_value"]
-        if str_value >= shortfall:
-            self.state["current_str_value"] -= shortfall
-            self.state["current_bank_balance"] += shortfall
-            return
-        else:
-            self.state["current_bank_balance"] += str_value
-            shortfall -= str_value
-            self.state["current_str_value"] = 0.0
-
-        # Withdraw from Bonds
-        bonds_value = self.state["current_bonds_value"]
-        if bonds_value >= shortfall:
-            self.state["current_bonds_value"] -= shortfall
-            self.state["current_bank_balance"] += shortfall
-            return
-        else:
-            self.state["current_bank_balance"] += bonds_value
-            shortfall -= bonds_value
-            self.state["current_bonds_value"] = 0.0
-
-        # Withdraw from Stocks
-        stocks_value = self.state["current_stocks_value"]
-        if stocks_value >= shortfall:
-            self.state["current_stocks_value"] -= shortfall
-            self.state["current_bank_balance"] += shortfall
-            return
-        else:
-            self.state["current_bank_balance"] += stocks_value
-            shortfall -= stocks_value
-            self.state["current_stocks_value"] = 0.0
-
-        # Withdraw from Fun
-        fun_value = self.state["current_fun_value"]
-        if fun_value >= shortfall:
-            self.state["current_fun_value"] -= shortfall
-            self.state["current_bank_balance"] += shortfall
-            return
-        else:
-            self.state["current_bank_balance"] += fun_value
-            shortfall -= fun_value
-            self.state["current_fun_value"] = 0.0
+        for key in asset_keys:
+            asset_value = self.state[key]
+            if asset_value >= shortfall:
+                self.state[key] -= shortfall
+                self.state["current_bank_balance"] += shortfall
+                return
+            else:
+                self.state["current_bank_balance"] += asset_value
+                shortfall -= asset_value
+                self.state[key] = 0.0
 
         # If still shortfall after all liquid assets, mark simulation as failed
         self.state["simulation_failed"] = True
