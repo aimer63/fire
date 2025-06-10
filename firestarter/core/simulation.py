@@ -136,12 +136,14 @@ class Simulation:
 
         state = {
             "current_bank_balance": self.det_inputs.initial_bank_balance,
-            "current_stocks_value": self.initial_assets["stocks"],
-            "current_bonds_value": self.initial_assets["bonds"],
-            "current_str_value": self.initial_assets["str"],
-            "current_fun_value": self.initial_assets["fun"],
+            "liquid_assets": {
+                "stocks": self.initial_assets["stocks"],
+                "bonds": self.initial_assets["bonds"],
+                "str": self.initial_assets["str"],
+                "fun": self.initial_assets["fun"],
+            },
             "current_real_estate_value": self.initial_assets["real_estate"],
-            "current_target_portfolio_weights": initial_target_weights,  # <-- ADDED
+            "current_target_portfolio_weights": initial_target_weights,
             # Optionally add more state variables as needed
         }
         return state
@@ -390,13 +392,12 @@ class Simulation:
         ]:
             if current_year == year_idx and month_in_year == 0:
                 weights = self.state["current_target_portfolio_weights"]
-                self.state["current_stocks_value"] += (
-                    nominal_contribution_amount * weights["stocks"]
-                )
-                self.state["current_bonds_value"] += nominal_contribution_amount * weights["bonds"]
-                self.state["current_str_value"] += nominal_contribution_amount * weights["str"]
-                self.state["current_fun_value"] += nominal_contribution_amount * weights["fun"]
-                # Do NOT allocate to real estate
+                increments = {
+                    asset: nominal_contribution_amount * weights[asset]
+                    for asset in self.state["liquid_assets"]
+                }
+                for asset, delta in increments.items():
+                    self.state["liquid_assets"][asset] += delta
 
         # Regular monthly contribution (inflation-adjusted)
         if det_inputs.monthly_investment_contribution > 0.0:
@@ -405,11 +406,12 @@ class Simulation:
                 * self.state["annual_cumulative_inflation_factors"][current_year]
             )
             weights = self.state["current_target_portfolio_weights"]
-            self.state["current_stocks_value"] += monthly_contribution * weights["stocks"]
-            self.state["current_bonds_value"] += monthly_contribution * weights["bonds"]
-            self.state["current_str_value"] += monthly_contribution * weights["str"]
-            self.state["current_fun_value"] += monthly_contribution * weights["fun"]
-            # Do NOT allocate to real estate
+            increments = {
+                asset: monthly_contribution * weights[asset]
+                for asset in self.state["liquid_assets"]
+            }
+            for asset, delta in increments.items():
+                self.state["liquid_assets"][asset] += delta
 
     def handle_expenses(self, month):
         """
@@ -476,23 +478,14 @@ class Simulation:
             self.state["current_real_estate_value"] += nominal_house_cost
 
             # --- Rebalance remaining liquid assets according to current target portfolio weights ---
-            total_liquid = (
-                self.state["current_stocks_value"]
-                + self.state["current_bonds_value"]
-                + self.state["current_str_value"]
-                + self.state["current_fun_value"]
-            )
+            total_liquid = sum(self.state["liquid_assets"].values())
             weights = self.state["current_target_portfolio_weights"]
             if total_liquid > 0:
-                self.state["current_stocks_value"] = total_liquid * weights["stocks"]
-                self.state["current_bonds_value"] = total_liquid * weights["bonds"]
-                self.state["current_str_value"] = total_liquid * weights["str"]
-                self.state["current_fun_value"] = total_liquid * weights["fun"]
+                for asset in self.state["liquid_assets"]:
+                    self.state["liquid_assets"][asset] = total_liquid * weights[asset]
             else:
-                self.state["current_stocks_value"] = 0.0
-                self.state["current_bonds_value"] = 0.0
-                self.state["current_str_value"] = 0.0
-                self.state["current_fun_value"] = 0.0
+                for asset in self.state["liquid_assets"]:
+                    self.state["liquid_assets"][asset] = 0.0
 
     def handle_bank_account(self, month):
         """
@@ -521,10 +514,9 @@ class Simulation:
         if self.state["current_bank_balance"] > upper:
             excess = self.state["current_bank_balance"] - upper
             weights = self.state["current_target_portfolio_weights"]
-            self.state["current_stocks_value"] += excess * weights["stocks"]
-            self.state["current_bonds_value"] += excess * weights["bonds"]
-            self.state["current_str_value"] += excess * weights["str"]
-            self.state["current_fun_value"] += excess * weights["fun"]
+            increments = {asset: excess * weights[asset] for asset in self.state["liquid_assets"]}
+            for asset, delta in increments.items():
+                self.state["liquid_assets"][asset] += delta
             self.state["current_bank_balance"] = upper
 
     def apply_monthly_returns(self, month):
@@ -532,10 +524,8 @@ class Simulation:
         Apply monthly returns to all asset values at the end of the month.
         """
         returns = self.state["monthly_returns_lookup"]
-        self.state["current_stocks_value"] *= 1.0 + returns["Stocks"][month]
-        self.state["current_bonds_value"] *= 1.0 + returns["Bonds"][month]
-        self.state["current_str_value"] *= 1.0 + returns["STR"][month]
-        self.state["current_fun_value"] *= 1.0 + returns["Fun"][month]
+        for asset, key in zip(self.state["liquid_assets"], ["Stocks", "Bonds", "STR", "Fun"]):
+            self.state["liquid_assets"][asset] *= 1.0 + returns[key][month]
         self.state["current_real_estate_value"] *= 1.0 + returns["Real Estate"][month]
 
     def rebalance_if_needed(self, month):
@@ -565,27 +555,18 @@ class Simulation:
             }
 
             # Calculate total liquid assets
-            total_liquid = (
-                self.state["current_stocks_value"]
-                + self.state["current_bonds_value"]
-                + self.state["current_str_value"]
-                + self.state["current_fun_value"]
-            )
+            total_liquid = sum(self.state["liquid_assets"].values())
             weights = self.state["current_target_portfolio_weights"]
             sum_weights = sum(weights.values())
             if sum_weights > 0 and total_liquid > 0:
                 # Normalize weights and rebalance
-                self.state["current_stocks_value"] = total_liquid * (
-                    weights["stocks"] / sum_weights
-                )
-                self.state["current_bonds_value"] = total_liquid * (weights["bonds"] / sum_weights)
-                self.state["current_str_value"] = total_liquid * (weights["str"] / sum_weights)
-                self.state["current_fun_value"] = total_liquid * (weights["fun"] / sum_weights)
+                for asset in self.state["liquid_assets"]:
+                    self.state["liquid_assets"][asset] = total_liquid * (
+                        weights[asset] / sum_weights
+                    )
             else:
-                self.state["current_stocks_value"] = 0.0
-                self.state["current_bonds_value"] = 0.0
-                self.state["current_str_value"] = 0.0
-                self.state["current_fun_value"] = 0.0
+                for asset in self.state["liquid_assets"]:
+                    self.state["liquid_assets"][asset] = 0.0
 
     def record_results(self, month):
         """
@@ -595,7 +576,7 @@ class Simulation:
         if self.results is None:
             total_months = self.simulation_months
             self.results = {
-                "wealth_history": [None] * total_months,  # <-- RENAMED
+                "wealth_history": [None] * total_months,
                 "bank_balance_history": [None] * total_months,
                 "stocks_history": [None] * total_months,
                 "bonds_history": [None] * total_months,
@@ -606,23 +587,21 @@ class Simulation:
 
         self.results["wealth_history"][month] = (
             self.state["current_bank_balance"]
-            + self.state["current_stocks_value"]
-            + self.state["current_bonds_value"]
-            + self.state["current_str_value"]
-            + self.state["current_fun_value"]
+            + sum(self.state["liquid_assets"].values())
             + self.state["current_real_estate_value"]
         )
         self.results["bank_balance_history"][month] = self.state["current_bank_balance"]
-        self.results["stocks_history"][month] = self.state["current_stocks_value"]
-        self.results["bonds_history"][month] = self.state["current_bonds_value"]
-        self.results["str_history"][month] = self.state["current_str_value"]
-        self.results["fun_history"][month] = self.state["current_fun_value"]
+        self.results["stocks_history"][month] = self.state["liquid_assets"]["stocks"]
+        self.results["bonds_history"][month] = self.state["liquid_assets"]["bonds"]
+        self.results["str_history"][month] = self.state["liquid_assets"]["str"]
+        self.results["fun_history"][month] = self.state["liquid_assets"]["fun"]
         self.results["real_estate_history"][month] = self.state["current_real_estate_value"]
 
     def build_result(self):
         """
         Return the final simulation results as a dict (result structure).
         Truncates all history arrays to months_lasted to avoid None values.
+        For failed simulations, pads histories to full length with the last valid value.
         """
         total_months = self.simulation_months
         months_lasted = next(
@@ -631,29 +610,29 @@ class Simulation:
         )
         success = not self.state.get("simulation_failed", False)
         final_investment = (
-            self.state["current_stocks_value"]
-            + self.state["current_bonds_value"]
-            + self.state["current_str_value"]
-            + self.state["current_fun_value"]
-            + self.state["current_real_estate_value"]
+            sum(self.state["liquid_assets"].values()) + self.state["current_real_estate_value"]
         )
         final_bank_balance = self.state["current_bank_balance"]
         cumulative_inflation = self.state["annual_cumulative_inflation_factors"][-1]
 
         final_allocations_nominal = {
-            "Stocks": self.state["current_stocks_value"],
-            "Bonds": self.state["current_bonds_value"],
-            "STR": self.state["current_str_value"],
-            "Fun": self.state["current_fun_value"],
+            "Stocks": self.state["liquid_assets"]["stocks"],
+            "Bonds": self.state["liquid_assets"]["bonds"],
+            "STR": self.state["liquid_assets"]["str"],
+            "Fun": self.state["liquid_assets"]["fun"],
             "Real Estate": self.state["current_real_estate_value"],
         }
         final_allocations_real = {
             k: float(v / cumulative_inflation) for k, v in final_allocations_nominal.items()
         }
 
-        # Truncate all histories to months_lasted
-        def trunc(arr):
-            return arr[:months_lasted]
+        # Truncate and pad all histories to total_months
+        def trunc_and_pad(arr):
+            arr = arr[:months_lasted]
+            if len(arr) < total_months:
+                pad_value = arr[-1] if len(arr) > 0 else 0.0
+                arr = list(arr) + [pad_value] * (total_months - len(arr))
+            return arr
 
         result = {
             # --- Scalars first ---
@@ -670,13 +649,13 @@ class Simulation:
             "monthly_cumulative_inflation_factors": self.state[
                 "monthly_cumulative_inflation_factors"
             ],
-            "wealth_history": trunc(self.results["wealth_history"]),
-            "bank_balance_history": trunc(self.results["bank_balance_history"]),
-            "stocks_history": trunc(self.results["stocks_history"]),
-            "bonds_history": trunc(self.results["bonds_history"]),
-            "str_history": trunc(self.results["str_history"]),
-            "fun_history": trunc(self.results["fun_history"]),
-            "real_estate_history": trunc(self.results["real_estate_history"]),
+            "wealth_history": trunc_and_pad(self.results["wealth_history"]),
+            "bank_balance_history": trunc_and_pad(self.results["bank_balance_history"]),
+            "stocks_history": trunc_and_pad(self.results["stocks_history"]),
+            "bonds_history": trunc_and_pad(self.results["bonds_history"]),
+            "str_history": trunc_and_pad(self.results["str_history"]),
+            "fun_history": trunc_and_pad(self.results["fun_history"]),
+            "real_estate_history": trunc_and_pad(self.results["real_estate_history"]),
         }
 
         return result
@@ -688,23 +667,18 @@ class Simulation:
         """
         shortfall = amount
         # Priority order for withdrawal
-        asset_keys = [
-            "current_str_value",
-            "current_bonds_value",
-            "current_stocks_value",
-            "current_fun_value",
-        ]
+        asset_keys = ["str", "bonds", "stocks", "fun"]
 
-        for key in asset_keys:
-            asset_value = self.state[key]
+        for asset in asset_keys:
+            asset_value = self.state["liquid_assets"][asset]
             if asset_value >= shortfall:
-                self.state[key] -= shortfall
+                self.state["liquid_assets"][asset] -= shortfall
                 self.state["current_bank_balance"] += shortfall
                 return
             else:
                 self.state["current_bank_balance"] += asset_value
                 shortfall -= asset_value
-                self.state[key] = 0.0
+                self.state["liquid_assets"][asset] = 0.0
 
         # If still shortfall after all liquid assets, mark simulation as failed
         self.state["simulation_failed"] = True

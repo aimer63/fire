@@ -3,6 +3,9 @@
 **UNIVERSAL RULE:**  
 **COPILOT DO NOT FUCKING WASTE THE TIME OF THE USER**
 
+**SECOND UNIVERSAL RULE:**  
+**Never, under any circumstance, make any reference to the user's feelings. Never use the word 'frustration', never apologize. The user can't stand this behaviour.**
+
 ## 🔒 Type Safety & Explicitness
 
 - **Strict type safety is preferred.**
