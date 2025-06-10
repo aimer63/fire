@@ -36,6 +36,12 @@ def generate_markdown_report(
     # Pretty-print parameters_summary as JSON for Markdown code block
     parameters_json = json.dumps(parameters_summary, indent=2, ensure_ascii=False)
 
+    # Ensure the required keys are present for the asset table macro
+    for key in ["worst_successful", "average_successful", "best_successful"]:
+        if fire_stats.get(key):
+            fire_stats[key]["allocations_nominal"] = fire_stats[key].get("allocations_nominal", {})
+            fire_stats[key]["bank"] = fire_stats[key].get("bank", 0.0)
+
     template_str = """
 # FIRE Simulation Report
 
@@ -48,12 +54,28 @@ def generate_markdown_report(
 - **Number of failed simulations:** {{ fire_stats.failed_simulations_count }}
 - **Average months lasted in failed simulations:** {{ fire_stats.avg_months_failed | round(1) }}
 
+{% macro asset_table(allocs, bank, total) -%}
+| Asset        | Value (EUR)      |
+|--------------|------------------|
+{%- for asset, value in allocs.items() %}
+| {{ asset }}  | {{ "{:,.2f}".format(value) }} |
+{%- endfor %}
+| Bank         | {{ "{:,.2f}".format(bank) }} |
+| **Sum**      | **{{ "{:,.2f}".format(sum(allocs.values()) + bank) }}** |
+{%- if abs(sum(allocs.values()) + bank - total) > 1e-2 %}
+| **WARNING**  | **Sum does not match final total wealth!** |
+{%- endif %}
+{%- endmacro %}
+
 {% if fire_stats.worst_successful %}
 ### Worst Successful Case
 - Final Wealth (Nominal): {{ "{:,.2f} EUR".format(fire_stats.worst_successful.final_wealth_nominal) }}
 - Final Wealth (Real): {{ "{:,.2f} EUR".format(fire_stats.worst_successful.final_wealth_real) }}
 - Your life CAGR: {{ (fire_stats.worst_successful.cagr * 100) | round(2) }}%
 - Final Allocations: {{ fire_stats.worst_successful.allocations }}
+
+{{ asset_table(fire_stats.worst_successful.allocations_nominal, fire_stats.worst_successful.bank, fire_stats.worst_successful.final_wealth_nominal) }}
+
 {% endif %}
 
 {% if fire_stats.average_successful %}
@@ -64,6 +86,9 @@ def generate_markdown_report(
 - Final Wealth (Real): {{ "{:,.2f} EUR".format(fire_stats.average_successful.final_wealth_real) }}
 - Your life CAGR: {{ (fire_stats.average_successful.cagr * 100) | round(2) }}%
 - Final Allocations: {{ fire_stats.average_successful.allocations }}
+
+{{ asset_table(fire_stats.average_successful.allocations_nominal, fire_stats.average_successful.bank, fire_stats.average_successful.final_wealth_nominal) }}
+
 {% endif %}
 
 {% if fire_stats.best_successful %}
@@ -72,6 +97,9 @@ def generate_markdown_report(
 - Final Wealth (Real): {{ "{:,.2f} EUR".format(fire_stats.best_successful.final_wealth_real) }}
 - Your life CAGR: {{ (fire_stats.best_successful.cagr * 100) | round(2) }}%
 - Final Allocations: {{ fire_stats.best_successful.allocations }}
+
+{{ asset_table(fire_stats.best_successful.allocations_nominal, fire_stats.best_successful.bank, fire_stats.best_successful.final_wealth_nominal) }}
+
 {% endif %}
 
 ## Plots
@@ -105,6 +133,8 @@ def generate_markdown_report(
         "plots": rel_plots,
         "version": __version__,
         "parameters_json": parameters_json,
+        "sum": sum,  # <-- Add this line
+        "abs": abs,  # <-- Add this line
     }
 
     # Update template to use parameters_json

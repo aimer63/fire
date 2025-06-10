@@ -110,6 +110,17 @@ def perform_analysis_and_prepare_plots_data(
         by="real_final_wealth", ascending=True
     )
 
+    # --- FIX: Always use the same indices as the summary for best/worst successful ---
+    best_successful_idx = None
+    worst_successful_idx = None
+    if len(successful_sims_for_plotting) > 0:
+        sorted_successful = successful_sims_for_plotting.sort_values(
+            by="real_final_wealth", ascending=True
+        )
+        worst_successful_idx = sorted_successful.index[0]
+        best_successful_idx = sorted_successful.index[-1]
+
+    # Add worst case (failed or worst successful)
     if not all_sims_sorted_by_real_wealth.empty:
         worst_sim_row_for_plot: pd.Series = all_sims_sorted_by_real_wealth.iloc[0]
         worst_sim_idx_for_plot: int = worst_sim_row_for_plot.name
@@ -126,18 +137,20 @@ def perform_analysis_and_prepare_plots_data(
                 )
             )
         else:
+            # Use the true worst successful index
             plot_lines_data.append(
                 PlotLineData(
-                    sim_idx=worst_sim_idx_for_plot,
+                    sim_idx=worst_successful_idx,
                     label=(
                         f"Worst Successful (Final Real: "
-                        f"{worst_sim_row_for_plot['real_final_wealth']:,.0f}€)"
+                        f"{results_df.loc[worst_successful_idx]['real_final_wealth']:,.0f}€)"
                     ),
                     color="darkred",
                     linewidth=2.0,
                 )
             )
 
+    # Add percentile samples (unchanged)
     if len(successful_sims_for_plotting) > 0:
         successful_sims_sorted_for_plotting: pd.DataFrame = (
             successful_sims_for_plotting.sort_values(by="real_final_wealth", ascending=True)
@@ -207,15 +220,14 @@ def perform_analysis_and_prepare_plots_data(
                         )
                     )
 
-    if not successful_sims_for_plotting.empty:
-        best_sim_row_for_plot: pd.Series = successful_sims_sorted_for_plotting.iloc[-1]
-        best_sim_idx_for_plot: int = best_sim_row_for_plot.name
+    # Add best successful case (always last)
+    if best_successful_idx is not None:
         plot_lines_data.append(
             PlotLineData(
-                sim_idx=best_sim_idx_for_plot,
+                sim_idx=best_successful_idx,
                 label=(
                     f"Best Successful (Final Real: "
-                    f"{best_sim_row_for_plot['real_final_wealth']:,.0f}€)"
+                    f"{results_df.loc[best_successful_idx]['real_final_wealth']:,.0f}€)"
                 ),
                 color="green",
                 linewidth=2.5,
@@ -223,7 +235,6 @@ def perform_analysis_and_prepare_plots_data(
         )
 
     # --- Prepare data for Bank Account Trajectories ---
-    # Use the same indices as plot_lines_data for bank account trajectories
     bank_account_plot_indices: NDArray[np.intp] = np.array(
         [d["sim_idx"] for d in plot_lines_data], dtype=np.intp
     )
@@ -344,6 +355,16 @@ def generate_fire_plan_summary(
     if successful_simulations_count > 0:
         summary_lines.append("\n--- Successful Cases Details ---")
 
+        def _allocations_nominal_line(allocs: dict[str, float], bank: float, total: float) -> str:
+            parts = [f"{asset}: {value:,.2f} EUR" for asset, value in allocs.items()]
+            parts.append(f"Bank: {bank:,.2f} EUR")
+            line = "  Nominal Asset Values: " + ", ".join(parts)
+            summed = sum(allocs.values()) + bank
+            assert (
+                abs(summed - total) < 1e-2
+            ), f"Sum of asset values ({summed}) does not match final total wealth ({total})"
+            return line
+
         # Worst Successful Case
         if worst_successful_result:
             final_total_wealth_nominal: float = (
@@ -364,9 +385,14 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(
-                        worst_successful_result['final_allocations_nominal']
-                    )}"
+                + f"{_format_allocations_as_percentages(worst_successful_result['final_allocations_nominal'])}"
+            )
+            summary_lines.append(
+                _allocations_nominal_line(
+                    worst_successful_result["final_allocations_nominal"],
+                    worst_successful_result["final_bank_balance"],
+                    final_total_wealth_nominal,
+                )
             )
 
         # Average Successful Case
@@ -392,9 +418,14 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(
-                        average_successful_result['final_allocations_nominal']
-                    )}"
+                + f"{_format_allocations_as_percentages(average_successful_result['final_allocations_nominal'])}"
+            )
+            summary_lines.append(
+                _allocations_nominal_line(
+                    average_successful_result["final_allocations_nominal"],
+                    average_successful_result["final_bank_balance"],
+                    final_total_wealth_nominal,
+                )
             )
 
         # Best Successful Case
@@ -417,9 +448,14 @@ def generate_fire_plan_summary(
             summary_lines.append(f"  Your life CAGR: {cagr:.2%}")
             summary_lines.append(
                 "  Final Allocations: "
-                + f"{_format_allocations_as_percentages(
-                        best_successful_result['final_allocations_nominal']
-                    )}"
+                + f"{_format_allocations_as_percentages(best_successful_result['final_allocations_nominal'])}"
+            )
+            summary_lines.append(
+                _allocations_nominal_line(
+                    best_successful_result["final_allocations_nominal"],
+                    best_successful_result["final_bank_balance"],
+                    final_total_wealth_nominal,
+                )
             )
 
     else:

@@ -1,27 +1,16 @@
-from enum import Enum
-
-
-class AssetKey(Enum):
-    STOCKS = "stocks"
-    BONDS = "bonds"
-    STR = "str"
-    FUN = "fun"
-    REAL_ESTATE = "real_estate"
-
-
-# List of all asset keys (in canonical order)
+# Asset keys used throughout the simulation codebase
 ASSET_KEYS = [
-    AssetKey.STOCKS,
-    AssetKey.BONDS,
-    AssetKey.STR,
-    AssetKey.FUN,
-    AssetKey.REAL_ESTATE,
+    "stocks",
+    "bonds",
+    "str",
+    "fun",
+    "real_estate",
 ]
 
 # Withdrawal priority order (from most liquid to least)
 WITHDRAWAL_PRIORITY = [
-    AssetKey.STR,
-    AssetKey.BONDS,
-    AssetKey.STOCKS,
-    AssetKey.FUN,
+    "str",
+    "bonds",
+    "stocks",
+    "fun",
 ]

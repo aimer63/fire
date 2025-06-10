@@ -17,6 +17,7 @@ Features:
 
 from typing import TypedDict
 import numpy as np
+from firestarter.core.constants import ASSET_KEYS, WITHDRAWAL_PRIORITY
 
 
 class SimulationBuilder:
@@ -128,19 +129,13 @@ class Simulation:
         # Find the initial target portfolio weights (from the first rebalance)
         first_reb = self.portfolio_rebalances.rebalances[0]
         initial_target_weights = {
-            "stocks": first_reb.stocks,
-            "bonds": first_reb.bonds,
-            "str": first_reb.str,
-            "fun": first_reb.fun,
+            asset: getattr(first_reb, asset) for asset in ASSET_KEYS if asset != "real_estate"
         }
 
         state = {
             "current_bank_balance": self.det_inputs.initial_bank_balance,
             "liquid_assets": {
-                "stocks": self.initial_assets["stocks"],
-                "bonds": self.initial_assets["bonds"],
-                "str": self.initial_assets["str"],
-                "fun": self.initial_assets["fun"],
+                asset: self.initial_assets[asset] for asset in ASSET_KEYS if asset != "real_estate"
             },
             "current_real_estate_value": self.initial_assets["real_estate"],
             "current_target_portfolio_weights": initial_target_weights,
@@ -394,7 +389,8 @@ class Simulation:
                 weights = self.state["current_target_portfolio_weights"]
                 increments = {
                     asset: nominal_contribution_amount * weights[asset]
-                    for asset in self.state["liquid_assets"]
+                    for asset in ASSET_KEYS
+                    if asset != "real_estate"
                 }
                 for asset, delta in increments.items():
                     self.state["liquid_assets"][asset] += delta
@@ -408,7 +404,8 @@ class Simulation:
             weights = self.state["current_target_portfolio_weights"]
             increments = {
                 asset: monthly_contribution * weights[asset]
-                for asset in self.state["liquid_assets"]
+                for asset in ASSET_KEYS
+                if asset != "real_estate"
             }
             for asset, delta in increments.items():
                 self.state["liquid_assets"][asset] += delta
@@ -481,11 +478,13 @@ class Simulation:
             total_liquid = sum(self.state["liquid_assets"].values())
             weights = self.state["current_target_portfolio_weights"]
             if total_liquid > 0:
-                for asset in self.state["liquid_assets"]:
-                    self.state["liquid_assets"][asset] = total_liquid * weights[asset]
+                for asset in ASSET_KEYS:
+                    if asset != "real_estate":
+                        self.state["liquid_assets"][asset] = total_liquid * weights[asset]
             else:
-                for asset in self.state["liquid_assets"]:
-                    self.state["liquid_assets"][asset] = 0.0
+                for asset in ASSET_KEYS:
+                    if asset != "real_estate":
+                        self.state["liquid_assets"][asset] = 0.0
 
     def handle_bank_account(self, month):
         """
@@ -524,8 +523,17 @@ class Simulation:
         Apply monthly returns to all asset values at the end of the month.
         """
         returns = self.state["monthly_returns_lookup"]
-        for asset, key in zip(self.state["liquid_assets"], ["Stocks", "Bonds", "STR", "Fun"]):
-            self.state["liquid_assets"][asset] *= 1.0 + returns[key][month]
+        asset_to_returns_key = {
+            "stocks": "Stocks",
+            "bonds": "Bonds",
+            "str": "STR",
+            "fun": "Fun",
+        }
+        for asset in ASSET_KEYS:
+            if asset != "real_estate":
+                self.state["liquid_assets"][asset] *= (
+                    1.0 + returns[asset_to_returns_key[asset]][month]
+                )
         self.state["current_real_estate_value"] *= 1.0 + returns["Real Estate"][month]
 
     def rebalance_if_needed(self, month):
@@ -548,10 +556,9 @@ class Simulation:
         if scheduled_rebalance is not None:
             # Update current_target_portfolio_weights in state
             self.state["current_target_portfolio_weights"] = {
-                "stocks": scheduled_rebalance.stocks,
-                "bonds": scheduled_rebalance.bonds,
-                "str": scheduled_rebalance.str,
-                "fun": scheduled_rebalance.fun,
+                asset: getattr(scheduled_rebalance, asset)
+                for asset in ASSET_KEYS
+                if asset != "real_estate"
             }
 
             # Calculate total liquid assets
@@ -560,13 +567,15 @@ class Simulation:
             sum_weights = sum(weights.values())
             if sum_weights > 0 and total_liquid > 0:
                 # Normalize weights and rebalance
-                for asset in self.state["liquid_assets"]:
-                    self.state["liquid_assets"][asset] = total_liquid * (
-                        weights[asset] / sum_weights
-                    )
+                for asset in ASSET_KEYS:
+                    if asset != "real_estate":
+                        self.state["liquid_assets"][asset] = total_liquid * (
+                            weights[asset] / sum_weights
+                        )
             else:
-                for asset in self.state["liquid_assets"]:
-                    self.state["liquid_assets"][asset] = 0.0
+                for asset in ASSET_KEYS:
+                    if asset != "real_estate":
+                        self.state["liquid_assets"][asset] = 0.0
 
     def record_results(self, month):
         """
@@ -601,7 +610,7 @@ class Simulation:
         """
         Return the final simulation results as a dict (result structure).
         Truncates all history arrays to months_lasted to avoid None values.
-        For failed simulations, pads histories to full length with the last valid value.
+        For failed simulations, histories are truncated at the failure point (no padding).
         """
         total_months = self.simulation_months
         months_lasted = next(
@@ -626,13 +635,9 @@ class Simulation:
             k: float(v / cumulative_inflation) for k, v in final_allocations_nominal.items()
         }
 
-        # Truncate and pad all histories to total_months
-        def trunc_and_pad(arr):
-            arr = arr[:months_lasted]
-            if len(arr) < total_months:
-                pad_value = arr[-1] if len(arr) > 0 else 0.0
-                arr = list(arr) + [pad_value] * (total_months - len(arr))
-            return arr
+        # Truncate all histories to months_lasted (no padding after failure)
+        def trunc_only(arr):
+            return arr[:months_lasted]
 
         result = {
             # --- Scalars first ---
@@ -649,13 +654,13 @@ class Simulation:
             "monthly_cumulative_inflation_factors": self.state[
                 "monthly_cumulative_inflation_factors"
             ],
-            "wealth_history": trunc_and_pad(self.results["wealth_history"]),
-            "bank_balance_history": trunc_and_pad(self.results["bank_balance_history"]),
-            "stocks_history": trunc_and_pad(self.results["stocks_history"]),
-            "bonds_history": trunc_and_pad(self.results["bonds_history"]),
-            "str_history": trunc_and_pad(self.results["str_history"]),
-            "fun_history": trunc_and_pad(self.results["fun_history"]),
-            "real_estate_history": trunc_and_pad(self.results["real_estate_history"]),
+            "wealth_history": trunc_only(self.results["wealth_history"]),
+            "bank_balance_history": trunc_only(self.results["bank_balance_history"]),
+            "stocks_history": trunc_only(self.results["stocks_history"]),
+            "bonds_history": trunc_only(self.results["bonds_history"]),
+            "str_history": trunc_only(self.results["str_history"]),
+            "fun_history": trunc_only(self.results["fun_history"]),
+            "real_estate_history": trunc_only(self.results["real_estate_history"]),
         }
 
         return result
@@ -666,10 +671,7 @@ class Simulation:
         to cover a bank shortfall. If assets are insufficient, marks the simulation as failed.
         """
         shortfall = amount
-        # Priority order for withdrawal
-        asset_keys = ["str", "bonds", "stocks", "fun"]
-
-        for asset in asset_keys:
+        for asset in WITHDRAWAL_PRIORITY:
             asset_value = self.state["liquid_assets"][asset]
             if asset_value >= shortfall:
                 self.state["liquid_assets"][asset] -= shortfall

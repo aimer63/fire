@@ -207,15 +207,14 @@ def plot_wealth_evolution_samples_real(
         linewidth: float = line_data["linewidth"]
 
         row: pd.Series = results_df.loc[sim_idx]
-        wealth_history: NDArray[np.float64] = row["wealth_history"]
-        monthly_cumulative_inflation_factors: NDArray[np.float64] = row[
-            "monthly_cumulative_inflation_factors"
-        ]  # <-- RENAMED
+        wealth_history: NDArray[np.float64] = np.array(row["wealth_history"], dtype=np.float64)
+        monthly_cumulative_inflation_factors: NDArray[np.float64] = np.array(
+            row["monthly_cumulative_inflation_factors"], dtype=np.float64
+        )
 
         n = len(wealth_history)
-        real_history: NDArray[np.float64] = (
-            wealth_history / monthly_cumulative_inflation_factors[:n]
-        )
+        # Use the correct inflation factor for each month
+        real_history = wealth_history / monthly_cumulative_inflation_factors[:n]
 
         real_history_positive: NDArray[np.float64] = np.where(
             real_history <= 0.0, 1.0, real_history

@@ -48,6 +48,11 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 
 ## 🟡 In Progress / Next Priorities
 
+- [ ] **[HIGH] Refactor Results Presentation**
+  - Centralize all result formatting, summary, and reporting logic (currently scattered across `analysis.py`, `reporting.py`, and `plots.py`) into a dedicated results or reporting module.
+  - Ensure all user-facing outputs (console, markdown, plots) use a unified, consistent data structure and formatting.
+  - Reduce duplication, improve maintainability, and guarantee consistency between summary, plots, and reports.
+
 - [ ] **Relative Plot Links in Reports**
   - Ensure plot links in Markdown reports are always correct (relative to report location).
 - [ ] **Error Handling & Robustness**
