@@ -1,0 +1,248 @@
+import os
+from typing import List, Dict, Any
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def plot_retirement_duration_distribution(
+    failed_sims: pd.DataFrame, total_retirement_years: int, filename: str
+):
+    if failed_sims.empty:
+        print("No failed simulations to plot retirement duration distribution.")
+        return
+    plt.figure(figsize=(10, 6))
+    plt.hist(
+        failed_sims["months_lasted"] / 12.0,
+        bins=np.arange(0, total_retirement_years + 1, 1),
+        edgecolor="black",
+    )
+    plt.title("Distribution of Retirement Duration for Failed Simulations")
+    plt.xlabel("Years Lasted")
+    plt.ylabel("Number of Simulations")
+    plt.grid(axis="y", alpha=0.75)
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
+
+def plot_final_wealth_distribution(
+    successful_sims: pd.DataFrame, column: str, title: str, xlabel: str, filename: str
+):
+    if successful_sims.empty:
+        print(f"No successful simulations to plot {title}.")
+        return
+    data = successful_sims[column].clip(lower=1.0)
+    plt.figure(figsize=(10, 6))
+    bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 50)
+    plt.hist(data, bins=bins, edgecolor="black")
+    plt.xscale("log")
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel("Number of Simulations")
+    plt.grid(axis="y", alpha=0.75)
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
+
+def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename: str):
+    plt.figure(figsize=(14, 8))
+    successful = results_df[results_df["success"]]
+    if successful.empty:
+        print("No successful simulations to plot wealth evolution.")
+        return
+
+    # Sort by final real/nominal wealth
+    key = "final_real_wealth" if real else "final_nominal_wealth"
+    sorted_successful = successful.sort_values(by=key).reset_index(drop=True)
+    n = len(sorted_successful)
+
+    # Percentile boundaries
+    percentiles = [0, 20, 40, 60, 80, 100]
+    colors = ["orange", "gold", "limegreen", "dodgerblue", "navy"]
+    lw = 1.2
+
+    # Plot 5 trajectories for each percentile range, but only one legend entry
+    # per range (use upper value)
+    for i in range(5):
+        start = int(percentiles[i] / 100 * n)
+        end = int(percentiles[i + 1] / 100 * n) if i < 4 else n
+        count = end - start
+        if count <= 0:
+            continue
+        # Evenly spaced 5 indices in this range
+        if count < 5:
+            indices = list(range(start, end))
+        else:
+            indices = np.linspace(start, end - 1, 5, dtype=int)
+        for j, idx in enumerate(indices):
+            row = sorted_successful.iloc[idx]
+            wealth = np.array(row["wealth_history"], dtype=np.float64)
+            if real:
+                inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+                wealth = wealth / inflation[: len(wealth)]
+            if j == 0:
+                # Legend value: upper percentile
+                upper_idx = end - 1 if end > start else start
+                upper_row = sorted_successful.iloc[upper_idx]
+                upper_wealth = np.array(upper_row["wealth_history"], dtype=np.float64)
+                if real:
+                    inflation = np.array(
+                        upper_row["monthly_cumulative_inflation_factors"], dtype=np.float64
+                    )
+                    upper_wealth = upper_wealth / inflation[: len(upper_wealth)]
+                upper_final_val = upper_wealth[-1] if len(upper_wealth) > 0 else 0.0
+                label = (
+                    f"{percentiles[i]}-{percentiles[i+1]}th Percentile "
+                    + f"(Final: {upper_final_val:,.0f}€)"
+                )
+            else:
+                label = None
+            plt.plot(
+                np.arange(0, len(wealth)) / 12.0,
+                wealth,
+                label=label,
+                color=colors[i],
+                linewidth=lw,
+                alpha=0.8,
+            )
+
+    # Plot worst and best
+    worst_row = sorted_successful.iloc[0]
+    best_row = sorted_successful.iloc[-1]
+    for row, label, color, width in [
+        (
+            worst_row,
+            f"Worst Successful (Final {'Real' if real else 'Nominal'}: {worst_row[key]:,.0f}€)",
+            "red",
+            2.5,
+        ),
+        (
+            best_row,
+            f"Best Successful (Final {'Real' if real else 'Nominal'}: {best_row[key]:,.0f}€)",
+            "green",
+            2.5,
+        ),
+    ]:
+        wealth = np.array(row["wealth_history"], dtype=np.float64)
+        if real:
+            inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+            wealth = wealth / inflation[: len(wealth)]
+        plt.plot(
+            np.arange(0, len(wealth)) / 12.0,
+            wealth,
+            label=label,
+            color=color,
+            linewidth=width,
+            alpha=1.0,
+        )
+
+    plt.title(f"Sampled Wealth Evolution Over Retirement ({'Real' if real else 'Nominal'} Terms)")
+    plt.xlabel("Years in Retirement")
+    plt.ylabel(f"Total Wealth (EUR{' in today\'s money' if real else ' at time of value'})")
+    plt.grid(True, linestyle="--", alpha=0.7)
+    plt.yscale("log")
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
+    plt.tight_layout(rect=[0, 0, 0.85, 1])
+    plt.savefig(filename)
+    plt.close()
+
+
+def plot_bank_account_trajectories(
+    results_df: pd.DataFrame, real: bool, bank_lower_bound: float, filename: str
+):
+    plt.figure(figsize=(14, 8))
+    n_samples = min(10, len(results_df))
+    sample_indices = np.linspace(0, len(results_df) - 1, n_samples, dtype=int)
+    for idx in sample_indices:
+        row = results_df.iloc[idx]
+        bank_history = np.array(row["bank_balance_history"], dtype=np.float64)
+        if real:
+            inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+            bank_history = bank_history / inflation[: len(bank_history)]
+        plt.plot(np.arange(0, len(bank_history)) / 12.0, bank_history, label=f"Sim {idx}")
+    plt.axhline(y=bank_lower_bound, color="r", linestyle="--", label="Bank Lower Bound")
+    plt.title(f"Bank Account Trajectories ({'Real' if real else 'Nominal'})")
+    plt.xlabel("Years in Retirement")
+    plt.ylabel(f"Bank Account Balance (EUR{' in today\'s money' if real else ''})")
+    plt.grid(True, linestyle="--", alpha=0.7)
+    plt.legend(loc="best", fontsize="small", ncol=2, frameon=True)
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
+
+def generate_all_plots(
+    simulation_results: List[Dict[str, Any]],
+    output_root: str,
+    det_inputs: Any,
+    econ_assumptions: Any,
+):
+    """
+    Generate all required plots for the FIRE simulator, using only simulation results.
+    Plots are saved to the output directory.
+    """
+    plots_dir = os.path.join(output_root, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+
+    results_df = pd.DataFrame(simulation_results)
+    failed_sims = results_df[~results_df["success"]]
+    successful_sims = results_df[results_df["success"]]
+
+    # 1. Retirement Duration Distribution (failed sims)
+    plot_retirement_duration_distribution(
+        failed_sims,
+        det_inputs.years_to_simulate,
+        os.path.join(plots_dir, "retirement_duration_distribution.png"),
+    )
+
+    # 2. Final Wealth Distribution (Nominal)
+    plot_final_wealth_distribution(
+        successful_sims,
+        "final_nominal_wealth",
+        "Distribution of Final Wealth (Nominal)",
+        "Total Wealth (EUR) - Log Scale",
+        os.path.join(plots_dir, "final_wealth_distribution_nominal.png"),
+    )
+
+    # 3. Final Wealth Distribution (Real)
+    plot_final_wealth_distribution(
+        successful_sims,
+        "final_real_wealth",
+        "Distribution of Final Wealth (Real)",
+        "Total Wealth (EUR in today's money) - Log Scale",
+        os.path.join(plots_dir, "final_wealth_distribution_real.png"),
+    )
+
+    # 4. Wealth Evolution Samples (Real)
+    plot_wealth_evolution_samples(
+        results_df,
+        real=True,
+        filename=os.path.join(plots_dir, "wealth_evolution_samples_real.png"),
+    )
+
+    # 5. Wealth Evolution Samples (Nominal)
+    plot_wealth_evolution_samples(
+        results_df,
+        real=False,
+        filename=os.path.join(plots_dir, "wealth_evolution_samples_nominal.png"),
+    )
+
+    # 6. Bank Account Trajectories (Real)
+    plot_bank_account_trajectories(
+        results_df,
+        real=True,
+        bank_lower_bound=det_inputs.bank_lower_bound,
+        filename=os.path.join(plots_dir, "bank_account_trajectories_real.png"),
+    )
+
+    # 7. Bank Account Trajectories (Nominal)
+    plot_bank_account_trajectories(
+        results_df,
+        real=False,
+        bank_lower_bound=det_inputs.bank_lower_bound,
+        filename=os.path.join(plots_dir, "bank_account_trajectories_nominal.png"),
+    )
+
+    print(f"All plots generated and saved to {plots_dir}")

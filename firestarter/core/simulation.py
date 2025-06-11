@@ -141,6 +141,12 @@ class Simulation:
             "current_target_portfolio_weights": initial_target_weights,
             # Optionally add more state variables as needed
         }
+        self.state = state
+        self.state["initial_total_wealth"] = (
+            self.state["current_bank_balance"]
+            + sum(self.state["liquid_assets"].values())
+            + self.state["current_real_estate_value"]
+        )
         return state
 
     def precompute_sequences(self):
@@ -624,6 +630,11 @@ class Simulation:
         final_bank_balance = self.state["current_bank_balance"]
         cumulative_inflation = self.state["annual_cumulative_inflation_factors"][-1]
 
+        final_nominal_wealth = final_investment + final_bank_balance
+        final_real_wealth = (
+            final_nominal_wealth / cumulative_inflation if cumulative_inflation else 0.0
+        )
+
         final_allocations_nominal = {
             "Stocks": self.state["liquid_assets"]["stocks"],
             "Bonds": self.state["liquid_assets"]["bonds"],
@@ -646,9 +657,12 @@ class Simulation:
             "final_investment": final_investment,
             "final_bank_balance": final_bank_balance,
             "final_cumulative_inflation_factor": cumulative_inflation,
+            "final_nominal_wealth": final_nominal_wealth,
+            "final_real_wealth": final_real_wealth,
             # --- Non-state, derived or input data ---
             "final_allocations_nominal": final_allocations_nominal,
             "final_allocations_real": final_allocations_real,
+            "initial_total_wealth": self.state.get("initial_total_wealth"),
             # --- State and histories ---
             "annual_inflations_sequence": self.state["annual_inflations_sequence"],
             "monthly_cumulative_inflation_factors": self.state[

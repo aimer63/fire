@@ -32,17 +32,6 @@ from firestarter.core.helpers import calculate_initial_asset_values, format_floa
 import firestarter.analysis.analysis as analysis
 from firestarter.analysis.analysis import PlotDataDict
 
-# Import plotting functions
-from firestarter.plots.plots import (
-    plot_retirement_duration_distribution,
-    plot_final_wealth_distribution_nominal,
-    plot_final_wealth_distribution_real,
-    plot_wealth_evolution_samples_real,
-    plot_wealth_evolution_samples_nominal,
-    plot_bank_account_trajectories_real,
-    plot_bank_account_trajectories_nominal,
-)
-
 # Import the DeterministicInputs Pydantic model
 from firestarter.config.config import (
     DeterministicInputs,
@@ -53,9 +42,10 @@ from firestarter.config.config import (
 )
 
 # from firestarter.version import __version__
-from firestarter.analysis.reporting import generate_markdown_report
-import firestarter.plots.plots as plots_module  # Only needed for set_output_dir
-import pprint
+from firestarter.analysis.markdown_report import generate_markdown_report
+from firestarter.analysis.console_report import print_console_summary
+from firestarter.analysis.grapth_report import generate_all_plots
+
 
 from firestarter.core.simulation import SimulationBuilder
 
@@ -87,7 +77,7 @@ def main() -> None:
         sys.exit(1)
 
     output_root = config_data.get("paths", {}).get("output_root", "output")
-    plots_module.set_output_dir(os.path.join(output_root, "plots"))
+    os.makedirs(os.path.join(output_root, "plots"), exist_ok=True)
 
     print("Configuration file parsed successfully. Extracting parameters...")
 
@@ -182,12 +172,12 @@ def main() -> None:
     formatted_summary = format_floats(parameters_summary, ndigits=4)
 
     # --- Print all loaded parameters in a summary section ---
-    print("\n--- Loaded Parameters Summary (from config.toml) ---")
-    for section, values in formatted_summary.items():
-        print(f"{section.replace('_', ' ').title()}:")
-        pprint.pprint(values, sort_dicts=False)
-        print()
-    print("--- End of Parameters Summary ---\n")
+    # print("\n--- Loaded Parameters Summary (from config.toml) ---")
+    # for section, values in formatted_summary.items():
+    #     print(f"{section.replace('_', ' ').title()}:")
+    #     pprint.pprint(values, sort_dicts=False)
+    #     print()
+    # print("--- End of Parameters Summary ---\n")
 
     # --- 6. Run Monte Carlo Simulations ---
     simulation_results = []
@@ -231,6 +221,9 @@ def main() -> None:
         + f"Total time elapsed: {total_simulation_elapsed_time:.2f} seconds."
     )
 
+    # --- Print config and simulation summary using reporting_v1 ---
+    print_console_summary(simulation_results, config_data)
+
     # --- 7. Perform Analysis and Prepare Plotting Data ---
     results_df: pd.DataFrame
     plot_data: PlotDataDict
@@ -246,11 +239,7 @@ def main() -> None:
         det_inputs.years_to_simulate,
     )
 
-    # Print the consolidated summary, including the total simulation time here
-    print(f"\nTotal simulations run: {num_simulations}")
-    print(f"Total simulation time: {total_simulation_elapsed_time:.2f} seconds")
-    print(fire_summary_string)
-
+    # --- Prepare plot paths dictionary ---
     plots = {
         "Retirement Duration Distribution": os.path.join(
             output_root, "plots", "retirement_duration_distribution.png"
@@ -277,44 +266,21 @@ def main() -> None:
 
     # Pass formatted_summary to generate_markdown_report
     report_path = generate_markdown_report(
-        config_path=config_file_path,
-        fire_stats=fire_stats,
+        simulation_results=simulation_results,
+        config=config_data,
         output_dir=os.path.join(output_root, "reports"),
         plots=plots,
-        parameters_summary=formatted_summary,
     )
 
     print(f"\nMarkdown report generated: {report_path}")
 
     print("\n--- Generating Plots ---")
 
-    # Extract data from plot_data dictionary with explicit types
-    failed_sims: pd.DataFrame = plot_data["failed_sims"]
-    successful_sims: pd.DataFrame = plot_data["successful_sims"]
-    plot_lines_data: list[analysis.PlotLineData] = plot_data["plot_lines_data"]
-    bank_account_plot_indices: NDArray[np.intp] = plot_data["bank_account_plot_indices"]
-
-    # Plotting Historical Distributions
-    plot_retirement_duration_distribution(failed_sims, det_inputs.years_to_simulate)
-    plot_final_wealth_distribution_nominal(successful_sims)
-    plot_final_wealth_distribution_real(successful_sims)
-
-    # Plotting Time Evolution Samples
-    plot_wealth_evolution_samples_real(results_df, plot_lines_data, econ_assumptions.pi_mu)
-    plot_wealth_evolution_samples_nominal(results_df, plot_lines_data)
-
-    # Plotting Bank Account Trajectories
-    plot_bank_account_trajectories_real(
-        results_df,
-        bank_account_plot_indices,
-        det_inputs.bank_lower_bound,
-        plot_lines_data,  # Pass plot_lines_data for color/label consistency
-    )
-    plot_bank_account_trajectories_nominal(
-        results_df,
-        bank_account_plot_indices,
-        plot_lines_data,  # Pass plot_lines_data for color/label consistency
-        det_inputs.bank_lower_bound,
+    generate_all_plots(
+        simulation_results=simulation_results,
+        output_root=output_root,
+        det_inputs=det_inputs,
+        econ_assumptions=econ_assumptions,
     )
 
     print("\nAll requested plots generated and saved to the current directory.")

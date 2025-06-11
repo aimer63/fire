@@ -22,3 +22,6 @@ update_spdx_year.sh
 
 # Ignore exercises
 learn.py
+
+# Temporary folder
+tmp/
