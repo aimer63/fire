@@ -23,7 +23,7 @@ def plot_retirement_duration_distribution(
     plt.grid(axis="y", alpha=0.75)
     plt.tight_layout()
     plt.savefig(filename)
-    plt.close()
+    # Do not close the figure, keep it open for interactive display
 
 
 def plot_final_wealth_distribution(
@@ -43,7 +43,7 @@ def plot_final_wealth_distribution(
     plt.grid(axis="y", alpha=0.75)
     plt.tight_layout()
     plt.savefig(filename)
-    plt.close()
+    # Do not close the figure, keep it open for interactive display
 
 
 def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename: str):
@@ -95,7 +95,7 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
                 upper_final_val = upper_wealth[-1] if len(upper_wealth) > 0 else 0.0
                 label = (
                     f"{percentiles[i]}-{percentiles[i+1]}th Percentile "
-                    + f"(Final: {upper_final_val:,.0f}€)"
+                    f"(Final: {upper_final_val:,.0f}€)"
                 )
             else:
                 label = None
@@ -146,7 +146,7 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
     plt.tight_layout(rect=[0, 0, 0.85, 1])
     plt.savefig(filename)
-    plt.close()
+    # Do not close the figure, keep it open for interactive display
 
 
 def plot_bank_account_trajectories(
@@ -249,7 +249,7 @@ def plot_bank_account_trajectories(
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
     plt.tight_layout(rect=[0, 0, 0.85, 1])
     plt.savefig(filename)
-    plt.close()
+    # Do not close the figure, keep it open for interactive display
 
 
 def generate_all_plots(
@@ -327,3 +327,5 @@ def generate_all_plots(
     )
 
     print(f"All plots generated and saved to {plots_dir}")
+    # Show all open figures interactively, block until user closes them
+    plt.show()

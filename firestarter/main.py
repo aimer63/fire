@@ -20,17 +20,11 @@ import tomllib
 import time
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
 
-from numpy.typing import NDArray
-import pandas as pd
+# import pandas as pd
 
 # Import helper functions
-from firestarter.core.helpers import calculate_initial_asset_values, format_floats
-
-# Import the legacy analysis module functions and its plotting data TypedDict
-import firestarter.analysis.analysis as analysis
-from firestarter.analysis.analysis import PlotDataDict
+from firestarter.core.helpers import calculate_initial_asset_values
 
 # Import the DeterministicInputs Pydantic model
 from firestarter.config.config import (
@@ -42,9 +36,9 @@ from firestarter.config.config import (
 )
 
 # from firestarter.version import __version__
-from firestarter.analysis.markdown_report import generate_markdown_report
-from firestarter.analysis.console_report import print_console_summary
-from firestarter.analysis.grapth_report import generate_all_plots
+from firestarter.reporting.markdown_report import generate_markdown_report
+from firestarter.reporting.console_report import print_console_summary
+from firestarter.reporting.grapth_report import generate_all_plots
 
 
 from firestarter.core.simulation import SimulationBuilder
@@ -168,17 +162,6 @@ def main() -> None:
             parameters_summary["portfolio_rebalances"]["rebalances"], key=lambda r: r["year"]
         )
 
-    # Format all floats to 4 decimal digits for console and report
-    formatted_summary = format_floats(parameters_summary, ndigits=4)
-
-    # --- Print all loaded parameters in a summary section ---
-    # print("\n--- Loaded Parameters Summary (from config.toml) ---")
-    # for section, values in formatted_summary.items():
-    #     print(f"{section.replace('_', ' ').title()}:")
-    #     pprint.pprint(values, sort_dicts=False)
-    #     print()
-    # print("--- End of Parameters Summary ---\n")
-
     # --- 6. Run Monte Carlo Simulations ---
     simulation_results = []
 
@@ -223,21 +206,6 @@ def main() -> None:
 
     # --- Print config and simulation summary using reporting_v1 ---
     print_console_summary(simulation_results, config_data)
-
-    # --- 7. Perform Analysis and Prepare Plotting Data ---
-    results_df: pd.DataFrame
-    plot_data: PlotDataDict
-    results_df, plot_data = analysis.perform_analysis_and_prepare_plots_data(
-        simulation_results, num_simulations
-    )
-
-    # Generate and print the consolidated FIRE plan summary
-    initial_total_wealth: float = det_inputs.initial_investment + det_inputs.initial_bank_balance
-    fire_summary_string, fire_stats = analysis.generate_fire_plan_summary(
-        simulation_results,
-        initial_total_wealth,
-        det_inputs.years_to_simulate,
-    )
 
     # --- Prepare plot paths dictionary ---
     plots = {
@@ -286,7 +254,6 @@ def main() -> None:
     print("\nAll requested plots generated and saved to the current directory.")
 
     print("\nAll plots generated. Displaying interactive windows. Close them to exit.")
-    plt.show(block=True)
 
 
 if __name__ == "__main__":

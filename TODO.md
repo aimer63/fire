@@ -43,15 +43,14 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 - **Parameter Summary Output**
   - Print all loaded parameters to the console in a section titled `--- Loaded Parameters Summary (from config.toml) ---` after config parsing.
   - Add a section to the Markdown report listing the value of all parameters loaded from the config file.
+- **[DONE] Refactor Results Presentation**
+  - Centralized all result formatting, summary, and reporting logic (formerly scattered across `analysis.py`, `reporting.py`, and `plots.py`) into dedicated reporting modules.
+  - All user-facing outputs (console, markdown, plots) now use a unified, consistent data structure and formatting.
+  - Duplication reduced, maintainability improved, and consistency guaranteed between summary, plots, and reports.
 
 ---
 
 ## 🟡 In Progress / Next Priorities
-
-- [ ] **[HIGH] Refactor Results Presentation**
-  - Centralize all result formatting, summary, and reporting logic (currently scattered across `analysis.py`, `reporting.py`, and `plots.py`) into a dedicated results or reporting module.
-  - Ensure all user-facing outputs (console, markdown, plots) use a unified, consistent data structure and formatting.
-  - Reduce duplication, improve maintainability, and guarantee consistency between summary, plots, and reports.
 
 - [ ] **Relative Plot Links in Reports**
   - Ensure plot links in Markdown reports are always correct (relative to report location).
