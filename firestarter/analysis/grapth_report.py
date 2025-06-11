@@ -150,25 +150,104 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
 
 
 def plot_bank_account_trajectories(
-    results_df: pd.DataFrame, real: bool, bank_lower_bound: float, filename: str
+    results_df: pd.DataFrame,
+    real: bool,
+    bank_lower_bound: float,
+    bank_upper_bound: float,
+    filename: str,
 ):
     plt.figure(figsize=(14, 8))
-    n_samples = min(10, len(results_df))
-    sample_indices = np.linspace(0, len(results_df) - 1, n_samples, dtype=int)
-    for idx in sample_indices:
-        row = results_df.iloc[idx]
-        bank_history = np.array(row["bank_balance_history"], dtype=np.float64)
+    successful = results_df[results_df["success"]]
+    if successful.empty:
+        print("No successful simulations to plot bank account trajectories.")
+        return
+
+    # Sort by final real/nominal wealth (same as wealth plot)
+    key = "final_real_wealth" if real else "final_nominal_wealth"
+    sorted_successful = successful.sort_values(by=key).reset_index(drop=True)
+    n = len(sorted_successful)
+
+    # Percentile boundaries and colors (same as wealth plot)
+    percentiles = [0, 20, 40, 60, 80, 100]
+    colors = ["orange", "gold", "limegreen", "dodgerblue", "navy"]
+    lw = 1.2
+
+    # Plot 5 trajectories for each percentile range, only first in legend
+    for i in range(5):
+        start = int(percentiles[i] / 100 * n)
+        end = int(percentiles[i + 1] / 100 * n) if i < 4 else n
+        count = end - start
+        if count <= 0:
+            continue
+        if count < 5:
+            indices = list(range(start, end))
+        else:
+            indices = np.linspace(start, end - 1, 5, dtype=int)
+        for j, idx in enumerate(indices):
+            row = sorted_successful.iloc[idx]
+            bank = np.array(row["bank_balance_history"], dtype=np.float64)
+            if real:
+                inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+                bank = bank / inflation[: len(bank)]
+            final_val = bank[-1] if len(bank) > 0 else 0.0
+            label = (
+                f"{percentiles[i]}-{percentiles[i+1]}th Percentile (Final: {final_val:,.0f}€)"
+                if j == 0
+                else None
+            )
+            plt.plot(
+                np.arange(0, len(bank)) / 12.0,
+                bank,
+                label=label,
+                color=colors[i],
+                linewidth=lw,
+                alpha=0.8,
+            )
+
+    # Plot worst and best
+    worst_row = sorted_successful.iloc[0]
+    best_row = sorted_successful.iloc[-1]
+    for row, color, width, case in [
+        (worst_row, "red", 2.5, "Worst Successful"),
+        (best_row, "green", 2.5, "Best Successful"),
+    ]:
+        bank = np.array(row["bank_balance_history"], dtype=np.float64)
         if real:
             inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
-            bank_history = bank_history / inflation[: len(bank_history)]
-        plt.plot(np.arange(0, len(bank_history)) / 12.0, bank_history, label=f"Sim {idx}")
-    plt.axhline(y=bank_lower_bound, color="r", linestyle="--", label="Bank Lower Bound")
+            bank = bank / inflation[: len(bank)]
+        final_val = bank[-1] if len(bank) > 0 else 0.0
+        label = f"{case} (Final {'Real' if real else 'Nominal'}: {final_val:,.0f}€)"
+        plt.plot(
+            np.arange(0, len(bank)) / 12.0,
+            bank,
+            label=label,
+            color=color,
+            linewidth=width,
+            alpha=1.0,
+        )
+
+    # Plot lower and upper bounds (real value in both plots)
+    plt.axhline(
+        y=bank_lower_bound,
+        color="black",
+        linestyle="--",
+        linewidth=1.5,
+        label=f"Bank Lower Bound ({bank_lower_bound:,.0f}€, real value)",
+    )
+    plt.axhline(
+        y=bank_upper_bound,
+        color="purple",
+        linestyle="--",
+        linewidth=1.5,
+        label=f"Bank Upper Bound ({bank_upper_bound:,.0f}€, real value)",
+    )
+
     plt.title(f"Bank Account Trajectories ({'Real' if real else 'Nominal'})")
     plt.xlabel("Years in Retirement")
     plt.ylabel(f"Bank Account Balance (EUR{' in today\'s money' if real else ''})")
     plt.grid(True, linestyle="--", alpha=0.7)
-    plt.legend(loc="best", fontsize="small", ncol=2, frameon=True)
-    plt.tight_layout()
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
+    plt.tight_layout(rect=[0, 0, 0.85, 1])
     plt.savefig(filename)
     plt.close()
 
@@ -234,6 +313,7 @@ def generate_all_plots(
         results_df,
         real=True,
         bank_lower_bound=det_inputs.bank_lower_bound,
+        bank_upper_bound=det_inputs.bank_upper_bound,
         filename=os.path.join(plots_dir, "bank_account_trajectories_real.png"),
     )
 
@@ -242,6 +322,7 @@ def generate_all_plots(
         results_df,
         real=False,
         bank_lower_bound=det_inputs.bank_lower_bound,
+        bank_upper_bound=det_inputs.bank_upper_bound,
         filename=os.path.join(plots_dir, "bank_account_trajectories_nominal.png"),
     )
 
