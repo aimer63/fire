@@ -10,9 +10,8 @@ This project is a Monte Carlo simulation tool for FIRE (Financial Independence /
 fire/
 ├── firestarter/           # Main Python package (all source code)
 │   ├── core/              # Core simulation engine and helpers
-│   ├── analysis/          # Analysis and reporting modules
+│   ├── reporting/         # Reporting and plotting modules
 │   ├── config/            # Pydantic config models and schema
-│   ├── plots/             # Plotting utilities (matplotlib)
 │   ├── main.py            # Main entry point
 │   └── version.py         # Version info
 ├── configs/               # TOML configuration files
@@ -45,12 +44,10 @@ fire/
   - Optionally simulates a house purchase at a specified time
   - Tracks asset allocation and rebalancing
 
-- **Analysis & Reporting**  
-  - `firestarter/analysis/analysis.py` processes simulation results, computes statistics (success rate, final wealth, CAGR, etc.), and prepares data for visualization.
-  - `firestarter/analysis/reporting.py` generates a Markdown report summarizing the simulation results, including links to generated plots.
-
-- **Plotting**  
-  - `firestarter/plots/plots.py` generates plots for wealth evolution, bank account trajectories, and distributions of outcomes.  
+- **Reporting & Plotting**  
+  - `firestarter/reporting/console_report.py` prints a summary to the console.
+  - `firestarter/reporting/markdown_report.py` generates a Markdown report summarizing the simulation results, including links to generated plots.
+  - `firestarter/reporting/grapth_report.py` generates all plots for wealth evolution, bank account trajectories, and distributions of outcomes.  
   - Output directories for plots and reports are set via the config file and created automatically.
 
 - **Data**  
@@ -98,7 +95,7 @@ initial_bank_balance = 0
 bank_lower_bound = 0
 bank_upper_bound = 0
 years_to_simulate = 20
-# ... (other parameters, renamed for clarity) ...
+# ... (other parameters) ...
 
 [economic_assumptions]
 stock_mu = 0.07
@@ -116,6 +113,7 @@ rebalances = [
 
 - The portfolio weights are specified in the `[portfolio_rebalances]` section as a list of rebalances, each with a `year` and weights for liquid assets (`stocks`, `bonds`, `str`, `fun`). There must be one at `year = 0` to give initial values at the portfolio assets.
 - There is no `real_estate` weight; real estate is handled separately at the time of house purchase.
+- **See [Real Estate Modeling](docs/real_estate.md) for details on how real estate is handled.**
 
 ---
 
