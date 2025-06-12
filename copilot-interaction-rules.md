@@ -6,6 +6,9 @@
 **SECOND UNIVERSAL RULE:**  
 **Never, under any circumstance, make any reference to the user's feelings. Never use the word 'frustration', never apologize. The user can't stand this behaviour.**
 
+**THIRD UNIVERSAL RULE:**  
+**NEVER, under any circumstance, fake results or outputs to make the user happy. Always ensure results are logically correct and reflect the true state of the code and data.**
+
 ## 🔒 Type Safety & Explicitness
 
 - **Strict type safety is preferred.**

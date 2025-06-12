@@ -624,16 +624,26 @@ class Simulation:
             total_months,
         )
         success = not self.state.get("simulation_failed", False)
+
+        def trunc_only(arr):
+            return arr[:months_lasted]
+
+        final_nominal_wealth = (
+            self.results["wealth_history"][months_lasted - 1] if months_lasted > 0 else 0.0
+        )
+        final_cumulative_inflation = (
+            self.state["monthly_cumulative_inflation_factors"][months_lasted - 1]
+            if months_lasted > 0
+            else 1.0
+        )
+        final_real_wealth = (
+            final_nominal_wealth / final_cumulative_inflation if final_cumulative_inflation else 0.0
+        )
+
         final_investment = (
             sum(self.state["liquid_assets"].values()) + self.state["current_real_estate_value"]
         )
         final_bank_balance = self.state["current_bank_balance"]
-        cumulative_inflation = self.state["annual_cumulative_inflation_factors"][-1]
-
-        final_nominal_wealth = final_investment + final_bank_balance
-        final_real_wealth = (
-            final_nominal_wealth / cumulative_inflation if cumulative_inflation else 0.0
-        )
 
         final_allocations_nominal = {
             "Stocks": self.state["liquid_assets"]["stocks"],
@@ -643,12 +653,8 @@ class Simulation:
             "Real Estate": self.state["current_real_estate_value"],
         }
         final_allocations_real = {
-            k: float(v / cumulative_inflation) for k, v in final_allocations_nominal.items()
+            k: float(v / final_cumulative_inflation) for k, v in final_allocations_nominal.items()
         }
-
-        # Truncate all histories to months_lasted (no padding after failure)
-        def trunc_only(arr):
-            return arr[:months_lasted]
 
         result = {
             # --- Scalars first ---
@@ -656,7 +662,7 @@ class Simulation:
             "months_lasted": months_lasted,
             "final_investment": final_investment,
             "final_bank_balance": final_bank_balance,
-            "final_cumulative_inflation_factor": cumulative_inflation,
+            "final_cumulative_inflation_factor": final_cumulative_inflation,
             "final_nominal_wealth": final_nominal_wealth,
             "final_real_wealth": final_real_wealth,
             # --- Non-state, derived or input data ---
@@ -665,9 +671,9 @@ class Simulation:
             "initial_total_wealth": self.state.get("initial_total_wealth"),
             # --- State and histories ---
             "annual_inflations_sequence": self.state["annual_inflations_sequence"],
-            "monthly_cumulative_inflation_factors": self.state[
-                "monthly_cumulative_inflation_factors"
-            ],
+            "monthly_cumulative_inflation_factors": trunc_only(
+                self.state["monthly_cumulative_inflation_factors"]
+            ),
             "wealth_history": trunc_only(self.results["wealth_history"]),
             "bank_balance_history": trunc_only(self.results["bank_balance_history"]),
             "stocks_history": trunc_only(self.results["stocks_history"]),

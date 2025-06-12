@@ -23,5 +23,8 @@ update_spdx_year.sh
 # Ignore exercises
 learn.py
 
+# Output from the console
+console.txt
+
 # Temporary folder
 tmp/

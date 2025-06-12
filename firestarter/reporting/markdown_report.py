@@ -103,6 +103,126 @@ def generate_markdown_report(
         md.append(case_md("Median", median))
         md.append(case_md("Best", best))
 
+        # --- Key scenario details: Nominal Results ---
+        if not successful_sims:
+            md.append("\nNo successful simulations to report.\n")
+        else:
+            md.append(
+                "\n## Key Scenario Details: Nominal Results "
+                + "(cases selected by nominal final wealth)\n"
+            )
+            sorted_by_nominal = sorted(
+                successful_sims, key=lambda r: r.get("final_nominal_wealth", 0.0)
+            )
+            worst_nom = sorted_by_nominal[0]
+            best_nom = sorted_by_nominal[-1]
+            median_nom = sorted_by_nominal[len(sorted_by_nominal) // 2]
+
+            def case_md_nominal(label: str, case: Dict[str, Any]) -> str:
+                lines = [f"\n### {label} Successful Case"]
+                lines.append(
+                    f"- Final Wealth (Nominal): {case.get('final_nominal_wealth', 0.0):,.2f} EUR"
+                )
+                lines.append(
+                    f"- Final Wealth (Real): {case.get('final_real_wealth', 0.0):,.2f} EUR"
+                )
+                # Calculate CAGR (nominal)
+                initial_wealth = case.get("initial_total_wealth")
+                final_wealth = case.get("final_nominal_wealth")
+                months_lasted = case.get("months_lasted", 0)
+                years = months_lasted / 12 if months_lasted else 0
+                if initial_wealth is not None and final_wealth is not None and years > 0:
+                    cagr = calculate_cagr(initial_wealth, final_wealth, years)
+                    lines.append(f"- Your life CAGR (Nominal): {cagr:.2%}")
+                else:
+                    lines.append("- Your life CAGR (Nominal): N/A")
+                allocations = case.get("final_allocations_nominal", {})
+                total_nominal = case.get("final_nominal_wealth", 0.0)
+                bank = case.get("final_bank_balance", 0.0)
+                # Allocations as percentages
+                if allocations:
+                    total_assets = sum(allocations.values())
+                    alloc_percent = ", ".join(
+                        f"{k}: {v / total_assets * 100:.1f}%" if total_assets else f"{k}: 0.0%"
+                        for k, v in allocations.items()
+                    )
+                    lines.append(f"- Final Allocations (percent): {alloc_percent}")
+                # Nominal asset values table
+                if allocations:
+                    lines.append("\n| Asset        | Value (EUR)      |")
+                    lines.append("|--------------|------------------|")
+                    for k, v in allocations.items():
+                        lines.append(f"| {k:<12} | {v:,.2f}           |")
+                    lines.append(f"| Bank         | {bank:,.2f}           |")
+                    summed = sum(allocations.values()) + bank
+                    lines.append(f"| **Sum**      | **{summed:,.2f}**     |")
+                    if abs(summed - total_nominal) > 1e-2:
+                        lines.append(
+                            "| **WARNING**  | **Sum does not match final total wealth!** |"
+                        )
+                return "\n".join(lines)
+
+            md.append(case_md_nominal("Worst", worst_nom))
+            md.append(case_md_nominal("Median", median_nom))
+            md.append(case_md_nominal("Best", best_nom))
+
+            # --- Key scenario details: Real Results ---
+            md.append(
+                "\n## Key Scenario Details: Real Results (cases selected by real final wealth)\n"
+            )
+            sorted_by_real = sorted(successful_sims, key=lambda r: r.get("final_real_wealth", 0.0))
+            worst_real = sorted_by_real[0]
+            best_real = sorted_by_real[-1]
+            median_real = sorted_by_real[len(sorted_by_real) // 2]
+
+            def case_md_real(label: str, case: Dict[str, Any]) -> str:
+                lines = [f"\n### {label} Successful Case"]
+                lines.append(
+                    f"- Final Wealth (Real): {case.get('final_real_wealth', 0.0):,.2f} EUR"
+                )
+                lines.append(
+                    f"- Final Wealth (Nominal): {case.get('final_nominal_wealth', 0.0):,.2f} EUR"
+                )
+                # Calculate CAGR (real)
+                initial_wealth = case.get("initial_total_wealth")
+                final_wealth = case.get("final_real_wealth")
+                months_lasted = case.get("months_lasted", 0)
+                years = months_lasted / 12 if months_lasted else 0
+                if initial_wealth is not None and final_wealth is not None and years > 0:
+                    cagr = calculate_cagr(initial_wealth, final_wealth, years)
+                    lines.append(f"- Your life CAGR (Real): {cagr:.2%}")
+                else:
+                    lines.append("- Your life CAGR (Real): N/A")
+                allocations = case.get("final_allocations_nominal", {})
+                total_nominal = case.get("final_nominal_wealth", 0.0)
+                bank = case.get("final_bank_balance", 0.0)
+                # Allocations as percentages
+                if allocations:
+                    total_assets = sum(allocations.values())
+                    alloc_percent = ", ".join(
+                        f"{k}: {v / total_assets * 100:.1f}%" if total_assets else f"{k}: 0.0%"
+                        for k, v in allocations.items()
+                    )
+                    lines.append(f"- Final Allocations (percent): {alloc_percent}")
+                # Nominal asset values table
+                if allocations:
+                    lines.append("\n| Asset        | Value (EUR)      |")
+                    lines.append("|--------------|------------------|")
+                    for k, v in allocations.items():
+                        lines.append(f"| {k:<12} | {v:,.2f}           |")
+                    lines.append(f"| Bank         | {bank:,.2f}           |")
+                    summed = sum(allocations.values()) + bank
+                    lines.append(f"| **Sum**      | **{summed:,.2f}**     |")
+                    if abs(summed - total_nominal) > 1e-2:
+                        lines.append(
+                            "| **WARNING**  | **Sum does not match final total wealth!** |"
+                        )
+                return "\n".join(lines)
+
+            md.append(case_md_real("Worst", worst_real))
+            md.append(case_md_real("Median", median_real))
+            md.append(case_md_real("Best", best_real))
+
     # --- Plots ---
     md.append("\n## Plots\n")
     report_dir = Path(output_dir)

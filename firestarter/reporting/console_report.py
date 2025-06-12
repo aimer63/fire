@@ -37,19 +37,19 @@ def print_console_summary(simulation_results: List[Dict[str, Any]], config: Dict
         )
         print(f"Average months lasted in failed simulations: {avg_months_failed:.1f}")
 
-    # --- Key scenario details: worst, median, best successful cases ---
+    # --- Key scenario details: Nominal Results ---
     successful_sims = [r for r in simulation_results if r.get("success", False)]
     if not successful_sims:
         print("\nNo successful simulations to report.")
         return
 
-    # Sort by real final wealth for scenario selection
-    sorted_by_real = sorted(successful_sims, key=lambda r: r.get("final_real_wealth", 0.0))
-    worst = sorted_by_real[0]
-    best = sorted_by_real[-1]
-    median = sorted_by_real[len(sorted_by_real) // 2]
+    print("\n=== Nominal Results (cases selected by nominal final wealth) ===")
+    sorted_by_nominal = sorted(successful_sims, key=lambda r: r.get("final_nominal_wealth", 0.0))
+    worst_nom = sorted_by_nominal[0]
+    best_nom = sorted_by_nominal[-1]
+    median_nom = sorted_by_nominal[len(sorted_by_nominal) // 2]
 
-    def print_case(label: str, case: Dict[str, Any]) -> None:
+    def print_case_nominal(label: str, case: Dict[str, Any]) -> None:
         print(f"\n{label} Successful Case:")
         print(f"  Final Wealth (Nominal): {case.get('final_nominal_wealth', 0.0):,.2f} EUR")
         print(f"  Final Wealth (Real): {case.get('final_real_wealth', 0.0):,.2f} EUR")
@@ -60,9 +60,9 @@ def print_console_summary(simulation_results: List[Dict[str, Any]], config: Dict
         years = months_lasted / 12 if months_lasted else 0
         if initial_wealth is not None and final_wealth is not None and years > 0:
             cagr = calculate_cagr(initial_wealth, final_wealth, years)
-            print(f"  Your life CAGR: {cagr:.2%}")
+            print(f"  Your life CAGR (Nominal): {cagr:.2%}")
         else:
-            print("  Your life CAGR: N/A")
+            print("  Your life CAGR (Nominal): N/A")
         allocations = case.get("final_allocations_nominal", {})
         total_nominal = case.get("final_nominal_wealth", 0.0)
         bank = case.get("final_bank_balance", 0.0)
@@ -84,9 +84,60 @@ def print_console_summary(simulation_results: List[Dict[str, Any]], config: Dict
             summed = sum(allocations.values()) + bank
             if abs(summed - total_nominal) > 1e-2:
                 print(
-                    f"    WARNING: Sum of assets ({summed:,.2f}) != Final Nominal Wealth ({total_nominal:,.2f})"
+                    f"    WARNING: Sum of assets ({summed:,.2f}) != "
+                    + f"Final Nominal Wealth ({total_nominal:,.2f})"
                 )
 
-    print_case("Worst", worst)
-    print_case("Median", median)
-    print_case("Best", best)
+    print_case_nominal("Worst", worst_nom)
+    print_case_nominal("Median", median_nom)
+    print_case_nominal("Best", best_nom)
+
+    # --- Key scenario details: Real Results ---
+    print("\n=== Real Results (cases selected by real final wealth) ===")
+    sorted_by_real = sorted(successful_sims, key=lambda r: r.get("final_real_wealth", 0.0))
+    worst_real = sorted_by_real[0]
+    best_real = sorted_by_real[-1]
+    median_real = sorted_by_real[len(sorted_by_real) // 2]
+
+    def print_case_real(label: str, case: Dict[str, Any]) -> None:
+        print(f"\n{label} Successful Case:")
+        print(f"  Final Wealth (Real): {case.get('final_real_wealth', 0.0):,.2f} EUR")
+        print(f"  Final Wealth (Nominal): {case.get('final_nominal_wealth', 0.0):,.2f} EUR")
+        # Calculate CAGR using initial and final real wealth and years
+        initial_wealth = case.get("initial_total_wealth")
+        final_wealth = case.get("final_real_wealth")
+        months_lasted = case.get("months_lasted", 0)
+        years = months_lasted / 12 if months_lasted else 0
+        if initial_wealth is not None and final_wealth is not None and years > 0:
+            cagr = calculate_cagr(initial_wealth, final_wealth, years)
+            print(f"  Your life CAGR (Real): {cagr:.2%}")
+        else:
+            print("  Your life CAGR (Real): N/A")
+        allocations = case.get("final_allocations_nominal", {})
+        total_nominal = case.get("final_nominal_wealth", 0.0)
+        bank = case.get("final_bank_balance", 0.0)
+        # Print allocations as percentages
+        if allocations:
+            total_assets = sum(allocations.values())
+            print("  Final Allocations (percent): ", end="")
+            print(
+                ", ".join(
+                    f"{k}: {v / total_assets * 100:.1f}%" if total_assets else f"{k}: 0.0%"
+                    for k, v in allocations.items()
+                )
+            )
+        # Print nominal asset values
+        if allocations:
+            print("  Nominal Asset Values: ", end="")
+            print(", ".join(f"{k}: {v:,.2f} EUR" for k, v in allocations.items()), end="")
+            print(f", Bank: {bank:,.2f} EUR")
+            summed = sum(allocations.values()) + bank
+            if abs(summed - total_nominal) > 1e-2:
+                print(
+                    f"    WARNING: Sum of assets ({summed:,.2f}) != "
+                    + f"Final Nominal Wealth ({total_nominal:,.2f})"
+                )
+
+    print_case_real("Worst", worst_real)
+    print_case_real("Median", median_real)
+    print_case_real("Best", best_real)

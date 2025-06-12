@@ -84,7 +84,6 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
                 wealth = wealth / inflation[: len(wealth)]
             if j == 0:
                 if i == 4:  # 80-100th percentile, show the true max
-                    # Find the true max in this range
                     max_final_val = 0.0
                     for k in range(start, end):
                         r = sorted_successful.iloc[k]
@@ -125,6 +124,7 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     # Plot worst and best
     worst_row = sorted_successful.iloc[0]
     best_row = sorted_successful.iloc[-1]
+
     for row, label, color, width in [
         (
             worst_row,
