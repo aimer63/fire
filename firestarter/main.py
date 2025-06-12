@@ -38,7 +38,7 @@ from firestarter.config.config import (
 # from firestarter.version import __version__
 from firestarter.reporting.markdown_report import generate_markdown_report
 from firestarter.reporting.console_report import print_console_summary
-from firestarter.reporting.grapth_report import generate_all_plots
+from firestarter.reporting.graph_report import generate_all_plots
 
 
 from firestarter.core.simulation import SimulationBuilder
