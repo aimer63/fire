@@ -83,16 +83,30 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
                 inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
                 wealth = wealth / inflation[: len(wealth)]
             if j == 0:
-                # Legend value: upper percentile
-                upper_idx = end - 1 if end > start else start
-                upper_row = sorted_successful.iloc[upper_idx]
-                upper_wealth = np.array(upper_row["wealth_history"], dtype=np.float64)
-                if real:
-                    inflation = np.array(
-                        upper_row["monthly_cumulative_inflation_factors"], dtype=np.float64
-                    )
-                    upper_wealth = upper_wealth / inflation[: len(upper_wealth)]
-                upper_final_val = upper_wealth[-1] if len(upper_wealth) > 0 else 0.0
+                if i == 4:  # 80-100th percentile, show the true max
+                    # Find the true max in this range
+                    max_final_val = 0.0
+                    for k in range(start, end):
+                        r = sorted_successful.iloc[k]
+                        w = np.array(r["wealth_history"], dtype=np.float64)
+                        if real:
+                            infl = np.array(
+                                r["monthly_cumulative_inflation_factors"], dtype=np.float64
+                            )
+                            w = w / infl[: len(w)]
+                        if len(w) > 0 and w[-1] > max_final_val:
+                            max_final_val = w[-1]
+                    upper_final_val = max_final_val
+                else:
+                    upper_idx = end - 1 if end > start else start
+                    upper_row = sorted_successful.iloc[upper_idx]
+                    upper_wealth = np.array(upper_row["wealth_history"], dtype=np.float64)
+                    if real:
+                        inflation = np.array(
+                            upper_row["monthly_cumulative_inflation_factors"], dtype=np.float64
+                        )
+                        upper_wealth = upper_wealth / inflation[: len(upper_wealth)]
+                    upper_final_val = upper_wealth[-1] if len(upper_wealth) > 0 else 0.0
                 label = (
                     f"{percentiles[i]}-{percentiles[i+1]}th Percentile "
                     f"(Final: {upper_final_val:,.0f}€)"

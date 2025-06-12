@@ -29,7 +29,7 @@ from firestarter.core.helpers import calculate_initial_asset_values
 # Import the DeterministicInputs Pydantic model
 from firestarter.config.config import (
     DeterministicInputs,
-    EconomicAssumptions,
+    MarketAssumptions,
     PortfolioRebalances,
     SimulationParameters,
     Shocks,
@@ -53,7 +53,8 @@ def main() -> None:
     - Runs Monte Carlo simulations using the current rebalance schedule.
     - Performs analysis and generates reports and plots.
     """
-    # --- 1-5. Config Loading, Parameter Assignment, Derived Calculations, and Assertions ---
+
+    # Config loading, parameter assignment, derived calculations, and assertions
     config_file_path: str = "config.toml"
     if len(sys.argv) > 1:
         config_file_path = sys.argv[1]
@@ -75,27 +76,24 @@ def main() -> None:
 
     print("Configuration file parsed successfully. Extracting parameters...")
 
-    # --- Pydantic: Load and validate deterministic inputs ---
+    # Pydantic: Load and validate deterministic inputs
     det_inputs: DeterministicInputs = DeterministicInputs(**config_data["deterministic_inputs"])
 
-    # --- Pydantic: Load and validate Economic Assumption ---
-    econ_assumptions: EconomicAssumptions = EconomicAssumptions(
-        **config_data["economic_assumptions"]
-    )
+    # Pydantic: Load and validate economic assumptions
+    econ_assumptions: MarketAssumptions = MarketAssumptions(**config_data["market_assumptions"])
 
-    # --- Pydantic: Load and validate Portfolio Rebalances ---
+    # Pydantic: Load and validate portfolio rebalances
     portfolio_rebalances: PortfolioRebalances = PortfolioRebalances(
         **config_data["portfolio_rebalances"]
     )
-    # print(config_data["portfolio_rebalances"])
 
-    # --- Pydantic: Load and validate Simulation Parameters ---
+    # Pydantic: Load and validate simulation parameters
     sim_params: SimulationParameters = SimulationParameters(**config_data["simulation_parameters"])
     num_simulations: int = sim_params.num_simulations
 
-    # --- Pydantic: Load and validate Shocks ---
+    # Pydantic: Load and validate shocks
     shocks: Shocks = Shocks(**config_data.get("shocks", {}))
-    shock_events = shocks.events  # <-- Pass Pydantic objects directly for type safety
+    shock_events = shocks.events  # Pass Pydantic objects directly for type safety
 
     # Validate portfolio rebalance weights
     for reb in portfolio_rebalances.rebalances:
@@ -111,8 +109,7 @@ def main() -> None:
     )
     print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
 
-    # Remove all uses of portfolio_allocs and initial asset value calculation based on it.
-    # If you need initial asset values, calculate them based on the first rebalance weights:
+    # Calculate initial asset values based on the first rebalance weights
     first_reb = portfolio_rebalances.rebalances[0]
     (
         initial_stocks_value,
@@ -162,7 +159,7 @@ def main() -> None:
             parameters_summary["portfolio_rebalances"]["rebalances"], key=lambda r: r["year"]
         )
 
-    # --- 6. Run Monte Carlo Simulations ---
+    # Run Monte Carlo simulations
     simulation_results = []
 
     spinner = itertools.cycle(["-", "\\", "|", "/"])
@@ -183,7 +180,7 @@ def main() -> None:
             .build()
         )
         simulation.init()
-        result = simulation.run()  # result is now the new dict structure
+        result = simulation.run()
         simulation_results.append(result)
 
         elapsed_time = time.time() - start_time
@@ -204,10 +201,10 @@ def main() -> None:
         + f"Total time elapsed: {total_simulation_elapsed_time:.2f} seconds."
     )
 
-    # --- Print config and simulation summary using reporting_v1 ---
+    # Print config parameters and simulation result summary
     print_console_summary(simulation_results, config_data)
 
-    # --- Prepare plot paths dictionary ---
+    # Prepare plot paths dictionary
     plots = {
         "Retirement Duration Distribution": os.path.join(
             output_root, "plots", "retirement_duration_distribution.png"
@@ -232,28 +229,29 @@ def main() -> None:
         ),
     }
 
-    # Pass formatted_summary to generate_markdown_report
-    report_path = generate_markdown_report(
+    # Generate markdown report
+    print("\n--- Generating markdown report ---")
+    generate_markdown_report(
         simulation_results=simulation_results,
         config=config_data,
         output_dir=os.path.join(output_root, "reports"),
         plots=plots,
     )
-
-    print(f"\nMarkdown report generated: {report_path}")
+    print("\n--- Markdown report generated ---")
 
     print("\n--- Generating Plots ---")
-
     generate_all_plots(
         simulation_results=simulation_results,
         output_root=output_root,
         det_inputs=det_inputs,
         econ_assumptions=econ_assumptions,
     )
+    print("\nAll plots generated and saved.")
 
-    print("\nAll requested plots generated and saved to the current directory.")
+    print(f"\nReports path: {os.path.join(output_root, 'reports')}")
+    print(f"Plots path: {os.path.join(output_root, 'plots')}")
 
-    print("\nAll plots generated. Displaying interactive windows. Close them to exit.")
+    print("\nDisplaying interactive plot windows. Close them to exit.")
 
 
 if __name__ == "__main__":

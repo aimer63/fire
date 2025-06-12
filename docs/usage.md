@@ -53,7 +53,7 @@ initial_investment = 100_000
 years_to_simulate = 30
 # ...other parameters...
 
-[economic_assumptions]
+[market_assumptions]
 stock_mu = 0.07
 stock_sigma = 0.15
 # ...other parameters...

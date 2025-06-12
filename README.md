@@ -97,7 +97,7 @@ bank_upper_bound = 0
 years_to_simulate = 20
 # ... (other parameters) ...
 
-[economic_assumptions]
+[market_assumptions]
 stock_mu = 0.07
 stock_sigma = 0.15
 # ... (other parameters) ...

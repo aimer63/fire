@@ -143,7 +143,7 @@ class DeterministicInputs(BaseModel):
         frozen = True  # This makes the model immutable
 
 
-class EconomicAssumptions(BaseModel):
+class MarketAssumptions(BaseModel):
     """
     Pydantic model representing the economic assumptions for the simulation.
     These parameters are loaded from the 'economic_assumptions' section of config.toml.

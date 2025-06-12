@@ -83,7 +83,7 @@ This document explains all parameters available in the main TOML configuration f
 
 ---
 
-## [economic_assumptions]
+## [market_assumptions]
 
 - **stock_mu, stock_sigma** *(float)*  
   Mean and standard deviation of annual stock returns.

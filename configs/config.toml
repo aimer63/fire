@@ -25,16 +25,16 @@ output_root = "output"
 # --- Deterministic Inputs (Your Personal Financial Plan) ---
 [deterministic_inputs]
 initial_investment = 100_000 # Initial Investment Value (e.g., EUR)
-initial_bank_balance = 0  # Initial Bank Account Balance (e.g., EUR)
+initial_bank_balance = 5000  # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower and upper bound in real money
 # if it goes below it will be topped, if it goes above it will be invested
 # from the investment
-bank_lower_bound = 0
-bank_upper_bound = 0
+bank_lower_bound = 5000
+bank_upper_bound = 10_000
 
 # Number of years the simulation will run
-years_to_simulate = 20
+years_to_simulate = 40
 
 # In flows
 
@@ -74,11 +74,11 @@ planned_extra_expenses = [
 ]
 
 # Initial real cost of the house to be purchased at rebalancing_year_idx
-planned_house_purchase_cost = 100_000
-house_purchase_year = 10
+planned_house_purchase_cost = 0
+house_purchase_year = 0
 
 # --- Economic Assumptions (Averages and Volatilities) ---
-[economic_assumptions]
+[market_assumptions]
 # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
@@ -155,6 +155,7 @@ real_estate_sigma = 0.0416
 # More relistics for the future
 pi_mu = 0.025
 pi_sigma = 0.025
+# pi_sigma = 0.0
 
 # Injects market shocks/crisis
 [shocks]
@@ -164,25 +165,25 @@ events = [
       # Note: Without a 'month' field, this shock will be applied based on how your
       # simulation.py handles year-only shocks (e.g., at the start of Year 0).
       # The specific 'October' timing of Black Friday is not preserved here.
-    {year = 15, asset = "Stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
-    {year = 15, asset = "Bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
-    {year = 15, asset = "STR", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
-    {year = 15, asset = "Fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
-    {year = 15, asset = "Real Estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
+    # {year = 10, asset = "Stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
+    # {year = 10, asset = "Bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
+    # {year = 10, asset = "STR", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
+    # {year = 10, asset = "Fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
+    # {year = 10, asset = "Real Estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
 
-    # Internet Bubble Burst (e.g., representing a year like 2000-2002)
-    {year = 10, asset = "Stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
-    {year = 10, asset = "Bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
-    {year = 10, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
-    {year = 10, asset = "Fun", magnitude = -0.10},          # Fun (50% Bitcoin, 50% Silver)
-    {year = 10, asset = "Real Estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
+    # # Internet Bubble Burst (e.g., representing a year like 2000-2002)
+    # {year = 15, asset = "Stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
+    # {year = 15, asset = "Bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
+    # {year = 15, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+    # {year = 15, asset = "Fun", magnitude = -0.10},          # Fun (50% Bitcoin, 50% Silver)
+    # {year = 15, asset = "Real Estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
 
-    # Great Recession (Worst year, e.g., 2008)
-    {year = 20, asset = "Stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
-    {year = 20, asset = "Bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
-    {year = 20, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
-    {year = 20, asset = "Fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
-    {year = 20, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
+    # # Great Recession (Worst year, e.g., 2008)
+    # {year = 20, asset = "Stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
+    # {year = 20, asset = "Bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
+    # {year = 20, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+    # {year = 20, asset = "Fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
+    # {year = 20, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
 ]
 
 # events = [
@@ -231,5 +232,5 @@ events = [
 [portfolio_rebalances]
 rebalances = [
   { year = 0,  stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
-  { year = 10, stocks = 0.40, bonds = 0.50, str = 0.05, fun = 0.05 }
+  { year = 20, stocks = 0.40, bonds = 0.60, str = 0.00, fun = 0.00 }
 ]
