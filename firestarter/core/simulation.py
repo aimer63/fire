@@ -15,7 +15,7 @@ Features:
 - Marks simulation as failed if withdrawals cannot be covered by liquid assets.
 """
 
-from typing import TypedDict
+from typing import TypedDict, Dict, Any
 import numpy as np
 from firestarter.core.constants import ASSET_KEYS, WITHDRAWAL_PRIORITY
 
@@ -23,7 +23,7 @@ from firestarter.core.constants import ASSET_KEYS, WITHDRAWAL_PRIORITY
 class SimulationBuilder:
     def __init__(self):
         self.det_inputs = None
-        self.econ_assumptions = None
+        self.market_assumptions = None
         self.portfolio_rebalances = None
         self.shock_events = None
         self.initial_assets = None
@@ -36,8 +36,8 @@ class SimulationBuilder:
         self.det_inputs = det_inputs
         return self
 
-    def set_econ_assumptions(self, econ_assumptions):
-        self.econ_assumptions = econ_assumptions
+    def set_market_assumptions(self, market_assumptions):
+        self.market_assumptions = market_assumptions
         return self
 
     def set_portfolio_rebalances(self, portfolio_rebalances):
@@ -56,7 +56,7 @@ class SimulationBuilder:
         # Validate all required fields are set
         if self.det_inputs is None:
             raise ValueError("det_inputs must be set before building the simulation.")
-        if self.econ_assumptions is None:
+        if self.market_assumptions is None:
             raise ValueError("econ_assumptions must be set before building the simulation.")
         if self.portfolio_rebalances is None:
             raise ValueError("portfolio_rebalances must be set before building the simulation.")
@@ -67,7 +67,7 @@ class SimulationBuilder:
 
         return Simulation(
             self.det_inputs,
-            self.econ_assumptions,
+            self.market_assumptions,
             self.portfolio_rebalances,
             self.shock_events,
             self.initial_assets,
@@ -147,6 +147,7 @@ class Simulation:
             + sum(self.state["liquid_assets"].values())
             + self.state["current_real_estate_value"]
         )
+        self.state["simulation_failed"] = False
         return state
 
     def precompute_sequences(self):
@@ -612,7 +613,7 @@ class Simulation:
         self.results["fun_history"][month] = self.state["liquid_assets"]["fun"]
         self.results["real_estate_history"][month] = self.state["current_real_estate_value"]
 
-    def build_result(self):
+    def build_result(self) -> Dict[str, Any]:
         """
         Return the final simulation results as a dict (result structure).
         Truncates all history arrays to months_lasted to avoid None values.
@@ -623,7 +624,6 @@ class Simulation:
             (i for i, v in enumerate(self.results["wealth_history"]) if v is None),
             total_months,
         )
-        success = not self.state.get("simulation_failed", False)
 
         def trunc_only(arr):
             return arr[:months_lasted]
@@ -658,7 +658,7 @@ class Simulation:
 
         result = {
             # --- Scalars first ---
-            "success": success,
+            "success": not self.state["simulation_failed"],
             "months_lasted": months_lasted,
             "final_investment": final_investment,
             "final_bank_balance": final_bank_balance,
@@ -668,7 +668,7 @@ class Simulation:
             # --- Non-state, derived or input data ---
             "final_allocations_nominal": final_allocations_nominal,
             "final_allocations_real": final_allocations_real,
-            "initial_total_wealth": self.state.get("initial_total_wealth"),
+            "initial_total_wealth": self.state["initial_total_wealth"],
             # --- State and histories ---
             "annual_inflations_sequence": self.state["annual_inflations_sequence"],
             "monthly_cumulative_inflation_factors": trunc_only(

@@ -173,7 +173,7 @@ def main() -> None:
         builder = SimulationBuilder.new()
         simulation = (
             builder.set_det_inputs(det_inputs)
-            .set_econ_assumptions(econ_assumptions)
+            .set_market_assumptions(econ_assumptions)
             .set_portfolio_rebalances(portfolio_rebalances)
             .set_shock_events(shock_events)
             .set_initial_assets(initial_assets)
