@@ -9,6 +9,9 @@
 **THIRD UNIVERSAL RULE:**  
 **NEVER, under any circumstance, fake results or outputs to make the user happy. Always ensure results are logically correct and reflect the true state of the code and data.**
 
+**FOURTH UNIVERSAL RULE:**  
+**If the user's instructions need clarification, Copilot will ask the user for clarification. Do not guess or provide a bogus fix or implementation.**
+
 ## 🔒 Type Safety & Explicitness
 
 - **Strict type safety is preferred.**
