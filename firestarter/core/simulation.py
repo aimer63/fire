@@ -165,6 +165,7 @@ class Simulation:
         """
         Precompute all monthly sequences needed for the simulation.
         This version draws returns and inflation for each month, not just each year.
+        Correctly applies pension_inflation_factor and salary_inflation_factor.
         """
         import numpy as np
 
@@ -276,7 +277,7 @@ class Simulation:
             )
             nominal_planned_extra_expenses_amounts.append((nominal_extra_expense_amount, year_idx))
 
-        # --- Precompute nominal pension and salary monthly sequences ---
+        # --- Precompute nominal pension and salary monthly sequences with partial indexation ---
         nominal_pension_monthly_sequence = np.zeros(total_months, dtype=np.float64)
         nominal_salary_monthly_sequence = np.zeros(total_months, dtype=np.float64)
 
@@ -284,21 +285,32 @@ class Simulation:
         salary_start_month_idx = det_inputs.salary_start_year * 12
         salary_end_month_idx = det_inputs.salary_end_year * 12
 
+        # Partial indexation: compound only a fraction of inflation each month
+        pension_cumulative = det_inputs.monthly_pension
+        salary_cumulative = det_inputs.monthly_salary
+
         for month_idx in range(total_months):
             # Pension
             if month_idx >= pension_start_month_idx:
-                inflation_factor = monthly_cumulative_inflation_factors[month_idx]
-                pension_growth = det_inputs.pension_inflation_factor ** (month_idx / 12)
-                nominal_pension_monthly_sequence[month_idx] = (
-                    det_inputs.monthly_pension * pension_growth * inflation_factor
-                )
+                if month_idx == pension_start_month_idx:
+                    pension_cumulative = det_inputs.monthly_pension
+                else:
+                    pension_cumulative *= 1.0 + (
+                        monthly_inflations_sequence[month_idx - 1]
+                        * det_inputs.pension_inflation_factor
+                    )
+                nominal_pension_monthly_sequence[month_idx] = pension_cumulative
+
             # Salary
             if salary_start_month_idx <= month_idx < salary_end_month_idx:
-                inflation_factor = monthly_cumulative_inflation_factors[month_idx]
-                salary_growth = det_inputs.salary_inflation_factor ** (month_idx / 12)
-                nominal_salary_monthly_sequence[month_idx] = (
-                    det_inputs.monthly_salary * salary_growth * inflation_factor
-                )
+                if month_idx == salary_start_month_idx:
+                    salary_cumulative = det_inputs.monthly_salary
+                else:
+                    salary_cumulative *= 1.0 + (
+                        monthly_inflations_sequence[month_idx - 1]
+                        * det_inputs.salary_inflation_factor
+                    )
+                nominal_salary_monthly_sequence[month_idx] = salary_cumulative
 
         # --- Store all sequences in self.state ---
         self.state["monthly_inflations_sequence"] = monthly_inflations_sequence
