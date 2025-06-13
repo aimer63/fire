@@ -39,7 +39,7 @@ Key responsibilities:
 
 For a detailed explanation of how **returns** and **inflation** are handled in the simulation, see:
 
-- [Notes on Monthly vs Annual Returns and Inflation](monthly_returns.md)
+- [Notes on Monthly vs Annual Returns and Inflation](returns.md)
 - [Inflation Handling in the FIRE Simulation](inflation.md)
 
 ---

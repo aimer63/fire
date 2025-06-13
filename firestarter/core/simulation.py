@@ -57,7 +57,7 @@ class SimulationBuilder:
         if self.det_inputs is None:
             raise ValueError("det_inputs must be set before building the simulation.")
         if self.market_assumptions is None:
-            raise ValueError("econ_assumptions must be set before building the simulation.")
+            raise ValueError("market_assumptions must be set before building the simulation.")
         if self.portfolio_rebalances is None:
             raise ValueError("portfolio_rebalances must be set before building the simulation.")
         if self.shock_events is None:
@@ -76,10 +76,10 @@ class SimulationBuilder:
 
 class Simulation:
     def __init__(
-        self, det_inputs, econ_assumptions, portfolio_rebalances, shock_events, initial_assets
+        self, det_inputs, market_assumptions, portfolio_rebalances, shock_events, initial_assets
     ):
         self.det_inputs = det_inputs
-        self.econ_assumptions = econ_assumptions
+        self.market_assumptions = market_assumptions
         self.portfolio_rebalances = portfolio_rebalances
         self.shock_events = shock_events
         self.initial_assets = initial_assets
@@ -150,231 +150,184 @@ class Simulation:
         self.state["simulation_failed"] = False
         return state
 
+    @staticmethod
+    def annual_lognormal_to_monthly(mu_a: float, sigma_a: float) -> tuple[float, float]:
+        """
+        Convert annual lognormal parameters to monthly lognormal parameters.
+        mu_a, sigma_a: annual lognormal parameters (mean and std of the underlying normal distribution)
+        Returns (mu_m, sigma_m): monthly lognormal parameters
+        """
+        mu_m = mu_a / 12
+        sigma_m = sigma_a / (12**0.5)
+        return mu_m, sigma_m
+
     def precompute_sequences(self):
         """
-        Precompute all annual and monthly sequences needed for the simulation.
-
-        Salary & Pension Logic:
-        - For each year, we precompute the *monthly* salary and monthly pension amount
-          for that year, already adjusted for inflation and any adjustment factor.
-        - These values are stored in `nominal_salary_annual_sequence` and `nominal_pension_annual_sequence`.
-        - During the simulation, for each month, we add the value for the current year to income.
-        - This means salary and pension are constant within a year, but can change annually.
-
-        Planned Contributions & Expenses:
-        - Planned contributions and extra expenses are specified as (real_amount, year).
-        - We convert these to nominal values for each year using cumulative inflation factors.
-        - These are stored as lists of (nominal_amount, year_idx) for use during the simulation.
-
-        This approach matches the legacy simulation logic for equivalence.
+        Precompute all monthly sequences needed for the simulation.
+        This version draws returns and inflation for each month, not just each year.
         """
         import numpy as np
-        from firestarter.core.helpers import annual_to_monthly_compounded_rate
 
         det_inputs = self.det_inputs
-        econ_assumptions = self.econ_assumptions
+        market_assumptions = self.market_assumptions
         portfolio_rebalances = self.portfolio_rebalances
         shock_events = self.shock_events
 
-        lognormal = econ_assumptions.lognormal
-        mu_log_stocks, sigma_log_stocks = lognormal["stocks"]
-        mu_log_bonds, sigma_log_bonds = lognormal["bonds"]
-        mu_log_str, sigma_log_str = lognormal["str"]
-        mu_log_fun, sigma_log_fun = lognormal["fun"]
-        mu_log_real_estate, sigma_log_real_estate = lognormal["real_estate"]
-        mu_log_inflation, sigma_log_inflation = lognormal["inflation"]
-
+        lognormal = market_assumptions.lognormal
         total_years = det_inputs.years_to_simulate
         total_months = total_years * 12
 
-        # Annual sequences
-        annual_inflations_sequence = (
-            np.random.lognormal(mu_log_inflation, sigma_log_inflation, total_years).astype(
+        # --- Convert annual lognormal parameters to monthly ---
+        mu_log_stocks, sigma_log_stocks = self.annual_lognormal_to_monthly(*lognormal["stocks"])
+        mu_log_bonds, sigma_log_bonds = self.annual_lognormal_to_monthly(*lognormal["bonds"])
+        mu_log_str, sigma_log_str = self.annual_lognormal_to_monthly(*lognormal["str"])
+        mu_log_fun, sigma_log_fun = self.annual_lognormal_to_monthly(*lognormal["fun"])
+        mu_log_real_estate, sigma_log_real_estate = self.annual_lognormal_to_monthly(
+            *lognormal["real_estate"]
+        )
+        mu_log_inflation, sigma_log_inflation = self.annual_lognormal_to_monthly(
+            *lognormal["inflation"]
+        )
+
+        # --- Draw monthly inflation and returns ---
+        monthly_inflations_sequence = (
+            np.random.lognormal(mu_log_inflation, sigma_log_inflation, total_months).astype(
                 np.float64
             )
             - 1.0
         )
-        annual_stocks_returns_sequence = (
-            np.random.lognormal(mu_log_stocks, sigma_log_stocks, total_years).astype(np.float64)
+        monthly_stocks_returns_sequence = (
+            np.random.lognormal(mu_log_stocks, sigma_log_stocks, total_months).astype(np.float64)
             - 1.0
         )
-        annual_bonds_returns_sequence = (
-            np.random.lognormal(mu_log_bonds, sigma_log_bonds, total_years).astype(np.float64) - 1.0
+        monthly_bonds_returns_sequence = (
+            np.random.lognormal(mu_log_bonds, sigma_log_bonds, total_months).astype(np.float64)
+            - 1.0
         )
-        annual_str_returns_sequence = (
-            np.random.lognormal(mu_log_str, sigma_log_str, total_years).astype(np.float64) - 1.0
+        monthly_str_returns_sequence = (
+            np.random.lognormal(mu_log_str, sigma_log_str, total_months).astype(np.float64) - 1.0
         )
-        annual_fun_returns_sequence = (
-            np.random.lognormal(mu_log_fun, sigma_log_fun, total_years).astype(np.float64) - 1.0
+        monthly_fun_returns_sequence = (
+            np.random.lognormal(mu_log_fun, sigma_log_fun, total_months).astype(np.float64) - 1.0
         )
-        annual_real_estate_returns_sequence = (
-            np.random.lognormal(mu_log_real_estate, sigma_log_real_estate, total_years).astype(
+        monthly_real_estate_returns_sequence = (
+            np.random.lognormal(mu_log_real_estate, sigma_log_real_estate, total_months).astype(
                 np.float64
             )
             - 1.0
         )
 
-        # Apply shocks
+        # --- Apply shocks (if any) ---
         for shock in shock_events:
-            shock_year = shock.year
+            shock_month = (
+                shock.year * 12
+            )  # If shocks are still specified by year, apply to first month of year
             shock_asset = shock.asset
             shock_magnitude = shock.magnitude
-            if 0 <= shock_year < total_years:
+            if 0 <= shock_month < total_months:
                 if shock_asset == "Stocks":
-                    annual_stocks_returns_sequence[shock_year] = shock_magnitude
+                    monthly_stocks_returns_sequence[shock_month] = shock_magnitude
                 elif shock_asset == "Bonds":
-                    annual_bonds_returns_sequence[shock_year] = shock_magnitude
+                    monthly_bonds_returns_sequence[shock_month] = shock_magnitude
                 elif shock_asset == "STR":
-                    annual_str_returns_sequence[shock_year] = shock_magnitude
+                    monthly_str_returns_sequence[shock_month] = shock_magnitude
                 elif shock_asset == "Fun":
-                    annual_fun_returns_sequence[shock_year] = shock_magnitude
+                    monthly_fun_returns_sequence[shock_month] = shock_magnitude
                 elif shock_asset == "Real Estate":
-                    annual_real_estate_returns_sequence[shock_year] = shock_magnitude
+                    monthly_real_estate_returns_sequence[shock_month] = shock_magnitude
                 elif shock_asset == "Inflation":
-                    annual_inflations_sequence[shock_year] = shock_magnitude
+                    monthly_inflations_sequence[shock_month] = shock_magnitude
 
-        # Cumulative inflation factors (annual)
-        annual_cumulative_inflation_factors = np.ones(total_years + 1, dtype=np.float64)
-        for year_idx in range(total_years):
-            annual_cumulative_inflation_factors[year_idx + 1] = annual_cumulative_inflation_factors[
-                year_idx
-            ] * (1.0 + annual_inflations_sequence[year_idx])
-
-        # --- Uniform monthly inflation rate array and cumulative factors ---
+        # --- Cumulative inflation factors (monthly) ---
         monthly_cumulative_inflation_factors = np.ones(total_months + 1, dtype=np.float64)
         for month_idx in range(total_months):
-            # Compute monthly rate on the fly
-            year_idx = month_idx // 12
-            monthly_rate = annual_to_monthly_compounded_rate(annual_inflations_sequence[year_idx])
             monthly_cumulative_inflation_factors[month_idx + 1] = (
-                monthly_cumulative_inflation_factors[month_idx] * (1.0 + monthly_rate)
+                monthly_cumulative_inflation_factors[month_idx]
+                * (1.0 + monthly_inflations_sequence[month_idx])
             )
 
-        # Monthly returns lookup
+        # --- Monthly returns lookup ---
         monthly_returns_lookup = {
-            "Stocks": np.zeros(total_months, dtype=np.float64),
-            "Bonds": np.zeros(total_months, dtype=np.float64),
-            "STR": np.zeros(total_months, dtype=np.float64),
-            "Fun": np.zeros(total_months, dtype=np.float64),
-            "Real Estate": np.zeros(total_months, dtype=np.float64),
+            "Stocks": monthly_stocks_returns_sequence,
+            "Bonds": monthly_bonds_returns_sequence,
+            "STR": monthly_str_returns_sequence,
+            "Fun": monthly_fun_returns_sequence,
+            "Real Estate": monthly_real_estate_returns_sequence,
         }
-        for year_idx in range(total_years):
-            monthly_stocks_rate = annual_to_monthly_compounded_rate(
-                annual_stocks_returns_sequence[year_idx]
-            )
-            monthly_bonds_rate = annual_to_monthly_compounded_rate(
-                annual_bonds_returns_sequence[year_idx]
-            )
-            monthly_str_rate = annual_to_monthly_compounded_rate(
-                annual_str_returns_sequence[year_idx]
-            )
-            monthly_fun_rate = annual_to_monthly_compounded_rate(
-                annual_fun_returns_sequence[year_idx]
-            )
-            monthly_real_estate_rate = annual_to_monthly_compounded_rate(
-                annual_real_estate_returns_sequence[year_idx]
-            )
 
-            start_month = year_idx * 12
-            end_month = min((year_idx + 1) * 12, total_months)
-            monthly_returns_lookup["Stocks"][start_month:end_month] = monthly_stocks_rate
-            monthly_returns_lookup["Bonds"][start_month:end_month] = monthly_bonds_rate
-            monthly_returns_lookup["STR"][start_month:end_month] = monthly_str_rate
-            monthly_returns_lookup["Fun"][start_month:end_month] = monthly_fun_rate
-            monthly_returns_lookup["Real Estate"][start_month:end_month] = monthly_real_estate_rate
-
-        # Planned contributions and extra expenses (nominal, inflation-adjusted)
+        # --- Planned contributions and extra expenses (nominal, inflation-adjusted) ---
         planned_contributions = det_inputs.planned_contributions
         planned_extra_expenses = det_inputs.planned_extra_expenses
 
         nominal_planned_contributions_amounts = []
         for real_amount, year_idx in planned_contributions:
+            # Use cumulative inflation up to the first month of the year
+            month_idx = year_idx * 12
             nominal_contribution_amount = float(
-                real_amount * annual_cumulative_inflation_factors[year_idx]
+                real_amount * monthly_cumulative_inflation_factors[month_idx]
             )
             nominal_planned_contributions_amounts.append((nominal_contribution_amount, year_idx))
 
         nominal_planned_extra_expenses_amounts = []
-        local_planned_extra_expenses = list(planned_extra_expenses)
-        for real_amount, year_idx in local_planned_extra_expenses:
+        for real_amount, year_idx in planned_extra_expenses:
+            month_idx = year_idx * 12
             nominal_extra_expense_amount = float(
-                real_amount * annual_cumulative_inflation_factors[year_idx]
+                real_amount * monthly_cumulative_inflation_factors[month_idx]
             )
             nominal_planned_extra_expenses_amounts.append((nominal_extra_expense_amount, year_idx))
 
-        # Precompute nominal pension and salary annual sequences
-        nominal_pension_annual_sequence = np.zeros(total_years, dtype=np.float64)
-        nominal_salary_annual_sequence = np.zeros(total_years, dtype=np.float64)
+        # --- Precompute nominal pension and salary monthly sequences ---
+        nominal_pension_monthly_sequence = np.zeros(total_months, dtype=np.float64)
+        nominal_salary_monthly_sequence = np.zeros(total_months, dtype=np.float64)
 
-        pension_start_year_idx = det_inputs.pension_start_year
-        salary_start_year_idx = det_inputs.salary_start_year
-        salary_end_year_idx = det_inputs.salary_end_year
+        pension_start_month_idx = det_inputs.pension_start_year * 12
+        salary_start_month_idx = det_inputs.salary_start_year * 12
+        salary_end_month_idx = det_inputs.salary_end_year * 12
 
-        for year_idx in range(total_years):
+        for month_idx in range(total_months):
             # Pension
-            if year_idx >= pension_start_year_idx:
-                if year_idx > pension_start_year_idx:
-                    pension_adjusted_inflations = (
-                        annual_inflations_sequence[pension_start_year_idx:year_idx]
-                        * det_inputs.pension_inflation_factor
-                    )
-                    pension_factor = float(np.prod(1.0 + pension_adjusted_inflations))
-                else:
-                    pension_factor = 1.0
-                nominal_pension_annual_sequence[year_idx] = (
-                    det_inputs.monthly_pension
-                    * annual_cumulative_inflation_factors[pension_start_year_idx]
-                    * pension_factor
+            if month_idx >= pension_start_month_idx:
+                inflation_factor = monthly_cumulative_inflation_factors[month_idx]
+                nominal_pension_monthly_sequence[month_idx] = (
+                    det_inputs.monthly_pension * inflation_factor
                 )
             # Salary
-            if salary_start_year_idx <= year_idx < salary_end_year_idx:
-                if year_idx > salary_start_year_idx:
-                    salary_adjusted_inflations = (
-                        annual_inflations_sequence[salary_start_year_idx:year_idx]
-                        * det_inputs.salary_inflation_factor
-                    )
-                    salary_factor = float(np.prod(1.0 + salary_adjusted_inflations))
-                else:
-                    salary_factor = 1.0
-                nominal_salary_annual_sequence[year_idx] = (
-                    det_inputs.monthly_salary
-                    * annual_cumulative_inflation_factors[salary_start_year_idx]
-                    * salary_factor
+            if salary_start_month_idx <= month_idx < salary_end_month_idx:
+                inflation_factor = monthly_cumulative_inflation_factors[month_idx]
+                nominal_salary_monthly_sequence[month_idx] = (
+                    det_inputs.monthly_salary * inflation_factor
                 )
 
-        # Store all sequences in self.state
-        self.state["annual_inflations_sequence"] = annual_inflations_sequence
-        self.state["annual_stocks_returns_sequence"] = annual_stocks_returns_sequence
-        self.state["annual_bonds_returns_sequence"] = annual_bonds_returns_sequence
-        self.state["annual_str_returns_sequence"] = annual_str_returns_sequence
-        self.state["annual_fun_returns_sequence"] = annual_fun_returns_sequence
-        self.state["annual_real_estate_returns_sequence"] = annual_real_estate_returns_sequence
-        self.state["annual_cumulative_inflation_factors"] = annual_cumulative_inflation_factors
+        # --- Store all sequences in self.state ---
+        self.state["monthly_inflations_sequence"] = monthly_inflations_sequence
+        self.state["monthly_stocks_returns_sequence"] = monthly_stocks_returns_sequence
+        self.state["monthly_bonds_returns_sequence"] = monthly_bonds_returns_sequence
+        self.state["monthly_str_returns_sequence"] = monthly_str_returns_sequence
+        self.state["monthly_fun_returns_sequence"] = monthly_fun_returns_sequence
+        self.state["monthly_real_estate_returns_sequence"] = monthly_real_estate_returns_sequence
         self.state["monthly_cumulative_inflation_factors"] = monthly_cumulative_inflation_factors
         self.state["monthly_returns_lookup"] = monthly_returns_lookup
         self.state["nominal_planned_contributions_amounts"] = nominal_planned_contributions_amounts
         self.state["nominal_planned_extra_expenses_amounts"] = (
             nominal_planned_extra_expenses_amounts
         )
-        self.state["nominal_pension_annual_sequence"] = nominal_pension_annual_sequence
-        self.state["nominal_salary_annual_sequence"] = nominal_salary_annual_sequence
+        self.state["nominal_pension_monthly_sequence"] = nominal_pension_monthly_sequence
+        self.state["nominal_salary_monthly_sequence"] = nominal_salary_monthly_sequence
 
     def process_income(self, month):
         """
-        For each month, add the precomputed *monthly* salary and pension for the current year.
-        These values are constant within a year, but can change annually due to inflation/adjustment.
-        This matches the legacy simulation logic.
+        For each month, add the precomputed *monthly* salary and pension for the current month.
+        These values are now drawn and adjusted monthly.
         """
         income = 0.0
-        year = month // 12
 
         # Pension (precomputed, already inflation/adjustment adjusted)
-        if year < len(self.state["nominal_pension_annual_sequence"]):
-            income += self.state["nominal_pension_annual_sequence"][year]
+        if month < len(self.state["nominal_pension_monthly_sequence"]):
+            income += self.state["nominal_pension_monthly_sequence"][month]
 
         # Salary (precomputed, already inflation/adjustment adjusted)
-        if year < len(self.state["nominal_salary_annual_sequence"]):
-            income += self.state["nominal_salary_annual_sequence"][year]
+        if month < len(self.state["nominal_salary_monthly_sequence"]):
+            income += self.state["nominal_salary_monthly_sequence"][month]
 
         self.state["current_bank_balance"] += income
 
@@ -385,14 +338,12 @@ class Simulation:
         but NEVER to real estate (see real_estate.md).
         """
         det_inputs = self.det_inputs
-        current_year = month // 12
-        month_in_year = month % 12
 
         # Planned one-time contributions (applied at the first month of the year)
         for nominal_contribution_amount, year_idx in self.state[
             "nominal_planned_contributions_amounts"
         ]:
-            if current_year == year_idx and month_in_year == 0:
+            if month == year_idx * 12:
                 weights = self.state["current_target_portfolio_weights"]
                 increments = {
                     asset: nominal_contribution_amount * weights[asset]
@@ -406,7 +357,7 @@ class Simulation:
         if det_inputs.monthly_investment_contribution > 0.0:
             monthly_contribution = (
                 det_inputs.monthly_investment_contribution
-                * self.state["annual_cumulative_inflation_factors"][current_year]
+                * self.state["monthly_cumulative_inflation_factors"][month]
             )
             weights = self.state["current_target_portfolio_weights"]
             increments = {
@@ -423,13 +374,10 @@ class Simulation:
         Expenses are inflation-adjusted. Planned extra expenses are applied at the first month of their year.
         """
         det_inputs = self.det_inputs
-        current_year = month // 12
-        month_in_year = month % 12
 
         # Regular monthly expenses (inflation-adjusted)
         nominal_monthly_expenses = (
-            det_inputs.monthly_expenses
-            * self.state["annual_cumulative_inflation_factors"][current_year]
+            det_inputs.monthly_expenses * self.state["monthly_cumulative_inflation_factors"][month]
         )
         total_expenses = nominal_monthly_expenses
 
@@ -437,7 +385,7 @@ class Simulation:
         for nominal_extra_expense_amount, year_idx in self.state[
             "nominal_planned_extra_expenses_amounts"
         ]:
-            if current_year == year_idx and month_in_year == 0:
+            if month == year_idx * 12:
                 total_expenses += nominal_extra_expense_amount
 
         # Deduct from bank balance
@@ -459,15 +407,12 @@ class Simulation:
         if house_purchase_year is None or house_cost_real <= 0:
             return  # No house purchase scheduled
 
-        current_year = month // 12
-        month_in_year = month % 12
+        purchase_month = house_purchase_year * 12
 
         # Only purchase at the first month of the scheduled year
-        if current_year == house_purchase_year and month_in_year == 0:
+        if month == purchase_month:
             # Inflation-adjusted nominal house cost
-            cumulative_inflation = self.state["annual_cumulative_inflation_factors"][
-                house_purchase_year
-            ]
+            cumulative_inflation = self.state["monthly_cumulative_inflation_factors"][month]
             nominal_house_cost = house_cost_real * cumulative_inflation
 
             # Use the unified withdrawal logic, but do NOT increase bank balance
@@ -670,7 +615,7 @@ class Simulation:
             "final_allocations_real": final_allocations_real,
             "initial_total_wealth": self.state["initial_total_wealth"],
             # --- State and histories ---
-            "annual_inflations_sequence": self.state["annual_inflations_sequence"],
+            "monthly_inflations_sequence": self.state["monthly_inflations_sequence"],
             "monthly_cumulative_inflation_factors": trunc_only(
                 self.state["monthly_cumulative_inflation_factors"]
             ),
