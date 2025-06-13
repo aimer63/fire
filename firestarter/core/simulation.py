@@ -288,14 +288,16 @@ class Simulation:
             # Pension
             if month_idx >= pension_start_month_idx:
                 inflation_factor = monthly_cumulative_inflation_factors[month_idx]
+                pension_growth = det_inputs.pension_inflation_factor ** (month_idx / 12)
                 nominal_pension_monthly_sequence[month_idx] = (
-                    det_inputs.monthly_pension * inflation_factor
+                    det_inputs.monthly_pension * pension_growth * inflation_factor
                 )
             # Salary
             if salary_start_month_idx <= month_idx < salary_end_month_idx:
                 inflation_factor = monthly_cumulative_inflation_factors[month_idx]
+                salary_growth = det_inputs.salary_inflation_factor ** (month_idx / 12)
                 nominal_salary_monthly_sequence[month_idx] = (
-                    det_inputs.monthly_salary * inflation_factor
+                    det_inputs.monthly_salary * salary_growth * inflation_factor
                 )
 
         # --- Store all sequences in self.state ---

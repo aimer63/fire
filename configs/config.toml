@@ -46,7 +46,7 @@ salary_end_year = 0                                 # Year index when salary end
 
 # The pension when it will arrive... if
 monthly_pension = 0
-pension_inflation_factor = 0.6
+pension_inflation_factor = 0.6                      # Factor by which pension adjusts to inflation (1.0 = same as inflation, 0.6 = 60% below inflation)
 pension_start_year = 0
 
 # To the investment:
