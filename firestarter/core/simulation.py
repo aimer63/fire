@@ -94,34 +94,57 @@ class Simulation:
         return self.det_inputs.years_to_simulate * 12
 
     def init(self):
-        self.state = self.initialize_state()
-        self.precompute_sequences()
+        self.state = self._initialize_state()
+        self._precompute_sequences()
 
-    def run(self):
+    def run(self) -> dict:
         """
-        Main simulation loop.
-        Processes all monthly flows, then ensures the bank account is within bounds.
-        Exits early if a shortfall cannot be covered by liquid assets.
+        Runs the main simulation loop, handling all monthly flows and events.
         """
-        for month in range(self.simulation_months):
-            self.process_income(month)
-            self.handle_contributions(month)
-            self.handle_expenses(month)
-            self.handle_house_purchase(month)
-            self.handle_bank_account(
-                month
-            )  # Ensures bank is within bounds, handles withdrawals/investments
+        self.init()  # Initialize state and precompute sequences
+        total_months = self.det_inputs.years_to_simulate * 12
 
-            if self.state.get("simulation_failed"):
-                break  # Exit early if a shortfall could not be covered
+        for month in range(total_months):
+            self.state["current_month_index"] = month
+            self.state["current_year_index"] = month // 12
 
-            self.apply_monthly_returns(month)
-            self.rebalance_if_needed(month)
-            self.record_results(month)
-        return self.build_result()
+            # 1. Income: Add salary and pension for the current year.
+            self._process_income(month)
+
+            # 2. Contributions: Apply planned and regular contributions to liquid assets.
+            self._handle_contributions(month)
+
+            # 3. Expenses: Deduct regular and extra expenses from the bank account.
+            self._handle_expenses(month)
+
+            # 4. House Purchase: If scheduled, withdraw from assets to buy a house.
+            self._handle_house_purchase(month)
+
+            # 5. Bank Account Management:
+            self._handle_bank_account(month)
+            if self.state.get("simulation_failed", False):
+                break  # Exit if bank top-up failed
+
+            # 6. Returns: Apply monthly returns to all assets.
+            self._apply_monthly_returns(month)
+
+            # 7. Apply Fund Fee (monthly)
+            self._apply_fund_fee(month)
+
+            # 8. Rebalancing: If scheduled, rebalance liquid assets.
+            self._rebalance_if_needed(month)
+
+            # 9. Recording: Save the current state.
+            self._record_results(month)
+
+            # Check for simulation failure again (e.g., if rebalancing or other logic could fail)
+            if self.state.get("simulation_failed", False):
+                break
+
+        return self._build_result()
 
     # --- Helper methods (stubs for now) ---
-    def initialize_state(self):
+    def _initialize_state(self):
         """
         Initialize all state variables for the simulation.
         Returns a dictionary or custom object holding the simulation state.
@@ -161,7 +184,7 @@ class Simulation:
         sigma_m = sigma_a / (12**0.5)
         return mu_m, sigma_m
 
-    def precompute_sequences(self):
+    def _precompute_sequences(self):
         """
         Precompute all monthly sequences needed for the simulation.
         This version draws returns and inflation for each month, not just each year.
@@ -328,7 +351,7 @@ class Simulation:
         self.state["nominal_pension_monthly_sequence"] = nominal_pension_monthly_sequence
         self.state["nominal_salary_monthly_sequence"] = nominal_salary_monthly_sequence
 
-    def process_income(self, month):
+    def _process_income(self, month):
         """
         For each month, add the precomputed *monthly* salary and pension for the current month.
         These values are now drawn and adjusted monthly.
@@ -345,7 +368,7 @@ class Simulation:
 
         self.state["current_bank_balance"] += income
 
-    def handle_contributions(self, month):
+    def _handle_contributions(self, month):
         """
         Handles planned one-time contributions and regular monthly contributions.
         Contributions are allocated according to the current target portfolio weights,
@@ -382,7 +405,7 @@ class Simulation:
             for asset, delta in increments.items():
                 self.state["liquid_assets"][asset] += delta
 
-    def handle_expenses(self, month):
+    def _handle_expenses(self, month):
         """
         Deducts regular monthly expenses and planned extra expenses from the bank balance.
         Expenses are inflation-adjusted. Planned extra expenses are applied at the first month of their year.
@@ -405,7 +428,7 @@ class Simulation:
         # Deduct from bank balance
         self.state["current_bank_balance"] -= total_expenses
 
-    def handle_house_purchase(self, month):
+    def _handle_house_purchase(self, month):
         """
         Handles the house purchase if scheduled for this month.
         Deducts the (inflation-adjusted) house cost from liquid assets (STR, Bonds, Stocks, Fun) in order,
@@ -452,7 +475,7 @@ class Simulation:
                     if asset != "real_estate":
                         self.state["liquid_assets"][asset] = 0.0
 
-    def handle_bank_account(self, month):
+    def _handle_bank_account(self, month):
         """
         Ensures the bank balance is within [lower_bound, upper_bound].
         - If below lower_bound, withdraw from assets to top up.
@@ -484,7 +507,7 @@ class Simulation:
                 self.state["liquid_assets"][asset] += delta
             self.state["current_bank_balance"] = upper
 
-    def apply_monthly_returns(self, month):
+    def _apply_monthly_returns(self, month):
         """
         Apply monthly returns to all asset values at the end of the month.
         """
@@ -502,7 +525,22 @@ class Simulation:
                 )
         self.state["current_real_estate_value"] *= 1.0 + returns["Real Estate"][month]
 
-    def rebalance_if_needed(self, month):
+    def _apply_fund_fee(self, month: int) -> None:
+        """
+        Applies the fund fee to all liquid assets on a monthly basis.
+        The annual fee is converted to a monthly equivalent.
+        """
+        annual_fee_percentage = self.det_inputs.annual_fund_fee
+        if annual_fee_percentage > 0:
+            # Convert annual fee to a simple monthly fee
+            monthly_fee_percentage = annual_fee_percentage / 12.0
+
+            for asset_key in self.state["liquid_assets"].keys():
+                current_value = self.state["liquid_assets"][asset_key]
+                fee_amount = current_value * monthly_fee_percentage
+                self.state["liquid_assets"][asset_key] = current_value - fee_amount
+
+    def _rebalance_if_needed(self, month):
         """
         Rebalance liquid assets (stocks, bonds, str, fun) according to the current portfolio weights,
         if a rebalance is scheduled for this year and this is the first month of the year.
@@ -543,7 +581,27 @@ class Simulation:
                     if asset != "real_estate":
                         self.state["liquid_assets"][asset] = 0.0
 
-    def record_results(self, month):
+    def _withdraw_from_assets(self, amount: float) -> None:
+        """
+        Withdraws from liquid assets in priority order (STR, Bonds, Stocks, Fun)
+        to cover a bank shortfall. If assets are insufficient, marks the simulation as failed.
+        """
+        shortfall = amount
+        for asset in WITHDRAWAL_PRIORITY:
+            asset_value = self.state["liquid_assets"][asset]
+            if asset_value >= shortfall:
+                self.state["liquid_assets"][asset] -= shortfall
+                self.state["current_bank_balance"] += shortfall
+                return
+            else:
+                self.state["current_bank_balance"] += asset_value
+                shortfall -= asset_value
+                self.state["liquid_assets"][asset] = 0.0
+
+        # If still shortfall after all liquid assets, mark simulation as failed
+        self.state["simulation_failed"] = True
+
+    def _record_results(self, month):
         """
         Record the current state of the simulation at the end of the month.
         This includes nominal wealth, bank balance, and all asset values.
@@ -572,7 +630,7 @@ class Simulation:
         self.results["fun_history"][month] = self.state["liquid_assets"]["fun"]
         self.results["real_estate_history"][month] = self.state["current_real_estate_value"]
 
-    def build_result(self) -> Dict[str, Any]:
+    def _build_result(self) -> Dict[str, Any]:
         """
         Return the final simulation results as a dict (result structure).
         Truncates all history arrays to months_lasted to avoid None values.
@@ -643,23 +701,3 @@ class Simulation:
         }
 
         return result
-
-    def _withdraw_from_assets(self, amount: float) -> None:
-        """
-        Withdraws from liquid assets in priority order (STR, Bonds, Stocks, Fun)
-        to cover a bank shortfall. If assets are insufficient, marks the simulation as failed.
-        """
-        shortfall = amount
-        for asset in WITHDRAWAL_PRIORITY:
-            asset_value = self.state["liquid_assets"][asset]
-            if asset_value >= shortfall:
-                self.state["liquid_assets"][asset] -= shortfall
-                self.state["current_bank_balance"] += shortfall
-                return
-            else:
-                self.state["current_bank_balance"] += asset_value
-                shortfall -= asset_value
-                self.state["liquid_assets"][asset] = 0.0
-
-        # If still shortfall after all liquid assets, mark simulation as failed
-        self.state["simulation_failed"] = True

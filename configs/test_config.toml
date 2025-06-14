@@ -25,16 +25,16 @@ output_root = "output"
 # --- Deterministic Inputs (Your Personal Financial Plan) ---
 [deterministic_inputs]
 initial_investment = 100_000 # Initial Investment Value (e.g., EUR)
-initial_bank_balance = 5000  # Initial Bank Account Balance (e.g., EUR)
+initial_bank_balance = 0  # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower and upper bound in real money
 # if it goes below it will be topped, if it goes above it will be invested
 # from the investment
-bank_lower_bound = 5000
-bank_upper_bound = 10_000
+bank_lower_bound = 0
+bank_upper_bound = 0
 
 # Number of years the simulation will run
-years_to_simulate = 40
+years_to_simulate = 10
 
 # In flows
 
@@ -64,7 +64,7 @@ planned_contributions = []
 # ]
 
 # Out flows
-annual_fund_fee = 0.002 # 0.2%
+annual_fund_fee = 0.03 # 0.2%
 # Fixed monthly exepense for the life level you want to keep
 monthly_expenses = 0
 
@@ -88,8 +88,11 @@ house_purchase_year = 0
 # The 2016-2025 period was exceptionally strong for global equities.
 # For a long-term simulation (30+ years), it's advisable to temper expectations
 # based on very long-term historical averages and current market valuations.
-stock_mu = 0.07
-stock_sigma = 0.15
+# stock_mu = 0.07
+# stock_sigma = 0.15
+stock_mu = 0.10
+stock_sigma = 0.0
+
 
 # European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR)
 # annual total returns from 2004-2023.
@@ -231,6 +234,6 @@ events = [
 
 [portfolio_rebalances]
 rebalances = [
-  { year = 0,  stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
-  { year = 20, stocks = 0.40, bonds = 0.60, str = 0.00, fun = 0.00 }
+  { year = 0,  stocks = 1.0, bonds = 0.0, str = 0.00, fun = 0.00 }
+  # { year = 20, stocks = 0.40, bonds = 0.60, str = 0.00, fun = 0.00 }
 ]
