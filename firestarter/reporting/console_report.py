@@ -1,4 +1,5 @@
 from typing import Any, List, Dict
+import numpy as np
 import json
 from firestarter.core.helpers import calculate_cagr
 
@@ -38,6 +39,33 @@ def print_console_summary(simulation_results: List[Dict[str, Any]], config: Dict
     if not successful_sims:
         print("\nNo successful simulations to report.\n")
         return
+
+    nominal_final_wealths = np.array([s["final_nominal_wealth"] for s in successful_sims])
+    real_final_wealths = np.array([s["final_real_wealth"] for s in successful_sims])
+
+    # Calculate percentiles for Nominal Wealth
+    p25_nominal_wealth = np.percentile(nominal_final_wealths, 25)
+    median_nominal_wealth = np.percentile(nominal_final_wealths, 50)  # or np.median()
+    p75_nominal_wealth = np.percentile(nominal_final_wealths, 75)
+    iqr_nominal_wealth = p75_nominal_wealth - p25_nominal_wealth
+
+    # Calculate percentiles for Real Wealth
+    p25_real_wealth = np.percentile(real_final_wealths, 25)
+    median_real_wealth = np.percentile(real_final_wealths, 50)  # or np.median()
+    p75_real_wealth = np.percentile(real_final_wealths, 75)
+    iqr_real_wealth = p75_real_wealth - p25_real_wealth
+
+    print("\n--- Final Wealth Distribution Statistics (Successful Simulations) ---")
+    print("Nominal Final Wealth:")
+    print(f"  Median (P50): {median_nominal_wealth:,.2f} EUR")
+    print(f"  25th Percentile (P25): {p25_nominal_wealth:,.2f} EUR")
+    print(f"  75th Percentile (P75): {p75_nominal_wealth:,.2f} EUR")
+    print(f"  Interquartile Range (P75-P25): {iqr_nominal_wealth:,.2f} EUR")
+    print("Real Final Wealth (Today's Money):")
+    print(f"  Median (P50): {median_real_wealth:,.2f} EUR")
+    print(f"  25th Percentile (P25): {p25_real_wealth:,.2f} EUR")
+    print(f"  75th Percentile (P75): {p75_real_wealth:,.2f} EUR")
+    print(f"  Interquartile Range (P75-P25): {iqr_real_wealth:,.2f} EUR")
 
     # --- Nominal Results ---
     print("\n=== Nominal Results (cases selected by nominal final wealth) ===\n")

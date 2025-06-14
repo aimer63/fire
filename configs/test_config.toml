@@ -34,7 +34,7 @@ bank_lower_bound = 0
 bank_upper_bound = 0
 
 # Number of years the simulation will run
-years_to_simulate = 10
+years_to_simulate = 20
 
 # In flows
 
@@ -64,7 +64,7 @@ planned_contributions = []
 # ]
 
 # Out flows
-annual_fund_fee = 0.03 # 0.2%
+annual_fund_fee = 0.002 # 0.2%
 # Fixed monthly exepense for the life level you want to keep
 monthly_expenses = 0
 

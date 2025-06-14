@@ -80,7 +80,7 @@ def main() -> None:
     det_inputs: DeterministicInputs = DeterministicInputs(**config_data["deterministic_inputs"])
 
     # Pydantic: Load and validate economic assumptions
-    econ_assumptions: MarketAssumptions = MarketAssumptions(**config_data["market_assumptions"])
+    market_assumptions: MarketAssumptions = MarketAssumptions(**config_data["market_assumptions"])
 
     # Pydantic: Load and validate portfolio rebalances
     portfolio_rebalances: PortfolioRebalances = PortfolioRebalances(
@@ -142,7 +142,7 @@ def main() -> None:
     # Prepare parameter summary for both console and report
     parameters_summary = {
         "deterministic_inputs": det_inputs.model_dump(),
-        "economic_assumptions": econ_assumptions.model_dump(),
+        "economic_assumptions": market_assumptions.model_dump(),
         "portfolio_rebalances": portfolio_rebalances.model_dump(),
         "shocks": shocks.model_dump(),
         "initial_assets": initial_assets,
@@ -173,7 +173,7 @@ def main() -> None:
         builder = SimulationBuilder.new()
         simulation = (
             builder.set_det_inputs(det_inputs)
-            .set_market_assumptions(econ_assumptions)
+            .set_market_assumptions(market_assumptions)
             .set_portfolio_rebalances(portfolio_rebalances)
             .set_shock_events(shock_events)
             .set_initial_assets(initial_assets)
@@ -234,8 +234,9 @@ def main() -> None:
     generate_markdown_report(
         simulation_results=simulation_results,
         config=config_data,
+        config_path=config_file_path,
         output_dir=os.path.join(output_root, "reports"),
-        plots=plots,
+        plot_paths=plots,
     )
     print("\n--- Markdown report generated ---")
 
@@ -244,7 +245,6 @@ def main() -> None:
         simulation_results=simulation_results,
         output_root=output_root,
         det_inputs=det_inputs,
-        econ_assumptions=econ_assumptions,
     )
     print("\nAll plots generated and saved.")
 

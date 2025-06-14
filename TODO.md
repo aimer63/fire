@@ -6,13 +6,17 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 
 ## 🟡 In Progress / Next Priorities
 
-- [ ] **Relative Plot Links in Reports**
-  - Ensure plot links in Markdown reports are always correct (relative to report location).
-- [ ] **Error Handling & Robustness**
-  - Improve error messages and handling for missing config, missing data, or failed simulations.
-  - **Validate that each year appears only once in [portfolio_rebalances]; raise an error if duplicates are found.**
 - [ ] **Testing**
   - Add or improve unit and integration tests (especially for config, simulation, and reporting).
+  - **Validate that each year appears only once in [portfolio_rebalances]; raise an error if duplicates are found.**
+- [ ] **Relative Plot Links in Reports**
+  - Ensure plot links in Markdown reports are always correct (relative to report location).
+- [ ] **Refactor Reporting Modules:** Extract common data processing and statistical calculation logic from `console_report.py` and `markdown_report.py` into a shared utility module (e.g., `reporting/utils.py` or `reporting/processor.py`) to reduce code duplication and improve maintainability. This includes:
+  - Overall simulation summary statistics.
+  - Final wealth distribution statistics (Percentiles, IQR).
+  - Logic for identifying worst, median, and best simulation cases.
+- [ ] **Error Handling & Robustness**
+  - Improve error messages and handling for missing config, missing data, or failed simulations.
 - [ ] **Documentation**
   - Expand the README with usage examples, configuration options, and troubleshooting.
   - Add docstrings and comments where needed.

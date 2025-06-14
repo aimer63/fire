@@ -1,160 +1,198 @@
 from typing import Any, List, Dict
-from datetime import datetime
-from pathlib import Path
-import os
+import numpy as np
 import json
+import os
+from datetime import datetime
 from firestarter.core.helpers import calculate_cagr
+
+
+# Placeholder for a function to format config into Markdown
+def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:
+    """Formats configuration parameters into a Markdown block."""
+    md_config_lines = ["### Loaded Configuration Parameters\n"]
+    md_config_lines.append("```json\n")
+    md_config_lines.append(json.dumps(config, indent=2, ensure_ascii=False) + "\n")
+    md_config_lines.append("```\n\n")
+    return md_config_lines
+
+
+# Placeholder for a function to format a single case (worst/median/best) into Markdown
+def format_case_for_markdown(
+    label: str, case: Dict[str, Any], case_type: str = "Nominal"
+) -> List[str]:
+    """Formats a single simulation case (worst, median, best) into Markdown lines."""
+    md_case_lines = []
+    initial_wealth = case["initial_total_wealth"]  # Use .get for safety
+    months_lasted = case["months_lasted"]
+    years = months_lasted / 12 if months_lasted is not None else 0
+
+    final_nominal_wealth = case["final_nominal_wealth"]
+    final_real_wealth = case["final_real_wealth"]
+
+    cagr_wealth_for_calc_val = None
+
+    if case_type == "Nominal":
+        final_wealth_display = final_nominal_wealth
+        final_wealth_other = final_real_wealth
+        cagr_wealth_for_calc_val = final_nominal_wealth
+        md_case_lines.append(f"#### {label} Successful Case (Nominal):\n\n")
+        md_case_lines.append(f"- **Final Wealth (Nominal):** {final_wealth_display:,.2f} EUR\n")
+        md_case_lines.append(f"- **Final Wealth (Real):** {final_wealth_other:,.2f} EUR\n")
+        cagr_label = "Nominal"
+    else:  # Real
+        final_wealth_display = final_real_wealth
+        final_wealth_other = final_nominal_wealth
+        cagr_wealth_for_calc_val = final_real_wealth
+        md_case_lines.append(f"#### {label} Successful Case (Real):\n\n")
+        md_case_lines.append(f"- **Final Wealth (Real):** {final_wealth_display:,.2f} EUR\n")
+        md_case_lines.append(f"- **Final Wealth (Nominal):** {final_wealth_other:,.2f} EUR\n")
+        cagr_label = "Real"
+
+    cagr = calculate_cagr(initial_wealth, cagr_wealth_for_calc_val, years)
+    md_case_lines.append(f"- **Your life CAGR ({cagr_label}):** {cagr:.2%}\n")
+
+    allocations = case["final_allocations_nominal"]
+    bank = case["final_bank_balance"]
+
+    total_assets = sum(allocations.values())
+
+    alloc_percent_parts = []
+    for k, v_asset in allocations.items():
+        percent = v_asset / total_assets * 100
+        alloc_percent_parts.append(f"{k}: {percent:.1f}%")
+    md_case_lines.append(f"- **Final Allocations (percent):** {', '.join(alloc_percent_parts)}\n")
+
+    asset_value_parts = []
+    for k, v_asset in allocations.items():
+        asset_value_parts.append(f"{k}: {v_asset:,.2f} EUR")
+    md_case_lines.append(
+        f"- **Nominal Asset Values:** {', '.join(asset_value_parts)}, Bank: {bank:,.2f} EUR\n"
+    )
+    md_case_lines.append("\n")
+    return md_case_lines
 
 
 def generate_markdown_report(
     simulation_results: List[Dict[str, Any]],
     config: Dict[str, Any],
+    config_path: str,
     output_dir: str,
-    plots: Dict[str, str],
-) -> str:
-    """
-    Generate a Markdown report summarizing the FIRE simulation results.
-    Saves the report to the specified output directory and returns the report path.
-    """
-    now = datetime.now()
-    run_date = now.strftime("%Y-%m-%d %H:%M")
-    md = []
+    plot_paths: Dict[str, str],
+) -> None:  # Added config_path
+    report_generated_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    config_filename = os.path.basename(config_path)
 
-    md.append("# FIRE Simulation Report\n")
-    md.append(f"**Run date:** {run_date}\n")
-    md.append(f"**Config:** `{config.get('config_file', 'N/A')}`\n")
+    md_content = ["# FIRE Plan Simulation Report\n\n"]
+    md_content.append(f"Report generated on: {report_generated_time}\n")
+    md_content.append(f"Using configuration: `{config_filename}`\n\n")
 
-    # --- Config parameters dump ---
-    md.append("## Loaded Configuration Parameters\n")
-    md.append("```json")
-    md.append(json.dumps(config, indent=2, ensure_ascii=False))
-    md.append("```\n")
+    # Add Configuration Parameters
+    md_content.extend(format_config_for_markdown(config))
 
-    # --- Simulation summary ---
-    md.append("## FIRE Plan Simulation Summary\n")
+    # Add FIRE Plan Simulation Summary
+    md_content.append("## FIRE Plan Simulation Summary\n\n")
     num_simulations = len(simulation_results)
     num_failed = sum(1 for r in simulation_results if not r["success"])
     num_successful = num_simulations - num_failed
-    success_rate = 100.0 * num_successful / num_simulations if num_simulations else 0.0
 
-    md.append(f"- **Success Rate:** {success_rate:.2f}%")
-    md.append(f"- **Number of failed simulations:** {num_failed}")
+    success_rate = 100.0 * num_successful / num_simulations
 
-    if num_failed > 0:
-        avg_months_failed = (
-            sum(r["months_lasted"] for r in simulation_results if not r["success"]) / num_failed
-        )
-        md.append(f"- **Average months lasted in failed simulations:** {avg_months_failed:.1f}")
+    md_content.append(f"- **FIRE Plan Success Rate:** {success_rate:.2f}%\n")
+    md_content.append(f"- **Number of failed simulations:** {num_failed}\n")
 
-    # --- Key scenario details: Nominal and Real Results ---
+    failed_months = [r["months_lasted"] for r in simulation_results if not r["success"]]
+    avg_months_failed = sum(failed_months) / num_failed
+
+    md_content.append(
+        f"- **Average months lasted in failed simulations:** {avg_months_failed:.1f}\n"
+    )
+    md_content.append("\n")
+
+    # Final Wealth Distribution Statistics
     successful_sims = [r for r in simulation_results if r["success"]]
-    if not successful_sims:
-        md.append("\nNo successful simulations to report.\n")
+    if not successful_sims:  # This check is for flow control, not error prevention for calculation
+        md_content.append("## Final Wealth Distribution Statistics (Successful Simulations)\n\n")
+        md_content.append("No successful simulations to report.\n\n")
     else:
-        # --- Nominal Results ---
-        md.append("\n## Nominal Results (cases selected by nominal final wealth)\n")
+        nominal_final_wealths = np.array(
+            [s["final_nominal_wealth"] for s in successful_sims], dtype=float
+        )
+        real_final_wealths = np.array(
+            [s["final_real_wealth"] for s in successful_sims], dtype=float
+        )
+
+        p25_nominal_wealth = np.percentile(nominal_final_wealths, 25)
+        median_nominal_wealth = np.percentile(nominal_final_wealths, 50)
+        p75_nominal_wealth = np.percentile(nominal_final_wealths, 75)
+        iqr_nominal_wealth = p75_nominal_wealth - p25_nominal_wealth
+
+        p25_real_wealth = np.percentile(real_final_wealths, 25)
+        median_real_wealth = np.percentile(real_final_wealths, 50)
+        p75_real_wealth = np.percentile(real_final_wealths, 75)
+        iqr_real_wealth = p75_real_wealth - p25_real_wealth
+
+        md_content.append("## Final Wealth Distribution Statistics (Successful Simulations)\n\n")
+        md_content.append(
+            "| Statistic                     | Nominal Final Wealth          | Real Final Wealth (Today's Money) |\n"
+        )
+        md_content.append(
+            "|-------------------------------|-------------------------------|-----------------------------------|\n"
+        )
+        md_content.append(
+            f"| Median (P50)                  | {median_nominal_wealth:,.2f} EUR    | {median_real_wealth:,.2f} EUR           |\n"
+        )
+        md_content.append(
+            f"| 25th Percentile (P25)         | {p25_nominal_wealth:,.2f} EUR     | {p25_real_wealth:,.2f} EUR           |\n"
+        )
+        md_content.append(
+            f"| 75th Percentile (P75)         | {p75_nominal_wealth:,.2f} EUR     | {p75_real_wealth:,.2f} EUR           |\n"
+        )
+        md_content.append(
+            f"| Interquartile Range (P75-P25) | {iqr_nominal_wealth:,.2f} EUR     | {iqr_real_wealth:,.2f} EUR           |\n"
+        )
+        md_content.append("\n")
+
+    # Nominal and Real Results sections
+    if successful_sims:
+        md_content.append("## Nominal Results (cases selected by nominal final wealth)\n\n")
         sorted_by_nominal = sorted(successful_sims, key=lambda r: r["final_nominal_wealth"])
-        worst_nom = sorted_by_nominal[0]
-        best_nom = sorted_by_nominal[-1]
-        median_nom = sorted_by_nominal[len(sorted_by_nominal) // 2]
-
-        def case_md_nominal(label: str, case: Dict[str, Any]) -> str:
-            lines = [f"\n### {label} Successful Case"]
-            lines.append(f"- Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} EUR")
-            lines.append(f"- Final Wealth (Real): {case['final_real_wealth']:,.2f} EUR")
-            initial_wealth = case["initial_total_wealth"]
-            final_wealth = case["final_nominal_wealth"]
-            months_lasted = case["months_lasted"]
-            years = months_lasted / 12 if months_lasted else 0
-            if initial_wealth is not None and final_wealth is not None and years > 0:
-                cagr = calculate_cagr(initial_wealth, final_wealth, years)
-                lines.append(f"- Your life CAGR (Nominal): {cagr:.2%}")
-            else:
-                lines.append("- Your life CAGR (Nominal): N/A")
-            allocations = case["final_allocations_nominal"]
-            total_nominal = case["final_nominal_wealth"]
-            bank = case["final_bank_balance"]
-            if allocations:
-                total_assets = sum(allocations.values())
-                alloc_percent = ", ".join(
-                    f"{k}: {v / total_assets * 100:.1f}%" if total_assets else f"{k}: 0.0%"
-                    for k, v in allocations.items()
+        if sorted_by_nominal:
+            md_content.extend(format_case_for_markdown("Worst", sorted_by_nominal[0], "Nominal"))
+            md_content.extend(
+                format_case_for_markdown(
+                    "Median", sorted_by_nominal[len(sorted_by_nominal) // 2], "Nominal"
                 )
-                lines.append(f"- Final Allocations (percent): {alloc_percent}")
-            if allocations:
-                lines.append("\n| Asset        | Value (EUR)      |")
-                lines.append("|--------------|------------------|")
-                for k, v in allocations.items():
-                    lines.append(f"| {k:<12} | {v:,.2f}           |")
-                lines.append(f"| Bank         | {bank:,.2f}           |")
-                summed = sum(allocations.values()) + bank
-                lines.append(f"| **Sum**      | **{summed:,.2f}**     |")
-                if abs(summed - total_nominal) > 1e-2:
-                    lines.append("| **WARNING**  | **Sum does not match final total wealth!** |")
-            return "\n".join(lines)
+            )
+            md_content.extend(format_case_for_markdown("Best", sorted_by_nominal[-1], "Nominal"))
 
-        md.append(case_md_nominal("Worst", worst_nom))
-        md.append(case_md_nominal("Median", median_nom))
-        md.append(case_md_nominal("Best", best_nom))
-
-        # --- Real Results ---
-        md.append("\n## Real Results (cases selected by real final wealth)\n")
+        md_content.append("## Real Results (cases selected by real final wealth)\n\n")
         sorted_by_real = sorted(successful_sims, key=lambda r: r["final_real_wealth"])
-        worst_real = sorted_by_real[0]
-        best_real = sorted_by_real[-1]
-        median_real = sorted_by_real[len(sorted_by_real) // 2]
+        if sorted_by_real:
+            md_content.extend(format_case_for_markdown("Worst", sorted_by_real[0], "Real"))
+            md_content.extend(
+                format_case_for_markdown("Median", sorted_by_real[len(sorted_by_real) // 2], "Real")
+            )
+            md_content.extend(format_case_for_markdown("Best", sorted_by_real[-1], "Real"))
 
-        def case_md_real(label: str, case: Dict[str, Any]) -> str:
-            lines = [f"\n### {label} Successful Case"]
-            lines.append(f"- Final Wealth (Real): {case['final_real_wealth']:,.2f} EUR")
-            lines.append(f"- Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} EUR")
-            initial_wealth = case["initial_total_wealth"]
-            final_wealth = case["final_real_wealth"]
-            months_lasted = case["months_lasted"]
-            years = months_lasted / 12 if months_lasted else 0
-            if initial_wealth is not None and final_wealth is not None and years > 0:
-                cagr = calculate_cagr(initial_wealth, final_wealth, years)
-                lines.append(f"- Your life CAGR (Real): {cagr:.2%}")
-            else:
-                lines.append("- Your life CAGR (Real): N/A")
-            allocations = case["final_allocations_nominal"]
-            total_nominal = case["final_nominal_wealth"]
-            bank = case["final_bank_balance"]
-            if allocations:
-                total_assets = sum(allocations.values())
-                alloc_percent = ", ".join(
-                    f"{k}: {v / total_assets * 100:.1f}%" if total_assets else f"{k}: 0.0%"
-                    for k, v in allocations.items()
-                )
-                lines.append(f"- Final Allocations (percent): {alloc_percent}")
-            if allocations:
-                lines.append("\n| Asset        | Value (EUR)      |")
-                lines.append("|--------------|------------------|")
-                for k, v in allocations.items():
-                    lines.append(f"| {k:<12} | {v:,.2f}           |")
-                lines.append(f"| Bank         | {bank:,.2f}           |")
-                summed = sum(allocations.values()) + bank
-                lines.append(f"| **Sum**      | **{summed:,.2f}**     |")
-                if abs(summed - total_nominal) > 1e-2:
-                    lines.append("| **WARNING**  | **Sum does not match final total wealth!** |")
-            return "\n".join(lines)
+    # Visualizations
+    md_content.append("## Visualizations\n\n")
+    if plot_paths:
+        for title, path in plot_paths.items():
+            md_content.append(f"### {title}\n\n")
+            md_content.append(f"![{title}]({path})\n\n")
+    else:
+        md_content.append("No plots generated or provided.\n\n")
 
-        md.append(case_md_real("Worst", worst_real))
-        md.append(case_md_real("Median", median_real))
-        md.append(case_md_real("Best", best_real))
+    # Add footer
+    md_content.append("---\n")  # Horizontal rule before footer
+    md_content.append("Generated by firestarter FIRE Plan Monte Carlo simulation\n")
 
-    # --- Plots ---
-    md.append("\n## Plots\n")
-    report_dir = Path(output_dir)
-    for plot_name, plot_path in plots.items():
-        rel_path = os.path.relpath(plot_path, start=report_dir)
-        md.append(f"- [{plot_name}]({rel_path})")
+    # Filename generation and writing to file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    report_filename = f"summary_{timestamp}.md"
+    final_output_path = os.path.join(output_dir, report_filename)
 
-    md.append(f"\n---\n*Generated by FIRE Simulator on {run_date}*")
+    with open(final_output_path, "w", encoding="utf-8") as f:
+        f.write("".join(md_content))
 
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    report_path = Path(output_dir) / f"summary_{now.strftime('%Y%m%d_%H%M')}.md"
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(md))
-
-    return str(report_path)
+    print(f"Markdown report generated at {final_output_path}")

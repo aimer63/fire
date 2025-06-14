@@ -85,9 +85,7 @@ def plot_final_wealth_distribution(
         mid_idx = num_bins_for_width_calc // 2
         bar_width = hypothetical_bin_edges[mid_idx + 1] - hypothetical_bin_edges[mid_idx]
 
-        plt.bar(
-            [center_val], [len(data)], width=bar_width, color="dodgerblue", edgecolor="black"
-        )
+        plt.bar([center_val], [len(data)], width=bar_width, color="dodgerblue", edgecolor="black")
         plt.xscale("log")
         plt.title(title)
         plt.xlabel(xlabel)
@@ -335,7 +333,6 @@ def generate_all_plots(
     simulation_results: List[Dict[str, Any]],
     output_root: str,
     det_inputs: Any,
-    econ_assumptions: Any,
 ):
     """
     Generate all required plots for the FIRE simulator, using only simulation results.
