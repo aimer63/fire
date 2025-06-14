@@ -26,21 +26,86 @@ def plot_retirement_duration_distribution(
     # Do not close the figure, keep it open for interactive display
 
 
+# def plot_final_wealth_distribution(
+#     successful_sims: pd.DataFrame, column: str, title: str, xlabel: str, filename: str
+# ):
+#     if successful_sims.empty:
+#         print(f"No successful simulations to plot {title}.")
+#         return
+#     data = successful_sims[column].clip(lower=1.0)
+#     plt.figure(figsize=(10, 6))
+#     bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 50)
+#     plt.hist(data, bins=bins, edgecolor="black")
+#     plt.xscale("log")
+#     plt.title(title)
+#     plt.xlabel(xlabel)
+#     plt.ylabel("Number of Simulations")
+#     plt.grid(axis="y", alpha=0.75)
+#     plt.tight_layout()
+#     plt.savefig(filename)
+# Do not close the figure, keep it open for interactive display
+
+
 def plot_final_wealth_distribution(
     successful_sims: pd.DataFrame, column: str, title: str, xlabel: str, filename: str
 ):
-    if successful_sims.empty:
-        print(f"No successful simulations to plot {title}.")
-        return
     data = successful_sims[column].clip(lower=1.0)
-    plt.figure(figsize=(10, 6))
-    bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 50)
-    plt.hist(data, bins=bins, edgecolor="black")
-    plt.xscale("log")
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel("Number of Simulations")
-    plt.grid(axis="y", alpha=0.75)
+
+    plt.figure(figsize=(10, 6))  # Keep consistent figure size
+
+    if (data == data.iloc[0]).all():
+        center_val = data.iloc[0]
+
+        # Define the x-axis viewing window for the single bar plot (e.g., +/- 2% around the value)
+        # This determines how "zoomed in" we are.
+        view_min_factor = 0.98
+        view_max_factor = 1.02
+        view_min = center_val * view_min_factor
+        view_max = center_val * view_max_factor
+
+        # Ensure view_min and view_max are valid for logspace and distinct
+        if view_min <= 0:
+            view_min = 1e-9  # Must be positive
+        if view_max <= view_min:  # Handles center_val being very small or zero after clipping
+            if center_val > 1e-9:  # if center_val is not effectively zero
+                view_max = view_min * 1.01  # Ensure max > min by a small factor
+            else:  # center_val is effectively zero, create a tiny range around it
+                view_min = 0.9  # Arbitrary small range if value was ~1
+                view_max = 1.1
+
+        # Create 50 hypothetical log-spaced bins within this viewing window
+        num_bins_for_width_calc = 50
+        # N bins means N+1 edges
+        hypothetical_bin_edges = np.logspace(
+            np.log10(view_min), np.log10(view_max), num_bins_for_width_calc + 1
+        )
+
+        # Use the width of a middle hypothetical bin for our single bar
+        # This makes its relative width consistent with the multi-bar plot's logic
+        mid_idx = num_bins_for_width_calc // 2
+        bar_width = hypothetical_bin_edges[mid_idx + 1] - hypothetical_bin_edges[mid_idx]
+
+        plt.bar(
+            [center_val], [len(data)], width=bar_width, color="dodgerblue", edgecolor="black"
+        )
+        plt.xscale("log")
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel("Number of Simulations")
+        plt.grid(axis="y", alpha=0.75)
+
+        # Set x-limits to the defined viewing window
+        plt.xlim(view_min, view_max)
+    else:
+        # Use 50 bins for the histogram (51 edges)
+        bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 51)
+        plt.hist(data, bins=bins, edgecolor="black")  # Matplotlib default color is fine
+        plt.xscale("log")
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel("Number of Simulations")
+        plt.grid(axis="y", alpha=0.75)
+
     plt.tight_layout()
     plt.savefig(filename)
     # Do not close the figure, keep it open for interactive display
