@@ -12,7 +12,9 @@ def dump_config_parameters(config: Dict[str, Any]) -> None:
     print(json.dumps(config, indent=2, ensure_ascii=False))
 
 
-def print_console_summary(simulation_results: List[Dict[str, Any]], config: Dict[str, Any]) -> None:
+def print_console_summary(
+    simulation_results: List[Dict[str, Any]], config: Dict[str, Any]
+) -> None:
     """
     Print the main simulation summary and key scenario details to the console.
     Accepts the raw simulation results (list of dicts from Simulation.build_result()) and config.
@@ -31,7 +33,8 @@ def print_console_summary(simulation_results: List[Dict[str, Any]], config: Dict
 
     if num_failed > 0:
         avg_months_failed = (
-            sum(r["months_lasted"] for r in simulation_results if not r["success"]) / num_failed
+            sum(r["months_lasted"] for r in simulation_results if not r["success"])
+            / num_failed
         )
         print(f"Average months lasted in failed simulations: {avg_months_failed:.1f}")
 
@@ -40,7 +43,9 @@ def print_console_summary(simulation_results: List[Dict[str, Any]], config: Dict
         print("\nNo successful simulations to report.\n")
         return
 
-    nominal_final_wealths = np.array([s["final_nominal_wealth"] for s in successful_sims])
+    nominal_final_wealths = np.array(
+        [s["final_nominal_wealth"] for s in successful_sims]
+    )
     real_final_wealths = np.array([s["final_real_wealth"] for s in successful_sims])
 
     # Calculate percentiles for Nominal Wealth

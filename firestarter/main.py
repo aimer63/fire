@@ -16,8 +16,9 @@ Main entry point for running FIRE Monte Carlo simulations.
 import sys
 import os
 from typing import Any
-import tomllib
 import time
+from tqdm import tqdm
+import tomllib
 import itertools
 import numpy as np
 
@@ -44,6 +45,29 @@ from firestarter.reporting.graph_report import generate_all_plots
 from firestarter.core.simulation import SimulationBuilder
 
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+
+def run_single_simulation(
+    det_inputs: DeterministicInputs,
+    market_assumptions: MarketAssumptions,
+    portfolio_rebalances: PortfolioRebalances,
+    shock_events: Any,
+    initial_assets: dict[str, float],
+) -> dict[str, Any]:
+    builder = SimulationBuilder.new()
+    simulation = (
+        builder.set_det_inputs(det_inputs)
+        .set_market_assumptions(market_assumptions)
+        .set_portfolio_rebalances(portfolio_rebalances)
+        .set_shock_events(shock_events)
+        .set_initial_assets(initial_assets)
+        .build()
+    )
+    simulation.init()
+    return simulation.run()
+
+
 def main() -> None:
     """
     Main workflow for the FIRE simulation tool.
@@ -53,6 +77,7 @@ def main() -> None:
     - Runs Monte Carlo simulations using the current rebalance schedule.
     - Performs analysis and generates reports and plots.
     """
+    import multiprocessing
 
     # Config loading, parameter assignment, derived calculations, and assertions
     config_file_path: str = "config.toml"
@@ -77,10 +102,14 @@ def main() -> None:
     print("Configuration file parsed successfully. Extracting parameters...")
 
     # Pydantic: Load and validate deterministic inputs
-    det_inputs: DeterministicInputs = DeterministicInputs(**config_data["deterministic_inputs"])
+    det_inputs: DeterministicInputs = DeterministicInputs(
+        **config_data["deterministic_inputs"]
+    )
 
     # Pydantic: Load and validate economic assumptions
-    market_assumptions: MarketAssumptions = MarketAssumptions(**config_data["market_assumptions"])
+    market_assumptions: MarketAssumptions = MarketAssumptions(
+        **config_data["market_assumptions"]
+    )
 
     # Pydantic: Load and validate portfolio rebalances
     portfolio_rebalances: PortfolioRebalances = PortfolioRebalances(
@@ -88,7 +117,9 @@ def main() -> None:
     )
 
     # Pydantic: Load and validate simulation parameters
-    sim_params: SimulationParameters = SimulationParameters(**config_data["simulation_parameters"])
+    sim_params: SimulationParameters = SimulationParameters(
+        **config_data["simulation_parameters"]
+    )
     num_simulations: int = sim_params.num_simulations
 
     # Pydantic: Load and validate shocks
@@ -98,10 +129,12 @@ def main() -> None:
     # Validate portfolio rebalance weights
     for reb in portfolio_rebalances.rebalances:
         reb_sum = reb.stocks + reb.bonds + reb.str + reb.fun
-        assert np.isclose(
-            reb_sum, 1.0
-        ), f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
-    print("All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance.")
+        assert np.isclose(reb_sum, 1.0), (
+            f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
+        )
+    print(
+        "All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance."
+    )
 
     assert det_inputs.bank_upper_bound >= det_inputs.bank_lower_bound, (
         f"Bounds invalid: Upper ({det_inputs.bank_upper_bound:,.0f}) "
@@ -156,39 +189,37 @@ def main() -> None:
         )
     if "rebalances" in parameters_summary["portfolio_rebalances"]:
         parameters_summary["portfolio_rebalances"]["rebalances"] = sorted(
-            parameters_summary["portfolio_rebalances"]["rebalances"], key=lambda r: r["year"]
+            parameters_summary["portfolio_rebalances"]["rebalances"],
+            key=lambda r: r["year"],
         )
 
-    # Run Monte Carlo simulations
+    # Run Monte Carlo simulations in parallel
     simulation_results = []
-
-    spinner = itertools.cycle(["-", "\\", "|", "/"])
     start_time = time.time()
-
     print(
         f"\nRunning {num_simulations} Monte Carlo simulations "
-        + f"(T={det_inputs.years_to_simulate} years)..."
+        + f"(T={det_inputs.years_to_simulate} years)"
     )
-    for i in range(num_simulations):
-        builder = SimulationBuilder.new()
-        simulation = (
-            builder.set_det_inputs(det_inputs)
-            .set_market_assumptions(market_assumptions)
-            .set_portfolio_rebalances(portfolio_rebalances)
-            .set_shock_events(shock_events)
-            .set_initial_assets(initial_assets)
-            .build()
-        )
-        simulation.init()
-        result = simulation.run()
-        simulation_results.append(result)
 
-        elapsed_time = time.time() - start_time
-        sys.stdout.write(
-            f"\r{next(spinner)} Running sim {i + 1}/{num_simulations} | "
-            + f"Elapsed: {elapsed_time:.2f}s"
-        )
-        sys.stdout.flush()
+    max_workers = multiprocessing.cpu_count()
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(
+                run_single_simulation,
+                det_inputs,
+                market_assumptions,
+                portfolio_rebalances,
+                shock_events,
+                initial_assets,
+            )
+            for _ in range(num_simulations)
+        ]
+        for future in tqdm(
+            as_completed(futures), total=num_simulations, desc="Simulations"
+        ):
+            result = future.result()
+            simulation_results.append(result)
+            sys.stdout.flush()
 
     sys.stdout.write("\n")
     sys.stdout.flush()

@@ -18,6 +18,7 @@
 - Copilot must always use explicit type annotations and strict, clear method signatures wherever possible.
 - Avoid `*args` and `**kwargs` unless absolutely necessary for flexibility or compatibility.
 - Favor static, type-safe code throughout all code and suggestions.
+- Avoid silent defaults, let the bugs and the errors surface quickly. Especially in prototyping phases, it is crucial to catch errors early. Prefer direct dict access over `get` methods, and avoid silent defaults like `x if x is None`.
 
 ## 🔄 Development Workflow
 
