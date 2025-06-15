@@ -107,13 +107,17 @@ def generate_markdown_report(
     md_content.append(f"- **FIRE Plan Success Rate:** {success_rate:.2f}%\n")
     md_content.append(f"- **Number of failed simulations:** {num_failed}\n")
 
-    failed_months = [r["months_lasted"] for r in simulation_results if not r["success"]]
-    avg_months_failed = sum(failed_months) / num_failed
-
-    md_content.append(
-        f"- **Average months lasted in failed simulations:** {avg_months_failed:.1f}\n"
-    )
-    md_content.append("\n")
+    # failed_months = [r["months_lasted"] for r in simulation_results if not r["success"]]
+    # avg_months_failed = sum(failed_months) / num_failed
+    if num_failed > 0:
+        avg_months_failed = (
+            sum(r["months_lasted"] for r in simulation_results if not r["success"])
+            / num_failed
+        )
+        md_content.append(
+            f"- **Average months lasted in failed simulations:** {avg_months_failed:.1f}\n"
+        )
+        md_content.append("\n")
 
     # Final Wealth Distribution Statistics
     successful_sims = [r for r in simulation_results if r["success"]]
