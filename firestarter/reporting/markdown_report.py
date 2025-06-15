@@ -96,9 +96,6 @@ def generate_markdown_report(
     md_content.append(f"Report generated on: {report_generated_time}\n")
     md_content.append(f"Using configuration: `{config_filename}`\n\n")
 
-    # Add Configuration Parameters
-    md_content.extend(format_config_for_markdown(config))
-
     # Add FIRE Plan Simulation Summary
     md_content.append("## FIRE Plan Simulation Summary\n\n")
     num_simulations = len(simulation_results)
@@ -212,6 +209,9 @@ def generate_markdown_report(
             md_content.append(f"![{title}]({path})\n\n")
     else:
         md_content.append("No plots generated or provided.\n\n")
+
+    # Add Configuration Parameters
+    md_content.extend(format_config_for_markdown(config))
 
     # Add footer
     md_content.append("---\n")  # Horizontal rule before footer

@@ -17,6 +17,7 @@ import sys
 import os
 from typing import Any
 import time
+import shutil
 from tqdm import tqdm
 import tomllib
 import itertools
@@ -196,12 +197,12 @@ def main() -> None:
     # Run Monte Carlo simulations in parallel
     simulation_results = []
     start_time = time.time()
-    print(
-        f"\nRunning {num_simulations} Monte Carlo simulations "
-        + f"(T={det_inputs.years_to_simulate} years)"
-    )
+    print(f"\nRunning {num_simulations} Monte Carlo simulations ")
 
     max_workers = multiprocessing.cpu_count()
+    term_width = shutil.get_terminal_size().columns
+    bar_width = max(40, term_width // 2)  # Use half terminal width, min 40
+
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(
@@ -215,11 +216,13 @@ def main() -> None:
             for _ in range(num_simulations)
         ]
         for future in tqdm(
-            as_completed(futures), total=num_simulations, desc="Simulations"
+            as_completed(futures),
+            total=num_simulations,
+            desc="Simulations",
+            ncols=bar_width,
         ):
             result = future.result()
             simulation_results.append(result)
-            sys.stdout.flush()
 
     sys.stdout.write("\n")
     sys.stdout.flush()

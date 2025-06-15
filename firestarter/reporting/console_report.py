@@ -20,7 +20,7 @@ def print_console_summary(
     Accepts the raw simulation results (list of dicts from Simulation.build_result()) and config.
     Only formats and presents data, does not compute except for CAGR.
     """
-    dump_config_parameters(config)
+    # dump_config_parameters(config)
 
     print("\n--- FIRE Plan Simulation Summary ---")
     num_simulations = len(simulation_results)
