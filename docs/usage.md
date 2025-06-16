@@ -1,13 +1,16 @@
 # Usage Guide: FIRE Monte Carlo Simulation Tool
 
-This guide explains how to configure, run, and interpret results from the FIRE Monte Carlo simulation tool.
+This guide explains how to configure, run, and interpret results from the FIRE Monte Carlo
+simulation tool.
 
 ---
 
 ## 1. What is This Tool?
 
-This package simulates financial independence and early retirement (FIRE) scenarios using Monte Carlo methods.  
-It models investment returns, expenses, rebalancing, house purchases, and more, to help you assess the probability of financial success over time.
+This package simulates financial independence and early retirement (FIRE) scenarios using Monte
+Carlo methods.  
+It models investment returns, expenses, rebalancing, house purchases, and more, to help you assess
+the probability of financial success over time.
 
 ---
 
@@ -86,7 +89,7 @@ python -m firestarter.main configs/config.toml
 ```
 
 - If you omit the argument, it defaults to `configs/config.toml`.
-- Make sure the script is executable:  
+- Make sure the script is executable:
 
   ```sh
   chmod +x firestarter.sh
@@ -96,7 +99,8 @@ python -m firestarter.main configs/config.toml
 
 ## 5. Understanding the Output
 
-- **Reports:** Markdown files in `output/reports/` summarizing simulation results and linking to plots.
+- **Reports:** Markdown files in `output/reports/` summarizing simulation results and linking to
+  plots.
 - **Plots:** PNG images in `output/plots/` showing wealth distributions, failure rates, etc.
 - All output paths are relative to the project root and configurable via `[paths] output_root`.
 

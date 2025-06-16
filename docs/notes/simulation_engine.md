@@ -1,12 +1,15 @@
 # FIRE Simulation Engine (simulation_v1.py)
 
-This document explains the structure and workflow of the new simulation engine implemented in `simulation_v1.py`. The engine is designed to model financial independence and early retirement (FIRE) scenarios with high flexibility and modularity.
+This document explains the structure and workflow of the new simulation engine implemented in
+`simulation_v1.py`. The engine is designed to model financial independence and early retirement
+(FIRE) scenarios with high flexibility and modularity.
 
 ---
 
 ## Overview
 
-The simulation engine models the evolution of a user's portfolio and bank account over time, considering:
+The simulation engine models the evolution of a user's portfolio and bank account over time,
+considering:
 
 - Income (salary, pension)
 - Expenses (regular and extra)
@@ -20,7 +23,8 @@ The simulation is organized around two main classes:
 
 ### 1. `SimulationBuilder`
 
-A builder-pattern class that allows step-by-step configuration of all simulation parameters (deterministic inputs, economic assumptions, rebalancing schedule, shocks, initial assets).  
+A builder-pattern class that allows step-by-step configuration of all simulation parameters
+(deterministic inputs, economic assumptions, rebalancing schedule, shocks, initial assets).  
 Once configured, it produces a ready-to-run `Simulation` instance.
 
 ### 2. `Simulation`
@@ -49,7 +53,8 @@ For a detailed explanation of how **returns** and **inflation** are handled in t
 ### 1. **Initialization**
 
 - The builder sets up all configuration objects.
-- `Simulation.init()` initializes the simulation state and precomputes all sequences needed for the run (returns, inflation, planned flows, etc.).
+- `Simulation.init()` initializes the simulation state and precomputes all sequences needed for the
+  run (returns, inflation, planned flows, etc.).
 
 ### 2. **Main Simulation Loop (`Simulation.run()`)**
 
@@ -58,13 +63,16 @@ For each month:
 1. **Income:** Add salary and pension for the current year.
 2. **Contributions:** Apply planned and regular contributions to liquid assets.
 3. **Expenses:** Deduct regular and extra expenses from the bank account.
-4. **House Purchase:** If scheduled, withdraw from assets to buy a house and add its value to real estate.
-5. **Bank Account Management:**  
-   - If the bank balance is below the lower bound, withdraw from assets (STR, Bonds, Stocks, Fun) in order to top up.
+4. **House Purchase:** If scheduled, withdraw from assets to buy a house and add its value to real
+   estate.
+5. **Bank Account Management:**
+   - If the bank balance is below the lower bound, withdraw from assets (STR, Bonds, Stocks, Fun) in
+     order to top up.
    - If above the upper bound, invest the excess into liquid assets according to portfolio weights.
    - If assets are insufficient to cover a shortfall, mark the simulation as failed and exit early.
 6. **Returns:** Apply monthly returns to all assets (including real estate).
-7. **Rebalancing:** If scheduled, rebalance liquid assets according to the current portfolio weights.
+7. **Rebalancing:** If scheduled, rebalance liquid assets according to the current portfolio
+   weights.
 8. **Recording:** Save the current state (wealth, balances, asset values) for this month.
 
 ### 3. **Result Construction**
@@ -92,18 +100,27 @@ For each month:
   Deducts regular and extra expenses from the bank account.
 
 - **`handle_house_purchase(month)`**  
-  If a house purchase is scheduled, withdraws from assets to pay for it and adds the value to real estate.
+  If a house purchase is scheduled, withdraws from assets to pay for it and adds the value to real
+  estate.
 
 - **`handle_bank_account(month)`**  
   Manages the bank account to ensure it stays within user-defined bounds:
+
   - **Lower Bound:**  
-    If the bank balance falls below the lower bound (inflation-adjusted), the simulation automatically withdraws from liquid assets (in a specified order: STR, Bonds, Stocks, Fun) to top up the bank account. If there are not enough assets to cover the shortfall, the simulation is marked as failed and ends early.
+    If the bank balance falls below the lower bound (inflation-adjusted), the simulation
+    automatically withdraws from liquid assets (in a specified order: STR, Bonds, Stocks, Fun) to
+    top up the bank account. If there are not enough assets to cover the shortfall, the simulation
+    is marked as failed and ends early.
   - **Upper Bound:**  
-    If the bank balance rises above the upper bound (inflation-adjusted), the excess is automatically invested back into liquid assets according to the current portfolio weights. This prevents the bank account from holding more cash than necessary, keeping the portfolio efficiently invested.
+    If the bank balance rises above the upper bound (inflation-adjusted), the excess is
+    automatically invested back into liquid assets according to the current portfolio weights. This
+    prevents the bank account from holding more cash than necessary, keeping the portfolio
+    efficiently invested.
   - **No Action:**  
     If the bank balance is within the bounds, no transfers occur.
 
-  This mechanism ensures liquidity for expenses while maximizing investment efficiency and is a key part of the simulation's monthly logic.
+  This mechanism ensures liquidity for expenses while maximizing investment efficiency and is a key
+  part of the simulation's monthly logic.
 
 - **`apply_monthly_returns(month)`**  
   Evolves all asset values according to precomputed monthly returns.
@@ -122,13 +139,15 @@ For each month:
 ## Withdrawals and Failure
 
 Withdrawals from assets are always handled in a single, unified way (`_withdraw_from_assets`).  
-If, at any point, the required withdrawal cannot be covered by liquid assets, the simulation is marked as failed and exits early.
+If, at any point, the required withdrawal cannot be covered by liquid assets, the simulation is
+marked as failed and exits early.
 
 ---
 
 ## Shocks
 
-Market or inflation shocks are applied in `precompute_sequences` by directly modifying the annual return or inflation sequence for the specified year and asset.
+Market or inflation shocks are applied in `precompute_sequences` by directly modifying the annual
+return or inflation sequence for the specified year and asset.
 
 ---
 
@@ -142,4 +161,5 @@ The modular design allows for easy extension:
 
 ---
 
-**This engine provides a robust, transparent, and extensible foundation for FIRE scenario analysis.**
+**This engine provides a robust, transparent, and extensible foundation for FIRE scenario
+analysis.**

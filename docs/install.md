@@ -1,6 +1,7 @@
 # firestarter Installation Guide
 
-This guide explains how to install the `firestarter` package from a GitHub release on **Linux**, **macOS**, and **Windows**.
+This guide explains how to install the `firestarter` package from a GitHub release on **Linux**,
+**macOS**, and **Windows**.
 
 ---
 
@@ -14,7 +15,8 @@ This guide explains how to install the `firestarter` package from a GitHub relea
 ## 2. Install Python (if needed)
 
 - **Linux:**  
-  Most distributions come with Python 3.10+ pre-installed. If not, install it using your package manager.
+  Most distributions come with Python 3.10+ pre-installed. If not, install it using your package
+  manager.
 
   ```sh
   sudo apt install python3 python3-pip  # Debian/Ubuntu
@@ -36,7 +38,8 @@ This guide explains how to install the `firestarter` package from a GitHub relea
 
 ## 3. Install firestarter
 
-Open a terminal (Linux/macOS) or Command Prompt (Windows), navigate to the folder where you downloaded the `.whl` file, and run:
+Open a terminal (Linux/macOS) or Command Prompt (Windows), navigate to the folder where you
+downloaded the `.whl` file, and run:
 
 ```sh
 pip install firestarter-0.1.0b1-py3-none-any.whl
@@ -46,7 +49,8 @@ pip install firestarter-0.1.0b1-py3-none-any.whl
 
 ## 4. Run firestarter
 
-- **Linux/macOS/Windows:**  
+- **Linux/macOS/Windows:**
+
   - Prepare a config.toml file
 
   ```sh

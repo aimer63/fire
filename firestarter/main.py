@@ -241,25 +241,25 @@ def main() -> None:
     # Prepare plot paths dictionary
     plots = {
         "Retirement Duration Distribution": os.path.join(
-            output_root, "plots", "retirement_duration_distribution.png"
+            "..", "plots", "retirement_duration_distribution.png"
         ),
         "Final Wealth Distribution (Nominal)": os.path.join(
-            output_root, "plots", "final_wealth_distribution_nominal.png"
+            "..", "plots", "final_wealth_distribution_nominal.png"
         ),
         "Final Wealth Distribution (Real)": os.path.join(
-            output_root, "plots", "final_wealth_distribution_real.png"
+            "..", "plots", "final_wealth_distribution_real.png"
         ),
         "Wealth Evolution Samples (Real)": os.path.join(
-            output_root, "plots", "wealth_evolution_samples_real.png"
+            "..", "plots", "wealth_evolution_samples_real.png"
         ),
         "Wealth Evolution Samples (Nominal)": os.path.join(
-            output_root, "plots", "wealth_evolution_samples_nominal.png"
+            "..", "plots", "wealth_evolution_samples_nominal.png"
         ),
         "Bank Account Trajectories (Real)": os.path.join(
-            output_root, "plots", "bank_account_trajectories_real.png"
+            "..", "plots", "bank_account_trajectories_real.png"
         ),
         "Bank Account Trajectories (Nominal)": os.path.join(
-            output_root, "plots", "bank_account_trajectories_nominal.png"
+            "..", "plots", "bank_account_trajectories_nominal.png"
         ),
     }
 

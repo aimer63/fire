@@ -1,6 +1,8 @@
 # FIRE Monte Carlo Simulation Tool
 
-This project is a Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning. It models a user's retirement plan, simulating investment growth, withdrawals, expenses, and market shocks over time to estimate the probability of financial success.
+This project is a Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement)
+planning. It models a user's retirement plan, simulating investment growth, withdrawals, expenses,
+and market shocks over time to estimate the probability of financial success.
 
 ---
 
@@ -31,11 +33,14 @@ fire/
 ## Key Components
 
 - **Configuration**  
-  User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial wealth, income, expenses, asset allocation, economic assumptions (returns, inflation), simulation parameters, and market shocks.  
+  User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
+  wealth, income, expenses, asset allocation, economic assumptions (returns, inflation), simulation
+  parameters, and market shocks.  
   Configuration is validated and parsed using Pydantic models in `firestarter/config/config.py`.
 
 - **Simulation Engine**  
   The main simulation logic is in `firestarter/core/simulation.py`. For each run, it:
+
   - Initializes asset values and bank balance
   - Simulates monthly/annual investment returns, inflation, and expenses
   - Handles salary, pension, contributions, and planned extra expenses
@@ -44,21 +49,26 @@ fire/
   - Optionally simulates a house purchase at a specified time
   - Tracks asset allocation and rebalancing
 
-- **Reporting & Plotting**  
+- **Reporting & Plotting**
+
   - `firestarter/reporting/console_report.py` prints a summary to the console.
-  - `firestarter/reporting/markdown_report.py` generates a Markdown report summarizing the simulation results, including links to generated plots.
-  - `firestarter/reporting/grapth_report.py` generates all plots for wealth evolution, bank account trajectories, and distributions of outcomes.  
+  - `firestarter/reporting/markdown_report.py` generates a Markdown report summarizing the
+    simulation results, including links to generated plots.
+  - `firestarter/reporting/grapth_report.py` generates all plots for wealth evolution, bank account
+    trajectories, and distributions of outcomes.
   - Output directories for plots and reports are set via the config file and created automatically.
 
 - **Data**  
-  The `data/` directory can contain historical price/return data for assets (e.g., stocks, bonds, Ethereum, silver) used for parameter estimation or backtesting.
+  The `data/` directory can contain historical price/return data for assets (e.g., stocks, bonds,
+  Ethereum, silver) used for parameter estimation or backtesting.
 
 ---
 
 ## Typical Workflow
 
 1. **Configure your plan**  
-   Edit a TOML file in `configs/` (e.g., `configs/config.toml`), specifying your starting wealth, income, expenses, investment strategy, simulation parameters, and any market shocks.  
+   Edit a TOML file in `configs/` (e.g., `configs/config.toml`), specifying your starting wealth,
+   income, expenses, investment strategy, simulation parameters, and any market shocks.  
    You can set the output directory root in the `[paths]` section.
 
 2. **Run the simulation**  
@@ -74,9 +84,11 @@ fire/
    python -m firestarter.main configs/config.toml
    ```
 
-3. **Review the results**  
-   - **Markdown report**: Generated in `output/reports/`, summarizing success rate, failed simulations, best/worst/average cases, and links to plots.
-   - **Plots**: Generated in `output/plots/`, visualizing wealth evolution, bank account trajectories, and distributions.
+3. **Review the results**
+   - **Markdown report**: Generated in `output/reports/`, summarizing success rate, failed
+     simulations, best/worst/average cases, and links to plots.
+   - **Plots**: Generated in `output/plots/`, visualizing wealth evolution, bank account
+     trajectories, and distributions.
 
 ---
 
@@ -109,9 +121,11 @@ rebalances = [
 ]
 ```
 
-**Note:**  
+**Note:**
 
-- The portfolio weights are specified in the `[portfolio_rebalances]` section as a list of rebalances, each with a `year` and weights for liquid assets (`stocks`, `bonds`, `str`, `fun`). There must be one at `year = 0` to give initial values at the portfolio assets.
+- The portfolio weights are specified in the `[portfolio_rebalances]` section as a list of
+  rebalances, each with a `year` and weights for liquid assets (`stocks`, `bonds`, `str`, `fun`).
+  There must be one at `year = 0` to give initial values at the portfolio assets.
 - There is no `real_estate` weight; real estate is handled separately at the time of house purchase.
 - **See [Real Estate Modeling](docs/real_estate.md) for details on how real estate is handled.**
 
@@ -121,7 +135,8 @@ rebalances = [
 
 - **Reports**: Markdown files in `output/reports/` with simulation summary and plot links.
 - **Plots**: PNG images in `output/plots/` for all major simulation results.
-- **All output paths are relative to the project root and configurable via `[paths] output_root` in your TOML config.**
+- **All output paths are relative to the project root and configurable via `[paths] output_root` in
+  your TOML config.**
 
 ---
 
@@ -151,7 +166,9 @@ pytest
 
 ## Purpose
 
-This tool helps users understand the likelihood of their retirement plan succeeding under uncertainty, visualize possible outcomes, and make informed decisions about savings, spending, and asset allocation.
+This tool helps users understand the likelihood of their retirement plan succeeding under
+uncertainty, visualize possible outcomes, and make informed decisions about savings, spending, and
+asset allocation.
 
 ---
 
@@ -164,8 +181,10 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 - [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
 - [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
 - [Monte Carlo Theory](docs/Montecarlo.md): Mathematical background and simulation theory.
-- [Real Estate Modeling](docs/real_estate.md): Details on how real estate is handled in the simulation.
-- [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a GitHub release.
+- [Real Estate Modeling](docs/real_estate.md): Details on how real estate is handled in the
+  simulation.
+- [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a
+  GitHub release.
 - [Release Process](docs/release.md): How to prepare and publish a new release.
 - [TODO & Improvement Plan](TODO.md): Roadmap and planned features.
 

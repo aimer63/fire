@@ -1,12 +1,14 @@
 # firestarter Release Process
 
-This guide describes the recommended steps to create and publish a new release of `firestarter` using GitHub Releases.
+This guide describes the recommended steps to create and publish a new release of `firestarter`
+using GitHub Releases.
 
 ---
 
 ## 1. Update Version Numbers
 
 - Edit both files to set the new version (e.g., `0.1.0b2`):
+
   - `pyproject.toml`:
 
     ```toml
@@ -94,7 +96,8 @@ twine upload --repository testpypi dist/*
 
 ## Notes
 
-- Do **not** commit or push the `dist/` directory to git; use GitHub Releases for distributing build artifacts.
+- Do **not** commit or push the `dist/` directory to git; use GitHub Releases for distributing build
+  artifacts.
 - Always keep `pyproject.toml` and `version.py` in sync.
 - For more details on installation, see [install.md](install.md).
 
