@@ -2,27 +2,27 @@
 
 ## Current Implementation
 
-- **Annual Draws:**
+- **Monthly Draws from Annual Parameters:**
 
-  - For each asset class and for inflation, a single random value is drawn **once per year** from a
-    lognormal (or normal) distribution.
-  - All 12 months in that year use the same annual return and inflation value, converted to a
-    monthly compounded rate.
-  - This approach matches the statistical properties of the annual mean (`mu`) and volatility
-    (`sigma`) provided in the config.
+  - For each asset class and for inflation, annual **arithmetic** mean (`mu_arith_annual`) and
+    standard deviation (`sigma_arith_annual`) for return rates are provided in the configuration.
+  - These annual arithmetic parameters are first converted to annual **lognormal** parameters
+    (`mu_log_annual`, `sigma_log_annual`).
+  - These annual lognormal parameters are then converted to their corresponding monthly lognormal
+    parameters (`mu_log_monthly`, `sigma_log_monthly`).
+  - A random value is then drawn **for each month** from these derived monthly distributions.
+  - This approach ensures that the statistical properties of the monthly draws are consistent with
+    the annualized parameters provided in the config when aggregated over a year.
 
 - **Monthly Application:**
 
-  - The annual return is converted to a monthly compounded rate using the helper:
-
-    ```python
-    (1 + annual_rate) ** (1/12) - 1
-    ```
-
-  - Asset values and inflation are updated monthly, but the underlying rate is constant within each
-    year.
+  - Asset values and inflation are updated monthly using the directly sampled monthly rates.
+  - There is no conversion of an annual rate to a monthly compounded rate within the simulation
+    loop, as the rates are already sampled at a monthly frequency.
 
 - **Rationale:**
-  - This is a common approach in long-term financial simulations.
-  - It ensures that the simulated returns and inflation match the annualized parameters.
-  - It is compatible with the legacy simulation logic and most published FIRE calculators.
+  - This approach allows for month-to-month variability in returns and inflation, potentially
+    capturing shorter-term volatility more directly.
+  - It ensures that the simulated monthly returns and inflation, when aggregated, align with the
+    statistical properties of the annualized input parameters.
+  - The conversion from annual to monthly distribution parameters is handled once before sampling.

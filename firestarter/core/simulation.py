@@ -16,7 +16,6 @@ Features:
 """
 
 from typing import TypedDict, Dict, Any
-import numpy as np
 from firestarter.core.constants import ASSET_KEYS, WITHDRAWAL_PRIORITY
 
 
@@ -147,10 +146,6 @@ class Simulation:
 
             # 9. Recording: Save the current state.
             self._record_results(month)
-
-            # Check for simulation failure again (e.g., if rebalancing or other logic could fail)
-            if self.state.get("simulation_failed", False):
-                break
 
         return self._build_result()
 
