@@ -55,6 +55,7 @@ def run_single_simulation(
     portfolio_rebalances: PortfolioRebalances,
     shock_events: Any,
     initial_assets: dict[str, float],
+    sim_params: SimulationParameters,  # Added sim_params here
 ) -> dict[str, Any]:
     builder = SimulationBuilder.new()
     simulation = (
@@ -63,6 +64,7 @@ def run_single_simulation(
         .set_portfolio_rebalances(portfolio_rebalances)
         .set_shock_events(shock_events)
         .set_initial_assets(initial_assets)
+        .set_sim_params(sim_params)  # Added this line
         .build()
     )
     simulation.init()
@@ -125,7 +127,6 @@ def main() -> None:
 
     # Pydantic: Load and validate shocks
     shocks: Shocks = Shocks(**config_data.get("shocks", {}))
-    shock_events = shocks.events  # Pass Pydantic objects directly for type safety
 
     # Validate portfolio rebalance weights
     for reb in portfolio_rebalances.rebalances:
@@ -173,27 +174,6 @@ def main() -> None:
         + "including derived ones."
     )
 
-    # Prepare parameter summary for both console and report
-    parameters_summary = {
-        "deterministic_inputs": det_inputs.model_dump(),
-        "economic_assumptions": market_assumptions.model_dump(),
-        "portfolio_rebalances": portfolio_rebalances.model_dump(),
-        "shocks": shocks.model_dump(),
-        "initial_assets": initial_assets,
-        "simulation_parameters": sim_params.model_dump(),
-    }
-
-    # Sort shocks['events'] and portfolio_rebalances['rebalances'] by year, if present
-    if "events" in parameters_summary["shocks"]:
-        parameters_summary["shocks"]["events"] = sorted(
-            parameters_summary["shocks"]["events"], key=lambda e: e["year"]
-        )
-    if "rebalances" in parameters_summary["portfolio_rebalances"]:
-        parameters_summary["portfolio_rebalances"]["rebalances"] = sorted(
-            parameters_summary["portfolio_rebalances"]["rebalances"],
-            key=lambda r: r["year"],
-        )
-
     # Run Monte Carlo simulations in parallel
     simulation_results = []
     start_time = time.time()
@@ -210,8 +190,9 @@ def main() -> None:
                 det_inputs,
                 market_assumptions,
                 portfolio_rebalances,
-                shock_events,
+                shocks,
                 initial_assets,
+                sim_params,
             )
             for _ in range(num_simulations)
         ]

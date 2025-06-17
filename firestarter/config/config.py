@@ -20,7 +20,8 @@ These models provide type safety and validation for the simulation engine.
 """
 
 # config.py
-from pydantic import BaseModel, Field
+# config.py
+from pydantic import BaseModel, Field, ConfigDict
 import numpy as np
 from typing import List
 
@@ -31,8 +32,12 @@ class DeterministicInputs(BaseModel):
     These parameters are loaded from the 'deterministic_inputs' section of config.toml.
     """
 
-    initial_investment: float = Field(..., description="Initial investment portfolio value.")
-    initial_bank_balance: float = Field(..., description="Initial bank account balance.")
+    initial_investment: float = Field(
+        ..., description="Initial investment portfolio value."
+    )
+    initial_bank_balance: float = Field(
+        ..., description="Initial bank account balance."
+    )
 
     bank_lower_bound: float = Field(
         ...,
@@ -53,7 +58,9 @@ class DeterministicInputs(BaseModel):
         ..., description="Total number of years the retirement simulation will run."
     )
 
-    monthly_salary: float = Field(..., description="Initial real (today's money) monthly salary.")
+    monthly_salary: float = Field(
+        ..., description="Initial real (today's money) monthly salary."
+    )
     salary_inflation_factor: float = Field(
         ...,
         description=(
@@ -64,7 +71,8 @@ class DeterministicInputs(BaseModel):
     salary_start_year: int = Field(
         ...,
         description=(
-            "Year index (0-indexed) when salary income starts. " "E.g., 0 for immediate start."
+            "Year index (0-indexed) when salary income starts. "
+            "E.g., 0 for immediate start."
         ),
     )
     salary_end_year: int = Field(
@@ -75,7 +83,9 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    monthly_pension: float = Field(..., description="Initial real (today's money) monthly pension.")
+    monthly_pension: float = Field(
+        ..., description="Initial real (today's money) monthly pension."
+    )
     pension_inflation_factor: float = Field(
         ...,
         description=(
@@ -135,12 +145,7 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    class Config:
-        """Pydantic configuration for the DeterministicInputs model."""
-
-        # Ensures no unexpected fields are present in the config.toml section.
-        extra = "forbid"
-        frozen = True  # This makes the model immutable
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class MarketAssumptions(BaseModel):
@@ -149,19 +154,28 @@ class MarketAssumptions(BaseModel):
     These parameters are loaded from the 'economic_assumptions' section of config.toml.
     """
 
-    stock_mu: float = Field(..., description="Arithmetic mean annual return for stocks.")
-    stock_sigma: float = Field(..., description="Standard deviation of annual returns for stocks.")
+    stock_mu: float = Field(
+        ..., description="Arithmetic mean annual return for stocks."
+    )
+    stock_sigma: float = Field(
+        ..., description="Standard deviation of annual returns for stocks."
+    )
 
     bond_mu: float = Field(..., description="Arithmetic mean annual return for bonds.")
-    bond_sigma: float = Field(..., description="Standard deviation of annual returns for bonds.")
+    bond_sigma: float = Field(
+        ..., description="Standard deviation of annual returns for bonds."
+    )
 
     str_mu: float = Field(
         ..., description="Arithmetic mean annual return for short-term reserves (STR)."
     )
-    str_sigma: float = Field(..., description="Standard deviation of annual returns for STR.")
+    str_sigma: float = Field(
+        ..., description="Standard deviation of annual returns for STR."
+    )
 
     fun_mu: float = Field(
-        ..., description="Arithmetic mean annual return for 'fun money' (e.g., crypto/silver)."
+        ...,
+        description="Arithmetic mean annual return for 'fun money' (e.g., crypto/silver).",
     )
     fun_sigma: float = Field(
         ..., description="Standard deviation of annual returns for 'fun money'."
@@ -170,7 +184,8 @@ class MarketAssumptions(BaseModel):
     real_estate_mu: float = Field(
         ...,
         description=(
-            "Arithmetic mean annual return for real estate " "(capital gains, net of maintenance)."
+            "Arithmetic mean annual return for real estate "
+            "(capital gains, net of maintenance)."
         ),
     )
     real_estate_sigma: float = Field(
@@ -178,10 +193,14 @@ class MarketAssumptions(BaseModel):
     )
 
     pi_mu: float = Field(..., description="Arithmetic mean of annual inflation rate.")
-    pi_sigma: float = Field(..., description="Standard deviation of annual inflation rate.")
+    pi_sigma: float = Field(
+        ..., description="Standard deviation of annual inflation rate."
+    )
 
     @staticmethod
-    def _convert_to_lognormal(arith_mu: float, arith_sigma: float) -> tuple[float, float]:
+    def _convert_to_lognormal(
+        arith_mu: float, arith_sigma: float
+    ) -> tuple[float, float]:
         """
         Helper function to convert arithmetic mean and standard deviation
         to log-normal parameters (mu_log, sigma_log).
@@ -214,15 +233,15 @@ class MarketAssumptions(BaseModel):
             "bonds": self._convert_to_lognormal(self.bond_mu, self.bond_sigma),
             "str": self._convert_to_lognormal(self.str_mu, self.str_sigma),
             "fun": self._convert_to_lognormal(self.fun_mu, self.fun_sigma),
-            "real_estate": self._convert_to_lognormal(self.real_estate_mu, self.real_estate_sigma),
-            "inflation": self._convert_to_lognormal(self.pi_mu, self.pi_sigma),  # <-- FIXED HERE
+            "real_estate": self._convert_to_lognormal(
+                self.real_estate_mu, self.real_estate_sigma
+            ),
+            "inflation": self._convert_to_lognormal(
+                self.pi_mu, self.pi_sigma
+            ),  # <-- FIXED HERE
         }
 
-    class Config:
-        """Pydantic configuration for the EconomicAssumptions model."""
-
-        extra = "forbid"  # Ensures no unexpected fields are present in the config.toml section.
-        frozen = True  # This makes the model immutable
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class PortfolioRebalance(BaseModel):
@@ -257,28 +276,33 @@ class PortfolioRebalances(BaseModel):
         ..., description="List of portfolio rebalances with year and weights."
     )
 
-    class Config:
-        extra = "forbid"
-        frozen = True
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class SimulationParameters(BaseModel):
-    num_simulations: int = Field(..., description="Number of Monte Carlo simulations to run.")
+    num_simulations: int = Field(
+        ..., gt=0, description="Number of Monte Carlo simulations to run."
+    )
+    random_seed: int | None = Field(
+        default=None,
+        description="Optional random seed for deterministic runs. If None, uses entropy.",
+    )
 
-    class Config:
-        extra = "forbid"
-        frozen = True
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class ShockEvent(BaseModel):
     year: int = Field(..., description="Year index of the shock (0-indexed).")
     asset: str = Field(..., description="Asset affected by the shock (e.g., 'Stocks').")
-    magnitude: float = Field(..., description="Magnitude of the shock (e.g., -0.35 for -35%).")
+    magnitude: float = Field(
+        ..., description="Magnitude of the shock (e.g., -0.35 for -35%)."
+    )
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class Shocks(BaseModel):
-    events: list[ShockEvent] = Field(default_factory=list, description="List of shock events.")
+    events: list[ShockEvent] = Field(
+        default_factory=list, description="List of shock events."
+    )
 
-    class Config:
-        extra = "forbid"
-        frozen = True
+    model_config = ConfigDict(extra="forbid", frozen=True)

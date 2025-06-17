@@ -15,17 +15,31 @@ Features:
 - Marks simulation as failed if withdrawals cannot be covered by liquid assets.
 """
 
-from typing import TypedDict, Dict, Any
+from typing import (
+    Dict,
+    Any,
+    Optional,
+)  # Removed List as Shocks class handles list of events
 from firestarter.core.constants import ASSET_KEYS, WITHDRAWAL_PRIORITY
+
+# Import the actual types from config.py
+from firestarter.config.config import (
+    DeterministicInputs,
+    MarketAssumptions,
+    PortfolioRebalances,
+    Shocks,
+    SimulationParameters,
+)
 
 
 class SimulationBuilder:
     def __init__(self):
-        self.det_inputs = None
-        self.market_assumptions = None
-        self.portfolio_rebalances = None
-        self.shock_events = None
-        self.initial_assets = None
+        self.det_inputs: Optional[DeterministicInputs] = None
+        self.market_assumptions: Optional[MarketAssumptions] = None
+        self.portfolio_rebalances: Optional[PortfolioRebalances] = None
+        self.shock_events: Optional[Shocks] = None
+        self.initial_assets: Optional[Dict[str, float]] = None
+        self.sim_params: Optional[SimulationParameters] = None
 
     @classmethod
     def new(cls):
@@ -51,6 +65,10 @@ class SimulationBuilder:
         self.initial_assets = initial_assets
         return self
 
+    def set_sim_params(self, sim_params):
+        self.sim_params = sim_params
+        return self
+
     def build(self):
         # Validate all required fields are set
         if self.det_inputs is None:
@@ -64,10 +82,16 @@ class SimulationBuilder:
                 "portfolio_rebalances must be set before building the simulation."
             )
         if self.shock_events is None:
-            raise ValueError("shock_events must be set before building the simulation.")
-        if self.initial_assets is None:
+            raise ValueError(
+                "shock_events must be set before building the simulation."  # Corrected message
+            )
+        if self.initial_assets is None:  # Added check for initial_assets
             raise ValueError(
                 "initial_assets must be set before building the simulation."
+            )
+        if self.sim_params is None:
+            raise ValueError(
+                "sim_params (SimulationParameters) must be set before building the simulation."
             )
 
         return Simulation(
@@ -76,25 +100,28 @@ class SimulationBuilder:
             self.portfolio_rebalances,
             self.shock_events,
             self.initial_assets,
+            self.sim_params,
         )
 
 
 class Simulation:
     def __init__(
         self,
-        det_inputs,
-        market_assumptions,
-        portfolio_rebalances,
-        shock_events,
-        initial_assets,
+        det_inputs: DeterministicInputs,
+        market_assumptions: MarketAssumptions,
+        portfolio_rebalances: PortfolioRebalances,
+        shock_events: Shocks,
+        initial_assets: Dict[str, float],
+        sim_params: SimulationParameters,
     ):
-        self.det_inputs = det_inputs
-        self.market_assumptions = market_assumptions
-        self.portfolio_rebalances = portfolio_rebalances
-        self.shock_events = shock_events
-        self.initial_assets = initial_assets
-        self.state = {}
-        self.results = {}
+        self.det_inputs: DeterministicInputs = det_inputs
+        self.market_assumptions: MarketAssumptions = market_assumptions
+        self.portfolio_rebalances: PortfolioRebalances = portfolio_rebalances
+        self.shock_events: Shocks = shock_events
+        self.initial_assets: Dict[str, float] = initial_assets
+        self.sim_params: SimulationParameters = sim_params
+        self.state: Dict[str, Any] = {}
+        self.results: Dict[str, Any] = {}
 
     @property
     def simulation_months(self):
@@ -202,6 +229,12 @@ class Simulation:
         """
         import numpy as np
 
+        # Set the random seed for reproducibility if provided
+        if self.sim_params.random_seed is not None:
+            np.random.seed(self.sim_params.random_seed)
+        # If random_seed is None, NumPy's RNG will be seeded from an entropy source
+        # by default (or continue with its current state if already initialized).
+
         det_inputs = self.det_inputs
         market_assumptions = self.market_assumptions
         portfolio_rebalances = self.portfolio_rebalances
@@ -266,25 +299,40 @@ class Simulation:
         )
 
         # --- Apply shocks (if any) ---
-        for shock in shock_events:
-            shock_month = (
-                shock.year * 12
-            )  # If shocks are still specified by year, apply to first month of year
+        # A shock's magnitude is an annual rate that replaces the stochastic rate
+        # for that year.
+        # This annual rate is then converted to a monthly rate and applied to all 12
+        # months of that year.
+        for shock in shock_events.events:  # Iterate over the .events attribute
+            year_idx = shock.year
             shock_asset = shock.asset
-            shock_magnitude = shock.magnitude
-            if 0 <= shock_month < total_months:
+            annual_shock_rate = shock.magnitude  # This is an annual rate
+
+            if 0 <= year_idx < total_years:
+                # Convert the annual shock rate to an equivalent monthly rate
+                monthly_shock_rate = (1.0 + annual_shock_rate) ** (1.0 / 12.0) - 1.0
+
+                target_sequence = None
                 if shock_asset == "Stocks":
-                    monthly_stocks_returns_sequence[shock_month] = shock_magnitude
+                    target_sequence = monthly_stocks_returns_sequence
                 elif shock_asset == "Bonds":
-                    monthly_bonds_returns_sequence[shock_month] = shock_magnitude
+                    target_sequence = monthly_bonds_returns_sequence
                 elif shock_asset == "STR":
-                    monthly_str_returns_sequence[shock_month] = shock_magnitude
+                    target_sequence = monthly_str_returns_sequence
                 elif shock_asset == "Fun":
-                    monthly_fun_returns_sequence[shock_month] = shock_magnitude
+                    target_sequence = monthly_fun_returns_sequence
                 elif shock_asset == "Real Estate":
-                    monthly_real_estate_returns_sequence[shock_month] = shock_magnitude
+                    target_sequence = monthly_real_estate_returns_sequence
                 elif shock_asset == "Inflation":
-                    monthly_inflations_sequence[shock_month] = shock_magnitude
+                    target_sequence = monthly_inflations_sequence
+
+                if target_sequence is not None:
+                    for month_offset in range(12):
+                        month_idx_in_simulation = year_idx * 12 + month_offset
+                        if 0 <= month_idx_in_simulation < total_months:
+                            target_sequence[month_idx_in_simulation] = (
+                                monthly_shock_rate
+                            )
 
         # --- Cumulative inflation factors (monthly) ---
         monthly_cumulative_inflation_factors = np.ones(
@@ -694,18 +742,18 @@ class Simulation:
 
         final_nominal_wealth = (
             self.results["wealth_history"][months_lasted - 1]
-            if months_lasted > 0
-            else 0.0
+            # if months_lasted > 0
+            # else 0.0
         )
         final_cumulative_inflation = (
             self.state["monthly_cumulative_inflation_factors"][months_lasted - 1]
-            if months_lasted > 0
-            else 1.0
+            # if months_lasted > 0
+            # else 1.0
         )
         final_real_wealth = (
             final_nominal_wealth / final_cumulative_inflation
-            if final_cumulative_inflation
-            else 0.0
+            # if final_cumulative_inflation
+            # else 0.0
         )
 
         final_investment = (
