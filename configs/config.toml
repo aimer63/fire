@@ -9,7 +9,7 @@
 # --- Simulation Parameters ---
 [simulation_parameters]
 num_simulations = 10000
-random_seed = 42        # Seed for random number generation, can be any integer
+random_seed = 2         # Seed for random number generation, can be any integer
 
 # --- Outputs ---
 [paths]
@@ -35,7 +35,7 @@ bank_lower_bound = 5000
 bank_upper_bound = 10_000
 
 # Number of years the simulation will run
-years_to_simulate = 40
+years_to_simulate = 10
 
 # In flows
 
@@ -56,13 +56,14 @@ pension_start_year = 0
 monthly_investment_contribution = 0 # Example: 500€ per month in today's money
 
 # Planned Contributions, real amount at the time of the contribution
-# [[contrib, year], ...]
-planned_contributions = []
-# planned_contributions = [
-#     [10_000, 2],
-#     [25_000, 3],
-#     [5430, 4],
-# ]
+# planned_contributions = []
+planned_contributions = [
+  { amount = 30000, year = 2 },
+  { amount = 30000, year = 4 },
+  { amount = 30000, year = 6 },
+  { amount = 30000, year = 8 },
+  { amount = 30000, year = 10 },
+]
 
 # Out flows
 annual_fund_fee = 0.002 # 0.2%
@@ -70,7 +71,7 @@ annual_fund_fee = 0.002 # 0.2%
 monthly_expenses = 0
 
 # Planned Extra Expenses real_amount at the time of the expense. [[X, year], ...]
-planned_extra_expenses = [[0, 0]]
+planned_extra_expenses = [{ amount = 0, year = 0 }]
 
 # Initial real cost of the house to be purchased at rebalancing_year_idx
 planned_house_purchase_cost = 0
@@ -89,6 +90,7 @@ house_purchase_year = 0
 # based on very long-term historical averages and current market valuations.
 stock_mu = 0.07
 stock_sigma = 0.15
+# stock_sigma = 0.0
 
 # European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR)
 # annual total returns from 2004-2023.

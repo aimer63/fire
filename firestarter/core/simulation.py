@@ -237,7 +237,6 @@ class Simulation:
 
         det_inputs = self.det_inputs
         market_assumptions = self.market_assumptions
-        portfolio_rebalances = self.portfolio_rebalances
         shock_events = self.shock_events
 
         lognormal = market_assumptions.lognormal
@@ -358,24 +357,24 @@ class Simulation:
         planned_extra_expenses = det_inputs.planned_extra_expenses
 
         nominal_planned_contributions_amounts = []
-        for real_amount, year_idx in planned_contributions:
+        for contribution in planned_contributions:
             # Use cumulative inflation up to the first month of the year
-            month_idx = year_idx * 12
+            month_idx = contribution.year * 12
             nominal_contribution_amount = float(
-                real_amount * monthly_cumulative_inflation_factors[month_idx]
+                contribution.amount * monthly_cumulative_inflation_factors[month_idx]
             )
             nominal_planned_contributions_amounts.append(
-                (nominal_contribution_amount, year_idx)
+                (nominal_contribution_amount, contribution.year)
             )
 
         nominal_planned_extra_expenses_amounts = []
-        for real_amount, year_idx in planned_extra_expenses:
-            month_idx = year_idx * 12
+        for expense in planned_extra_expenses:
+            month_idx = expense.year * 12
             nominal_extra_expense_amount = float(
-                real_amount * monthly_cumulative_inflation_factors[month_idx]
+                expense.amount * monthly_cumulative_inflation_factors[month_idx]
             )
             nominal_planned_extra_expenses_amounts.append(
-                (nominal_extra_expense_amount, year_idx)
+                (nominal_extra_expense_amount, expense.year)
             )
 
         # --- Precompute nominal pension and salary monthly sequences with partial indexation ---
@@ -556,15 +555,12 @@ class Simulation:
             total_liquid = sum(self.state["liquid_assets"].values())
             weights = self.state["current_target_portfolio_weights"]
             if total_liquid > 0:
-                for asset in ASSET_KEYS:
-                    if asset != "real_estate":
-                        self.state["liquid_assets"][asset] = (
-                            total_liquid * weights[asset]
-                        )
+                for asset, weight in weights.items():
+                    self.state["liquid_assets"][asset] = total_liquid * weight
             else:
-                for asset in ASSET_KEYS:
-                    if asset != "real_estate":
-                        self.state["liquid_assets"][asset] = 0.0
+                # If total liquid is zero, zero out all liquid assets
+                for asset in self.state["liquid_assets"]:
+                    self.state["liquid_assets"][asset] = 0.0
 
     def _handle_bank_account(self, month):
         """
@@ -661,18 +657,14 @@ class Simulation:
             # Calculate total liquid assets
             total_liquid = sum(self.state["liquid_assets"].values())
             weights = self.state["current_target_portfolio_weights"]
-            sum_weights = sum(weights.values())
-            if sum_weights > 0 and total_liquid > 0:
-                # Normalize weights and rebalance
-                for asset in ASSET_KEYS:
-                    if asset != "real_estate":
-                        self.state["liquid_assets"][asset] = total_liquid * (
-                            weights[asset] / sum_weights
-                        )
+            # Assuming weights sum to 1.0 as validated in config parsing
+            if total_liquid > 0:
+                for asset, weight in weights.items():
+                    self.state["liquid_assets"][asset] = total_liquid * weight
             else:
-                for asset in ASSET_KEYS:
-                    if asset != "real_estate":
-                        self.state["liquid_assets"][asset] = 0.0
+                # If total liquid is zero, zero out all liquid assets
+                for asset in self.state["liquid_assets"]:
+                    self.state["liquid_assets"][asset] = 0.0
 
     def _withdraw_from_assets(self, amount: float) -> None:
         """

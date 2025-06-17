@@ -26,6 +26,30 @@ import numpy as np
 from typing import List
 
 
+class PlannedContribution(BaseModel):
+    """Represents a planned, single-year, contribution."""
+
+    amount: float = Field(
+        ..., description="Real (today's money) amount of the contribution."
+    )
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when the contribution occurs."
+    )
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class PlannedExtraExpense(BaseModel):
+    """Represents a planned, single-year, extra expense."""
+
+    amount: float = Field(
+        ..., description="Real (today's money) amount of the expense."
+    )
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when the expense occurs."
+    )
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
 class DeterministicInputs(BaseModel):
     """
     Pydantic model representing the deterministic financial inputs for the simulation.
@@ -104,12 +128,10 @@ class DeterministicInputs(BaseModel):
             "Models regular external contributions (e.g., a monthly savings plan)."
         ),
     )
-    planned_contributions: list[tuple[float, int]] = Field(
+    planned_contributions: list[PlannedContribution] = Field(
         default_factory=list,
         description=(
-            "List of planned one-time contributions to investments: "
-            "[[amount_in_real_terms, year_index]]. "
-            "Year index is 0-indexed."
+            "List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"
         ),
     )
 
@@ -121,12 +143,10 @@ class DeterministicInputs(BaseModel):
         ...,
         description="Initial real (today's money) fixed monthly expenses for living costs.",
     )
-    planned_extra_expenses: list[tuple[float, int]] = Field(
+    planned_extra_expenses: list[PlannedExtraExpense] = Field(
         default_factory=list,
         description=(
-            "List of planned one-time extra expenses: "
-            "[[amount_in_real_terms, year_index]]. "
-            "Year index is 0-indexed."
+            "List of planned extra expenses. e.g. [{amount = 15000, year = 3}, ...]"
         ),
     )
 

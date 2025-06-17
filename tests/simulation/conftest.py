@@ -9,6 +9,8 @@ from firestarter.config.config import (
     PortfolioRebalances,
     Shocks,
     SimulationParameters,
+    PlannedContribution,
+    PlannedExtraExpense,
 )
 from firestarter.core.constants import ASSET_KEYS
 
@@ -45,10 +47,10 @@ def basic_det_inputs() -> DeterministicInputs:
         pension_inflation_factor=1.0,
         pension_start_year=30,
         monthly_investment_contribution=0,
-        planned_contributions=[],
+        planned_contributions=[PlannedContribution(amount=1200, year=1)],
         annual_fund_fee=0.001,  # 0.1%
         monthly_expenses=0,
-        planned_extra_expenses=[],
+        planned_extra_expenses=[PlannedExtraExpense(amount=500, year=2)],
         planned_house_purchase_cost=0,
         house_purchase_year=None,
     )
