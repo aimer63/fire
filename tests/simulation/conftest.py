@@ -1,5 +1,5 @@
 import pytest
-from typing import Dict, Any
+from typing import Dict
 
 from firestarter.core.simulation import Simulation, SimulationBuilder
 from firestarter.config.config import (

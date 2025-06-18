@@ -156,10 +156,12 @@ class Simulation:
 
             # 4. House Purchase: If scheduled, withdraw from assets to buy a house.
             self._handle_house_purchase(month)
+            if self.state["simulation_failed"]:
+                break  # Exit if house purchase failed
 
             # 5. Bank Account Management:
             self._handle_bank_account(month)
-            if self.state.get("simulation_failed", False):
+            if self.state["simulation_failed"]:
                 break  # Exit if bank top-up failed
 
             # 6. Returns: Apply monthly returns to all assets.
@@ -456,6 +458,7 @@ class Simulation:
     def _handle_contributions(self, month):
         """
         Handles planned one-time contributions and regular monthly contributions.
+        Planned contribution are all applied the first month of the year
         Contributions are allocated according to the current target portfolio weights,
         but NEVER to real estate (see real_estate.md).
         """
@@ -543,7 +546,7 @@ class Simulation:
             # Use the unified withdrawal logic, but do NOT increase bank balance
             old_bank_balance = self.state["current_bank_balance"]
             self._withdraw_from_assets(nominal_house_cost)
-            if self.state.get("simulation_failed"):
+            if self.state["simulation_failed"]:
                 return
             # Remove the artificial bank increase (since we don't want to increase bank, just pay for house)
             self.state["current_bank_balance"] = old_bank_balance
@@ -581,7 +584,7 @@ class Simulation:
             shortfall = lower - self.state["current_bank_balance"]
             self._withdraw_from_assets(shortfall)
             # If withdrawal failed, _withdraw_from_assets sets simulation_failed
-            if self.state.get("simulation_failed"):
+            if self.state["simulation_failed"]:
                 return
             self.state["current_bank_balance"] = lower
 
