@@ -62,25 +62,26 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
         "fun": 50_000.0,
     }
     sim.state["current_real_estate_value"] = 300_000.0
-
     sim._record_results(month=0)
     month_0_bank = sim.results["bank_balance_history"][0]
 
     # Set state for month 1
-    sim.state["current_bank_balance"] = 12000.0
+    sim.state["current_bank_balance"] = 22_000.0
     sim.state["liquid_assets"] = {
-        "stocks": 52.0,
-        "bonds": 22.0,
-        "str": 12.0,
-        "fun": 7.0,
+        "stocks": 510_000.0,
+        "bonds": 255_000.0,
+        "str": 100_000.0,
+        "fun": 51_000.0,
     }
-    sim.state["current_real_estate_value"] = 2.0
+    sim.state["current_real_estate_value"] = 301_000.0
     sim._record_results(month=1)
 
     # Check values for month 1
-    expected_wealth_1 = 12000.0 + 52.0 + 22.0 + 12.0 + 7.0 + 2.0
+    expected_wealth_1 = (
+        22_000.0 + 510_000.0 + 255_000.0 + 100_000.0 + 51_000.0 + 301_000.0
+    )
     assert sim.results["wealth_history"][1] == pytest.approx(expected_wealth_1)
-    assert sim.results["bank_balance_history"][1] == pytest.approx(12000.0)
+    assert sim.results["bank_balance_history"][1] == pytest.approx(22_000.0)
 
     # Check month 0 is unchanged
     assert sim.results["bank_balance_history"][0] == pytest.approx(month_0_bank)
