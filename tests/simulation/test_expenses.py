@@ -1,6 +1,6 @@
 import pytest
 from firestarter.core.simulation import Simulation
-from firestarter.config.config import PlannedExtraExpense
+from firestarter.config.config import PlannedExtraExpenses
 
 
 def test_handle_expenses_sufficient_funds(initialized_simulation: Simulation) -> None:
@@ -16,7 +16,7 @@ def test_handle_expenses_sufficient_funds(initialized_simulation: Simulation) ->
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "planned_extra_expenses": [
-                PlannedExtraExpense(amount=expense_amount, year=expense_year)
+                PlannedExtraExpenses(amount=expense_amount, year=expense_year)
             ]
         }
     )
@@ -52,7 +52,7 @@ def test_handle_expenses_allows_negative_balance(
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "planned_extra_expenses": [
-                PlannedExtraExpense(amount=expense_amount, year=expense_year)
+                PlannedExtraExpenses(amount=expense_amount, year=expense_year)
             ]
         }
     )

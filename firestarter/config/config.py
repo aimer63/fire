@@ -38,7 +38,7 @@ class PlannedContribution(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-class PlannedExtraExpense(BaseModel):
+class PlannedExtraExpenses(BaseModel):
     """Represents a planned, single-year, extra expense."""
 
     amount: float = Field(
@@ -143,7 +143,7 @@ class DeterministicInputs(BaseModel):
         ...,
         description="Initial real (today's money) fixed monthly expenses for living costs.",
     )
-    planned_extra_expenses: list[PlannedExtraExpense] = Field(
+    planned_extra_expenses: list[PlannedExtraExpenses] = Field(
         default_factory=list,
         description=(
             "List of planned extra expenses. e.g. [{amount = 15000, year = 3}, ...]"

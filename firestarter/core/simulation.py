@@ -138,8 +138,17 @@ class Simulation:
         """
         Runs the main simulation loop, handling all monthly flows and events.
         """
-        self.init()  # Initialize state and precompute sequences
-        total_months = self.det_inputs.years_to_simulate * 12
+        # self.init()  # Initialize state and precompute sequences
+        total_months = self.simulation_months
+        self.results = {
+            "wealth_history": [None] * total_months,
+            "bank_balance_history": [None] * total_months,
+            "stocks_history": [None] * total_months,
+            "bonds_history": [None] * total_months,
+            "str_history": [None] * total_months,
+            "fun_history": [None] * total_months,
+            "real_estate_history": [None] * total_months,
+        }
 
         for month in range(total_months):
             self.state["current_month_index"] = month
@@ -694,17 +703,6 @@ class Simulation:
         Record the current state of the simulation at the end of the month.
         This includes nominal wealth, bank balance, and all asset values.
         """
-        if self.results == {}:
-            total_months = self.simulation_months
-            self.results = {
-                "wealth_history": [None] * total_months,
-                "bank_balance_history": [None] * total_months,
-                "stocks_history": [None] * total_months,
-                "bonds_history": [None] * total_months,
-                "str_history": [None] * total_months,
-                "fun_history": [None] * total_months,
-                "real_estate_history": [None] * total_months,
-            }
 
         self.results["wealth_history"][month] = (
             self.state["current_bank_balance"]
@@ -735,35 +733,36 @@ class Simulation:
         def trunc_only(arr):
             return arr[:months_lasted]
 
-        final_nominal_wealth = (
-            self.results["wealth_history"][months_lasted - 1]
-            # if months_lasted > 0
-            # else 0.0
-        )
-        final_cumulative_inflation = (
-            self.state["monthly_cumulative_inflation_factors"][months_lasted - 1]
-            # if months_lasted > 0
-            # else 1.0
-        )
-        final_real_wealth = (
-            final_nominal_wealth / final_cumulative_inflation
-            # if final_cumulative_inflation
-            # else 0.0
-        )
+        if months_lasted > 0:
+            last_month_idx = months_lasted - 1
+            final_nominal_wealth = self.results["wealth_history"][last_month_idx]
+            final_cumulative_inflation = self.state[
+                "monthly_cumulative_inflation_factors"
+            ][last_month_idx]
+            final_bank_balance = self.results["bank_balance_history"][last_month_idx]
+            final_investment = final_nominal_wealth - final_bank_balance
+            final_allocations_nominal = {
+                "Stocks": self.results["stocks_history"][last_month_idx],
+                "Bonds": self.results["bonds_history"][last_month_idx],
+                "STR": self.results["str_history"][last_month_idx],
+                "Fun": self.results["fun_history"][last_month_idx],
+                "Real Estate": self.results["real_estate_history"][last_month_idx],
+            }
+        else:  # months_lasted == 0
+            final_nominal_wealth = self.state["initial_total_wealth"]
+            final_cumulative_inflation = 1.0
+            final_bank_balance = self.det_inputs.initial_bank_balance
+            final_investment = final_nominal_wealth - final_bank_balance
+            final_allocations_nominal = {
+                "Stocks": self.initial_assets["stocks"],
+                "Bonds": self.initial_assets["bonds"],
+                "STR": self.initial_assets["str"],
+                "Fun": self.initial_assets["fun"],
+                "Real Estate": self.initial_assets["real_estate"],
+            }
 
-        final_investment = (
-            sum(self.state["liquid_assets"].values())
-            + self.state["current_real_estate_value"]
-        )
-        final_bank_balance = self.state["current_bank_balance"]
+        final_real_wealth = final_nominal_wealth / final_cumulative_inflation
 
-        final_allocations_nominal = {
-            "Stocks": self.state["liquid_assets"]["stocks"],
-            "Bonds": self.state["liquid_assets"]["bonds"],
-            "STR": self.state["liquid_assets"]["str"],
-            "Fun": self.state["liquid_assets"]["fun"],
-            "Real Estate": self.state["current_real_estate_value"],
-        }
         final_allocations_real = {
             k: float(v / final_cumulative_inflation)
             for k, v in final_allocations_nominal.items()

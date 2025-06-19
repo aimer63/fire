@@ -25,8 +25,16 @@ def test_record_results_initialization_and_first_month(
     }
     sim.init()  # Re-initialize to reflect the new inputs
 
-    # Before first recording, results should be an empty dict
-    assert sim.results == {}
+    # Manually initialize results structure as run() would
+    sim.results = {
+        "wealth_history": [None] * total_months,
+        "bank_balance_history": [None] * total_months,
+        "stocks_history": [None] * total_months,
+        "bonds_history": [None] * total_months,
+        "str_history": [None] * total_months,
+        "fun_history": [None] * total_months,
+        "real_estate_history": [None] * total_months,
+    }
 
     # Record state for month 0
     sim._record_results(month=0)
@@ -52,7 +60,18 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
     without altering previous records.
     """
     sim = initialized_simulation
+    total_months = sim.simulation_months
 
+    # Manually initialize results structure as run() would
+    sim.results = {
+        "wealth_history": [None] * total_months,
+        "bank_balance_history": [None] * total_months,
+        "stocks_history": [None] * total_months,
+        "bonds_history": [None] * total_months,
+        "str_history": [None] * total_months,
+        "fun_history": [None] * total_months,
+        "real_estate_history": [None] * total_months,
+    }
     # Record for month 0 with realistic values, assuming a house is owned
     sim.state["current_bank_balance"] = 20_000.0
     sim.state["liquid_assets"] = {
