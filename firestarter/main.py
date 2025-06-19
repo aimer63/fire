@@ -236,6 +236,12 @@ def main() -> None:
         "Wealth Evolution Samples (Nominal)": os.path.join(
             "..", "plots", "wealth_evolution_samples_nominal.png"
         ),
+        "Failed Wealth Evolution Samples (Real)": os.path.join(
+            "..", "plots", "failed_wealth_evolution_samples_real.png"
+        ),
+        "Failed Wealth Evolution Samples (Nominal)": os.path.join(
+            "..", "plots", "failed_wealth_evolution_samples_nominal.png"
+        ),
         "Bank Account Trajectories (Real)": os.path.join(
             "..", "plots", "bank_account_trajectories_real.png"
         ),

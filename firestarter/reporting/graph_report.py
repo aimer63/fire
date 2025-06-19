@@ -14,7 +14,7 @@ def plot_retirement_duration_distribution(
     plt.figure(figsize=(10, 6))
     plt.hist(
         failed_sims["months_lasted"] / 12.0,
-        bins=np.arange(0, total_retirement_years + 1, 1),
+        bins=np.arange(0, total_retirement_years + 1, 1.0).tolist(),
         edgecolor="black",
     )
     plt.title("Distribution of Retirement Duration for Failed Simulations")
@@ -24,26 +24,6 @@ def plot_retirement_duration_distribution(
     plt.tight_layout()
     plt.savefig(filename)
     # Do not close the figure, keep it open for interactive display
-
-
-# def plot_final_wealth_distribution(
-#     successful_sims: pd.DataFrame, column: str, title: str, xlabel: str, filename: str
-# ):
-#     if successful_sims.empty:
-#         print(f"No successful simulations to plot {title}.")
-#         return
-#     data = successful_sims[column].clip(lower=1.0)
-#     plt.figure(figsize=(10, 6))
-#     bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 50)
-#     plt.hist(data, bins=bins, edgecolor="black")
-#     plt.xscale("log")
-#     plt.title(title)
-#     plt.xlabel(xlabel)
-#     plt.ylabel("Number of Simulations")
-#     plt.grid(axis="y", alpha=0.75)
-#     plt.tight_layout()
-#     plt.savefig(filename)
-# Do not close the figure, keep it open for interactive display
 
 
 def plot_final_wealth_distribution(
@@ -66,7 +46,9 @@ def plot_final_wealth_distribution(
         # Ensure view_min and view_max are valid for logspace and distinct
         if view_min <= 0:
             view_min = 1e-9  # Must be positive
-        if view_max <= view_min:  # Handles center_val being very small or zero after clipping
+        if (
+            view_max <= view_min
+        ):  # Handles center_val being very small or zero after clipping
             if center_val > 1e-9:  # if center_val is not effectively zero
                 view_max = view_min * 1.01  # Ensure max > min by a small factor
             else:  # center_val is effectively zero, create a tiny range around it
@@ -83,9 +65,17 @@ def plot_final_wealth_distribution(
         # Use the width of a middle hypothetical bin for our single bar
         # This makes its relative width consistent with the multi-bar plot's logic
         mid_idx = num_bins_for_width_calc // 2
-        bar_width = hypothetical_bin_edges[mid_idx + 1] - hypothetical_bin_edges[mid_idx]
+        bar_width = (
+            hypothetical_bin_edges[mid_idx + 1] - hypothetical_bin_edges[mid_idx]
+        )
 
-        plt.bar([center_val], [len(data)], width=bar_width, color="dodgerblue", edgecolor="black")
+        plt.bar(
+            [center_val],
+            [len(data)],
+            width=bar_width,
+            color="dodgerblue",
+            edgecolor="black",
+        )
         plt.xscale("log")
         plt.title(title)
         plt.xlabel(xlabel)
@@ -97,7 +87,9 @@ def plot_final_wealth_distribution(
     else:
         # Use 50 bins for the histogram (51 edges)
         bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 51)
-        plt.hist(data, bins=bins, edgecolor="black")  # Matplotlib default color is fine
+        plt.hist(
+            data, bins=bins.tolist(), edgecolor="black"
+        )  # Matplotlib default color is fine
         plt.xscale("log")
         plt.title(title)
         plt.xlabel(xlabel)
@@ -143,7 +135,9 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
             row = sorted_successful.iloc[idx]
             wealth = np.array(row["wealth_history"], dtype=np.float64)
             if real:
-                inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+                inflation = np.array(
+                    row["monthly_cumulative_inflation_factors"], dtype=np.float64
+                )
                 wealth = wealth / inflation[: len(wealth)]
             if j == 0:
                 if i == 4:  # 80-100th percentile, show the true max
@@ -153,7 +147,8 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
                         w = np.array(r["wealth_history"], dtype=np.float64)
                         if real:
                             infl = np.array(
-                                r["monthly_cumulative_inflation_factors"], dtype=np.float64
+                                r["monthly_cumulative_inflation_factors"],
+                                dtype=np.float64,
                             )
                             w = w / infl[: len(w)]
                         if len(w) > 0 and w[-1] > max_final_val:
@@ -162,15 +157,18 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
                 else:
                     upper_idx = end - 1 if end > start else start
                     upper_row = sorted_successful.iloc[upper_idx]
-                    upper_wealth = np.array(upper_row["wealth_history"], dtype=np.float64)
+                    upper_wealth = np.array(
+                        upper_row["wealth_history"], dtype=np.float64
+                    )
                     if real:
                         inflation = np.array(
-                            upper_row["monthly_cumulative_inflation_factors"], dtype=np.float64
+                            upper_row["monthly_cumulative_inflation_factors"],
+                            dtype=np.float64,
                         )
                         upper_wealth = upper_wealth / inflation[: len(upper_wealth)]
                     upper_final_val = upper_wealth[-1] if len(upper_wealth) > 0 else 0.0
                 label = (
-                    f"{percentiles[i]}-{percentiles[i+1]}th Percentile "
+                    f"{percentiles[i]}-{percentiles[i + 1]}th Percentile "
                     f"(Final: {upper_final_val:,.0f}€)"
                 )
             else:
@@ -204,7 +202,9 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     ]:
         wealth = np.array(row["wealth_history"], dtype=np.float64)
         if real:
-            inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+            inflation = np.array(
+                row["monthly_cumulative_inflation_factors"], dtype=np.float64
+            )
             wealth = wealth / inflation[: len(wealth)]
         plt.plot(
             np.arange(0, len(wealth)) / 12.0,
@@ -215,15 +215,63 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
             alpha=1.0,
         )
 
-    plt.title(f"Sampled Wealth Evolution Over Retirement ({'Real' if real else 'Nominal'} Terms)")
+    plt.title(
+        f"Sampled Wealth Evolution Over Retirement ({'Real' if real else 'Nominal'} Terms)"
+    )
     plt.xlabel("Years in Retirement")
-    plt.ylabel(f"Total Wealth (EUR{' in today\'s money' if real else ' at time of value'})")
+    plt.ylabel(
+        f"Total Wealth (EUR{" in today's money" if real else ' at time of value'})"
+    )
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.yscale("log")
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
-    plt.tight_layout(rect=[0, 0, 0.85, 1])
+    plt.tight_layout(rect=(0, 0, 0.85, 1))
     plt.savefig(filename)
     # Do not close the figure, keep it open for interactive display
+
+
+def plot_failed_wealth_evolution_samples(
+    results_df: pd.DataFrame, real: bool, filename: str
+):
+    plt.figure(figsize=(14, 8))
+    failed = results_df[~results_df["success"]]
+    if failed.empty:
+        print("No failed simulations to plot wealth evolution.")
+        return
+
+    # Take a sample of up to 25 simulations for clarity
+    num_samples = 25
+    sample_df = (
+        failed.sample(n=num_samples, random_state=42)
+        if len(failed) > num_samples
+        else failed
+    )
+
+    for _, row in sample_df.iterrows():
+        wealth = np.array(row["wealth_history"], dtype=np.float64)
+        if real:
+            inflation = np.array(
+                row["monthly_cumulative_inflation_factors"], dtype=np.float64
+            )
+            wealth = wealth / inflation[: len(wealth)]
+
+        plt.plot(
+            np.arange(0, len(wealth)) / 12.0,
+            wealth,
+            color="crimson",
+            linewidth=1.0,
+            alpha=0.5,
+        )
+
+    plt.title(
+        f"Sampled Wealth Evolution for Failed Simulations ({'Real' if real else 'Nominal'} Terms)"
+    )
+    plt.xlabel("Years in Retirement")
+    plt.ylabel(f"Total Wealth ({'Real' if real else 'Nominal'} Terms)")
+    plt.grid(True, linestyle="--", alpha=0.7)
+    plt.yscale("log")
+    plt.tight_layout()
+    plt.savefig(filename)
 
 
 def plot_bank_account_trajectories(
@@ -264,11 +312,13 @@ def plot_bank_account_trajectories(
             row = sorted_successful.iloc[idx]
             bank = np.array(row["bank_balance_history"], dtype=np.float64)
             if real:
-                inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+                inflation = np.array(
+                    row["monthly_cumulative_inflation_factors"], dtype=np.float64
+                )
                 bank = bank / inflation[: len(bank)]
             final_val = bank[-1] if len(bank) > 0 else 0.0
             label = (
-                f"{percentiles[i]}-{percentiles[i+1]}th Percentile (Final: {final_val:,.0f}€)"
+                f"{percentiles[i]}-{percentiles[i + 1]}th Percentile (Final: {final_val:,.0f}€)"
                 if j == 0
                 else None
             )
@@ -290,7 +340,9 @@ def plot_bank_account_trajectories(
     ]:
         bank = np.array(row["bank_balance_history"], dtype=np.float64)
         if real:
-            inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
+            inflation = np.array(
+                row["monthly_cumulative_inflation_factors"], dtype=np.float64
+            )
             bank = bank / inflation[: len(bank)]
         final_val = bank[-1] if len(bank) > 0 else 0.0
         label = f"{case} (Final {'Real' if real else 'Nominal'}: {final_val:,.0f}€)"
@@ -321,10 +373,10 @@ def plot_bank_account_trajectories(
 
     plt.title(f"Bank Account Trajectories ({'Real' if real else 'Nominal'})")
     plt.xlabel("Years in Retirement")
-    plt.ylabel(f"Bank Account Balance (EUR{' in today\'s money' if real else ''})")
+    plt.ylabel(f"Bank Account Balance (EUR{" in today's money" if real else ''})")
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
-    plt.tight_layout(rect=[0, 0, 0.85, 1])
+    plt.tight_layout(rect=(0, 0, 0.85, 1))
     plt.savefig(filename)
     # Do not close the figure, keep it open for interactive display
 
@@ -342,8 +394,8 @@ def generate_all_plots(
     os.makedirs(plots_dir, exist_ok=True)
 
     results_df = pd.DataFrame(simulation_results)
-    failed_sims = results_df[~results_df["success"]]
-    successful_sims = results_df[results_df["success"]]
+    failed_sims = results_df.loc[~results_df["success"]]
+    successful_sims = results_df.loc[results_df["success"]]
 
     # 1. Retirement Duration Distribution (failed sims)
     plot_retirement_duration_distribution(
@@ -384,7 +436,21 @@ def generate_all_plots(
         filename=os.path.join(plots_dir, "wealth_evolution_samples_nominal.png"),
     )
 
-    # 6. Bank Account Trajectories (Real)
+    # 6. Failed Wealth Evolution Samples (Real)
+    plot_failed_wealth_evolution_samples(
+        results_df,
+        real=True,
+        filename=os.path.join(plots_dir, "failed_wealth_evolution_samples_real.png"),
+    )
+
+    # 7. Failed Wealth Evolution Samples (Nominal)
+    plot_failed_wealth_evolution_samples(
+        results_df,
+        real=False,
+        filename=os.path.join(plots_dir, "failed_wealth_evolution_samples_nominal.png"),
+    )
+
+    # 8. Bank Account Trajectories (Real)
     plot_bank_account_trajectories(
         results_df,
         real=True,
@@ -393,7 +459,7 @@ def generate_all_plots(
         filename=os.path.join(plots_dir, "bank_account_trajectories_real.png"),
     )
 
-    # 7. Bank Account Trajectories (Nominal)
+    # 9. Bank Account Trajectories (Nominal)
     plot_bank_account_trajectories(
         results_df,
         real=False,

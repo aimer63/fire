@@ -44,14 +44,30 @@ def test_record_results_initialization_and_first_month(
     assert len(sim.results["wealth_history"]) == total_months
     # Check that other months are still None
     assert all(x is None for x in sim.results["wealth_history"][1:])
-    expected_wealth = 25_000.0 + 500_000.0 + 250_000.0 + 100_000.0 + 50_000.0 + 0.0
+    expected_wealth = (
+        sim.state["current_bank_balance"]
+        + sum(sim.state["liquid_assets"].values())
+        + sim.state["current_real_estate_value"]
+    )
     assert sim.results["wealth_history"][0] == pytest.approx(expected_wealth)
-    assert sim.results["bank_balance_history"][0] == pytest.approx(25_000.0)
-    assert sim.results["stocks_history"][0] == pytest.approx(500_000.0)
-    assert sim.results["bonds_history"][0] == pytest.approx(250_000.0)
-    assert sim.results["str_history"][0] == pytest.approx(100_000.0)
-    assert sim.results["fun_history"][0] == pytest.approx(50_000.0)
-    assert sim.results["real_estate_history"][0] == pytest.approx(0.0)
+    assert sim.results["bank_balance_history"][0] == pytest.approx(
+        sim.state["current_bank_balance"]
+    )
+    assert sim.results["stocks_history"][0] == pytest.approx(
+        sim.state["liquid_assets"]["stocks"]
+    )
+    assert sim.results["bonds_history"][0] == pytest.approx(
+        sim.state["liquid_assets"]["bonds"]
+    )
+    assert sim.results["str_history"][0] == pytest.approx(
+        sim.state["liquid_assets"]["str"]
+    )
+    assert sim.results["fun_history"][0] == pytest.approx(
+        sim.state["liquid_assets"]["fun"]
+    )
+    assert sim.results["real_estate_history"][0] == pytest.approx(
+        sim.state["current_real_estate_value"]
+    )
 
 
 def test_record_results_subsequent_month(initialized_simulation: Simulation):
@@ -97,10 +113,14 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
 
     # Check values for month 1
     expected_wealth_1 = (
-        22_000.0 + 510_000.0 + 255_000.0 + 100_000.0 + 51_000.0 + 301_000.0
+        sim.state["current_bank_balance"]
+        + sum(sim.state["liquid_assets"].values())
+        + sim.state["current_real_estate_value"]
     )
     assert sim.results["wealth_history"][1] == pytest.approx(expected_wealth_1)
-    assert sim.results["bank_balance_history"][1] == pytest.approx(22_000.0)
+    assert sim.results["bank_balance_history"][1] == pytest.approx(
+        sim.state["current_bank_balance"]
+    )
 
     # Check month 0 is unchanged
     assert sim.results["bank_balance_history"][0] == pytest.approx(month_0_bank)

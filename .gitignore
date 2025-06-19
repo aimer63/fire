@@ -5,6 +5,12 @@ __pycache__/
 # C extensions
 *.so
 
+# Pytest cache
+.pytest_cache/
+
+# VS Code
+.vscode/
+
 # Ignore config files you don't want to commit
 configs/imerio.toml
 configs/carlo.toml
