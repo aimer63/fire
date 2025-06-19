@@ -26,15 +26,12 @@ All notable changes to this project will be documented in this file.
 - Updated all code, config files, and documentation to use the new structure and parameter names.
 - Refactored `run_single_fire_simulation` for improved readability, maintainability, modularity, and
   flexibility.
-- Unused inflation/return sequences removed, naming clarified, and documentation updated.
 - Removed unused `monthly_inflation_rates` from the simulation.
 - Ensured only necessary inflation/return sequences are stored and documented.
 - Renamed inflation factor arrays for consistency and clarity.
 - Updated documentation to reflect the new structure and clarify the handling of inflation and
   returns.
 - Added explicit notes in config and docs about single-currency assumption.
-- Print all loaded parameters to the console in a section titled
-  `--- Loaded Parameters Summary (from config.toml) ---` after config parsing.
 - Add a section to the Markdown report listing the value of all parameters loaded from the config
   file.
 - Centralized all result formatting, summary, and reporting logic (formerly scattered across
@@ -55,5 +52,7 @@ All notable changes to this project will be documented in this file.
     discovery during the prototyping phase by allowing runtime errors to surface directly.
   - Ensured `markdown_report.py` correctly includes the report generation timestamp and the
     configuration filename in the output.
+- The simulation now runs truly on monthly base, meaning that a sample of returns and inflation is drawn for each month.
+- Added tests for simulation.py.
 
 ---
