@@ -26,3 +26,21 @@
   - It ensures that the simulated monthly returns and inflation, when aggregated, align with the
     statistical properties of the annualized input parameters.
   - The conversion from annual to monthly distribution parameters is handled once before sampling.
+
+---
+
+## Correlation Assumptions
+
+A key simplifying assumption in the current simulation model is the **lack of correlation** between
+all stochastic variables. Specifically:
+
+- **Asset-to-Asset Correlation:** The monthly returns for each asset class (e.g., Stocks, Bonds,
+  Real Estate) are drawn independently. The simulation assumes **zero correlation** between the
+  returns of different assets.
+- **Asset-to-Inflation Correlation:** The monthly returns for all asset classes are drawn
+  independently from the monthly inflation rate. The simulation assumes **zero correlation** between
+  asset performance and inflation.
+
+This means that a high return in the stock market in a given month has no statistical bearing on the
+return of the bond market or the inflation rate for that same month. While this simplifies the
+model, it is an important limitation to consider when interpreting the results.

@@ -66,7 +66,8 @@ This document explains all parameters available in the main TOML configuration f
   Fixed monthly contribution to investments (in today's money).
 
 - **planned_contributions** _(list of dicts)_  
-  List of one-time contributions (in today's money). Each dict has `amount` (float) and `year` (int).
+  List of one-time contributions (in today's money). Each dict has `amount` (float) and `year`
+  (int).
 
 - **annual_fund_fee** _(float)_  
   Annual fee on investments (e.g., 0.002 for 0.2%).
@@ -75,7 +76,8 @@ This document explains all parameters available in the main TOML configuration f
   Fixed monthly living expenses (in today's money).
 
 - **planned_extra_expenses** _(list of dicts)_  
-  List of one-time extra expenses (in today's money). Each dict has `amount` (float) and `year` (int).
+  List of one-time extra expenses (in today's money). Each dict has `amount` (float) and `year`
+  (int).
 
 - **planned_house_purchase_cost** _(float)_  
   Real cost of the house to be purchased.
@@ -122,7 +124,8 @@ This document explains all parameters available in the main TOML configuration f
 - **rebalances** _(list of dicts)_  
   List of scheduled portfolio rebalances. Each entry is a dictionary:
 
-  - **year**: Year index when the rebalance occurs (int). The rebalance is triggered at the beginning of this year.
+  - **year**: Year index when the rebalance occurs (int). The rebalance is triggered at the
+    beginning of this year.
   - **stocks**: Portfolio weight for stocks (float, 0–1, liquid assets only)
   - **bonds**: Portfolio weight for bonds (float, 0–1, liquid assets only)
   - **str**: Portfolio weight for short-term reserves/cash (float, 0–1)

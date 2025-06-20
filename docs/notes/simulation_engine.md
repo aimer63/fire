@@ -53,14 +53,14 @@ For a detailed explanation of how **returns** and **inflation** are handled in t
 ### 1. **Initialization**
 
 - The builder sets up all configuration objects.
-- `Simulation.init()` initializes the simulation state and precomputes all sequences needed for the
-  run (returns, inflation, planned flows, etc.).
+- `Simulation.init()` initializes the simulation state and precomputes all time-series data needed
+  for the run (e.g., monthly sequences for market returns and inflation).
 
 ### 2. **Main Simulation Loop (`Simulation.run()`)**
 
 For each month:
 
-1. **Income:** Add salary and pension for the current year.
+1. **Income:** Calculates and adds salary and pension for the current month.
 2. **Contributions:** Apply planned and regular contributions to liquid assets.
 3. **Expenses:** Deduct regular and extra expenses from the bank account.
 4. **House Purchase:** If scheduled, withdraw from assets to buy a house and add its value to real
@@ -88,10 +88,10 @@ For each month:
 ## Key Methods
 
 - **`precompute_sequences()`**  
-  Prepares all annual/monthly sequences for returns, inflation, planned flows, and applies shocks.
+  Prepares all monthly sequences for returns and inflation, and applies shocks.
 
 - **`process_income(month)`**  
-  Adds precomputed salary and pension for the current year to the bank account.
+  Calculates and adds salary and pension for the current month to the bank account.
 
 - **`handle_contributions(month)`**  
   Allocates planned and regular contributions to liquid assets (never to real estate).

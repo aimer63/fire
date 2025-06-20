@@ -37,6 +37,11 @@
 - Updated documentation to reflect the new project structure and clarify the handling of inflation
   and returns.
 - Parallelized execution using Pool's `ProcessPoolExecutor`.
+- Renamed pre-computed income sequences (salary, pension) for better clarity and consistency.
+- Refactored inflation adjustment for `planned_contributions` and `planned_extra_expenses` to be
+  calculated just-in-time, removing their pre-computation from the simulation state.
+- Updated documentation to explicitly state the assumption of zero correlation between all
+  stochastic variables (asset returns and inflation).
 
 ### Fixed
 
@@ -44,6 +49,4 @@
 
 ### Removed
 
-- Removed the `[portfolio_allocations]` section and all related `phase1_*`/`phase2_*` parameters
-  from the configuration.
 - Removed unused `monthly_inflation_rates` from the simulation state.

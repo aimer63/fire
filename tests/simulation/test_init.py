@@ -56,8 +56,8 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
         "monthly_str_returns_sequence",
         "monthly_fun_returns_sequence",
         "monthly_real_estate_returns_sequence",
-        "nominal_pension_monthly_sequence",
-        "nominal_salary_monthly_sequence",
+        "monthly_nominal_pension_sequence",
+        "monthly_nominal_salary_sequence",
     ]
     for seq_name in sequences_to_check:
         assert seq_name in state, f"'{seq_name}' should be in state."
@@ -74,7 +74,3 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
     for asset_key in ["Stocks", "Bonds", "STR", "Fun", "Real Estate"]:
         assert asset_key in state["monthly_returns_lookup"]
         assert len(state["monthly_returns_lookup"][asset_key]) == total_months
-
-    # Check other precomputed lists/dicts (existence is usually enough here)
-    assert "nominal_planned_contributions_amounts" in state
-    assert "nominal_planned_extra_expenses_amounts" in state

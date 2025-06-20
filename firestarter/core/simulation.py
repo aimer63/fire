@@ -363,34 +363,9 @@ class Simulation:
             "Real Estate": monthly_real_estate_returns_sequence,
         }
 
-        # --- Planned contributions and extra expenses (nominal, inflation-adjusted) ---
-        planned_contributions = det_inputs.planned_contributions
-        planned_extra_expenses = det_inputs.planned_extra_expenses
-
-        nominal_planned_contributions_amounts = []
-        for contribution in planned_contributions:
-            # Use cumulative inflation up to the first month of the year
-            month_idx = contribution.year * 12
-            nominal_contribution_amount = float(
-                contribution.amount * monthly_cumulative_inflation_factors[month_idx]
-            )
-            nominal_planned_contributions_amounts.append(
-                (nominal_contribution_amount, contribution.year)
-            )
-
-        nominal_planned_extra_expenses_amounts = []
-        for expense in planned_extra_expenses:
-            month_idx = expense.year * 12
-            nominal_extra_expense_amount = float(
-                expense.amount * monthly_cumulative_inflation_factors[month_idx]
-            )
-            nominal_planned_extra_expenses_amounts.append(
-                (nominal_extra_expense_amount, expense.year)
-            )
-
         # --- Precompute nominal pension and salary monthly sequences with partial indexation ---
-        nominal_pension_monthly_sequence = np.zeros(total_months, dtype=np.float64)
-        nominal_salary_monthly_sequence = np.zeros(total_months, dtype=np.float64)
+        monthly_nominal_pension_sequence = np.zeros(total_months, dtype=np.float64)
+        monthly_nominal_salary_sequence = np.zeros(total_months, dtype=np.float64)
 
         pension_start_month_idx = det_inputs.pension_start_year * 12
         salary_start_month_idx = det_inputs.salary_start_year * 12
@@ -410,7 +385,7 @@ class Simulation:
                         monthly_inflations_sequence[month_idx - 1]
                         * det_inputs.pension_inflation_factor
                     )
-                nominal_pension_monthly_sequence[month_idx] = pension_cumulative
+                monthly_nominal_pension_sequence[month_idx] = pension_cumulative
 
             # Salary
             if salary_start_month_idx <= month_idx < salary_end_month_idx:
@@ -421,7 +396,7 @@ class Simulation:
                         monthly_inflations_sequence[month_idx - 1]
                         * det_inputs.salary_inflation_factor
                     )
-                nominal_salary_monthly_sequence[month_idx] = salary_cumulative
+                monthly_nominal_salary_sequence[month_idx] = salary_cumulative
 
         # --- Store all sequences in self.state ---
         self.state["monthly_inflations_sequence"] = monthly_inflations_sequence
@@ -436,16 +411,10 @@ class Simulation:
             monthly_cumulative_inflation_factors
         )
         self.state["monthly_returns_lookup"] = monthly_returns_lookup
-        self.state["nominal_planned_contributions_amounts"] = (
-            nominal_planned_contributions_amounts
+        self.state["monthly_nominal_pension_sequence"] = (
+            monthly_nominal_pension_sequence
         )
-        self.state["nominal_planned_extra_expenses_amounts"] = (
-            nominal_planned_extra_expenses_amounts
-        )
-        self.state["nominal_pension_monthly_sequence"] = (
-            nominal_pension_monthly_sequence
-        )
-        self.state["nominal_salary_monthly_sequence"] = nominal_salary_monthly_sequence
+        self.state["monthly_nominal_salary_sequence"] = monthly_nominal_salary_sequence
 
     def _process_income(self, month):
         """
@@ -455,12 +424,12 @@ class Simulation:
         income = 0.0
 
         # Pension (precomputed, already inflation/adjustment adjusted)
-        if month < len(self.state["nominal_pension_monthly_sequence"]):
-            income += self.state["nominal_pension_monthly_sequence"][month]
+        if month < len(self.state["monthly_nominal_pension_sequence"]):
+            income += self.state["monthly_nominal_pension_sequence"][month]
 
         # Salary (precomputed, already inflation/adjustment adjusted)
-        if month < len(self.state["nominal_salary_monthly_sequence"]):
-            income += self.state["nominal_salary_monthly_sequence"][month]
+        if month < len(self.state["monthly_nominal_salary_sequence"]):
+            income += self.state["monthly_nominal_salary_sequence"][month]
 
         self.state["current_bank_balance"] += income
 
@@ -473,13 +442,15 @@ class Simulation:
         """
         det_inputs = self.det_inputs
 
-        # Planned one-time contributions (applied at the first month of the year)
-        # Planned one-time contributions (applied at the first month of the year)
-        for nominal_contribution_amount, year_idx in self.state[
-            "nominal_planned_contributions_amounts"
-        ]:
-            if month == year_idx * 12:
-                self._invest_in_liquid_assets(nominal_contribution_amount)
+        if month % 12 == 0:
+            current_year = month // 12
+            for contribution in det_inputs.planned_contributions:
+                if contribution.year == current_year:
+                    inflation_factor = self.state[
+                        "monthly_cumulative_inflation_factors"
+                    ][month]
+                    nominal_amount = contribution.amount * inflation_factor
+                    self._invest_in_liquid_assets(nominal_amount)
 
         # Regular monthly contribution (inflation-adjusted)
         if det_inputs.monthly_investment_contribution > 0.0:
@@ -504,11 +475,15 @@ class Simulation:
         total_expenses = nominal_monthly_expenses
 
         # Planned extra expenses (applied at the first month of the year)
-        for nominal_extra_expense_amount, year_idx in self.state[
-            "nominal_planned_extra_expenses_amounts"
-        ]:
-            if month == year_idx * 12:
-                total_expenses += nominal_extra_expense_amount
+        if month % 12 == 0:
+            current_year = month // 12
+            for expense in det_inputs.planned_extra_expenses:
+                if expense.year == current_year:
+                    inflation_factor = self.state[
+                        "monthly_cumulative_inflation_factors"
+                    ][month]
+                    nominal_amount = expense.amount * inflation_factor
+                    total_expenses += nominal_amount
 
         # Deduct from bank balance
         self.state["current_bank_balance"] -= total_expenses
