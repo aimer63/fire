@@ -62,12 +62,8 @@ This document explains all parameters available in the main TOML configuration f
 - **pension_start_year** _(int)_  
   Year index when pension starts.
 
-- **monthly_investment_contribution** _(float)_  
-  Fixed monthly contribution to investments (in today's money).
-
 - **planned_contributions** _(list of dicts)_  
-  List of one-time contributions (in today's money). Each dict has `amount` (float) and `year`
-  (int).
+  List of one-time contributions (as a fixed nominal amount). Each dict has `amount` (float) and `year` (int).
 
 - **annual_fund_fee** _(float)_  
   Annual fee on investments (e.g., 0.002 for 0.2%).

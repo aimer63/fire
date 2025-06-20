@@ -61,7 +61,7 @@ For a detailed explanation of how **returns** and **inflation** are handled in t
 For each month:
 
 1. **Income:** Calculates and adds salary and pension for the current month.
-2. **Contributions:** Apply planned and regular contributions to liquid assets.
+2. **Contributions:** Apply planned contributions to liquid assets.
 3. **Expenses:** Deduct regular and extra expenses from the bank account.
 4. **House Purchase:** If scheduled, withdraw from assets to buy a house and add its value to real
    estate.
@@ -94,7 +94,7 @@ For each month:
   Calculates and adds salary and pension for the current month to the bank account.
 
 - **`handle_contributions(month)`**  
-  Allocates planned and regular contributions to liquid assets (never to real estate).
+  Allocates planned contributions to liquid assets (never to real estate).
 
 - **`handle_expenses(month)`**  
   Deducts regular and extra expenses from the bank account.

@@ -46,7 +46,6 @@ def basic_det_inputs() -> DeterministicInputs:
         monthly_pension=0,
         pension_inflation_factor=1.0,
         pension_start_year=30,
-        monthly_investment_contribution=0,
         planned_contributions=[PlannedContribution(amount=1200, year=1)],
         annual_fund_fee=0.001,  # 0.1%
         monthly_expenses=0,

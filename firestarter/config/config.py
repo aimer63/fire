@@ -24,6 +24,7 @@ These models provide type safety and validation for the simulation engine.
 from pydantic import BaseModel, Field, ConfigDict
 import numpy as np
 from typing import List
+from firestarter.config.correlation_matrix import CorrelationMatrix
 
 
 class PlannedContribution(BaseModel):
@@ -121,13 +122,6 @@ class DeterministicInputs(BaseModel):
         ..., description="Year index (0-indexed) when pension income starts."
     )
 
-    monthly_investment_contribution: float = Field(
-        ...,
-        description=(
-            "Fixed initial real (today's money) monthly contribution to invested assets. "
-            "Models regular external contributions (e.g., a monthly savings plan)."
-        ),
-    )
     planned_contributions: list[PlannedContribution] = Field(
         default_factory=list,
         description=(
@@ -215,6 +209,14 @@ class MarketAssumptions(BaseModel):
     pi_mu: float = Field(..., description="Arithmetic mean of annual inflation rate.")
     pi_sigma: float = Field(
         ..., description="Standard deviation of annual inflation rate."
+    )
+
+    correlation_matrix: CorrelationMatrix | None = Field(
+        default=None,
+        description=(
+            "Optional correlation matrix for asset returns and inflation. "
+            "If not provided, assets are assumed to be uncorrelated."
+        ),
     )
 
     @staticmethod

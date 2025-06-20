@@ -29,8 +29,7 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
     initial_bank_balance = sim.state["current_bank_balance"]
 
     # Execute the method under test for an arbitrary month
-    month_to_test = 6
-    sim._apply_fund_fee(month_to_test)
+    sim._apply_fund_fee()
 
     # --- Assertions ---
     monthly_fee_percentage = annual_fee / 12.0

@@ -32,14 +32,13 @@ def test_handle_contributions(initialized_simulation: Simulation) -> None:
     month_to_test = contribution_year * 12
     sim._handle_contributions(month_to_test)
 
-    # The contribution amount should be adjusted for inflation up to the start of the year
-    inflation_factor = state["monthly_cumulative_inflation_factors"][month_to_test]
-    expected_nominal_amount = contribution_amount * inflation_factor
+    # The contribution amount is a fixed nominal value and should not be adjusted for inflation
+    expected_nominal_amount = contribution_amount
 
     # Check that bank balance is unchanged
-    assert (
-        state["current_bank_balance"] == initial_bank_balance
-    ), "Bank balance should not change on contribution."
+    assert state["current_bank_balance"] == initial_bank_balance, (
+        "Bank balance should not change on contribution."
+    )
 
     # Check that liquid assets are increased according to target weights
     target_weights = state["current_target_portfolio_weights"]

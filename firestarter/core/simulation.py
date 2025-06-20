@@ -157,7 +157,7 @@ class Simulation:
             # 1. Income: Add salary and pension for the current year.
             self._process_income(month)
 
-            # 2. Contributions: Apply planned and regular contributions to liquid assets.
+            # 2. Contributions: Apply planned contributions to liquid assets.
             self._handle_contributions(month)
 
             # 3. Expenses: Deduct regular and extra expenses from the bank account.
@@ -177,7 +177,7 @@ class Simulation:
             self._apply_monthly_returns(month)
 
             # 7. Apply Fund Fee (monthly)
-            self._apply_fund_fee(month)
+            self._apply_fund_fee()
 
             # 8. Rebalancing: If scheduled, rebalance liquid assets.
             self._rebalance_if_needed(month)
@@ -435,7 +435,7 @@ class Simulation:
 
     def _handle_contributions(self, month):
         """
-        Handles planned one-time contributions and regular monthly contributions.
+        Handles planned one-time contributions.
         Planned contribution are all applied the first month of the year
         Contributions are allocated according to the current target portfolio weights,
         but NEVER to real estate (see real_estate.md).
@@ -446,19 +446,7 @@ class Simulation:
             current_year = month // 12
             for contribution in det_inputs.planned_contributions:
                 if contribution.year == current_year:
-                    inflation_factor = self.state[
-                        "monthly_cumulative_inflation_factors"
-                    ][month]
-                    nominal_amount = contribution.amount * inflation_factor
-                    self._invest_in_liquid_assets(nominal_amount)
-
-        # Regular monthly contribution (inflation-adjusted)
-        if det_inputs.monthly_investment_contribution > 0.0:
-            monthly_contribution = (
-                det_inputs.monthly_investment_contribution
-                * self.state["monthly_cumulative_inflation_factors"][month]
-            )
-            self._invest_in_liquid_assets(monthly_contribution)
+                    self._invest_in_liquid_assets(contribution.amount)
 
     def _handle_expenses(self, month):
         """
@@ -575,7 +563,7 @@ class Simulation:
                 )
         self.state["current_real_estate_value"] *= 1.0 + returns["Real Estate"][month]
 
-    def _apply_fund_fee(self, month: int) -> None:
+    def _apply_fund_fee(self) -> None:
         """
         Applies the fund fee to all liquid assets on a monthly basis.
         The annual fee is converted to a monthly equivalent.

@@ -1,0 +1,23 @@
+
+[market_assumptions]
+stock_mu = 0.08
+stock_sigma = 0.15
+bond_mu = 0.03
+bond_sigma = 0.05
+str_mu = 0.01
+str_sigma = 0.02
+fun_mu = 0.05
+fun_sigma = 0.10
+real_estate_mu = 0.04
+real_estate_sigma = 0.08
+pi_mu = 0.02
+pi_sigma = 0.03
+
+# Invalid matrix (asymmetric)
+[market_assumptions.correlation_matrix]
+stocks = [1.0, 0.5, 0.0, 0.0, 0.0, 0.0]
+bonds = [0.4, 1.0, 0.0, 0.0, 0.0, 0.0]
+str = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+fun = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+real_estate = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+inflation = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]

@@ -36,8 +36,8 @@ The simulation manages inflation using two primary sequences derived from monthl
 - **Usage:** This is the **primary tool** for converting any real (today's money) value to its
   nominal (future money) equivalent at any specific month. It is used for:
   - Adjusting planned contributions, extra expenses, salary, pension, and house purchase costs
-    (which are specified in real terms by year) to their nominal values at the start of the relevant
-    year (i.e., indexed at `year_idx * 12`).
+    (which are specified in real terms by year) to their nominal values at the start of the
+    relevant year (i.e., indexed at `year_idx * 12`).
   - Converting nominal asset values and balances to real terms for reporting and plotting.
   - Adjusting bank account bounds (specified in real terms) to nominal values for each month.
 

@@ -51,11 +51,8 @@ pension_inflation_factor = 0.6 # Factor by which pension adjusts to inflation (1
 pension_start_year = 0
 
 # To the investment:
-# Fixed monthly contribution to the invested assets, like a pac in today money
-# coming from your grandfather, it's exogenous
-monthly_investment_contribution = 0 # Example: 500€ per month in today's money
 
-# Planned Contributions, real amount at the time of the contribution
+# Planned Contributions, nominal amount.
 # planned_contributions = []
 planned_contributions = [
   { amount = 30000, year = 2 },
@@ -67,13 +64,17 @@ planned_contributions = [
 
 # Out flows
 annual_fund_fee = 0.002 # 0.2%
+
 # Fixed monthly exepense for the life level you want to keep
+# Real amount, today's money, the simulation will inflate the value according
+# to the drawn inflation rate.
 monthly_expenses = 0
 
-# Planned Extra Expenses real_amount at the time of the expense. [[X, year], ...]
+# Real amount, today's money, the simulation will inflate the value according
+# to the drawn inflation rate.
 planned_extra_expenses = [{ amount = 0, year = 0 }]
 
-# Initial real cost of the house to be purchased at rebalancing_year_idx
+# Real cost at today of the house to be purchased
 planned_house_purchase_cost = 0
 house_purchase_year = 0
 
