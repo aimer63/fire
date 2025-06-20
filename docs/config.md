@@ -65,8 +65,8 @@ This document explains all parameters available in the main TOML configuration f
 - **monthly_investment_contribution** _(float)_  
   Fixed monthly contribution to investments (in today's money).
 
-- **planned_contributions** _(list of [amount, year])_  
-  List of one-time contributions: each entry is `[amount, year]`.
+- **planned_contributions** _(list of dicts)_  
+  List of one-time contributions (in today's money). Each dict has `amount` (float) and `year` (int).
 
 - **annual_fund_fee** _(float)_  
   Annual fee on investments (e.g., 0.002 for 0.2%).
@@ -74,8 +74,8 @@ This document explains all parameters available in the main TOML configuration f
 - **monthly_expenses** _(float)_  
   Fixed monthly living expenses (in today's money).
 
-- **planned_extra_expenses** _(list of [amount, year])_  
-  List of one-time extra expenses: each entry is `[amount, year]`.
+- **planned_extra_expenses** _(list of dicts)_  
+  List of one-time extra expenses (in today's money). Each dict has `amount` (float) and `year` (int).
 
 - **planned_house_purchase_cost** _(float)_  
   Real cost of the house to be purchased.
@@ -112,8 +112,8 @@ This document explains all parameters available in the main TOML configuration f
 - **events** _(list of dicts)_  
   List of market shock events. Each event is a dictionary with:
   - **year**: Year index of the shock (int)
-  - **asset**: Asset affected (e.g., "Stocks", "Bonds", "STR", "Fun", "Real Estate")
-  - **magnitude**: Return shock (e.g., -0.35 for -35%)
+  - **asset**: Asset affected (e.g., "Stocks", "Bonds", "STR", "Fun", "Real Estate", "Inflation")
+  - **magnitude**: Absolute annual rate that overrides the stochastic model (e.g., -0.35 for -35%).
 
 ---
 
@@ -122,7 +122,7 @@ This document explains all parameters available in the main TOML configuration f
 - **rebalances** _(list of dicts)_  
   List of scheduled portfolio rebalances. Each entry is a dictionary:
 
-  - **year**: Year index when the rebalance occurs (int)
+  - **year**: Year index when the rebalance occurs (int). The rebalance is triggered at the beginning of this year.
   - **stocks**: Portfolio weight for stocks (float, 0–1, liquid assets only)
   - **bonds**: Portfolio weight for bonds (float, 0–1, liquid assets only)
   - **str**: Portfolio weight for short-term reserves/cash (float, 0–1)
@@ -131,6 +131,7 @@ This document explains all parameters available in the main TOML configuration f
   **Note:**
 
   - The sum of weights for each rebalance must be 1.0.
+  - Each year can only have one rebalance event scheduled.
   - There must be a rebalance at year 0 to set initial weights.
   - Real estate is not included in portfolio weights; it is handled separately.
 

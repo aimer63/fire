@@ -474,18 +474,12 @@ class Simulation:
         det_inputs = self.det_inputs
 
         # Planned one-time contributions (applied at the first month of the year)
+        # Planned one-time contributions (applied at the first month of the year)
         for nominal_contribution_amount, year_idx in self.state[
             "nominal_planned_contributions_amounts"
         ]:
             if month == year_idx * 12:
-                weights = self.state["current_target_portfolio_weights"]
-                increments = {
-                    asset: nominal_contribution_amount * weights[asset]
-                    for asset in ASSET_KEYS
-                    if asset != "real_estate"
-                }
-                for asset, delta in increments.items():
-                    self.state["liquid_assets"][asset] += delta
+                self._invest_in_liquid_assets(nominal_contribution_amount)
 
         # Regular monthly contribution (inflation-adjusted)
         if det_inputs.monthly_investment_contribution > 0.0:
@@ -493,14 +487,7 @@ class Simulation:
                 det_inputs.monthly_investment_contribution
                 * self.state["monthly_cumulative_inflation_factors"][month]
             )
-            weights = self.state["current_target_portfolio_weights"]
-            increments = {
-                asset: monthly_contribution * weights[asset]
-                for asset in ASSET_KEYS
-                if asset != "real_estate"
-            }
-            for asset, delta in increments.items():
-                self.state["liquid_assets"][asset] += delta
+            self._invest_in_liquid_assets(monthly_contribution)
 
     def _handle_expenses(self, month):
         """
@@ -564,15 +551,7 @@ class Simulation:
             self.state["current_real_estate_value"] += nominal_house_cost
 
             # --- Rebalance remaining liquid assets according to current target portfolio weights ---
-            total_liquid = sum(self.state["liquid_assets"].values())
-            weights = self.state["current_target_portfolio_weights"]
-            if total_liquid > 0:
-                for asset, weight in weights.items():
-                    self.state["liquid_assets"][asset] = total_liquid * weight
-            else:
-                # If total liquid is zero, zero out all liquid assets
-                for asset in self.state["liquid_assets"]:
-                    self.state["liquid_assets"][asset] = 0.0
+            self._rebalance_liquid_assets()
 
     def _handle_bank_account(self, month):
         """
@@ -600,12 +579,7 @@ class Simulation:
         # Invest excess if above upper bound
         if self.state["current_bank_balance"] > upper:
             excess = self.state["current_bank_balance"] - upper
-            weights = self.state["current_target_portfolio_weights"]
-            increments = {
-                asset: excess * weights[asset] for asset in self.state["liquid_assets"]
-            }
-            for asset, delta in increments.items():
-                self.state["liquid_assets"][asset] += delta
+            self._invest_in_liquid_assets(excess)
             self.state["current_bank_balance"] = upper
 
     def _apply_monthly_returns(self, month):
@@ -641,6 +615,29 @@ class Simulation:
                 fee_amount = current_value * monthly_fee_percentage
                 self.state["liquid_assets"][asset_key] = current_value - fee_amount
 
+    def _rebalance_liquid_assets(self):
+        """
+        Rebalances all liquid assets according to the current target portfolio weights.
+        """
+        total_liquid = sum(self.state["liquid_assets"].values())
+        weights = self.state["current_target_portfolio_weights"]
+        if total_liquid > 0:
+            # Assuming weights sum to 1.0 as validated in config parsing
+            for asset, weight in weights.items():
+                self.state["liquid_assets"][asset] = total_liquid * weight
+        else:
+            # If total liquid is zero, zero out all liquid assets
+            for asset in self.state["liquid_assets"]:
+                self.state["liquid_assets"][asset] = 0.0
+
+    def _invest_in_liquid_assets(self, amount: float):
+        """
+        Invests a given amount into liquid assets according to current target weights.
+        """
+        weights = self.state["current_target_portfolio_weights"]
+        for asset, weight in weights.items():
+            self.state["liquid_assets"][asset] += amount * weight
+
     def _rebalance_if_needed(self, month):
         """
         Rebalance liquid assets (stocks, bonds, str, fun) according to the current portfolio weights,
@@ -666,17 +663,8 @@ class Simulation:
                 if asset != "real_estate"
             }
 
-            # Calculate total liquid assets
-            total_liquid = sum(self.state["liquid_assets"].values())
-            weights = self.state["current_target_portfolio_weights"]
-            # Assuming weights sum to 1.0 as validated in config parsing
-            if total_liquid > 0:
-                for asset, weight in weights.items():
-                    self.state["liquid_assets"][asset] = total_liquid * weight
-            else:
-                # If total liquid is zero, zero out all liquid assets
-                for asset in self.state["liquid_assets"]:
-                    self.state["liquid_assets"][asset] = 0.0
+            # Rebalance liquid assets
+            self._rebalance_liquid_assets()
 
     def _withdraw_from_assets(self, amount: float) -> None:
         """
