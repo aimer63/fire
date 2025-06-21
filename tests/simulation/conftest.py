@@ -10,7 +10,7 @@ from firestarter.config.config import (
     Shocks,
     SimulationParameters,
     PlannedContribution,
-    PlannedExtraExpenses,
+    PlannedExtraExpense,
 )
 from firestarter.core.constants import ASSET_KEYS
 
@@ -49,7 +49,7 @@ def basic_det_inputs() -> DeterministicInputs:
         planned_contributions=[PlannedContribution(amount=1200, year=1)],
         annual_fund_fee=0.001,  # 0.1%
         monthly_expenses=0,
-        planned_extra_expenses=[PlannedExtraExpenses(amount=500, year=2)],
+        planned_extra_expenses=[PlannedExtraExpense(amount=500, year=2)],
         planned_house_purchase_cost=0,
         house_purchase_year=None,
     )
@@ -77,9 +77,7 @@ def basic_market_assumptions() -> MarketAssumptions:
 @pytest.fixture
 def basic_portfolio_rebalances() -> PortfolioRebalances:
     """Minimal PortfolioRebalances for testing."""
-    rebalance_event_1 = PortfolioRebalance(
-        year=0, stocks=0.6, bonds=0.3, str=0.1, fun=0.0
-    )
+    rebalance_event_1 = PortfolioRebalance(year=0, stocks=0.6, bonds=0.3, str=0.1, fun=0.0)
     rebalance_event_2 = PortfolioRebalance(
         year=2,
         stocks=0.5,

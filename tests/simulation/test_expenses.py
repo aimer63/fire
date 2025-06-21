@@ -1,6 +1,6 @@
 import pytest
 from firestarter.core.simulation import Simulation
-from firestarter.config.config import PlannedExtraExpenses
+from firestarter.config.config import PlannedExtraExpense
 
 
 def test_handle_expenses_sufficient_funds(initialized_simulation: Simulation) -> None:
@@ -16,7 +16,7 @@ def test_handle_expenses_sufficient_funds(initialized_simulation: Simulation) ->
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "planned_extra_expenses": [
-                PlannedExtraExpenses(amount=expense_amount, year=expense_year)
+                PlannedExtraExpense(amount=expense_amount, year=expense_year)
             ]
         }
     )
@@ -52,7 +52,7 @@ def test_handle_expenses_allows_negative_balance(
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "planned_extra_expenses": [
-                PlannedExtraExpenses(amount=expense_amount, year=expense_year)
+                PlannedExtraExpense(amount=expense_amount, year=expense_year)
             ]
         }
     )
@@ -72,6 +72,6 @@ def test_handle_expenses_allows_negative_balance(
     # Assert that the bank balance is now negative
     assert sim.state["current_bank_balance"] == pytest.approx(expected_bank_balance)
     # Assert that the simulation is NOT yet marked as failed
-    assert not sim.state["simulation_failed"], (
-        "Simulation should not fail at the expense handling stage."
-    )
+    assert not sim.state[
+        "simulation_failed"
+    ], "Simulation should not fail at the expense handling stage."

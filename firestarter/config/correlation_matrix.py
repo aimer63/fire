@@ -43,15 +43,11 @@ class CorrelationMatrix(BaseModel):
 
         # 2. Check element range
         if not np.all((matrix >= -1) & (matrix <= 1)):
-            raise ValueError(
-                "All elements of the correlation matrix must be between -1 and 1."
-            )
+            raise ValueError("All elements of the correlation matrix must be between -1 and 1.")
 
         # 3. Check for 1s on the diagonal
         if not np.all(np.diag(matrix) == 1):
-            raise ValueError(
-                "All diagonal elements of the correlation matrix must be 1."
-            )
+            raise ValueError("All diagonal elements of the correlation matrix must be 1.")
 
         # 4. Check for symmetry
         if not np.allclose(matrix, matrix.T):
@@ -63,7 +59,10 @@ class CorrelationMatrix(BaseModel):
         # Use a small tolerance for floating point inaccuracies
         if not np.all(eigenvalues >= -1e-8):
             raise ValueError(
-                "Correlation matrix must be positive semi-definite (all eigenvalues must be non-negative)."
+                (
+                    "Correlation matrix must be positive semi-definite "
+                    + "(all eigenvalues must be non-negative)."
+                )
             )
 
         return self

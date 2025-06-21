@@ -20,7 +20,6 @@ import time
 import shutil
 from tqdm import tqdm
 import tomllib
-import itertools
 import numpy as np
 
 # import pandas as pd
@@ -105,14 +104,10 @@ def main() -> None:
     print("Configuration file parsed successfully. Extracting parameters...")
 
     # Pydantic: Load and validate deterministic inputs
-    det_inputs: DeterministicInputs = DeterministicInputs(
-        **config_data["deterministic_inputs"]
-    )
+    det_inputs: DeterministicInputs = DeterministicInputs(**config_data["deterministic_inputs"])
 
     # Pydantic: Load and validate economic assumptions
-    market_assumptions: MarketAssumptions = MarketAssumptions(
-        **config_data["market_assumptions"]
-    )
+    market_assumptions: MarketAssumptions = MarketAssumptions(**config_data["market_assumptions"])
 
     # Pydantic: Load and validate portfolio rebalances
     portfolio_rebalances: PortfolioRebalances = PortfolioRebalances(
@@ -120,9 +115,7 @@ def main() -> None:
     )
 
     # Pydantic: Load and validate simulation parameters
-    sim_params: SimulationParameters = SimulationParameters(
-        **config_data["simulation_parameters"]
-    )
+    sim_params: SimulationParameters = SimulationParameters(**config_data["simulation_parameters"])
     num_simulations: int = sim_params.num_simulations
 
     # Pydantic: Load and validate shocks
@@ -131,12 +124,10 @@ def main() -> None:
     # Validate portfolio rebalance weights
     for reb in portfolio_rebalances.rebalances:
         reb_sum = reb.stocks + reb.bonds + reb.str + reb.fun
-        assert np.isclose(reb_sum, 1.0), (
-            f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
-        )
-    print(
-        "All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance."
-    )
+        assert np.isclose(
+            reb_sum, 1.0
+        ), f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
+    print("All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance.")
 
     assert det_inputs.bank_upper_bound >= det_inputs.bank_lower_bound, (
         f"Bounds invalid: Upper ({det_inputs.bank_upper_bound:,.0f}) "

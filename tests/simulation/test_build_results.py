@@ -1,11 +1,9 @@
 import pytest
 from firestarter.core.simulation import Simulation
-from firestarter.config.config import PlannedExtraExpenses
+from firestarter.config.config import PlannedExtraExpense
 
 
-def _get_expected_allocations_from_history(
-    sim: Simulation, month_index: int
-) -> dict[str, float]:
+def _get_expected_allocations_from_history(sim: Simulation, month_index: int) -> dict[str, float]:
     """Helper to build expected allocations from simulation history for a given month."""
     return {
         "Stocks": sim.results["stocks_history"][month_index],
@@ -33,20 +31,16 @@ def test_build_result_successful_simulation(initialized_simulation: Simulation):
     # Check that final values match the last recorded month in history
     last_month_index = total_months - 1
     expected_final_nominal_wealth = sim.results["wealth_history"][last_month_index]
-    assert result["final_nominal_wealth"] == pytest.approx(
-        expected_final_nominal_wealth
-    )
+    assert result["final_nominal_wealth"] == pytest.approx(expected_final_nominal_wealth)
 
-    expected_final_cumulative_inflation = sim.state[
-        "monthly_cumulative_inflation_factors"
-    ][last_month_index]
+    expected_final_cumulative_inflation = sim.state["monthly_cumulative_inflation_factors"][
+        last_month_index
+    ]
     assert result["final_cumulative_inflation_factor"] == pytest.approx(
         expected_final_cumulative_inflation
     )
 
-    expected_final_real_wealth = (
-        expected_final_nominal_wealth / expected_final_cumulative_inflation
-    )
+    expected_final_real_wealth = expected_final_nominal_wealth / expected_final_cumulative_inflation
     assert result["final_real_wealth"] == pytest.approx(expected_final_real_wealth)
     assert result["final_real_wealth"] == pytest.approx(expected_final_real_wealth)
 
@@ -63,12 +57,8 @@ def test_build_result_failed_simulation_midway(initialized_simulation: Simulatio
     # Engineer a failure by setting a huge one-time expense mid-simulation
     failure_year = sim.det_inputs.years_to_simulate // 2
     current_expenses = sim.det_inputs.planned_extra_expenses.copy()
-    current_expenses.append(
-        PlannedExtraExpenses(year=failure_year, amount=1_000_000_000)
-    )
-    sim.det_inputs = sim.det_inputs.model_copy(
-        update={"planned_extra_expenses": current_expenses}
-    )
+    current_expenses.append(PlannedExtraExpense(year=failure_year, amount=1_000_000_000))
+    sim.det_inputs = sim.det_inputs.model_copy(update={"planned_extra_expenses": current_expenses})
     sim.init()
     result = sim.run()
 
@@ -83,16 +73,10 @@ def test_build_result_failed_simulation_midway(initialized_simulation: Simulatio
 
     # Check final values are from the month *before* failure
     last_successful_month_idx = failure_month - 1
-    expected_final_nominal_wealth = sim.results["wealth_history"][
-        last_successful_month_idx
-    ]
-    assert result["final_nominal_wealth"] == pytest.approx(
-        expected_final_nominal_wealth
-    )
+    expected_final_nominal_wealth = sim.results["wealth_history"][last_successful_month_idx]
+    assert result["final_nominal_wealth"] == pytest.approx(expected_final_nominal_wealth)
 
-    expected_allocations = _get_expected_allocations_from_history(
-        sim, last_successful_month_idx
-    )
+    expected_allocations = _get_expected_allocations_from_history(sim, last_successful_month_idx)
     assert result["final_allocations_nominal"] == expected_allocations
 
 

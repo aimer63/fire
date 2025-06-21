@@ -30,24 +30,16 @@ from firestarter.config.correlation_matrix import CorrelationMatrix
 class PlannedContribution(BaseModel):
     """Represents a planned, single-year, contribution."""
 
-    amount: float = Field(
-        ..., description="Real (today's money) amount of the contribution."
-    )
-    year: int = Field(
-        ..., ge=0, description="Year index (0-indexed) when the contribution occurs."
-    )
+    amount: float = Field(..., description="Real (today's money) amount of the contribution.")
+    year: int = Field(..., ge=0, description="Year index (0-indexed) when the contribution occurs.")
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-class PlannedExtraExpenses(BaseModel):
+class PlannedExtraExpense(BaseModel):
     """Represents a planned, single-year, extra expense."""
 
-    amount: float = Field(
-        ..., description="Real (today's money) amount of the expense."
-    )
-    year: int = Field(
-        ..., ge=0, description="Year index (0-indexed) when the expense occurs."
-    )
+    amount: float = Field(..., description="Real (today's money) amount of the expense.")
+    year: int = Field(..., ge=0, description="Year index (0-indexed) when the expense occurs.")
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
@@ -57,12 +49,8 @@ class DeterministicInputs(BaseModel):
     These parameters are loaded from the 'deterministic_inputs' section of config.toml.
     """
 
-    initial_investment: float = Field(
-        ..., description="Initial investment portfolio value."
-    )
-    initial_bank_balance: float = Field(
-        ..., description="Initial bank account balance."
-    )
+    initial_investment: float = Field(..., description="Initial investment portfolio value.")
+    initial_bank_balance: float = Field(..., description="Initial bank account balance.")
 
     bank_lower_bound: float = Field(
         ...,
@@ -83,9 +71,7 @@ class DeterministicInputs(BaseModel):
         ..., description="Total number of years the retirement simulation will run."
     )
 
-    monthly_salary: float = Field(
-        ..., description="Initial real (today's money) monthly salary."
-    )
+    monthly_salary: float = Field(..., description="Initial real (today's money) monthly salary.")
     salary_inflation_factor: float = Field(
         ...,
         description=(
@@ -96,8 +82,7 @@ class DeterministicInputs(BaseModel):
     salary_start_year: int = Field(
         ...,
         description=(
-            "Year index (0-indexed) when salary income starts. "
-            "E.g., 0 for immediate start."
+            "Year index (0-indexed) when salary income starts. " "E.g., 0 for immediate start."
         ),
     )
     salary_end_year: int = Field(
@@ -108,9 +93,7 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    monthly_pension: float = Field(
-        ..., description="Initial real (today's money) monthly pension."
-    )
+    monthly_pension: float = Field(..., description="Initial real (today's money) monthly pension.")
     pension_inflation_factor: float = Field(
         ...,
         description=(
@@ -124,9 +107,7 @@ class DeterministicInputs(BaseModel):
 
     planned_contributions: list[PlannedContribution] = Field(
         default_factory=list,
-        description=(
-            "List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"
-        ),
+        description=("List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"),
     )
 
     annual_fund_fee: float = Field(
@@ -137,11 +118,9 @@ class DeterministicInputs(BaseModel):
         ...,
         description="Initial real (today's money) fixed monthly expenses for living costs.",
     )
-    planned_extra_expenses: list[PlannedExtraExpenses] = Field(
+    planned_extra_expenses: list[PlannedExtraExpense] = Field(
         default_factory=list,
-        description=(
-            "List of planned extra expenses. e.g. [{amount = 15000, year = 3}, ...]"
-        ),
+        description=("List of planned extra expenses. e.g. [{amount = 15000, year = 3}, ...]"),
     )
 
     planned_house_purchase_cost: float = Field(
@@ -168,24 +147,16 @@ class MarketAssumptions(BaseModel):
     These parameters are loaded from the 'economic_assumptions' section of config.toml.
     """
 
-    stock_mu: float = Field(
-        ..., description="Arithmetic mean annual return for stocks."
-    )
-    stock_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for stocks."
-    )
+    stock_mu: float = Field(..., description="Arithmetic mean annual return for stocks.")
+    stock_sigma: float = Field(..., description="Standard deviation of annual returns for stocks.")
 
     bond_mu: float = Field(..., description="Arithmetic mean annual return for bonds.")
-    bond_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for bonds."
-    )
+    bond_sigma: float = Field(..., description="Standard deviation of annual returns for bonds.")
 
     str_mu: float = Field(
         ..., description="Arithmetic mean annual return for short-term reserves (STR)."
     )
-    str_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for STR."
-    )
+    str_sigma: float = Field(..., description="Standard deviation of annual returns for STR.")
 
     fun_mu: float = Field(
         ...,
@@ -198,8 +169,7 @@ class MarketAssumptions(BaseModel):
     real_estate_mu: float = Field(
         ...,
         description=(
-            "Arithmetic mean annual return for real estate "
-            "(capital gains, net of maintenance)."
+            "Arithmetic mean annual return for real estate " "(capital gains, net of maintenance)."
         ),
     )
     real_estate_sigma: float = Field(
@@ -207,9 +177,7 @@ class MarketAssumptions(BaseModel):
     )
 
     pi_mu: float = Field(..., description="Arithmetic mean of annual inflation rate.")
-    pi_sigma: float = Field(
-        ..., description="Standard deviation of annual inflation rate."
-    )
+    pi_sigma: float = Field(..., description="Standard deviation of annual inflation rate.")
 
     correlation_matrix: CorrelationMatrix | None = Field(
         default=None,
@@ -220,9 +188,7 @@ class MarketAssumptions(BaseModel):
     )
 
     @staticmethod
-    def _convert_to_lognormal(
-        arith_mu: float, arith_sigma: float
-    ) -> tuple[float, float]:
+    def _convert_to_lognormal(arith_mu: float, arith_sigma: float) -> tuple[float, float]:
         """
         Helper function to convert arithmetic mean and standard deviation
         to log-normal parameters (mu_log, sigma_log).
@@ -255,12 +221,8 @@ class MarketAssumptions(BaseModel):
             "bonds": self._convert_to_lognormal(self.bond_mu, self.bond_sigma),
             "str": self._convert_to_lognormal(self.str_mu, self.str_sigma),
             "fun": self._convert_to_lognormal(self.fun_mu, self.fun_sigma),
-            "real_estate": self._convert_to_lognormal(
-                self.real_estate_mu, self.real_estate_sigma
-            ),
-            "inflation": self._convert_to_lognormal(
-                self.pi_mu, self.pi_sigma
-            ),  # <-- FIXED HERE
+            "real_estate": self._convert_to_lognormal(self.real_estate_mu, self.real_estate_sigma),
+            "inflation": self._convert_to_lognormal(self.pi_mu, self.pi_sigma),  # <-- FIXED HERE
         }
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -302,9 +264,7 @@ class PortfolioRebalances(BaseModel):
 
 
 class SimulationParameters(BaseModel):
-    num_simulations: int = Field(
-        ..., gt=0, description="Number of Monte Carlo simulations to run."
-    )
+    num_simulations: int = Field(..., gt=0, description="Number of Monte Carlo simulations to run.")
     random_seed: int | None = Field(
         default=None,
         description="Optional random seed for deterministic runs. If None, uses entropy.",
@@ -316,15 +276,11 @@ class SimulationParameters(BaseModel):
 class ShockEvent(BaseModel):
     year: int = Field(..., description="Year index of the shock (0-indexed).")
     asset: str = Field(..., description="Asset affected by the shock (e.g., 'Stocks').")
-    magnitude: float = Field(
-        ..., description="Magnitude of the shock (e.g., -0.35 for -35%)."
-    )
+    magnitude: float = Field(..., description="Magnitude of the shock (e.g., -0.35 for -35%).")
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class Shocks(BaseModel):
-    events: list[ShockEvent] = Field(
-        default_factory=list, description="List of shock events."
-    )
+    events: list[ShockEvent] = Field(default_factory=list, description="List of shock events.")
 
     model_config = ConfigDict(extra="forbid", frozen=True)

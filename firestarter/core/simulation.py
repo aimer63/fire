@@ -20,6 +20,8 @@ from typing import (
     Any,
     Optional,
 )  # Removed List as Shocks class handles list of events
+
+import numpy as np
 from firestarter.core.constants import ASSET_KEYS, WITHDRAWAL_PRIORITY
 
 # Import the actual types from config.py
@@ -232,26 +234,17 @@ class Simulation:
         sigma_m = sigma_a / (12**0.5)
         return mu_m, sigma_m
 
-    def _precompute_sequences(self):
-        """
-        Precompute all monthly sequences needed for the simulation.
-        This version draws returns and inflation for each month, not just each year.
-        Correctly applies pension_inflation_factor and salary_inflation_factor.
-        """
-        import numpy as np
-
+    def _generate_indipendent_stochastic_sequences(self):
         # Set the random seed for reproducibility if provided
         if self.sim_params.random_seed is not None:
             np.random.seed(self.sim_params.random_seed)
         # If random_seed is None, NumPy's RNG will be seeded from an entropy source
         # by default (or continue with its current state if already initialized).
 
-        det_inputs = self.det_inputs
         market_assumptions = self.market_assumptions
-        shock_events = self.shock_events
 
         lognormal = market_assumptions.lognormal
-        total_years = det_inputs.years_to_simulate
+        total_years = self.det_inputs.years_to_simulate
         total_months = total_years * 12
 
         # --- Convert annual lognormal parameters to monthly ---
@@ -308,6 +301,30 @@ class Simulation:
             - 1.0
         )
 
+        self.state["monthly_stocks_returns_sequence"] = monthly_stocks_returns_sequence
+        self.state["monthly_bonds_returns_sequence"] = monthly_bonds_returns_sequence
+        self.state["monthly_str_returns_sequence"] = monthly_str_returns_sequence
+        self.state["monthly_fun_returns_sequence"] = monthly_fun_returns_sequence
+        self.state["monthly_real_estate_returns_sequence"] = (
+            monthly_real_estate_returns_sequence
+        )
+        self.state["monthly_inflation_sequence"] = monthly_inflations_sequence
+
+    def _precompute_sequences(self):
+        """
+        Precompute all monthly sequences needed for the simulation.
+        This version draws returns and inflation for each month, not just each year.
+        Correctly applies pension_inflation_factor and salary_inflation_factor.
+        """
+
+        det_inputs = self.det_inputs
+        shock_events = self.shock_events
+
+        total_years = det_inputs.years_to_simulate
+        total_months = total_years * 12
+
+        self._generate_indipendent_stochastic_sequences()
+
         # --- Apply shocks (if any) ---
         # A shock's magnitude is an annual rate that replaces the stochastic rate
         # for that year.
@@ -324,17 +341,17 @@ class Simulation:
 
                 target_sequence = None
                 if shock_asset == "Stocks":
-                    target_sequence = monthly_stocks_returns_sequence
+                    target_sequence = self.state["monthly_stocks_returns_sequence"]
                 elif shock_asset == "Bonds":
-                    target_sequence = monthly_bonds_returns_sequence
+                    target_sequence = self.state["monthly_bonds_returns_sequence"]
                 elif shock_asset == "STR":
-                    target_sequence = monthly_str_returns_sequence
+                    target_sequence = self.state["monthly_str_returns_sequence"]
                 elif shock_asset == "Fun":
-                    target_sequence = monthly_fun_returns_sequence
+                    target_sequence = self.state["monthly_fun_returns_sequence"]
                 elif shock_asset == "Real Estate":
-                    target_sequence = monthly_real_estate_returns_sequence
+                    target_sequence = self.state["monthly_real_estate_returns_sequence"]
                 elif shock_asset == "Inflation":
-                    target_sequence = monthly_inflations_sequence
+                    target_sequence = self.state["monthly_inflation_sequence"]
 
                 if target_sequence is not None:
                     for month_offset in range(12):
@@ -344,6 +361,8 @@ class Simulation:
                                 monthly_shock_rate
                             )
 
+        monthly_inflation_sequence = self.state["monthly_inflation_sequence"]
+
         # --- Cumulative inflation factors (monthly) ---
         monthly_cumulative_inflation_factors = np.ones(
             total_months + 1, dtype=np.float64
@@ -351,16 +370,16 @@ class Simulation:
         for month_idx in range(total_months):
             monthly_cumulative_inflation_factors[month_idx + 1] = (
                 monthly_cumulative_inflation_factors[month_idx]
-                * (1.0 + monthly_inflations_sequence[month_idx])
+                * (1.0 + monthly_inflation_sequence[month_idx])
             )
 
         # --- Monthly returns lookup ---
         monthly_returns_lookup = {
-            "Stocks": monthly_stocks_returns_sequence,
-            "Bonds": monthly_bonds_returns_sequence,
-            "STR": monthly_str_returns_sequence,
-            "Fun": monthly_fun_returns_sequence,
-            "Real Estate": monthly_real_estate_returns_sequence,
+            "Stocks": self.state["monthly_stocks_returns_sequence"],
+            "Bonds": self.state["monthly_bonds_returns_sequence"],
+            "STR": self.state["monthly_str_returns_sequence"],
+            "Fun": self.state["monthly_fun_returns_sequence"],
+            "Real Estate": self.state["monthly_real_estate_returns_sequence"],
         }
 
         # --- Precompute nominal pension and salary monthly sequences with partial indexation ---
@@ -382,7 +401,7 @@ class Simulation:
                     pension_cumulative = det_inputs.monthly_pension
                 else:
                     pension_cumulative *= 1.0 + (
-                        monthly_inflations_sequence[month_idx - 1]
+                        monthly_inflation_sequence[month_idx - 1]
                         * det_inputs.pension_inflation_factor
                     )
                 monthly_nominal_pension_sequence[month_idx] = pension_cumulative
@@ -393,20 +412,11 @@ class Simulation:
                     salary_cumulative = det_inputs.monthly_salary
                 else:
                     salary_cumulative *= 1.0 + (
-                        monthly_inflations_sequence[month_idx - 1]
+                        monthly_inflation_sequence[month_idx - 1]
                         * det_inputs.salary_inflation_factor
                     )
                 monthly_nominal_salary_sequence[month_idx] = salary_cumulative
 
-        # --- Store all sequences in self.state ---
-        self.state["monthly_inflations_sequence"] = monthly_inflations_sequence
-        self.state["monthly_stocks_returns_sequence"] = monthly_stocks_returns_sequence
-        self.state["monthly_bonds_returns_sequence"] = monthly_bonds_returns_sequence
-        self.state["monthly_str_returns_sequence"] = monthly_str_returns_sequence
-        self.state["monthly_fun_returns_sequence"] = monthly_fun_returns_sequence
-        self.state["monthly_real_estate_returns_sequence"] = (
-            monthly_real_estate_returns_sequence
-        )
         self.state["monthly_cumulative_inflation_factors"] = (
             monthly_cumulative_inflation_factors
         )
@@ -733,7 +743,7 @@ class Simulation:
             "final_allocations_real": final_allocations_real,
             "initial_total_wealth": self.state["initial_total_wealth"],
             # --- State and histories ---
-            "monthly_inflations_sequence": self.state["monthly_inflations_sequence"],
+            "monthly_inflation_sequence": self.state["monthly_inflation_sequence"],
             "monthly_cumulative_inflation_factors": trunc_only(
                 self.state["monthly_cumulative_inflation_factors"]
             ),

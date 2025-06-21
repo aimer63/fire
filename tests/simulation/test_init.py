@@ -50,7 +50,7 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
 
     # Check for existence and length of key sequences
     sequences_to_check = [
-        "monthly_inflations_sequence",
+        "monthly_inflation_sequence",
         "monthly_stocks_returns_sequence",
         "monthly_bonds_returns_sequence",
         "monthly_str_returns_sequence",
