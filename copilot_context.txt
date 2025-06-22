@@ -1,0 +1,9 @@
+
+> #buffers:
+> #buffers:`visible`
+> #files:`**/*.py`
+> #files:`**/*.md`
+> #files:`configs/*.toml`
+> #files:`firestarter/config/*.py`
+> #files:`firestarter/core/*.py`
+> #file:`firestarter/main.py`

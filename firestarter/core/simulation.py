@@ -235,9 +235,11 @@ class Simulation:
         return mu_m, sigma_m
 
     def _generate_indipendent_stochastic_sequences(self):
-        # Set the random seed for reproducibility if provided
+        # Use a per-process random generator for multiprocessing safety
         if self.sim_params.random_seed is not None:
-            np.random.seed(self.sim_params.random_seed)
+            rng = np.random.default_rng(self.sim_params.random_seed)
+        else:
+            rng = np.random.default_rng()
         # If random_seed is None, NumPy's RNG will be seeded from an entropy source
         # by default (or continue with its current state if already initialized).
 
@@ -265,37 +267,33 @@ class Simulation:
 
         # --- Draw monthly inflation and returns ---
         monthly_inflations_sequence = (
-            np.random.lognormal(
-                mu_log_inflation, sigma_log_inflation, total_months
-            ).astype(np.float64)
+            rng.lognormal(mu_log_inflation, sigma_log_inflation, total_months).astype(
+                np.float64
+            )
             - 1.0
         )
         monthly_stocks_returns_sequence = (
-            np.random.lognormal(mu_log_stocks, sigma_log_stocks, total_months).astype(
+            rng.lognormal(mu_log_stocks, sigma_log_stocks, total_months).astype(
                 np.float64
             )
             - 1.0
         )
         monthly_bonds_returns_sequence = (
-            np.random.lognormal(mu_log_bonds, sigma_log_bonds, total_months).astype(
+            rng.lognormal(mu_log_bonds, sigma_log_bonds, total_months).astype(
                 np.float64
             )
             - 1.0
         )
         monthly_str_returns_sequence = (
-            np.random.lognormal(mu_log_str, sigma_log_str, total_months).astype(
-                np.float64
-            )
+            rng.lognormal(mu_log_str, sigma_log_str, total_months).astype(np.float64)
             - 1.0
         )
         monthly_fun_returns_sequence = (
-            np.random.lognormal(mu_log_fun, sigma_log_fun, total_months).astype(
-                np.float64
-            )
+            rng.lognormal(mu_log_fun, sigma_log_fun, total_months).astype(np.float64)
             - 1.0
         )
         monthly_real_estate_returns_sequence = (
-            np.random.lognormal(
+            rng.lognormal(
                 mu_log_real_estate, sigma_log_real_estate, total_months
             ).astype(np.float64)
             - 1.0
@@ -310,6 +308,88 @@ class Simulation:
         )
         self.state["monthly_inflation_sequence"] = monthly_inflations_sequence
 
+    def _generate_correlated_stochastic_sequences(self):
+        """
+        Generates correlated monthly return and inflation sequences using the
+        user-provided correlation matrix in MarketAssumptions.
+        """
+        # Use a per-process random generator for multiprocessing safety
+        if self.sim_params.random_seed is not None:
+            rng = np.random.default_rng(self.sim_params.random_seed)
+        else:
+            rng = np.random.default_rng()
+
+        market_assumptions = self.market_assumptions
+        total_years = self.det_inputs.years_to_simulate
+        total_months = total_years * 12
+
+        # --- Extract lognormal parameters from MarketAssumptions ---
+        lognormal = market_assumptions.lognormal
+
+        # --- Convert annual lognormal parameters to monthly using helper ---
+        mu_log_stocks, sigma_log_stocks = self.annual_lognormal_to_monthly(
+            *lognormal["stocks"]
+        )
+        mu_log_bonds, sigma_log_bonds = self.annual_lognormal_to_monthly(
+            *lognormal["bonds"]
+        )
+        mu_log_str, sigma_log_str = self.annual_lognormal_to_monthly(*lognormal["str"])
+        mu_log_fun, sigma_log_fun = self.annual_lognormal_to_monthly(*lognormal["fun"])
+        mu_log_real_estate, sigma_log_real_estate = self.annual_lognormal_to_monthly(
+            *lognormal["real_estate"]
+        )
+        mu_log_inflation, sigma_log_inflation = self.annual_lognormal_to_monthly(
+            *lognormal["inflation"]
+        )
+
+        monthly_mu_log = np.array(
+            [
+                mu_log_stocks,
+                mu_log_bonds,
+                mu_log_str,
+                mu_log_fun,
+                mu_log_real_estate,
+                mu_log_inflation,
+            ]
+        )
+        monthly_sigma_log = np.array(
+            [
+                sigma_log_stocks,
+                sigma_log_bonds,
+                sigma_log_str,
+                sigma_log_fun,
+                sigma_log_real_estate,
+                sigma_log_inflation,
+            ]
+        )
+
+        # --- Build monthly log-normal covariance matrix ---
+        assert market_assumptions.correlation_matrix is not None
+        corr_matrix = np.array(
+            list(market_assumptions.correlation_matrix.model_dump().values())
+        )
+        D = np.diag(monthly_sigma_log)
+        monthly_cov_log = D @ corr_matrix @ D
+
+        # --- Draw correlated log returns ---
+        # Shape: (total_months, 6)
+        log_of_correlated_return_factors = rng.multivariate_normal(
+            mean=monthly_mu_log, cov=monthly_cov_log, size=total_months
+        )
+
+        # --- Convert to arithmetic return rates ---
+        correlated_return_rates = np.exp(log_of_correlated_return_factors) - 1.0
+
+        # Assign to state
+        self.state["monthly_stocks_returns_sequence"] = correlated_return_rates[:, 0]
+        self.state["monthly_bonds_returns_sequence"] = correlated_return_rates[:, 1]
+        self.state["monthly_str_returns_sequence"] = correlated_return_rates[:, 2]
+        self.state["monthly_fun_returns_sequence"] = correlated_return_rates[:, 3]
+        self.state["monthly_real_estate_returns_sequence"] = correlated_return_rates[
+            :, 4
+        ]
+        self.state["monthly_inflation_sequence"] = correlated_return_rates[:, 5]
+
     def _precompute_sequences(self):
         """
         Precompute all monthly sequences needed for the simulation.
@@ -323,7 +403,10 @@ class Simulation:
         total_years = det_inputs.years_to_simulate
         total_months = total_years * 12
 
-        self._generate_indipendent_stochastic_sequences()
+        if self.market_assumptions.correlation_matrix is not None:
+            self._generate_correlated_stochastic_sequences()
+        else:
+            self._generate_indipendent_stochastic_sequences()
 
         # --- Apply shocks (if any) ---
         # A shock's magnitude is an annual rate that replaces the stochastic rate
