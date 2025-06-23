@@ -4,8 +4,9 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 
 ---
 
-## 🟡 In Progress / Next Priorities
-
+- [ ] **Asset Representation Refactor:** Unify asset handling (liquid and illiquid/real estate)
+      into a consistent structure (class or dict with metadata) to eliminate special-casing,
+      improve clarity, and enable extensibility. See `problems.md` for analysis.
 - [ ] **Refactoring & Maintainability**
 
   - [ ] **Rebalance Logic:** Extract a `rebalance_liquid_assets` helper to reduce duplication
