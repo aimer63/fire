@@ -11,11 +11,11 @@ def test_simulation_process_income_no_income(
 ) -> None:
     """Tests _process_income when no salary or pension is configured."""
     sim = initialized_simulation
-    initial_bank_balance = sim.state["current_bank_balance"]
+    initial_bank_balance = sim.state.current_bank_balance
     month_to_test = 0
     sim._process_income(month_to_test)
 
-    assert sim.state["current_bank_balance"] == initial_bank_balance, (
+    assert sim.state.current_bank_balance == initial_bank_balance, (
         "Bank balance should not change if no income is scheduled."
     )
 
@@ -45,7 +45,7 @@ def test_simulation_process_income_with_salary_and_pension(
 
     expected_income_scenario1 = 1000.0 + 500.0
     assert (
-        sim.state["current_bank_balance"]
+        sim.state.current_bank_balance
         == original_fixture_bank_balance + expected_income_scenario1
     ), "Scenario 1: Bank balance should increase by salary and pension."
 
@@ -60,7 +60,7 @@ def test_simulation_process_income_with_salary_and_pension(
 
     expected_income_scenario2 = 500.0  # Only pension
     assert (
-        sim.state["current_bank_balance"]
+        sim.state.current_bank_balance
         == original_fixture_bank_balance + expected_income_scenario2
     ), "Scenario 2: Bank balance should increase by pension only after salary period."
 
@@ -78,7 +78,7 @@ def test_simulation_process_income_with_salary_and_pension(
 
     expected_income_scenario3 = 0.0
     assert (
-        sim.state["current_bank_balance"]
+        sim.state.current_bank_balance
         == original_fixture_bank_balance + expected_income_scenario3
     ), (
         "Scenario 3: Bank balance should not change if pension hasn't started and no salary."

@@ -28,40 +28,40 @@ def test_handle_house_purchase_success(initialized_simulation: Simulation) -> No
     sim.init()  # Re-initialize with new inputs
 
     # Store initial values before the purchase
-    initial_bank_balance = sim.state["current_bank_balance"]
-    initial_liquid_assets_total = sum(sim.state["liquid_assets"].values())
-    initial_real_estate_value = sim.state["current_real_estate_value"]
+    initial_bank_balance = sim.state.current_bank_balance
+    initial_liquid_assets_total = sum(sim.state.liquid_assets.values())
+    initial_real_estate_value = sim.state.current_real_estate_value
 
     # Execute the house purchase logic for the correct month
     purchase_month = purchase_year * 12
     sim._handle_house_purchase(purchase_month)
 
     # Calculate expected nominal cost based on inflation (0% in fixture)
-    inflation_factor = sim.state["monthly_cumulative_inflation_factors"][purchase_month]
+    inflation_factor = sim.state.monthly_cumulative_inflation_factors[purchase_month]
     expected_nominal_cost = house_cost * inflation_factor
 
     # --- Assertions ---
-    assert not sim.state["simulation_failed"], "Simulation should not fail."
+    assert not sim.state.simulation_failed, "Simulation should not fail."
 
     # Bank balance should be unchanged
-    assert sim.state["current_bank_balance"] == pytest.approx(initial_bank_balance)
+    assert sim.state.current_bank_balance == pytest.approx(initial_bank_balance)
 
     # Real estate value should increase by the nominal house cost
     expected_real_estate_value = initial_real_estate_value + expected_nominal_cost
-    assert sim.state["current_real_estate_value"] == pytest.approx(
+    assert sim.state.current_real_estate_value == pytest.approx(
         expected_real_estate_value
     )
 
     # Total liquid assets should decrease by the nominal cost
     expected_liquid_total = initial_liquid_assets_total - expected_nominal_cost
-    current_liquid_total = sum(sim.state["liquid_assets"].values())
+    current_liquid_total = sum(sim.state.liquid_assets.values())
     assert current_liquid_total == pytest.approx(expected_liquid_total)
 
     # Remaining liquid assets should be rebalanced according to target weights
-    target_weights = sim.state["current_target_portfolio_weights"]
+    target_weights = sim.state.current_target_portfolio_weights
     for asset, weight in target_weights.items():
         expected_asset_value = current_liquid_total * weight
-        assert sim.state["liquid_assets"][asset] == pytest.approx(expected_asset_value)
+        assert sim.state.liquid_assets[asset] == pytest.approx(expected_asset_value)
 
 
 def test_handle_house_purchase_failure_insufficient_assets(
@@ -95,4 +95,4 @@ def test_handle_house_purchase_failure_insufficient_assets(
     sim._handle_house_purchase(purchase_month)
 
     # --- Assertions ---
-    assert sim.state["simulation_failed"], "Simulation should be marked as failed."
+    assert sim.state.simulation_failed, "Simulation should be marked as failed."

@@ -58,12 +58,26 @@ def test_simulation_builder_setters(setter_method_name, attribute_name):
 def complete_builder() -> SimulationBuilder:
     """Returns a SimulationBuilder with all required attributes mocked."""
     builder: SimulationBuilder = SimulationBuilder.new()
-    builder.set_det_inputs(Mock(name="det_inputs"))
+    det_inputs_mock = Mock(name="det_inputs")
+    det_inputs_mock.initial_bank_balance = 1000.0
+    builder.set_det_inputs(det_inputs_mock)
     builder.set_market_assumptions(Mock(name="market_assumptions"))
-    builder.set_portfolio_rebalances(Mock(name="portfolio_rebalances"))
+    # Provide a mock with a .rebalances attribute that is a list with one mock
+    portfolio_rebalances_mock = Mock(name="portfolio_rebalances")
+    portfolio_rebalances_mock.rebalances = [Mock(name="rebalance")]
+    builder.set_portfolio_rebalances(portfolio_rebalances_mock)
     builder.set_shock_events(Mock(name="shock_events"))
-    builder.set_initial_assets(Mock(name="initial_assets"))
     builder.set_sim_params(Mock(name="sim_params"))
+    # Provide a dict-like mock for initial_assets so ["real_estate"] works
+    builder.set_initial_assets(
+        {
+            "stocks": 1000.0,
+            "bonds": 1000.0,
+            "str": 1000.0,
+            "fun": 1000.0,
+            "real_estate": 1000.0,
+        }
+    )
     return builder
 
 
