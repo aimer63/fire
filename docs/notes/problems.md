@@ -63,3 +63,37 @@ A more uniform and extensible asset representation would reduce special-casing, 
 logic, and make the codebase easier to maintain and extend. The best approach is likely a
 unified asset structure (dictionary or class-based), with clear metadata for liquidity and
 behavior, and logic that operates on filtered views as needed.
+
+---
+
+## Correlation of Asset Returns and Inflation
+
+### Problem
+
+Modeling asset returns and inflation as independent processes is unrealistic for many economic
+scenarios. In reality, asset returns (e.g., stocks, bonds, real estate) and inflation are often
+statistically correlated. Failing to account for these correlations can lead to misleading
+simulation results, especially in stress scenarios or when modeling diversification benefits.
+
+### Challenges
+
+- **Configuration Complexity:**  
+  Allowing users to specify arbitrary correlations increases the complexity of the configuration
+  file and validation logic. The correlation matrix must be square, symmetric, have 1.0 on the
+  diagonal, and be positive semi-definite.
+- **User Understanding:**  
+  Users may not be familiar with how to specify or interpret a correlation matrix, or with the
+  implications of correlated returns and inflation.
+- **Implementation:**  
+  The simulation must generate correlated random sequences for all assets and inflation, which
+  requires careful handling of the correlation matrix and stochastic process.
+
+### Solution
+
+- The simulation supports a user-specified correlation matrix in the configuration file, allowing
+  for realistic modeling of joint asset/inflation behavior.
+- If omitted, the simulation assumes all returns and inflation are uncorrelated.
+- Extensive validation is performed to ensure the matrix is well-formed and mathematically valid.
+
+See `docs/config.md` for configuration details and `tests/config/test_validate_correlation.py` for
+validation logic and examples.

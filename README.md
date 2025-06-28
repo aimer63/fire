@@ -114,6 +114,16 @@ stock_mu = 0.07
 stock_sigma = 0.15
 # ... (other parameters) ...
 
+# Optionally, specify a correlation matrix to model correlations between asset returns and inflation.
+# This allows for more realistic scenarios where, for example, inflation and stock returns may move together.
+[market_assumptions.correlation_matrix]
+stocks      = [1.0, 0.2, 0.1, 0.0, 0.1, 0.3]
+bonds       = [0.2, 1.0, 0.1, 0.0, 0.0, 0.2]
+str         = [0.1, 0.1, 1.0, 0.0, 0.0, 0.1]
+fun         = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+real_estate = [0.1, 0.0, 0.0, 0.0, 1.0, 0.2]
+inflation   = [0.3, 0.2, 0.1, 0.0, 0.2, 1.0]
+
 [portfolio_rebalances]
 rebalances = [
   { year = 0, stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
@@ -128,6 +138,7 @@ rebalances = [
   There must be one at `year = 0` to give initial values at the portfolio assets.
 - There is no `real_estate` weight; real estate is handled separately at the time of house purchase.
 - **See [Real Estate Modeling](docs/real_estate.md) for details on how real estate is handled.**
+- If the correlation matrix is omitted, the simulation assumes all returns and inflation are uncorrelated.
 
 ---
 

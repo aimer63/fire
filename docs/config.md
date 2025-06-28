@@ -105,9 +105,46 @@ This document explains all parameters available in the main TOML configuration f
 
 ---
 
+### Correlation Matrix
+
+You can specify correlations between asset returns and inflation using the optional
+`correlation_matrix` parameter under `[market_assumptions]`. This matrix controls the
+statistical dependence between annual returns for stocks, bonds, short-term reserves (STR),
+"fun money", real estate, and inflation.
+
+- The matrix must be 6x6, symmetric, with 1.0 on the diagonal.
+- The order of assets is: stocks, bonds, str, fun, real_estate, inflation.
+- Each row is a list of six floats, corresponding to the correlation coefficients with each asset.
+- All elements must be between -1 and 1, and the matrix must be positive semi-definite.
+
+**Example:**
+
+```toml
+[market_assumptions.correlation_matrix]
+stocks      = [1.0, 0.2, 0.1, 0.0, 0.1, 0.3]
+bonds       = [0.2, 1.0, 0.1, 0.0, 0.0, 0.2]
+str         = [0.1, 0.1, 1.0, 0.0, 0.0, 0.1]
+fun         = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+real_estate = [0.1, 0.0, 0.0, 0.0, 1.0, 0.2]
+inflation   = [0.3, 0.2, 0.1, 0.0, 0.2, 1.0]
+```
+
+If omitted, the simulation assumes all returns and inflation are uncorrelated, you can have
+independent returns and inflation also specifying the identity matrix.
+
+**Note:**
+Correlations affect the joint simulation of asset returns and inflation, allowing for more
+realistic modeling of economic scenarios where, for example, inflation and stock returns may
+move together or in opposition.
+
+For more details and validation rules, see the test file:
+`tests/config/test_validate_correlation.py`.
+
+---
+
 ## [shocks]
 
-- **events** _(list of dicts)_  
+- **events** _(list of dicts)_
   List of market shock events. Each event is a dictionary with:
   - **year**: Year index of the shock (int)
   - **asset**: Asset affected (e.g., "Stocks", "Bonds", "STR", "Fun", "Real Estate", "Inflation")
@@ -117,7 +154,7 @@ This document explains all parameters available in the main TOML configuration f
 
 ## [portfolio_rebalances]
 
-- **rebalances** _(list of dicts)_  
+- **rebalances** _(list of dicts)_
   List of scheduled portfolio rebalances. Each entry is a dictionary:
 
   - **year**: Year index when the rebalance occurs (int). The rebalance is triggered at the
@@ -137,3 +174,7 @@ This document explains all parameters available in the main TOML configuration f
 ---
 
 For more details and examples, see [usage.md](usage.md) and [README.md](../README.md).
+
+```
+
+```

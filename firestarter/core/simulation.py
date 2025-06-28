@@ -1,18 +1,24 @@
-# flake8: noqa=F821
 """
-FIRE simulation engine for modeling financial independence and early retirement scenarios.
+FIRE Simulation Engine
 
-This module provides the Simulation and SimulationBuilder classes to run customizable
-financial simulations. It supports configurable inputs for income, expenses, asset allocation,
-portfolio rebalancing, planned contributions, extra expenses, house purchases, and economic assumptions.
+This module implements the core simulation logic for modeling financial independence
+and early retirement (FIRE) scenarios. It provides the SimulationBuilder and Simulation
+classes, supporting flexible configuration and execution of financial simulations.
 
-Features:
-- Modular builder pattern for flexible simulation setup.
-- Handles monthly flows: income, contributions, expenses, withdrawals, and asset rebalancing.
-- Evolves asset values monthly according to stochastic returns and inflation.
-- Supports planned shocks and house purchases.
-- Records detailed monthly histories of wealth, balances, and asset values.
-- Marks simulation as failed if withdrawals cannot be covered by liquid assets.
+Key features:
+- Modular builder pattern for simulation setup
+- Handles monthly flows: income, contributions, expenses, withdrawals, and asset
+  rebalancing
+- Evolves asset values monthly according to stochastic returns and inflation
+- Supports planned shocks and house purchase
+- Records detailed monthly histories of wealth, balances, and asset values
+- Marks simulation as failed if withdrawals cannot be covered by liquid assets
+- Supports user-defined correlation between asset returns and inflation via a
+  validated correlation matrix, enabling realistic multivariate stochastic modeling
+  of economic variables
+
+See docs/notes/simulation_engine.md and docs/notes/correlation.md for a detailed
+overview.
 """
 
 from typing import (

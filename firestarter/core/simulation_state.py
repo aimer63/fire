@@ -1,3 +1,10 @@
+"""
+Defines the SimulationState dataclass, which encapsulates the mutable state of a
+single simulation run.
+This includes current asset balances, portfolio weights, precomputed stochastic
+sequences, and simulation time tracking.
+"""
+
 from dataclasses import dataclass, field
 from typing import Dict
 import numpy as np
