@@ -60,8 +60,8 @@
 
 Real estate returns can be correlated with other asset classes and inflation via the
 `correlation_matrix` parameter in the configuration file. When you specify a correlation matrix
-under `[market_assumptions.correlation_matrix]`, the real estate row and column determine how
-real estate returns co-move with stocks, bonds, STR, fun money, and inflation.
+under `[market_assumptions.correlation_matrix]`, the real estate row and column determine how real
+estate returns co-move with stocks, bonds, STR, fun money, and inflation.
 
 - The simulation uses this matrix to jointly simulate all asset returns and inflation, including
   real estate, in a statistically consistent way.

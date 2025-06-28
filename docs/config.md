@@ -63,7 +63,8 @@ This document explains all parameters available in the main TOML configuration f
   Year index when pension starts.
 
 - **planned_contributions** _(list of dicts)_  
-  List of one-time contributions (as a fixed nominal amount). Each dict has `amount` (float) and `year` (int).
+  List of one-time contributions (as a fixed nominal amount). Each dict has `amount` (float) and
+  `year` (int).
 
 - **annual_fund_fee** _(float)_  
   Annual fee on investments (e.g., 0.002 for 0.2%).
@@ -108,9 +109,9 @@ This document explains all parameters available in the main TOML configuration f
 ### Correlation Matrix
 
 You can specify correlations between asset returns and inflation using the optional
-`correlation_matrix` parameter under `[market_assumptions]`. This matrix controls the
-statistical dependence between annual returns for stocks, bonds, short-term reserves (STR),
-"fun money", real estate, and inflation.
+`correlation_matrix` parameter under `[market_assumptions]`. This matrix controls the statistical
+dependence between annual returns for stocks, bonds, short-term reserves (STR), "fun money", real
+estate, and inflation.
 
 - The matrix must be 6x6, symmetric, with 1.0 on the diagonal.
 - The order of assets is: stocks, bonds, str, fun, real_estate, inflation.
@@ -121,21 +122,21 @@ statistical dependence between annual returns for stocks, bonds, short-term rese
 
 ```toml
 [market_assumptions.correlation_matrix]
-stocks      = [1.0, 0.2, 0.1, 0.0, 0.1, 0.3]
-bonds       = [0.2, 1.0, 0.1, 0.0, 0.0, 0.2]
-str         = [0.1, 0.1, 1.0, 0.0, 0.0, 0.1]
-fun         = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-real_estate = [0.1, 0.0, 0.0, 0.0, 1.0, 0.2]
-inflation   = [0.3, 0.2, 0.1, 0.0, 0.2, 1.0]
+#              Stk   Bnd   str    fun  r_e     pi
+stocks      = [1.00, -0.30, 0.15, 0.45, 0.75, -0.20]
+bonds       = [-0.30, 1.00, 0.40, -0.10, -0.25, 0.10]
+str         = [0.15, 0.40, 1.00, -0.05, 0.20, 0.60]
+fun         = [0.45, -0.10, -0.05, 1.00, 0.35, 0.15]
+real_estate = [0.75, -0.25, 0.20, 0.35, 1.00, 0.05]
+inflation   = [-0.20, 0.10, 0.60, 0.15, 0.05, 1.00]
 ```
 
 If omitted, the simulation assumes all returns and inflation are uncorrelated, you can have
 independent returns and inflation also specifying the identity matrix.
 
-**Note:**
-Correlations affect the joint simulation of asset returns and inflation, allowing for more
-realistic modeling of economic scenarios where, for example, inflation and stock returns may
-move together or in opposition.
+**Note:** Correlations affect the joint simulation of asset returns and inflation, allowing for more
+realistic modeling of economic scenarios where, for example, inflation and stock returns may move
+together or in opposition.
 
 For more details and validation rules, see the test file:
 `tests/config/test_validate_correlation.py`.
@@ -144,8 +145,7 @@ For more details and validation rules, see the test file:
 
 ## [shocks]
 
-- **events** _(list of dicts)_
-  List of market shock events. Each event is a dictionary with:
+- **events** _(list of dicts)_ List of market shock events. Each event is a dictionary with:
   - **year**: Year index of the shock (int)
   - **asset**: Asset affected (e.g., "Stocks", "Bonds", "STR", "Fun", "Real Estate", "Inflation")
   - **magnitude**: Absolute annual rate that overrides the stochastic model (e.g., -0.35 for -35%).
@@ -154,8 +154,8 @@ For more details and validation rules, see the test file:
 
 ## [portfolio_rebalances]
 
-- **rebalances** _(list of dicts)_
-  List of scheduled portfolio rebalances. Each entry is a dictionary:
+- **rebalances** _(list of dicts)_ List of scheduled portfolio rebalances. Each entry is a
+  dictionary:
 
   - **year**: Year index when the rebalance occurs (int). The rebalance is triggered at the
     beginning of this year.

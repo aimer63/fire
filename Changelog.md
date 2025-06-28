@@ -14,10 +14,10 @@
 
 ### Changed
 
-- Refactored the simulation state from a dictionary to a `SimulationState` dataclass, improving
-  type safety, clarity, and consistency throughout the codebase. All state access is now via
-  attributes instead of dictionary keys. This change also significantly improved simulation
-  speed, cutting the running time for a typical 10,000-run simulation by half.
+- Refactored the simulation state from a dictionary to a `SimulationState` dataclass, improving type
+  safety, clarity, and consistency throughout the codebase. All state access is now via attributes
+  instead of dictionary keys. This change also significantly improved simulation speed, cutting the
+  running time for a typical 10,000-run simulation by half.
 - Introduced correlation between asset returns and inflation, allowing for more realistic
   simulations. The correlation is now a configurable parameter in `config.toml`.
 - Modified final wealth distribution statistics to use Median (P50), P25, P75, and IQR for a more
