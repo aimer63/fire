@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aimer63
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from typing import Any, List, Dict
 import numpy as np
 import json

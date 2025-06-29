@@ -4,13 +4,13 @@
 
 ### Added
 
-- Added GPLv3 license and automated SPDX headers with `reuse`.
-- Added a `[portfolio_rebalances]` section to `config.toml`, allowing users to specify multiple
-  rebalances with custom asset weights and trigger years.
-- Added a section to the Markdown report listing all parameters loaded from the config file.
+- Added unit tests for `simulation.py`.
 - Added explicit notes in the configuration and documentation regarding the single-currency
   assumption.
-- Added unit tests for `simulation.py`.
+- Added a section to the Markdown report listing all parameters loaded from the config file.
+- Added a `[portfolio_rebalances]` section to `config.toml`, allowing users to specify multiple
+  rebalances with custom asset weights and trigger years.
+- Added GPLv3 license and automated SPDX headers with `reuse`.
 
 ### Changed
 

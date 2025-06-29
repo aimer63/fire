@@ -23,7 +23,8 @@ dist/
 build/
 *.egg-info/
 
-# Ignore SPDX update script
+# Ignore SPDX update scripts
+check_copyright.sh
 update_spdx_year.sh
 
 # Ignore exercises

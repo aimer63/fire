@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aimer63
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from firestarter.core.simulation import Simulation
 
 # Fixtures like initialized_simulation are automatically discovered from conftest.py

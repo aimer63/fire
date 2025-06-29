@@ -193,7 +193,9 @@ def calculate_cagr(initial_value: float, final_value: float, num_years: int) -> 
         return -1.0  # Return -1.0 for complete loss, as per docstring
 
     # Ensure result is explicitly a Python float
-    return float((final_value / initial_value) ** (1.0 / num_years) - 1.0)  # Use float literals
+    return float(
+        (final_value / initial_value) ** (1.0 / num_years) - 1.0
+    )  # Use float literals
 
 
 def format_floats(obj, ndigits=4):

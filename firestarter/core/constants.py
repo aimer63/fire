@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aimer63
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Asset keys used throughout the simulation codebase
 ASSET_KEYS = [
     "stocks",

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aimer63
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Defines the SimulationState dataclass, which encapsulates the mutable state of a
 single simulation run.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aimer63
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import pytest
 from typing import Dict
 
@@ -77,7 +81,9 @@ def basic_market_assumptions() -> MarketAssumptions:
 @pytest.fixture
 def basic_portfolio_rebalances() -> PortfolioRebalances:
     """Minimal PortfolioRebalances for testing."""
-    rebalance_event_1 = PortfolioRebalance(year=0, stocks=0.6, bonds=0.3, str=0.1, fun=0.0)
+    rebalance_event_1 = PortfolioRebalance(
+        year=0, stocks=0.6, bonds=0.3, str=0.1, fun=0.0
+    )
     rebalance_event_2 = PortfolioRebalance(
         year=2,
         stocks=0.5,
