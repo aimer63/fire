@@ -13,7 +13,7 @@
 
 - **Before house purchase:**
 
-  - The portfolio consists only of liquid assets: stocks, bonds, STR, and fun money.
+  - The portfolio consists only of liquid assets: stocks, bonds, str, and fun money.
   - Portfolio weights are always specified relative to the _liquid_ portion of the portfolio.
   - Real estate is not included in portfolio weights or allocations.
 
@@ -24,7 +24,7 @@
   - The house is not considered part of the liquid portfolio for future rebalancing or withdrawals.
 
 - **After house purchase:**
-  - The real estate value evolves stochastically using the log-normal parameters (`real_estate_mu`,
+  - The real estate value evolves stochastically using the parameters (`real_estate_mu`,
     `real_estate_sigma`) and inflation.
   - The real estate asset is not rebalanced, not liquidated, and not used to cover expenses.
   - All portfolio weights and rebalancing continue to apply only to the remaining liquid assets.
@@ -37,7 +37,7 @@
 
 - **Withdrawal:**  
   A lump sum equal to the (inflation-adjusted) house cost is withdrawn from the liquid assets.  
-  The withdrawal order is: STR → Bonds → Stocks → Fun.  
+  The withdrawal order is: str → Bonds → Stocks → Fun.  
   If the total liquid assets are insufficient to cover the house cost, the simulation fails at this
   point.
 
@@ -61,7 +61,7 @@
 Real estate returns can be correlated with other asset classes and inflation via the
 `correlation_matrix` parameter in the configuration file. When you specify a correlation matrix
 under `[market_assumptions.correlation_matrix]`, the real estate row and column determine how real
-estate returns co-move with stocks, bonds, STR, fun money, and inflation.
+estate returns co-move with stocks, bonds, str, fun money, and inflation.
 
 - The simulation uses this matrix to jointly simulate all asset returns and inflation, including
   real estate, in a statistically consistent way.
