@@ -59,6 +59,29 @@ pip install firestarter-0.1.0b1-py3-none-any.whl
 
 ---
 
+## 5. Upgrading firestarter
+
+To upgrade to a newer version (e.g., from `v0.1.0b1` to `v0.1.0b2`):
+
+1. Download the new `.whl` file from the [GitHub Releases page](https://github.com/<your-username>/<your-repo>/releases).
+2. (Optional but recommended) Uninstall the old version:
+
+   ```sh
+   pip uninstall firestarter
+   ```
+
+3. Install the new version:
+
+   ```sh
+   pip install firestarter-0.1.0b2-py3-none-any.whl
+   ```
+
+4. Verify the installation:
+
+   ```sh
+   python -c "import firestarter; print(firestarter.__version__)"
+   ```
+
 ## Notes
 
 - If you encounter a "pip not found" error, try `python -m pip install ...` instead.

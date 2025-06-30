@@ -7,14 +7,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "firestarter"
-version = "0.1.0b2"
+version = "0.1.0b3"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
 authors = [{ name = "aimer63", email = "imeriod@gmail.com" }]
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy", "pandas", "matplotlib", "pydantic", "tomli"]
+dependencies = ["numpy", "pandas", "matplotlib", "pydantic", "tomli", "tqdm"]
 
 [project.scripts]
 fire = "firestarter.main:main"
