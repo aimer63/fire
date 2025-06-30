@@ -100,6 +100,7 @@ def main() -> None:
 
     output_root = config_data.get("paths", {}).get("output_root", "output")
     os.makedirs(os.path.join(output_root, "plots"), exist_ok=True)
+    os.makedirs(os.path.join(output_root, "reports"), exist_ok=True)
 
     print("Configuration file parsed successfully. Extracting parameters...")
 
