@@ -96,7 +96,8 @@ This document explains all parameters available in the main TOML configuration f
   Mean and standard deviation of annual short-term reserve (cash) returns.
 
 - **fun_mu, fun_sigma** _(float)_  
-  Mean and standard deviation of annual "fun money" (e.g., crypto, silver) returns.
+  Mean and standard deviation of annual "fun money" (e.g., hight volatility assets
+  like crypto, commodities... or any combination of such assets) returns.
 
 - **real_estate_mu, real_estate_sigma** _(float)_  
   Mean and standard deviation of annual real estate returns (capital gains, net of maintenance).
@@ -166,6 +167,7 @@ For more details and validation rules, see the test file:
 
   **Note:**
 
+  - year 0 must always have a rebalance to set initial weights.
   - The sum of weights for each rebalance must be 1.0.
   - Each year can only have one rebalance event scheduled.
   - There must be a rebalance at year 0 to set initial weights.
