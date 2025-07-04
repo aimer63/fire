@@ -27,6 +27,9 @@ build/
 check_copyright.sh
 update_copyright_year.sh
 
+# Ignore mailmap file
+.mailmap
+
 # Ignore exercises
 learn.py
 
