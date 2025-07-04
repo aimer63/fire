@@ -19,7 +19,7 @@ Let $(\Omega, \mathcal{F}, P)$ be a probability space, where:
 A **random variable** $X: \Omega \to \mathbb{R}$ is a measurable function. The expected value (mean)
 of $X$ is:
 
-$\mathbb{E}[X] = \int_{\Omega} X(\omega) \, dP(\omega)$
+$\mathbb{E}[X] = \int_{\Omega} X(\omega) \ dP(\omega)$
 
 ---
 

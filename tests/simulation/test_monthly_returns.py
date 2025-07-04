@@ -31,11 +31,11 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
     # Define mock monthly returns for a specific month (e.g., month 12)
     month_to_test = 12
     mock_returns = {
-        "Stocks": 0.02,  # +2%
-        "Bonds": -0.005,  # -0.5%
-        "STR": 0.001,  # +0.1%
-        "Fun": 0.0,  # 0%
-        "Real Estate": 0.005,  # +0.5%
+        "stocks": 0.02,  # +2%
+        "bonds": -0.005,  # -0.5%
+        "str": 0.001,  # +0.1%
+        "fun": 0.0,  # 0%
+        "real_estate": 0.005,  # +0.5%
     }
 
     # Manually inject these returns into the precomputed sequences in the state
@@ -48,21 +48,21 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
     # --- Assertions ---
     # Check that each liquid asset was updated correctly
     assert sim.state.liquid_assets["stocks"] == pytest.approx(
-        initial_liquid_assets["stocks"] * (1 + mock_returns["Stocks"])
+        initial_liquid_assets["stocks"] * (1 + mock_returns["stocks"])
     )
     assert sim.state.liquid_assets["bonds"] == pytest.approx(
-        initial_liquid_assets["bonds"] * (1 + mock_returns["Bonds"])
+        initial_liquid_assets["bonds"] * (1 + mock_returns["bonds"])
     )
     assert sim.state.liquid_assets["str"] == pytest.approx(
-        initial_liquid_assets["str"] * (1 + mock_returns["STR"])
+        initial_liquid_assets["str"] * (1 + mock_returns["str"])
     )
     assert sim.state.liquid_assets["fun"] == pytest.approx(
-        initial_liquid_assets["fun"] * (1 + mock_returns["Fun"])
+        initial_liquid_assets["fun"] * (1 + mock_returns["fun"])
     )
 
     # Check that real estate was also updated correctly
     assert sim.state.current_real_estate_value == pytest.approx(
-        initial_real_estate_value * (1 + mock_returns["Real Estate"])
+        initial_real_estate_value * (1 + mock_returns["real_estate"])
     )
 
     # Check that bank balance is untouched

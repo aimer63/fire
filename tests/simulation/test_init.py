@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from firestarter.core.constants import ASSET_KEYS
 from firestarter.core.simulation import Simulation
 # Fixtures are now in conftest.py
 
@@ -75,6 +76,6 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
     )
 
     assert hasattr(state, "monthly_returns_lookup")
-    for asset_key in ["Stocks", "Bonds", "STR", "Fun", "Real Estate"]:
+    for asset_key in ASSET_KEYS:
         assert asset_key in state.monthly_returns_lookup
         assert len(state.monthly_returns_lookup[asset_key]) == total_months

@@ -431,17 +431,17 @@ class Simulation:
                 monthly_shock_rate = (1.0 + annual_shock_rate) ** (1.0 / 12.0) - 1.0
 
                 target_sequence = None
-                if shock_asset == "Stocks":
+                if shock_asset == "stocks":
                     target_sequence = self.state.monthly_stocks_returns_sequence
-                elif shock_asset == "Bonds":
+                elif shock_asset == "bonds":
                     target_sequence = self.state.monthly_bonds_returns_sequence
-                elif shock_asset == "STR":
+                elif shock_asset == "str":
                     target_sequence = self.state.monthly_str_returns_sequence
-                elif shock_asset == "Fun":
+                elif shock_asset == "fun":
                     target_sequence = self.state.monthly_fun_returns_sequence
-                elif shock_asset == "Real Estate":
+                elif shock_asset == "real_estate":
                     target_sequence = self.state.monthly_real_estate_returns_sequence
-                elif shock_asset == "Inflation":
+                elif shock_asset == "inflation":
                     target_sequence = self.state.monthly_inflation_sequence
 
                 if target_sequence is not None:
@@ -463,15 +463,6 @@ class Simulation:
                 monthly_cumulative_inflation_factors[month_idx]
                 * (1.0 + monthly_inflation_sequence[month_idx])
             )
-
-        # --- Monthly returns lookup ---
-        monthly_returns_lookup = {
-            "Stocks": self.state.monthly_stocks_returns_sequence,
-            "Bonds": self.state.monthly_bonds_returns_sequence,
-            "STR": self.state.monthly_str_returns_sequence,
-            "Fun": self.state.monthly_fun_returns_sequence,
-            "Real Estate": self.state.monthly_real_estate_returns_sequence,
-        }
 
         # --- Precompute nominal pension and salary monthly sequences with partial indexation ---
         monthly_nominal_pension_sequence = np.zeros(total_months, dtype=np.float64)
@@ -508,10 +499,16 @@ class Simulation:
                     )
                 monthly_nominal_salary_sequence[month_idx] = salary_cumulative
 
+        self.state.monthly_returns_lookup = {
+            "stocks": self.state.monthly_stocks_returns_sequence,
+            "bonds": self.state.monthly_bonds_returns_sequence,
+            "str": self.state.monthly_str_returns_sequence,
+            "fun": self.state.monthly_fun_returns_sequence,
+            "real_estate": self.state.monthly_real_estate_returns_sequence,
+        }
         self.state.monthly_cumulative_inflation_factors = (
             monthly_cumulative_inflation_factors
         )
-        self.state.monthly_returns_lookup = monthly_returns_lookup
         self.state.monthly_nominal_pension_sequence = monthly_nominal_pension_sequence
         self.state.monthly_nominal_salary_sequence = monthly_nominal_salary_sequence
 
@@ -649,19 +646,11 @@ class Simulation:
         Apply monthly returns to all asset values at the end of the month.
         """
         returns = self.state.monthly_returns_lookup
-        asset_to_returns_key = {
-            "stocks": "Stocks",
-            "bonds": "Bonds",
-            "str": "STR",
-            "fun": "Fun",
-        }
         for asset in ASSET_KEYS:
             if asset != "real_estate":
-                self.state.liquid_assets[asset] *= float(
-                    1.0 + returns[asset_to_returns_key[asset]][month]
-                )
+                self.state.liquid_assets[asset] *= float(1.0 + returns[asset][month])
         self.state.current_real_estate_value *= float(
-            1.0 + returns["Real Estate"][month]
+            1.0 + returns["real_estate"][month]
         )
 
     def _apply_fund_fee(self) -> None:
