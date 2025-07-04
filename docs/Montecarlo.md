@@ -31,7 +31,11 @@ value as the number of samples increases.
 
 Let $X_1, X_2, \ldots, X_n$ be i.i.d. random variables with mean $\mu$:
 
-The sample mean is $$\overline{X}_n = \frac{1}{n} \sum\limits_{i=1}^n X_i$$
+The sample mean is
+
+```math
+\overline{X}_n = \frac{1}{n} \sum_{i=1}^n X_i
+```
 
 Then, as $n \to \infty$:
 
@@ -45,8 +49,9 @@ where "almost surely" denotes convergence with probability 1.
 
 Suppose we wish to estimate $\theta = \mathbb{E}[f(X)]$, where $f$ is a function and $X$ is a random
 variable with known distribution. The Monte Carlo estimator is:
-
-$\hat{\theta}_n = \frac{1}{n} \sum_{i=1}^n f(X_i)$
+```math
+\hat{\theta}_n = \frac{1}{n} \sum_{i=1}^n f(X_i)
+```
 
 where $X_1, \ldots, X_n$ are i.i.d. samples from the distribution of $X$.
 
@@ -89,7 +94,9 @@ $\pi \approx 4 \cdot \frac{\text{Number of points inside circle}}{\text{Total nu
 
 Let $(X_i, Y_i)$ be i.i.d. samples from $\mathrm{Uniform}(0,1)$:
 
-$ I_i = 1 $ if $ X_i^2 + Y_i^2 \leq 1 $, $0$ otherwise.
+```math
+ I_i = 1 \: if \: X_i^2 + Y_i^2 \: \leq 1, \: 0 \;otherwise.
+```
 
 Then,
 
