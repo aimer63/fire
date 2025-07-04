@@ -49,6 +49,7 @@ where "almost surely" denotes convergence with probability 1.
 
 Suppose we wish to estimate $\theta = \mathbb{E}[f(X)]$, where $f$ is a function and $X$ is a random
 variable with known distribution. The Monte Carlo estimator is:
+
 ```math
 \hat{\theta}_n = \frac{1}{n} \sum_{i=1}^n f(X_i)
 ```
