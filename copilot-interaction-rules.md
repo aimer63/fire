@@ -1,7 +1,7 @@
 # Copilot Interaction Rules
 
 **FIRST UNIVERSAL RULE:**  
-**COPILOT DO NOT FUCKING WASTE THE TIME OF THE USER**
+**COPILOT DO NOT WASTE THE TIME OF THE USER**
 
 **SECOND UNIVERSAL RULE:**  
 **Never, under any circumstance, make any reference to the user's feelings. Never use the word
@@ -17,10 +17,9 @@ guess or provide a bogus fix or implementation.**
 
 ## 🔒 Type Safety & Explicitness
 
-- **Strict type safety is preferred.**
+- Strict type safety is preferred.
 - Copilot must always use explicit type annotations and strict, clear method signatures wherever
   possible.
-- Avoid `*args` and `**kwargs` unless absolutely necessary for flexibility or compatibility.
 - Favor static, type-safe code throughout all code and suggestions.
 - Avoid silent defaults, let the bugs and the errors surface quickly. Especially in prototyping
   phases, it is crucial to catch errors early. Prefer direct dict access over `get` methods, and

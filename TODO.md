@@ -4,9 +4,6 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 
 ---
 
-- [ ] **Asset Representation Refactor:** Unify asset handling (liquid and illiquid/real estate) into
-      a consistent structure (class or dict with metadata) to eliminate special-casing, improve
-      clarity, and enable extensibility. See `problems.md` for analysis.
 - [ ] **Refactoring & Maintainability**
 
   - [ ] **Rebalance Logic:** Extract a `rebalance_liquid_assets` helper to reduce duplication
@@ -15,8 +12,6 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
         `console_report.py` and `markdown_report.py` into a shared utility module.
   - [ ] **Formatting Logic:** Centralize all formatting (currency, percentages, allocations) into
         `helpers.py`.
-  - [ ] **Asset Key Consistency:** Standardize asset keys (e.g., always lowercase) and use constants
-        throughout the codebase.
   - [ ] **Type Safety:** Use `TypedDicts` or `dataclasses` for structured data passed between
         modules to improve type safety.
 
@@ -49,14 +44,8 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 ## 🟦 Future Features / Ideas
 
 - [ ] **Flexible Asset Management**
-  - [ ] **Improve Asset Extensibility:** Refactor to use asset key lists/dicts everywhere, so adding
-        a new asset is a one-line change.
   - [ ] **Configurable Asset Classes:** Allow asset classes to be defined in the config, so the
         simulation can support arbitrary asset mixes without code changes.
-- [ ] **Advanced Financial Modeling**
-  - [ ] **Implement Correlation:** Account for asset-asset and asset-inflation correlation using a
-        correlation matrix in the configuration. This will require `numpy` and Cholesky
-        decomposition to generate correlated random draws.
 - [ ] Add scenario comparison (multiple configs in one run).
 - [ ] Optionally parallelize simulations for speed.
 

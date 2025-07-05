@@ -25,7 +25,7 @@ output_root = "output"
 # --- Deterministic Inputs (Your Personal Financial Plan) ---
 [deterministic_inputs]
 initial_investment = 100_000 # Initial Investment Value (e.g., EUR)
-initial_bank_balance = 0  # Initial Bank Account Balance (e.g., EUR)
+initial_bank_balance = 0     # Initial Bank Account Balance (e.g., EUR)
 
 # Bank account lower and upper bound in real money
 # if it goes below it will be topped, if it goes above it will be invested
@@ -39,14 +39,14 @@ years_to_simulate = 20
 # In flows
 
 # To the bank:
-monthly_salary = 0                                  # Initial real monthly salary (e.g., 2500 EUR in today's money)
-salary_inflation_factor = 1.0                       # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
-salary_start_year = 0                               # Year index when salary starts (e.g., 0 for immediate start)
-salary_end_year = 0                                 # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+monthly_salary = 0            # Initial real monthly salary (e.g., 2500 EUR in today's money)
+salary_inflation_factor = 1.0 # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
+salary_start_year = 0         # Year index when salary starts (e.g., 0 for immediate start)
+salary_end_year = 0           # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
 
 # The pension when it will arrive... if
 monthly_pension = 0
-pension_inflation_factor = 0.6                      # Factor by which pension adjusts to inflation (1.0 = same as inflation, 0.6 = 60% below inflation)
+pension_inflation_factor = 0.6 # Factor by which pension adjusts to inflation (1.0 = same as inflation, 0.6 = 60% below inflation)
 pension_start_year = 0
 
 # To the investment:
@@ -69,9 +69,7 @@ annual_fund_fee = 0.002 # 0.2%
 monthly_expenses = 0
 
 # Planned Extra Expenses real_amount at the time of the expense. [[X, year], ...]
-planned_extra_expenses = [
-    [0, 0],
-]
+planned_extra_expenses = [[0, 0]]
 
 # Initial real cost of the house to be purchased at rebalancing_year_idx
 planned_house_purchase_cost = 0
@@ -162,78 +160,78 @@ pi_sigma = 0.025
 
 # Injects market shocks/crisis
 [shocks]
-# events = []
-events = [
-      # Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
-      # Note: Without a 'month' field, this shock will be applied based on how your
-      # simulation.py handles year-only shocks (e.g., at the start of Year 0).
-      # The specific 'October' timing of Black Friday is not preserved here.
-    # {year = 10, asset = "Stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
-    # {year = 10, asset = "Bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
-    # {year = 10, asset = "STR", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
-    # {year = 10, asset = "Fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
-    # {year = 10, asset = "Real Estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
-
-    # # Internet Bubble Burst (e.g., representing a year like 2000-2002)
-    # {year = 15, asset = "Stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
-    # {year = 15, asset = "Bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
-    # {year = 15, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
-    # {year = 15, asset = "Fun", magnitude = -0.10},          # Fun (50% Bitcoin, 50% Silver)
-    # {year = 15, asset = "Real Estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
-
-    # # Great Recession (Worst year, e.g., 2008)
-    # {year = 20, asset = "Stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
-    # {year = 20, asset = "Bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
-    # {year = 20, asset = "STR", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
-    # {year = 20, asset = "Fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
-    # {year = 20, asset = "Real Estate", magnitude = -0.18},  # Significant residential real estate price declines.
-]
+events = []
+# events = [
+# Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
+# Note: Without a 'month' field, this shock will be applied based on how your
+# simulation.py handles year-only shocks (e.g., at the start of Year 0).
+# The specific 'October' timing of Black Friday is not preserved here.
+# {year = 10, asset = "stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
+# {year = 10, asset = "bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
+# {year = 10, asset = "str", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
+# {year = 10, asset = "fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
+# {year = 10, asset = "real_estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
+#
+# # Internet Bubble Burst (e.g., representing a year like 2000-2002)
+# {year = 15, asset = "stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
+# {year = 15, asset = "bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
+# {year = 15, asset = "str", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+# {year = 15, asset = "fun", magnitude = -0.10},          # Fun (50% Bitcoin, 50% Silver)
+# {year = 15, asset = "real_estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
+#
+# # Great Recession (Worst year, e.g., 2008)
+# {year = 20, asset = "stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
+# {year = 20, asset = "bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
+# {year = 20, asset = "str", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
+# {year = 20, asset = "fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
+# {year = 20, asset = "real_estate", magnitude = -0.18},  # Significant residential real estate price declines.
+#  ]
 
 # events = [
 #     # Crypto shock
-#     {year = 30, asset = "Stocks", magnitude = -0.1},
-#     {year = 30, asset = "Bonds", magnitude = 0.02},
-#     {year = 30, asset = "STR", magnitude = 0.0},
-#     {year = 30, asset = "Fun", magnitude = -1.0},
-#     {year = 30, asset = "Real Estate", magnitude = -0.05},
-#     {year = 31, asset = "Stocks", magnitude = 0.05},
-#     {year = 31, asset = "Bonds", magnitude = 0.02},
-#     {year = 31, asset = "STR", magnitude = 0.0},
-#     {year = 31, asset = "Fun", magnitude = -1.0},
-#     {year = 31, asset = "Real Estate", magnitude = -0.05},
-#     {year = 32, asset = "Stocks", magnitude = 0.095},
-#     {year = 32, asset = "Bonds", magnitude = 0.019},
-#     {year = 32, asset = "STR", magnitude = 0.0085},
-#     {year = 32, asset = "Fun", magnitude = -1.0},
-#     {year = 32, asset = "Real Estate", magnitude = -0.05},
+#     {year = 30, asset = "stocks", magnitude = -0.1},
+#     {year = 30, asset = "bonds", magnitude = 0.02},
+#     {year = 30, asset = "str", magnitude = 0.0},
+#     {year = 30, asset = "fun", magnitude = -1.0},
+#     {year = 30, asset = "real_estate", magnitude = -0.05},
+#     {year = 31, asset = "stocks", magnitude = 0.05},
+#     {year = 31, asset = "bonds", magnitude = 0.02},
+#     {year = 31, asset = "str", magnitude = 0.0},
+#     {year = 31, asset = "fun", magnitude = -1.0},
+#     {year = 31, asset = "real_estate", magnitude = -0.05},
+#     {year = 32, asset = "stocks", magnitude = 0.095},
+#     {year = 32, asset = "bonds", magnitude = 0.019},
+#     {year = 32, asset = "str", magnitude = 0.0085},
+#     {year = 32, asset = "fun", magnitude = -1.0},
+#     {year = 32, asset = "real_estate", magnitude = -0.05},
 # ]
 
 # events = [
 #     # Stagflation
-#     {year = 10, asset = "Stocks", magnitude = -0.1},
-#     {year = 10, asset = "Bonds", magnitude = 0.06},
-#     {year = 10, asset = "STR", magnitude = 0.0},
-#     {year = 10, asset = "Fun", magnitude = 0.0},
-#     {year = 10, asset = "Real Estate", magnitude = -0.05},
-#     {year = 10, asset = "Inflation", magnitude = 0.05},
-
-#     {year = 11, asset = "Stocks", magnitude = 0.0002},
-#     {year = 11, asset = "Bonds", magnitude = 0.012},
-#     {year = 11, asset = "STR", magnitude = 0.0},
-#     {year = 11, asset = "Fun", magnitude = 0.0},
-#     {year = 11, asset = "Real Estate", magnitude = -0.05},
-#     {year = 11, asset = "Inflation", magnitude = 0.15},
-
-#     {year = 12, asset = "Stocks", magnitude = 0.003},
-#     {year = 12, asset = "Bonds", magnitude = 0.019},
-#     {year = 12, asset = "STR", magnitude = 0.0085},
-#     {year = 12, asset = "Fun", magnitude = 0.0},
-#     {year = 12, asset = "Real Estate", magnitude = -0.05},
-#     {year = 12, asset = "Inflation", magnitude = 0.08},
+#     {year = 10, asset = "stocks", magnitude = -0.1},
+#     {year = 10, asset = "bonds", magnitude = 0.06},
+#     {year = 10, asset = "str", magnitude = 0.0},
+#     {year = 10, asset = "fun", magnitude = 0.0},
+#     {year = 10, asset = "real_estate", magnitude = -0.05},
+#     {year = 10, asset = "inflation", magnitude = 0.05},
+#
+#     {year = 11, asset = "stocks", magnitude = 0.0002},
+#     {year = 11, asset = "bonds", magnitude = 0.012},
+#     {year = 11, asset = "str", magnitude = 0.0},
+#     {year = 11, asset = "fun", magnitude = 0.0},
+#     {year = 11, asset = "real_estate", magnitude = -0.05},
+#     {year = 11, asset = "inflation", magnitude = 0.15},
+#
+#     {year = 12, asset = "stocks", magnitude = 0.003},
+#     {year = 12, asset = "bonds", magnitude = 0.019},
+#     {year = 12, asset = "str", magnitude = 0.0085},
+#     {year = 12, asset = "fun", magnitude = 0.0},
+#     {year = 12, asset = "real_estate", magnitude = -0.05},
+#     {year = 12, asset = "inflation", magnitude = 0.08},
 # ]
 
 [portfolio_rebalances]
 rebalances = [
-  { year = 0,  stocks = 1.0, bonds = 0.0, str = 0.00, fun = 0.00 }
+  { year = 0, stocks = 1.0, bonds = 0.0, str = 0.00, fun = 0.00 },
   # { year = 20, stocks = 0.40, bonds = 0.60, str = 0.00, fun = 0.00 }
 ]

@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased] - 2025-06
+## [Unreleased]
+
+### Changed
+
+- Normalized asset names and keys throughout the codebase for consistency.
+
+## [v0.1.0b3] - 2025-06
 
 ### Added
 
