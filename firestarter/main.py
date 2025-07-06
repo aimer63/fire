@@ -53,8 +53,7 @@ def run_single_simulation(
     market_assumptions: MarketAssumptions,
     portfolio_rebalances: PortfolioRebalances,
     shock_events: Any,
-    initial_assets: dict[str, float],
-    sim_params: SimulationParameters,  # Added sim_params here
+    sim_params: SimulationParameters,
 ) -> dict[str, Any]:
     builder = SimulationBuilder.new()
     simulation = (
@@ -62,8 +61,7 @@ def run_single_simulation(
         .set_market_assumptions(market_assumptions)
         .set_portfolio_rebalances(portfolio_rebalances)
         .set_shock_events(shock_events)
-        .set_initial_assets(initial_assets)
-        .set_sim_params(sim_params)  # Added this line
+        .set_sim_params(sim_params)
         .build()
     )
     simulation.init()
@@ -110,13 +108,16 @@ def main() -> None:
     )
 
     # Pydantic: Load and validate economic assumptions
-    market_assumptions: MarketAssumptions = MarketAssumptions(
-        **config_data["market_assumptions"]
-    )
+    # Manually combine the assets and market_assumptions sections from the config
+    market_assumptions_data = {
+        **config_data["market_assumptions"],
+        "assets": config_data["assets"],
+    }
+    market_assumptions: MarketAssumptions = MarketAssumptions(**market_assumptions_data)
 
     # Pydantic: Load and validate portfolio rebalances
     portfolio_rebalances: PortfolioRebalances = PortfolioRebalances(
-        **config_data["portfolio_rebalances"]
+        rebalances=config_data["portfolio_rebalances"]
     )
 
     # Pydantic: Load and validate simulation parameters
@@ -126,15 +127,17 @@ def main() -> None:
     num_simulations: int = sim_params.num_simulations
 
     # Pydantic: Load and validate shocks
-    shocks: Shocks = Shocks(**config_data.get("shocks", {}))
+    shocks: Shocks = Shocks(events=config_data.get("shocks", []))
 
     # Validate portfolio rebalance weights
     for reb in portfolio_rebalances.rebalances:
-        reb_sum = reb.stocks + reb.bonds + reb.str + reb.fun
+        reb_sum = sum(reb.weights.values())
         assert np.isclose(reb_sum, 1.0), (
             f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
         )
-    # print("All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance.")
+    print(
+        "All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance."
+    )
 
     assert det_inputs.bank_upper_bound >= det_inputs.bank_lower_bound, (
         f"Bounds invalid: Upper ({det_inputs.bank_upper_bound:,.0f}) "
@@ -142,30 +145,18 @@ def main() -> None:
     )
     # print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
 
-    # Calculate initial asset values based on the first rebalance weights
-    first_reb = portfolio_rebalances.rebalances[0]
-    (
-        initial_stocks_value,
-        initial_bonds_value,
-        initial_str_value,
-        initial_fun_value,
-        initial_real_estate_value,
-    ) = calculate_initial_asset_values(
-        det_inputs.initial_investment,
-        first_reb.stocks,
-        first_reb.bonds,
-        first_reb.str,
-        first_reb.fun,
-        0.0,  # real estate is always 0 in liquid allocations
-    )
+    # The initial portfolio is now loaded directly from the config into det_inputs.
+    # The logic to calculate it from a total value and rebalance weights is removed,
+    # as are the now-unused helper function and initial asset value variables.
 
-    initial_assets = {
-        "stocks": initial_stocks_value,
-        "bonds": initial_bonds_value,
-        "str": initial_str_value,
-        "fun": initial_fun_value,
-        "real_estate": initial_real_estate_value,
-    }
+    # This dictionary is no longer used as initial_portfolio is loaded directly.
+    # initial_assets = {
+    #     "stocks": initial_stocks_value,
+    #     "bonds": initial_bonds_value,
+    #     "str": initial_str_value,
+    #     "fun": initial_fun_value,
+    #     "real_estate": initial_real_estate_value,
+    # }
 
     print(
         "All parameters successfully extracted and assigned to Python variables, "
@@ -189,7 +180,6 @@ def main() -> None:
                 market_assumptions,
                 portfolio_rebalances,
                 shocks,
-                initial_assets,
                 sim_params,
             )
             for _ in range(num_simulations)
