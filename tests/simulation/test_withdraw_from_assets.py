@@ -17,13 +17,16 @@ def test_withdraw_from_assets_success_single_asset(
     Tests a successful withdrawal that is fully covered by the first-priority asset.
     """
     sim = initialized_simulation
-    sim.initial_assets = {
+    initial_portfolio = {
         "stocks": 50_000.0,
         "bonds": 50_000.0,
         "str": 50_000.0,
         "fun": 50_000.0,
         "real_estate": 0.0,
     }
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={"initial_portfolio": initial_portfolio}
+    )
     sim.init()
     sim.state.current_bank_balance = 0.0
 
@@ -32,8 +35,8 @@ def test_withdraw_from_assets_success_single_asset(
 
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(amount_to_withdraw)
-    assert sim.state.liquid_assets["str"] == pytest.approx(40_000.0)  # 50k - 10k
-    assert sim.state.liquid_assets["bonds"] == pytest.approx(50_000.0)  # Unchanged
+    assert sim.state.portfolio["str"] == pytest.approx(40_000.0)  # 50k - 10k
+    assert sim.state.portfolio["bonds"] == pytest.approx(50_000.0)  # Unchanged
 
 
 def test_withdraw_from_assets_success_multiple_assets(
@@ -44,13 +47,16 @@ def test_withdraw_from_assets_success_multiple_assets(
     partially draws from the second.
     """
     sim = initialized_simulation
-    sim.initial_assets = {
+    initial_portfolio = {
         "stocks": 50_000.0,
         "bonds": 50_000.0,
         "str": 10_000.0,  # Lower amount to force depletion
         "fun": 50_000.0,
         "real_estate": 0.0,
     }
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={"initial_portfolio": initial_portfolio}
+    )
     sim.init()
     sim.state.current_bank_balance = 0.0
 
@@ -59,9 +65,9 @@ def test_withdraw_from_assets_success_multiple_assets(
 
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(amount_to_withdraw)
-    assert sim.state.liquid_assets["str"] == pytest.approx(0.0)  # Depleted
-    assert sim.state.liquid_assets["bonds"] == pytest.approx(35_000.0)  # 50k - 15k
-    assert sim.state.liquid_assets["stocks"] == pytest.approx(50_000.0)  # Unchanged
+    assert sim.state.portfolio["str"] == pytest.approx(0.0)  # Depleted
+    assert sim.state.portfolio["bonds"] == pytest.approx(35_000.0)  # 50k - 15k
+    assert sim.state.portfolio["stocks"] == pytest.approx(50_000.0)  # Unchanged
 
 
 def test_withdraw_from_assets_failure_insufficient_funds(
@@ -72,23 +78,30 @@ def test_withdraw_from_assets_failure_insufficient_funds(
     of all liquid assets.
     """
     sim = initialized_simulation
-    sim.initial_assets = {
+    initial_portfolio = {
         "stocks": 10_000.0,
         "bonds": 10_000.0,
         "str": 10_000.0,
         "fun": 10_000.0,
         "real_estate": 0.0,
     }
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={"initial_portfolio": initial_portfolio}
+    )
     sim.init()
     sim.state.current_bank_balance = 0.0
-    total_liquid_assets = sum(sim.state.liquid_assets.values())
+    total_liquid_assets = sum(
+        v for k, v in sim.state.portfolio.items() if k != "real_estate"
+    )
 
     amount_to_withdraw = 50_000.0  # More than the 40k available
     sim._withdraw_from_assets(amount_to_withdraw)
 
     assert sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(total_liquid_assets)
-    assert sum(sim.state.liquid_assets.values()) == pytest.approx(0.0)
+    assert sum(
+        v for k, v in sim.state.portfolio.items() if k != "real_estate"
+    ) == pytest.approx(0.0)
 
 
 def test_withdraw_from_assets_success_all_assets(
@@ -98,13 +111,16 @@ def test_withdraw_from_assets_success_all_assets(
     Tests a successful withdrawal that draws from all liquid assets according to priority.
     """
     sim = initialized_simulation
-    sim.initial_assets = {
+    initial_portfolio = {
         "stocks": 10_000.0,
         "bonds": 10_000.0,
         "str": 10_000.0,
         "fun": 50_000.0,
         "real_estate": 0.0,
     }
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={"initial_portfolio": initial_portfolio}
+    )
     sim.init()
     sim.state.current_bank_balance = 0.0
 
@@ -114,9 +130,9 @@ def test_withdraw_from_assets_success_all_assets(
 
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(amount_to_withdraw)
-    assert sim.state.liquid_assets["str"] == pytest.approx(0.0)
-    assert sim.state.liquid_assets["bonds"] == pytest.approx(0.0)
-    assert sim.state.liquid_assets["stocks"] == pytest.approx(0.0)
-    assert sim.state.liquid_assets["fun"] == pytest.approx(
+    assert sim.state.portfolio["str"] == pytest.approx(0.0)
+    assert sim.state.portfolio["bonds"] == pytest.approx(0.0)
+    assert sim.state.portfolio["stocks"] == pytest.approx(0.0)
+    assert sim.state.portfolio["fun"] == pytest.approx(
         45_000.0
     )  # 50k - 5k needed after others depleted

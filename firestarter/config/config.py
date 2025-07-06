@@ -21,9 +21,10 @@ These models provide type safety and validation for the simulation engine.
 
 # config.py
 # config.py
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 import numpy as np
-from typing import List
+from typing import List, Dict
+
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 
@@ -48,7 +49,40 @@ class PlannedExtraExpense(BaseModel):
     year: int = Field(
         ..., ge=0, description="Year index (0-indexed) when the expense occurs."
     )
+    description: str | None = Field(
+        default=None, description="Optional description of the expense."
+    )
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class Asset(BaseModel):
+    """Represents a single financial asset class."""
+
+    mu: float = Field(..., description="Expected annual arithmetic mean return.")
+    sigma: float = Field(
+        ..., description="Expected annual standard deviation of returns."
+    )
+    is_liquid: bool = Field(
+        ...,
+        description="True if the asset is part of the liquid, rebalanceable portfolio.",
+    )
+    withdrawal_priority: int | None = Field(
+        default=None,
+        description="Order for selling to cover cash shortfalls (lower is sold first). Required for liquid assets.",
+    )
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def check_withdrawal_priority(self) -> "Asset":
+        """Ensure withdrawal_priority is set correctly based on liquidity."""
+        is_liquid = self.is_liquid
+        priority = self.withdrawal_priority
+
+        if is_liquid and priority is None:
+            raise ValueError("withdrawal_priority is required for liquid assets")
+        if not is_liquid and priority is not None:
+            raise ValueError("withdrawal_priority must not be set for illiquid assets")
+        return self
 
 
 class DeterministicInputs(BaseModel):
@@ -57,8 +91,9 @@ class DeterministicInputs(BaseModel):
     These parameters are loaded from the 'deterministic_inputs' section of config.toml.
     """
 
-    initial_investment: float = Field(
-        ..., description="Initial investment portfolio value."
+    initial_portfolio: dict[str, float] = Field(
+        ...,
+        description="Initial value of portfolio assets, mapping asset name to amount.",
     )
     initial_bank_balance: float = Field(
         ..., description="Initial bank account balance."
@@ -140,7 +175,7 @@ class DeterministicInputs(BaseModel):
     planned_extra_expenses: list[PlannedExtraExpense] = Field(
         default_factory=list,
         description=(
-            "List of planned extra expenses. e.g. [{amount = 15000, year = 3}, ...]"
+            "List of planned extra expenses. e.g. [{amount = 15000, year = 3, description = 'Car'}, ...]"
         ),
     )
 
@@ -165,52 +200,12 @@ class DeterministicInputs(BaseModel):
 class MarketAssumptions(BaseModel):
     """
     Pydantic model representing the economic assumptions for the simulation.
-    These parameters are loaded from the 'economic_assumptions' section of config.toml.
+    These parameters are loaded from the 'market_assumptions' section of config.toml.
     """
 
-    stock_mu: float = Field(
-        ..., description="Arithmetic mean annual return for stocks."
+    assets: dict[str, Asset] = Field(
+        ..., description="A dictionary containing all defined financial assets."
     )
-    stock_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for stocks."
-    )
-
-    bond_mu: float = Field(..., description="Arithmetic mean annual return for bonds.")
-    bond_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for bonds."
-    )
-
-    str_mu: float = Field(
-        ..., description="Arithmetic mean annual return for short-term reserves (STR)."
-    )
-    str_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for STR."
-    )
-
-    fun_mu: float = Field(
-        ...,
-        description="Arithmetic mean annual return for 'fun money' (e.g., crypto/silver).",
-    )
-    fun_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for 'fun money'."
-    )
-
-    real_estate_mu: float = Field(
-        ...,
-        description=(
-            "Arithmetic mean annual return for real estate "
-            "(capital gains, net of maintenance)."
-        ),
-    )
-    real_estate_sigma: float = Field(
-        ..., description="Standard deviation of annual returns for real estate."
-    )
-
-    pi_mu: float = Field(..., description="Arithmetic mean of annual inflation rate.")
-    pi_sigma: float = Field(
-        ..., description="Standard deviation of annual inflation rate."
-    )
-
     correlation_matrix: CorrelationMatrix | None = Field(
         default=None,
         description=(
@@ -218,6 +213,27 @@ class MarketAssumptions(BaseModel):
             "If not provided, assets are assumed to be uncorrelated."
         ),
     )
+
+    @model_validator(mode="after")
+    def check_assets(self) -> "MarketAssumptions":
+        """
+        Validates two conditions across all assets:
+        1. Liquid assets must have a `withdrawal_priority`.
+        2. `withdrawal_priority` must be unique among all liquid assets.
+        """
+        priorities = set()
+        for asset_name, asset in self.assets.items():
+            if asset.is_liquid:
+                if asset.withdrawal_priority is None:
+                    raise ValueError(
+                        f"Liquid asset '{asset_name}' must have a withdrawal_priority."
+                    )
+                if asset.withdrawal_priority in priorities:
+                    raise ValueError(
+                        "Withdrawal priorities for liquid assets must be unique."
+                    )
+                priorities.add(asset.withdrawal_priority)
+        return self
 
     @staticmethod
     def _convert_to_lognormal(
@@ -251,16 +267,8 @@ class MarketAssumptions(BaseModel):
     def lognormal(self) -> dict[str, tuple[float, float]]:
         """Return log-normal parameters for all assets and inflation."""
         return {
-            "stocks": self._convert_to_lognormal(self.stock_mu, self.stock_sigma),
-            "bonds": self._convert_to_lognormal(self.bond_mu, self.bond_sigma),
-            "str": self._convert_to_lognormal(self.str_mu, self.str_sigma),
-            "fun": self._convert_to_lognormal(self.fun_mu, self.fun_sigma),
-            "real_estate": self._convert_to_lognormal(
-                self.real_estate_mu, self.real_estate_sigma
-            ),
-            "inflation": self._convert_to_lognormal(
-                self.pi_mu, self.pi_sigma
-            ),  # <-- FIXED HERE
+            asset_name: self._convert_to_lognormal(asset.mu, asset.sigma)
+            for asset_name, asset in self.assets.items()
         }
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -272,33 +280,63 @@ class PortfolioRebalance(BaseModel):
 
     Attributes:
         year (int): The year (0-indexed) when this rebalance occurs.
-        stocks (float): Weight for stocks (liquid assets only).
-        bonds (float): Weight for bonds (liquid assets only).
-        str (float): Weight for short-term reserves (STR, liquid assets only).
-        fun (float): Weight for 'fun money' (liquid assets only).
+        weights (dict[str, float]): A dictionary mapping liquid asset names to their
+                                    target weights, which must sum to 1.0.
+        description (str | None): Optional description of the rebalance event.
     """
 
     year: int
-    stocks: float
-    bonds: float
-    str: float
-    fun: float
+    description: str | None = None
+    weights: dict[str, float] = {}
+
+    model_config = ConfigDict(extra="allow", frozen=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def build_weights(cls, values: dict) -> dict:
+        """
+        Collect all undefined fields into a 'weights' dictionary.
+        """
+        defined_fields = {"year", "description", "weights"}
+        weights = values.get("weights", {})
+
+        for key, value in list(values.items()):
+            if key not in defined_fields:
+                weights[key] = values.pop(key)
+
+        values["weights"] = weights
+        return values
+
+    @model_validator(mode="after")
+    def check_weights(self) -> "PortfolioRebalance":
+        """
+        Validate that weights are not empty and sum to 1.0.
+        """
+        if not self.weights:
+            raise ValueError("Rebalance weights cannot be empty.")
+
+        if not np.isclose(sum(self.weights.values()), 1.0):
+            raise ValueError("Rebalance weights must sum to 1.0.")
+
+        return self
 
 
 class PortfolioRebalances(BaseModel):
-    """
-    Contains the list of all scheduled portfolio rebalances.
-
-    Attributes:
-        rebalances (List[PortfolioRebalance]): List of rebalance events, each specifying
-        the year and weights.
-    """
+    """A container for a list of portfolio rebalance events."""
 
     rebalances: List[PortfolioRebalance] = Field(
         ..., description="List of portfolio rebalances with year and weights."
     )
 
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def check_unique_years(self) -> "PortfolioRebalances":
+        """Validate that rebalance years are unique."""
+        years = [r.year for r in self.rebalances]
+        if len(years) != len(set(years)):
+            raise ValueError("Rebalance years must be unique.")
+        return self
 
 
 class SimulationParameters(BaseModel):
@@ -313,17 +351,19 @@ class SimulationParameters(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-class ShockEvent(BaseModel):
-    year: int = Field(..., description="Year index of the shock (0-indexed).")
-    asset: str = Field(..., description="Asset affected by the shock (e.g., 'stocks').")
-    magnitude: float = Field(
-        ..., description="Magnitude of the shock (e.g., -0.35 for -35%)."
-    )
+class Shock(BaseModel):
+    """Defines a one-time financial shock."""
+
+    year: int
+    asset: str
+    magnitude: float
+    description: str
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class Shocks(BaseModel):
-    events: list[ShockEvent] = Field(
+    events: list[Shock] = Field(
         default_factory=list, description="List of shock events."
     )
 

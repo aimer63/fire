@@ -1,23 +1,41 @@
 
-[market_assumptions]
-stock_mu = 0.08
-stock_sigma = 0.15
-bond_mu = 0.03
-bond_sigma = 0.05
-str_mu = 0.01
-str_sigma = 0.02
-fun_mu = 0.05
-fun_sigma = 0.10
-real_estate_mu = 0.04
-real_estate_sigma = 0.08
-pi_mu = 0.02
-pi_sigma = 0.03
+[market_assumptions.assets.stocks]
+mu = 0.08
+sigma = 0.15
+is_liquid = true
+withdrawal_priority = 1
+[market_assumptions.assets.bonds]
+mu = 0.03
+sigma = 0.05
+is_liquid = true
+withdrawal_priority = 2
+[market_assumptions.assets.str]
+mu = 0.01
+sigma = 0.02
+is_liquid = true
+withdrawal_priority = 3
+[market_assumptions.assets.fun]
+mu = 0.05
+sigma = 0.10
+is_liquid = true
+withdrawal_priority = 4
+[market_assumptions.assets.real_estate]
+mu = 0.04
+sigma = 0.08
+is_liquid = false
+[market_assumptions.assets.inflation]
+mu = 0.02
+sigma = 0.03
+is_liquid = false
 
 # Invalid matrix (asymmetric)
 [market_assumptions.correlation_matrix]
-stocks = [1.0, 0.5, 0.0, 0.0, 0.0, 0.0]
-bonds = [0.4, 1.0, 0.0, 0.0, 0.0, 0.0]
-str = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-fun = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-real_estate = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
-inflation = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+assets = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+matrix = [
+  [1.0, 0.5, 0.0, 0.0, 0.0, 0.0],
+  [0.4, 1.0, 0.0, 0.0, 0.0, 0.0],
+  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+]

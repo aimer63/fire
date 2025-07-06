@@ -12,52 +12,53 @@ class CorrelationMatrix(BaseModel):
 
     This model ensures that the provided matrix is square, symmetric, has 1s on
     the diagonal, has all elements between -1 and 1, and is positive
-    semi-definite.
+    semi-definite. It also checks that the number of assets in the list
+    matches the dimensions of the matrix.
     """
 
-    stocks: list[float]
-    bonds: list[float]
-    str: list[float]
-    fun: list[float]
-    real_estate: list[float]
-    inflation: list[float]
+    assets: list[str]
+    matrix: list[list[float]]
 
     @model_validator(mode="after")
     def validate_matrix(self) -> "CorrelationMatrix":
         """
         Validates the correlation matrix after the model is created.
         """
-        matrix_data = [
-            self.stocks,
-            self.bonds,
-            self.str,
-            self.fun,
-            self.real_estate,
-            self.inflation,
-        ]
+        # 1. Check that number of assets matches matrix dimensions
+        if len(self.assets) != len(self.matrix):
+            raise ValueError(
+                "Number of assets must match the number of rows in the correlation matrix."
+            )
 
         try:
-            matrix = np.array(matrix_data, dtype=float)
+            matrix = np.array(self.matrix, dtype=float)
         except ValueError:
-            raise ValueError("Correlation matrix contains non-numeric values.")
+            # This can happen if the matrix is ragged (rows of different lengths)
+            raise ValueError(
+                "Correlation matrix contains non-numeric values or is ragged."
+            )
 
-        # 1. Check if square
+        # 2. Check if square
         if matrix.shape[0] != matrix.shape[1]:
             raise ValueError("Correlation matrix must be square.")
 
-        # 2. Check element range
+        # 3. Check element range
         if not np.all((matrix >= -1) & (matrix <= 1)):
-            raise ValueError("All elements of the correlation matrix must be between -1 and 1.")
+            raise ValueError(
+                "All elements of the correlation matrix must be between -1 and 1."
+            )
 
-        # 3. Check for 1s on the diagonal
+        # 4. Check for 1s on the diagonal
         if not np.all(np.diag(matrix) == 1):
-            raise ValueError("All diagonal elements of the correlation matrix must be 1.")
+            raise ValueError(
+                "All diagonal elements of the correlation matrix must be 1."
+            )
 
-        # 4. Check for symmetry
+        # 5. Check for symmetry
         if not np.allclose(matrix, matrix.T):
             raise ValueError("Correlation matrix must be symmetric.")
 
-        # 5. Check for positive semi-definiteness
+        # 6. Check for positive semi-definiteness
         # Use eigvalsh as it's optimized for symmetric matrices and avoids complex numbers
         eigenvalues = np.linalg.eigvalsh(matrix)
         # Use a small tolerance for floating point inaccuracies
@@ -70,3 +71,7 @@ class CorrelationMatrix(BaseModel):
             )
 
         return self
+
+    def to_numpy(self) -> np.ndarray:
+        """Converts the correlation matrix to a NumPy array."""
+        return np.array(self.matrix, dtype=float)

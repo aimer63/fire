@@ -12,14 +12,16 @@ from firestarter.config.config import MarketAssumptions
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 # A known valid correlation matrix (identity matrix)
-VALID_MATRIX_DATA = {
-    "stocks": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-    "bonds": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-    "str": [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
-    "fun": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-    "real_estate": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-    "inflation": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-}
+VALID_ASSETS = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+VALID_MATRIX = [
+    [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+]
+VALID_MATRIX_DATA = {"assets": VALID_ASSETS, "matrix": VALID_MATRIX}
 
 
 def test_valid_correlation_matrix():
@@ -37,12 +39,15 @@ def test_invalid_non_square_matrix():
     Tests that a non-square matrix (6x5) fails validation.
     """
     invalid_data = {
-        "stocks": [1.0, 0.0, 0.0, 0.0, 0.0],
-        "bonds": [0.0, 1.0, 0.0, 0.0, 0.0],
-        "str": [0.0, 0.0, 1.0, 0.0, 0.0],
-        "fun": [0.0, 0.0, 0.0, 1.0, 0.0],
-        "real_estate": [0.0, 0.0, 0.0, 0.0, 1.0],
-        "inflation": [0.0, 0.0, 0.0, 0.0, 0.0],
+        "assets": VALID_ASSETS,
+        "matrix": [
+            [1.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+        ],
     }
     with pytest.raises(ValidationError, match="Correlation matrix must be square."):
         CorrelationMatrix(**invalid_data)
@@ -51,12 +56,13 @@ def test_invalid_non_square_matrix():
 def test_invalid_ragged_matrix():
     """
     Tests that a ragged matrix fails validation.
-    Due to the implementation, this is caught as a non-numeric value error.
     """
-    invalid_data = VALID_MATRIX_DATA.copy()
-    invalid_data["stocks"] = [1.0, 0.0, 0.0, 0.0, 0.0]  # Make one row shorter
+    invalid_matrix = VALID_MATRIX.copy()
+    invalid_matrix[0] = [1.0, 0.0, 0.0, 0.0, 0.0]  # Make one row shorter
+    invalid_data = {"assets": VALID_ASSETS, "matrix": invalid_matrix}
     with pytest.raises(
-        ValidationError, match="Correlation matrix contains non-numeric values."
+        ValidationError,
+        match="Correlation matrix contains non-numeric values or is ragged.",
     ):
         CorrelationMatrix(**invalid_data)
 
@@ -65,8 +71,9 @@ def test_invalid_range_matrix():
     """
     Tests that a matrix with elements outside [-1, 1] fails validation.
     """
-    invalid_data = VALID_MATRIX_DATA.copy()
-    invalid_data["stocks"] = [1.0, 1.5, 0.0, 0.0, 0.0, 0.0]
+    invalid_matrix = VALID_MATRIX.copy()
+    invalid_matrix[0] = [1.0, 1.5, 0.0, 0.0, 0.0, 0.0]
+    invalid_data = {"assets": VALID_ASSETS, "matrix": invalid_matrix}
     with pytest.raises(
         ValidationError,
         match="All elements of the correlation matrix must be between -1 and 1.",
@@ -78,8 +85,9 @@ def test_invalid_diagonal_matrix():
     """
     Tests that a matrix without 1s on the diagonal fails validation.
     """
-    invalid_data = VALID_MATRIX_DATA.copy()
-    invalid_data["stocks"] = [0.9, 0.0, 0.0, 0.0, 0.0, 0.0]
+    invalid_matrix = VALID_MATRIX.copy()
+    invalid_matrix[0] = [0.9, 0.0, 0.0, 0.0, 0.0, 0.0]
+    invalid_data = {"assets": VALID_ASSETS, "matrix": invalid_matrix}
     with pytest.raises(
         ValidationError,
         match="All diagonal elements of the correlation matrix must be 1.",
@@ -91,9 +99,10 @@ def test_asymmetric_matrix():
     """
     Tests that an asymmetric matrix fails validation.
     """
-    invalid_data = VALID_MATRIX_DATA.copy()
-    invalid_data["stocks"] = [1.0, 0.5, 0.0, 0.0, 0.0, 0.0]
-    invalid_data["bonds"] = [0.4, 1.0, 0.0, 0.0, 0.0, 0.0]
+    invalid_matrix = VALID_MATRIX.copy()
+    invalid_matrix[0] = [1.0, 0.5, 0.0, 0.0, 0.0, 0.0]
+    invalid_matrix[1] = [0.4, 1.0, 0.0, 0.0, 0.0, 0.0]
+    invalid_data = {"assets": VALID_ASSETS, "matrix": invalid_matrix}
     with pytest.raises(ValidationError, match="Correlation matrix must be symmetric."):
         CorrelationMatrix(**invalid_data)
 
@@ -104,36 +113,52 @@ def test_not_positive_semi_definite_matrix():
     """
     # This matrix is symmetric, has 1s on the diagonal, and all elements
     # are in [-1, 1], but it is not positive semi-definite.
-    not_psd_data = {
-        "stocks": [1.0, 0.9, 0.1, 0.0, 0.0, 0.0],
-        "bonds": [0.9, 1.0, 0.9, 0.0, 0.0, 0.0],
-        "str": [0.1, 0.9, 1.0, 0.0, 0.0, 0.0],
-        "fun": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-        "real_estate": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-        "inflation": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-    }
+    not_psd_matrix = [
+        [1.0, 0.9, 0.1, 0.0, 0.0, 0.0],
+        [0.9, 1.0, 0.9, 0.0, 0.0, 0.0],
+        [0.1, 0.9, 1.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    ]
+    not_psd_data = {"assets": VALID_ASSETS, "matrix": not_psd_matrix}
     with pytest.raises(
         ValidationError, match="Correlation matrix must be positive semi-definite"
     ):
         CorrelationMatrix(**not_psd_data)
 
 
-# Boilerplate for market assumptions in TOML format.
+# Boilerplate for assets in TOML format.
 # These values are required for MarketAssumptions to validate, but are not the focus of these tests.
-TOML_MARKET_ASSUMPTIONS_BOILERPLATE = """
-[market_assumptions]
-stock_mu = 0.08
-stock_sigma = 0.15
-bond_mu = 0.03
-bond_sigma = 0.05
-str_mu = 0.01
-str_sigma = 0.02
-fun_mu = 0.05
-fun_sigma = 0.10
-real_estate_mu = 0.04
-real_estate_sigma = 0.08
-pi_mu = 0.02
-pi_sigma = 0.03
+TOML_ASSETS_BOILERPLATE = """
+[market_assumptions.assets.stocks]
+mu = 0.08
+sigma = 0.15
+is_liquid = true
+withdrawal_priority = 1
+[market_assumptions.assets.bonds]
+mu = 0.03
+sigma = 0.05
+is_liquid = true
+withdrawal_priority = 2
+[market_assumptions.assets.str]
+mu = 0.01
+sigma = 0.02
+is_liquid = true
+withdrawal_priority = 3
+[market_assumptions.assets.fun]
+mu = 0.05
+sigma = 0.10
+is_liquid = true
+withdrawal_priority = 4
+[market_assumptions.assets.real_estate]
+mu = 0.04
+sigma = 0.08
+is_liquid = false
+[market_assumptions.assets.inflation]
+mu = 0.02
+sigma = 0.03
+is_liquid = false
 """
 
 
@@ -144,14 +169,17 @@ def test_load_valid_correlation_matrix_from_toml():
     """
     valid_matrix_toml = """
 [market_assumptions.correlation_matrix]
-stocks = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-bonds = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
-str = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-fun = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-real_estate = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
-inflation = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+assets = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+matrix = [
+  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+]
 """
-    config_content = TOML_MARKET_ASSUMPTIONS_BOILERPLATE + valid_matrix_toml
+    config_content = TOML_ASSETS_BOILERPLATE + valid_matrix_toml
     config_file = Path("tests/config/correlation_test.toml")
     config_file.write_text(config_content)
 
@@ -171,14 +199,17 @@ def test_load_invalid_correlation_matrix_from_toml():
     invalid_matrix_toml = """
 # Invalid matrix (asymmetric)
 [market_assumptions.correlation_matrix]
-stocks = [1.0, 0.5, 0.0, 0.0, 0.0, 0.0]
-bonds = [0.4, 1.0, 0.0, 0.0, 0.0, 0.0]
-str = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-fun = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-real_estate = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
-inflation = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+assets = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+matrix = [
+  [1.0, 0.5, 0.0, 0.0, 0.0, 0.0],
+  [0.4, 1.0, 0.0, 0.0, 0.0, 0.0],
+  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+]
 """
-    config_content = TOML_MARKET_ASSUMPTIONS_BOILERPLATE + invalid_matrix_toml
+    config_content = TOML_ASSETS_BOILERPLATE + invalid_matrix_toml
     config_file = Path("tests/config/correlation_test.toml")
     config_file.write_text(config_content)
 

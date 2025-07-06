@@ -29,9 +29,12 @@ def test_handle_contributions(initialized_simulation: Simulation) -> None:
     state = sim.state  # Get a fresh reference to the new state
 
     # Store initial state
-    # Store initial state
     initial_bank_balance = state.current_bank_balance
-    initial_liquid_assets = state.liquid_assets.copy()
+    initial_liquid_assets = {
+        k: v
+        for k, v in state.portfolio.items()
+        if k in state.current_target_portfolio_weights
+    }
 
     # Test a month within the contribution year
     month_to_test = contribution_year * 12
@@ -50,6 +53,6 @@ def test_handle_contributions(initialized_simulation: Simulation) -> None:
     for asset_key, weight in target_weights.items():
         expected_increase = expected_nominal_amount * weight
         expected_asset_value = initial_liquid_assets[asset_key] + expected_increase
-        assert state.liquid_assets[asset_key] == pytest.approx(expected_asset_value), (
+        assert state.portfolio[asset_key] == pytest.approx(expected_asset_value), (
             f"Asset '{asset_key}' should increase according to target weight."
         )
