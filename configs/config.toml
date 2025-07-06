@@ -9,7 +9,7 @@
 # --- Simulation Parameters ---
 [simulation_parameters]
 num_simulations = 10000
-random_seed = 2         # Seed for random number generation, can be any integer
+# random_seed = 42        # Seed for random number generation, can be any integer
 
 # --- Outputs ---
 [paths]

@@ -35,10 +35,10 @@ def basic_initial_assets() -> Dict[str, float]:
 
 
 @pytest.fixture
-def basic_det_inputs() -> DeterministicInputs:
+def basic_det_inputs(basic_initial_assets) -> DeterministicInputs:
     """Minimal DeterministicInputs for testing."""
     return DeterministicInputs(
-        initial_investment=100000.0,  # Should match sum of liquid assets in initial_assets
+        initial_portfolio=basic_initial_assets,
         initial_bank_balance=5000.0,
         bank_lower_bound=2000.0,
         bank_upper_bound=10000.0,
@@ -62,19 +62,30 @@ def basic_det_inputs() -> DeterministicInputs:
 @pytest.fixture
 def basic_market_assumptions() -> MarketAssumptions:
     """Minimal MarketAssumptions for testing."""
+    from firestarter.config.config import Asset
+    from firestarter.config.correlation_matrix import CorrelationMatrix
+
+    identity_matrix = CorrelationMatrix(
+        assets=["stocks", "bonds", "str", "fun", "real_estate", "inflation"],
+        matrix=[
+            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+        ],
+    )
     return MarketAssumptions(
-        stock_mu=0.07,
-        stock_sigma=0.15,
-        bond_mu=0.03,
-        bond_sigma=0.05,
-        str_mu=0.01,
-        str_sigma=0.01,
-        fun_mu=0.10,
-        fun_sigma=0.30,
-        real_estate_mu=0.04,
-        real_estate_sigma=0.10,
-        pi_mu=0.02,
-        pi_sigma=0.01,
+        assets={
+            "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=2),
+            "bonds": Asset(mu=0.03, sigma=0.05, is_liquid=True, withdrawal_priority=1),
+            "str": Asset(mu=0.01, sigma=0.01, is_liquid=True, withdrawal_priority=0),
+            "fun": Asset(mu=0.10, sigma=0.30, is_liquid=True, withdrawal_priority=3),
+            "real_estate": Asset(mu=0.04, sigma=0.10, is_liquid=False),
+            "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
+        },
+        correlation_matrix=identity_matrix,
     )
 
 
@@ -82,14 +93,16 @@ def basic_market_assumptions() -> MarketAssumptions:
 def basic_portfolio_rebalances() -> PortfolioRebalances:
     """Minimal PortfolioRebalances for testing."""
     rebalance_event_1 = PortfolioRebalance(
-        year=0, stocks=0.6, bonds=0.3, str=0.1, fun=0.0
+        year=0, weights={"stocks": 0.6, "bonds": 0.3, "str": 0.1, "fun": 0.0}
     )
     rebalance_event_2 = PortfolioRebalance(
         year=2,
-        stocks=0.5,
-        bonds=0.4,
-        str=0.05,
-        fun=0.05,
+        weights={
+            "stocks": 0.5,
+            "bonds": 0.4,
+            "str": 0.05,
+            "fun": 0.05,
+        },
     )
     return PortfolioRebalances(rebalances=[rebalance_event_1, rebalance_event_2])
 
@@ -106,7 +119,6 @@ def initialized_simulation(
     basic_market_assumptions: MarketAssumptions,
     basic_portfolio_rebalances: PortfolioRebalances,
     basic_shocks: Shocks,
-    basic_initial_assets: Dict[str, float],
     basic_sim_params: SimulationParameters,
 ) -> Simulation:
     """
@@ -119,7 +131,6 @@ def initialized_simulation(
         .set_market_assumptions(basic_market_assumptions)
         .set_portfolio_rebalances(basic_portfolio_rebalances)
         .set_shock_events(basic_shocks)
-        .set_initial_assets(basic_initial_assets)
         .set_sim_params(basic_sim_params)
         .build()
     )

@@ -1,0 +1,164 @@
+# This is a comprehensive test configuration file for the FIRE Monte Carlo simulation.
+# It is designed to exercise all features and validation rules of the configuration parser.
+# This file reflects the NEW dynamic asset configuration schema.
+
+# ==============================================================================
+# 1. SIMULATION PARAMETERS
+# ==============================================================================
+[simulation_parameters]
+# Number of Monte Carlo simulation runs to perform.
+num_simulations = 100
+
+# ==============================================================================
+# 2. PATHS
+# ==============================================================================
+[paths]
+# Directory where all output (reports, plots, etc.) will be saved.
+# Relative to the project root.
+output_root = "output/test_run"
+
+# ==============================================================================
+# 3. ASSET DEFINITIONS
+# ==============================================================================
+# Defines all financial assets available in the simulation using a table for each asset.
+# The key of the table (e.g., "stocks") is the unique identifier for the asset.
+# - `mu`: Expected annual arithmetic mean return.
+# - `sigma`: Expected annual standard deviation of returns.
+# - `is_liquid`: Boolean indicating if the asset is part of the liquid portfolio
+#                that can be rebalanced and sold to cover expenses.
+# - `withdrawal_priority`: (For liquid assets only) Order in which assets are
+#                          sold to cover cash shortfalls (lower number = sold first).
+
+[assets.stocks]
+mu = 0.08
+sigma = 0.15
+is_liquid = true
+withdrawal_priority = 2
+
+[assets.bonds]
+mu = 0.03
+sigma = 0.05
+is_liquid = true
+withdrawal_priority = 1
+
+[assets.str]
+mu = 0.01
+sigma = 0.02
+is_liquid = true
+withdrawal_priority = 0
+
+[assets.fun]
+mu = 0.05
+sigma = 0.10
+is_liquid = true
+withdrawal_priority = 3
+
+# Illiquid assets are handled separately and not part of portfolio rebalancing.
+# They do not require a withdrawal_priority.
+[assets.real_estate]
+mu = 0.04
+sigma = 0.08
+is_liquid = false
+
+[assets.inflation]
+mu = 0.02
+sigma = 0.03
+is_liquid = false
+
+
+# Initial values for each asset, mapping asset keys from the [assets] tables to amounts.
+[deterministic_inputs]
+initial_portfolio = { stocks = 75000.0, bonds = 25000.0, str = 10000.0, fun = 5000.0, real_estate = 0.0 }
+
+# Initial cash/bank account balance.
+initial_bank_balance = 10000.0
+
+# Bank balance thresholds for automatic investment/divestment.
+bank_lower_bound = 5000.0
+bank_upper_bound = 15000.0
+
+# Total duration of the simulation.
+years_to_simulate = 40
+
+# --- Income Streams ---
+# Real (inflation-adjusted) monthly salary.
+monthly_salary = 4000.0
+salary_inflation_factor = 1.01 # Salary grows 1% faster than inflation.
+salary_start_year = 0
+salary_end_year = 25           # Salary stops at the beginning of year 25.
+
+# Real (inflation-adjusted) monthly pension.
+monthly_pension = 1500.0
+pension_inflation_factor = 1.0 # Pension grows exactly with inflation.
+pension_start_year = 30
+
+# --- Contributions & Expenses ---
+# One-time contributions (fixed nominal amounts, not inflation-adjusted).
+planned_contributions = [
+  { amount = 10000.0, year = 5 },
+  { amount = 10000.0, year = 10 },
+]
+
+# Annual fee on all liquid investments (e.g., 0.0015 for 0.15%).
+annual_fund_fee = 0.0015
+
+# Fixed monthly living expenses (in today's money, will be inflation-adjusted).
+monthly_expenses = 2500.0
+
+# One-time extra expenses (in today's money, will be inflation-adjusted).
+planned_extra_expenses = [
+  { amount = 20000.0, year = 15, description = "Car Purchase" },
+]
+
+# --- Major Life Events ---
+# Real cost of a house purchase.
+planned_house_purchase_cost = 300000.0
+house_purchase_year = 5
+
+
+# ==============================================================================
+# 5. MARKET ASSUMPTIONS (STOCHASTIC INPUTS)
+# ==============================================================================
+[market_assumptions]
+
+# Correlation matrix for asset returns and inflation.
+# The `assets` list must match keys from the [assets] tables, plus "inflation".
+# The `matrix` must be square and correspond to the `assets` list order.
+[market_assumptions.correlation_matrix]
+assets = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+matrix = [
+  # Stk,   Bnd,   STR,   Fun,   R.Est, Infl
+  [1.00, -0.30, 0.00, 0.45, 0.15, -0.20], # Stocks
+  [-0.30, 1.00, 0.40, -0.10, 0.05, 0.10], # Bonds
+  [0.00, 0.40, 1.00, -0.05, 0.00, 0.60],  # STR
+  [0.45, -0.10, -0.05, 1.00, 0.25, 0.15], # Fun
+  [0.15, 0.05, 0.00, 0.25, 1.00, 0.05],   # Real Estate
+  [-0.20, 0.10, 0.60, 0.15, 0.05, 1.00],  # Inflation
+]
+# ==============================================================================
+# 6. SHOCKS
+# ==============================================================================
+# Defines specific, one-off market events that override stochastic returns for a given year.
+[[shocks]]
+year = 10
+asset = "stocks"                           # Must match a key from the [assets] table.
+magnitude = -0.35                          # Overrides the generated return with -35% for this year.
+description = "Dot-com Bubble style crash"
+
+[[shocks]]
+year = 11
+asset = "inflation"                  # Can also target inflation.
+magnitude = 0.08                     # Overrides generated inflation with 8% for this year.
+description = "High inflation event"
+
+
+# ==============================================================================
+# 7. PORTFOLIO REBALANCES
+# ==============================================================================
+# Defines the target asset allocation for the liquid portfolio at different stages.
+# A rebalance must be defined for year 0 to set the initial allocation.
+# Weights must sum to 1.0 and only include keys for assets where `is_liquid = true`.
+[[portfolio_rebalances]]
+year = 25
+description = "De-risking for retirement"
+weights = { stocks = 0.50, bonds = 0.40, str = 0.10 }

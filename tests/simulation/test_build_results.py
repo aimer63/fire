@@ -12,11 +12,11 @@ def _get_expected_allocations_from_history(
 ) -> dict[str, float]:
     """Helper to build expected allocations from simulation history for a given month."""
     return {
-        "Stocks": sim.results["stocks_history"][month_index],
-        "Bonds": sim.results["bonds_history"][month_index],
-        "STR": sim.results["str_history"][month_index],
-        "Fun": sim.results["fun_history"][month_index],
-        "Real Estate": sim.results["real_estate_history"][month_index],
+        "stocks": sim.results["stocks_history"][month_index],
+        "bonds": sim.results["bonds_history"][month_index],
+        "str": sim.results["str_history"][month_index],
+        "fun": sim.results["fun_history"][month_index],
+        "real_estate": sim.results["real_estate_history"][month_index],
     }
 
 
@@ -110,15 +110,18 @@ def test_build_result_failed_simulation_immediately(
     sim = initialized_simulation
     # Engineer an immediate failure by having no assets and high expenses
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"monthly_expenses": 1_000_000, "initial_bank_balance": 0}
+        update={
+            "monthly_expenses": 1_000_000,
+            "initial_bank_balance": 0,
+            "initial_portfolio": {
+                "stocks": 0,
+                "bonds": 0,
+                "str": 0,
+                "fun": 0,
+                "real_estate": 0,
+            },
+        }
     )
-    sim.initial_assets = {
-        "stocks": 0,
-        "bonds": 0,
-        "str": 0,
-        "fun": 0,
-        "real_estate": 0,
-    }
     sim.init()
     result = sim.run()
 
@@ -135,10 +138,10 @@ def test_build_result_failed_simulation_immediately(
     assert result["final_cumulative_inflation_factor"] == 1.0
     assert result["initial_total_wealth"] == 0.0
     expected_allocations = {
-        "Stocks": sim.initial_assets["stocks"],
-        "Bonds": sim.initial_assets["bonds"],
-        "STR": sim.initial_assets["str"],
-        "Fun": sim.initial_assets["fun"],
-        "Real Estate": sim.initial_assets["real_estate"],
+        "stocks": sim.det_inputs.initial_portfolio["stocks"],
+        "bonds": sim.det_inputs.initial_portfolio["bonds"],
+        "str": sim.det_inputs.initial_portfolio["str"],
+        "fun": sim.det_inputs.initial_portfolio["fun"],
+        "real_estate": sim.det_inputs.initial_portfolio["real_estate"],
     }
     assert result["final_allocations_nominal"] == expected_allocations

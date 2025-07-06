@@ -17,32 +17,32 @@ def test_simulation_init_initial_state(initialized_simulation: Simulation) -> No
     """Tests the initial state variables after simulation.init() is called."""
     state = initialized_simulation.state
     det_inputs = initialized_simulation.det_inputs
-    initial_assets = initialized_simulation.initial_assets
+    initial_portfolio = det_inputs.initial_portfolio
     first_rebalance = initialized_simulation.portfolio_rebalances.rebalances[0]
 
     assert state, "State dictionary should be initialized."
 
     assert state.current_bank_balance == det_inputs.initial_bank_balance
-    assert state.liquid_assets["stocks"] == initial_assets["stocks"]
-    assert state.liquid_assets["bonds"] == initial_assets["bonds"]
-    assert state.liquid_assets["str"] == initial_assets["str"]
-    assert state.liquid_assets["fun"] == initial_assets["fun"]
-    assert state.current_real_estate_value == initial_assets["real_estate"]
+    assert state.portfolio["stocks"] == initial_portfolio["stocks"]
+    assert state.portfolio["bonds"] == initial_portfolio["bonds"]
+    assert state.portfolio["str"] == initial_portfolio["str"]
+    assert state.portfolio["fun"] == initial_portfolio["fun"]
+    assert state.portfolio["real_estate"] == initial_portfolio["real_estate"]
 
     expected_target_weights = {
-        "stocks": first_rebalance.stocks,
-        "bonds": first_rebalance.bonds,
-        "str": first_rebalance.str,
-        "fun": first_rebalance.fun,
+        "stocks": first_rebalance.weights["stocks"],
+        "bonds": first_rebalance.weights["bonds"],
+        "str": first_rebalance.weights["str"],
+        "fun": first_rebalance.weights["fun"],
     }
     assert state.current_target_portfolio_weights == expected_target_weights
 
     expected_initial_total_wealth = (
         det_inputs.initial_bank_balance
-        + initial_assets[
+        + initial_portfolio[
             "stocks"
         ]  # Only stocks has a non-zero value in basic_initial_assets
-        + initial_assets["real_estate"]
+        + initial_portfolio["real_estate"]
     )
     assert state.initial_total_wealth == expected_initial_total_wealth
     assert not state.simulation_failed
@@ -54,13 +54,8 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
     total_months = initialized_simulation.simulation_months
 
     # Check for existence and length of key sequences
+    # Check for existence and length of key sequences
     sequences_to_check = [
-        "monthly_inflation_sequence",
-        "monthly_stocks_returns_sequence",
-        "monthly_bonds_returns_sequence",
-        "monthly_str_returns_sequence",
-        "monthly_fun_returns_sequence",
-        "monthly_real_estate_returns_sequence",
         "monthly_nominal_pension_sequence",
         "monthly_nominal_salary_sequence",
     ]
@@ -70,12 +65,18 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
             f"'{seq_name}' should have length {total_months}."
         )
 
+    assert hasattr(state, "monthly_returns_sequences")
+    # ASSET_KEYS + inflation
+    assert len(state.monthly_returns_sequences) == len(ASSET_KEYS) + 1
+    for asset_key in state.monthly_returns_sequences:
+        assert len(state.monthly_returns_sequences[asset_key]) == total_months
+
     assert hasattr(state, "monthly_cumulative_inflation_factors")
     assert len(state.monthly_cumulative_inflation_factors) == total_months + 1, (
         "Cumulative inflation factors should have length total_months + 1."
     )
 
-    assert hasattr(state, "monthly_returns_lookup")
+    assert hasattr(state, "monthly_returns_sequences")
     for asset_key in ASSET_KEYS:
-        assert asset_key in state.monthly_returns_lookup
-        assert len(state.monthly_returns_lookup[asset_key]) == total_months
+        assert asset_key in state.monthly_returns_sequences
+        assert len(state.monthly_returns_sequences[asset_key]) == total_months

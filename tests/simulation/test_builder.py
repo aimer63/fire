@@ -25,7 +25,6 @@ def test_simulation_builder_new_initial_state():
         "portfolio_rebalances should be None initially"
     )
     assert builder.shock_events is None, "shock_events should be None initially"
-    assert builder.initial_assets is None, "initial_assets should be None initially"
     assert builder.sim_params is None, "sim_params should be None initially"
 
 
@@ -36,7 +35,6 @@ def test_simulation_builder_new_initial_state():
         ("set_market_assumptions", "market_assumptions"),
         ("set_portfolio_rebalances", "portfolio_rebalances"),
         ("set_shock_events", "shock_events"),
-        ("set_initial_assets", "initial_assets"),
         ("set_sim_params", "sim_params"),
     ],
 )
@@ -63,25 +61,19 @@ def complete_builder() -> SimulationBuilder:
     """Returns a SimulationBuilder with all required attributes mocked."""
     builder: SimulationBuilder = SimulationBuilder.new()
     det_inputs_mock = Mock(name="det_inputs")
+    det_inputs_mock.initial_portfolio = {"stocks": 100000.0}
     det_inputs_mock.initial_bank_balance = 1000.0
     builder.set_det_inputs(det_inputs_mock)
     builder.set_market_assumptions(Mock(name="market_assumptions"))
     # Provide a mock with a .rebalances attribute that is a list with one mock
     portfolio_rebalances_mock = Mock(name="portfolio_rebalances")
-    portfolio_rebalances_mock.rebalances = [Mock(name="rebalance")]
+    rebalance_event_mock = Mock(name="rebalance_event")
+    rebalance_event_mock.weights = {"stocks": 1.0}
+    portfolio_rebalances_mock.rebalances = [rebalance_event_mock]
     builder.set_portfolio_rebalances(portfolio_rebalances_mock)
     builder.set_shock_events(Mock(name="shock_events"))
     builder.set_sim_params(Mock(name="sim_params"))
-    # Provide a dict-like mock for initial_assets so ["real_estate"] works
-    builder.set_initial_assets(
-        {
-            "stocks": 1000.0,
-            "bonds": 1000.0,
-            "str": 1000.0,
-            "fun": 1000.0,
-            "real_estate": 1000.0,
-        }
-    )
+
     return builder
 
 
@@ -97,7 +89,6 @@ def test_simulation_builder_build_success(complete_builder: SimulationBuilder) -
     assert simulation.market_assumptions is complete_builder.market_assumptions
     assert simulation.portfolio_rebalances is complete_builder.portfolio_rebalances
     assert simulation.shock_events is complete_builder.shock_events
-    assert simulation.initial_assets is complete_builder.initial_assets
     assert simulation.sim_params is complete_builder.sim_params
 
 
@@ -108,7 +99,6 @@ def test_simulation_builder_build_success(complete_builder: SimulationBuilder) -
         ("market_assumptions", "market_assumptions must be set"),
         ("portfolio_rebalances", "portfolio_rebalances must be set"),
         ("shock_events", "shock_events must be set"),
-        ("initial_assets", "initial_assets must be set"),
         ("sim_params", "sim_params (SimulationParameters) must be set"),
     ],
 )
@@ -125,7 +115,6 @@ def test_simulation_builder_build_failure_missing_attributes(
         "market_assumptions": Mock(name="market_assumptions"),
         "portfolio_rebalances": Mock(name="portfolio_rebalances"),
         "shock_events": Mock(name="shock_events"),
-        "initial_assets": Mock(name="initial_assets"),
         "sim_params": Mock(name="sim_params"),
     }
 

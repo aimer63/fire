@@ -18,20 +18,26 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
 
     # Define a new set of weights for the rebalance event
     new_weights = {"stocks": 0.6, "bonds": 0.4, "str": 0.0, "fun": 0.0}
-    rebalance_event = PortfolioRebalance(year=rebalance_year, **new_weights)
+    rebalance_event = PortfolioRebalance(year=rebalance_year, weights=new_weights)
+
+    # Replace the rebalance schedule on the simulation instance from the fixture
     sim.portfolio_rebalances = PortfolioRebalances(rebalances=[rebalance_event])
 
-    # Set initial assets to be clearly imbalanced
-    sim.initial_assets = {
+    # Set a specific portfolio for this test
+    sim.state.portfolio = {
         "stocks": 100_000.0,
         "bonds": 0.0,
         "str": 0.0,
         "fun": 0.0,
-        "real_estate": 0.0,
+        "real_estate": 500_000.0,  # Non-liquid, should be ignored
     }
     sim.init()
 
-    total_liquid_assets = sum(sim.state.liquid_assets.values())
+    total_liquid_assets = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    )
 
     # Execute the rebalance logic for the correct month
     month_to_test = rebalance_year * 12
@@ -44,7 +50,7 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
     # 2. Liquid assets should be redistributed according to the new weights
     for asset, weight in new_weights.items():
         expected_value = total_liquid_assets * weight
-        assert sim.state.liquid_assets[asset] == pytest.approx(expected_value)
+        assert sim.state.portfolio[asset] == pytest.approx(expected_value)
 
 
 def test_rebalance_no_event_scheduled_for_year(
@@ -58,14 +64,15 @@ def test_rebalance_no_event_scheduled_for_year(
     year_to_test = 3  # A year with no rebalance scheduled
 
     rebalance_event = PortfolioRebalance(
-        year=rebalance_year, stocks=1.0, bonds=0.0, str=0.0, fun=0.0
+        year=rebalance_year,
+        weights={"stocks": 1.0, "bonds": 0.0, "str": 0.0, "fun": 0.0},
     )
     sim.portfolio_rebalances = PortfolioRebalances(rebalances=[rebalance_event])
     sim.init()
 
     # Store initial state for comparison
     initial_weights = sim.state.current_target_portfolio_weights.copy()
-    initial_assets = sim.state.liquid_assets.copy()
+    initial_portfolio = sim.state.portfolio.copy()
 
     # Execute logic for a month where no rebalance is scheduled
     month_to_test = year_to_test * 12
@@ -74,7 +81,7 @@ def test_rebalance_no_event_scheduled_for_year(
     # --- Assertions ---
     # Weights and asset values should be unchanged
     assert sim.state.current_target_portfolio_weights == initial_weights
-    assert sim.state.liquid_assets == initial_assets
+    assert sim.state.portfolio == initial_portfolio
 
 
 def test_rebalance_not_first_month_of_year(
@@ -88,13 +95,13 @@ def test_rebalance_not_first_month_of_year(
     rebalance_year = 5
 
     new_weights = {"stocks": 0.6, "bonds": 0.4, "str": 0.0, "fun": 0.0}
-    rebalance_event = PortfolioRebalance(year=rebalance_year, **new_weights)
+    rebalance_event = PortfolioRebalance(year=rebalance_year, weights=new_weights)
     sim.portfolio_rebalances = PortfolioRebalances(rebalances=[rebalance_event])
     sim.init()
 
     # Store initial state for comparison
     initial_weights = sim.state.current_target_portfolio_weights.copy()
-    initial_assets = sim.state.liquid_assets.copy()
+    initial_portfolio = sim.state.portfolio.copy()
 
     # Execute logic for the *second* month of the scheduled year
     month_to_test = rebalance_year * 12 + 1
@@ -103,4 +110,4 @@ def test_rebalance_not_first_month_of_year(
     # --- Assertions ---
     # Weights and asset values should be unchanged
     assert sim.state.current_target_portfolio_weights == initial_weights
-    assert sim.state.liquid_assets == initial_assets
+    assert sim.state.portfolio == initial_portfolio

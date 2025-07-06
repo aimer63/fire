@@ -20,19 +20,26 @@ def test_handle_bank_account_successful_top_up(
 
     # Configure bounds and set initial state
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"bank_lower_bound": lower_bound, "bank_upper_bound": upper_bound}
+        update={
+            "bank_lower_bound": lower_bound,
+            "bank_upper_bound": upper_bound,
+            "initial_portfolio": {
+                "stocks": 50_000.0,
+                "bonds": 0,
+                "str": 0,
+                "fun": 0,
+                "real_estate": 0.0,
+            },
+        }
     )
-    sim.initial_assets = {
-        "stocks": 50_000.0,
-        "bonds": 0,
-        "str": 0,
-        "fun": 0,
-        "real_estate": 0.0,
-    }
     sim.init()
     sim.state.current_bank_balance = 4_000.0  # Below lower bound
 
-    initial_liquid_assets = sum(sim.state.liquid_assets.values())
+    initial_liquid_assets = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    )
     inflation_factor = sim.state.monthly_cumulative_inflation_factors[month_to_test]
     expected_nominal_lower_bound = lower_bound * inflation_factor
     shortfall = expected_nominal_lower_bound - sim.state.current_bank_balance
@@ -43,9 +50,12 @@ def test_handle_bank_account_successful_top_up(
     # --- Assertions ---
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(expected_nominal_lower_bound)
-    assert sum(sim.state.liquid_assets.values()) == pytest.approx(
-        initial_liquid_assets - shortfall
+    current_liquid_assets = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
     )
+    assert current_liquid_assets == pytest.approx(initial_liquid_assets - shortfall)
 
 
 def test_handle_bank_account_failed_top_up(
@@ -62,15 +72,18 @@ def test_handle_bank_account_failed_top_up(
 
     # Configure bounds and set initial state
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"bank_lower_bound": lower_bound, "bank_upper_bound": upper_bound}
+        update={
+            "bank_lower_bound": lower_bound,
+            "bank_upper_bound": upper_bound,
+            "initial_portfolio": {
+                "stocks": 3_000.0,
+                "bonds": 0,
+                "str": 0,
+                "fun": 0,
+                "real_estate": 0.0,
+            },
+        }
     )
-    sim.initial_assets = {
-        "stocks": 3_000.0,
-        "bonds": 0,
-        "str": 0,
-        "fun": 0,
-        "real_estate": 0.0,
-    }
     sim.init()
     sim.state.current_bank_balance = 4_000.0  # Shortfall of 6_000
 
@@ -95,19 +108,26 @@ def test_handle_bank_account_invest_excess(
 
     # Configure bounds and set initial state
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"bank_lower_bound": lower_bound, "bank_upper_bound": upper_bound}
+        update={
+            "bank_lower_bound": lower_bound,
+            "bank_upper_bound": upper_bound,
+            "initial_portfolio": {
+                "stocks": 50_000.0,
+                "bonds": 50_000.0,
+                "str": 0,
+                "fun": 0,
+                "real_estate": 0.0,
+            },
+        }
     )
-    sim.initial_assets = {
-        "stocks": 50_000.0,
-        "bonds": 50_000.0,
-        "str": 0,
-        "fun": 0,
-        "real_estate": 0.0,
-    }
     sim.init()
     sim.state.current_bank_balance = 25_000.0  # Above upper bound
 
-    initial_liquid_assets = sum(sim.state.liquid_assets.values())
+    initial_liquid_assets = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    )
     inflation_factor = sim.state.monthly_cumulative_inflation_factors[month_to_test]
     expected_nominal_upper_bound = upper_bound * inflation_factor
     excess = sim.state.current_bank_balance - expected_nominal_upper_bound
@@ -118,9 +138,12 @@ def test_handle_bank_account_invest_excess(
     # --- Assertions ---
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(expected_nominal_upper_bound)
-    assert sum(sim.state.liquid_assets.values()) == pytest.approx(
-        initial_liquid_assets + excess
+    current_liquid_assets = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
     )
+    assert current_liquid_assets == pytest.approx(initial_liquid_assets + excess)
 
 
 def test_handle_bank_account_no_action(initialized_simulation: Simulation) -> None:
@@ -134,20 +157,27 @@ def test_handle_bank_account_no_action(initialized_simulation: Simulation) -> No
 
     # Configure bounds and set initial state
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"bank_lower_bound": lower_bound, "bank_upper_bound": upper_bound}
+        update={
+            "bank_lower_bound": lower_bound,
+            "bank_upper_bound": upper_bound,
+            "initial_portfolio": {
+                "stocks": 50_000.0,
+                "bonds": 0,
+                "str": 0,
+                "fun": 0,
+                "real_estate": 0.0,
+            },
+        }
     )
-    sim.initial_assets = {
-        "stocks": 50_000.0,
-        "bonds": 0,
-        "str": 0,
-        "fun": 0,
-        "real_estate": 0.0,
-    }
     sim.init()
     sim.state.current_bank_balance = 15_000.0  # Within bounds
 
     initial_bank_balance = sim.state.current_bank_balance
-    initial_liquid_assets = sum(sim.state.liquid_assets.values())
+    initial_liquid_assets = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    )
 
     # Execute the method
     sim._handle_bank_account(month_to_test)
@@ -155,4 +185,8 @@ def test_handle_bank_account_no_action(initialized_simulation: Simulation) -> No
     # --- Assertions ---
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(initial_bank_balance)
-    assert sum(sim.state.liquid_assets.values()) == pytest.approx(initial_liquid_assets)
+    assert sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    ) == pytest.approx(initial_liquid_assets)

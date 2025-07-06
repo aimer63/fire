@@ -15,21 +15,27 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
     annual_fee = 0.012  # 1.2% annual fee, which is 0.1% monthly
 
     # Configure the simulation with the fund fee
-    sim.det_inputs = sim.det_inputs.model_copy(update={"annual_fund_fee": annual_fee})
-
-    # Set initial asset values
-    sim.initial_assets = {
-        "stocks": 100_000.0,
-        "bonds": 50_000.0,
-        "str": 20_000.0,
-        "fun": 10_000.0,
-        "real_estate": 500_000.0,
-    }
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={
+            "annual_fund_fee": annual_fee,
+            "initial_portfolio": {
+                "stocks": 100_000.0,
+                "bonds": 50_000.0,
+                "str": 20_000.0,
+                "fun": 10_000.0,
+                "real_estate": 500_000.0,
+            },
+        }
+    )
     sim.init()
 
     # Store initial values to compare against
-    initial_liquid_assets = sim.state.liquid_assets.copy()
-    initial_real_estate_value = sim.state.current_real_estate_value
+    initial_liquid_assets = {
+        k: v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    }
+    initial_real_estate_value = sim.state.portfolio["real_estate"]
     initial_bank_balance = sim.state.current_bank_balance
 
     # Execute the method under test for an arbitrary month
@@ -41,10 +47,10 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
     # Check that each liquid asset was reduced by the monthly fee
     for asset, initial_value in initial_liquid_assets.items():
         expected_value = initial_value * (1 - monthly_fee_percentage)
-        assert sim.state.liquid_assets[asset] == pytest.approx(expected_value)
+        assert sim.state.portfolio[asset] == pytest.approx(expected_value)
 
     # Check that non-liquid assets and bank balance are untouched
-    assert sim.state.current_real_estate_value == pytest.approx(
+    assert sim.state.portfolio["real_estate"] == pytest.approx(
         initial_real_estate_value
     )
     assert sim.state.current_bank_balance == pytest.approx(initial_bank_balance)

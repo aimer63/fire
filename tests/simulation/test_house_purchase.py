@@ -19,22 +19,26 @@ def test_handle_house_purchase_success(initialized_simulation: Simulation) -> No
         update={
             "house_purchase_year": purchase_year,
             "planned_house_purchase_cost": house_cost,
+            "initial_portfolio": {
+                "stocks": 300_000.0,
+                "bonds": 50_000.0,
+                "str": 20_000.0,
+                "fun": 10_000.0,
+                "real_estate": 0.0,
+            },
         }
     )
-    # Set sufficient initial assets to cover the purchase
-    sim.initial_assets = {
-        "stocks": 300_000.0,
-        "bonds": 50_000.0,
-        "str": 20_000.0,
-        "fun": 10_000.0,
-        "real_estate": 50_000.0,  # Existing real estate
-    }
     sim.init()  # Re-initialize with new inputs
 
     # Store initial values before the purchase
     initial_bank_balance = sim.state.current_bank_balance
-    initial_liquid_assets_total = sum(sim.state.liquid_assets.values())
-    initial_real_estate_value = sim.state.current_real_estate_value
+    # Store initial values before the purchase
+    initial_liquid_assets_total = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    )
+    initial_real_estate_value = sim.state.portfolio["real_estate"]
 
     # Execute the house purchase logic for the correct month
     purchase_month = purchase_year * 12
@@ -52,20 +56,25 @@ def test_handle_house_purchase_success(initialized_simulation: Simulation) -> No
 
     # Real estate value should increase by the nominal house cost
     expected_real_estate_value = initial_real_estate_value + expected_nominal_cost
-    assert sim.state.current_real_estate_value == pytest.approx(
+    assert sim.state.portfolio["real_estate"] == pytest.approx(
         expected_real_estate_value
     )
 
     # Total liquid assets should decrease by the nominal cost
     expected_liquid_total = initial_liquid_assets_total - expected_nominal_cost
-    current_liquid_total = sum(sim.state.liquid_assets.values())
+    current_liquid_total = sum(
+        v
+        for k, v in sim.state.portfolio.items()
+        if sim.market_assumptions.assets[k].is_liquid
+    )
     assert current_liquid_total == pytest.approx(expected_liquid_total)
 
     # Remaining liquid assets should be rebalanced according to target weights
     target_weights = sim.state.current_target_portfolio_weights
     for asset, weight in target_weights.items():
-        expected_asset_value = current_liquid_total * weight
-        assert sim.state.liquid_assets[asset] == pytest.approx(expected_asset_value)
+        if sim.market_assumptions.assets[asset].is_liquid:
+            expected_asset_value = current_liquid_total * weight
+            assert sim.state.portfolio[asset] == pytest.approx(expected_asset_value)
 
 
 def test_handle_house_purchase_failure_insufficient_assets(
@@ -78,20 +87,20 @@ def test_handle_house_purchase_failure_insufficient_assets(
     purchase_year = 5
     house_cost = 500_000.0  # More than available assets
 
+    # Set insufficient initial assets
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "house_purchase_year": purchase_year,
             "planned_house_purchase_cost": house_cost,
+            "initial_portfolio": {
+                "stocks": 100_000.0,
+                "bonds": 0.0,
+                "str": 0.0,
+                "fun": 0.0,
+                "real_estate": 0.0,
+            },
         }
     )
-    # Set insufficient initial assets
-    sim.initial_assets = {
-        "stocks": 100_000.0,
-        "bonds": 0,
-        "str": 0,
-        "fun": 0,
-        "real_estate": 0,
-    }
     sim.init()
 
     # Execute the house purchase logic
