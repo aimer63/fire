@@ -16,7 +16,7 @@ class CorrelationMatrix(BaseModel):
     matches the dimensions of the matrix.
     """
 
-    assets: list[str]
+    assets_order: list[str]
     matrix: list[list[float]]
 
     @model_validator(mode="after")
@@ -25,7 +25,7 @@ class CorrelationMatrix(BaseModel):
         Validates the correlation matrix after the model is created.
         """
         # 1. Check that number of assets matches matrix dimensions
-        if len(self.assets) != len(self.matrix):
+        if len(self.assets_order) != len(self.matrix):
             raise ValueError(
                 "Number of assets must match the number of rows in the correlation matrix."
             )

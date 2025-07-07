@@ -3,60 +3,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import pytest
-import numpy as np
 from pydantic import ValidationError
 
 
 from firestarter.config.config import (
-    MarketAssumptions,
+    Config,
     Asset,
-    DeterministicInputs,
     PortfolioRebalance,
     PortfolioRebalances,
-    Shocks,
-    SimulationParameters,
 )
 
 
-def test_market_assumptions_lognormal_property():
+def test_assets_validation_unique_withdrawal_priority(
+    basic_deterministic_inputs,
+    basic_market_assumptions,
+    basic_paths,
+    basic_portfolio_rebalances,
+    basic_simulation_parameters,
+):
     """
-    Tests that the `lognormal` property correctly converts arithmetic parameters
-    for all assets to log-normal parameters.
-    """
-    # Define assets, treating inflation as one of them
-    assets_data = {
-        "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1),
-        "bonds": Asset(mu=0.02, sigma=0.05, is_liquid=True, withdrawal_priority=0),
-        "inflation": Asset(
-            mu=0.03, sigma=0.02, is_liquid=False, withdrawal_priority=None
-        ),
-    }
-
-    market_assumptions = MarketAssumptions(assets=assets_data)
-
-    # Get the log-normal parameters
-    log_params = market_assumptions.lognormal
-
-    # --- Assertions ---
-    assert "stocks" in log_params
-    assert "bonds" in log_params
-    assert "inflation" in log_params
-    assert len(log_params) == 3
-
-    # Verify the conversion for one asset ('inflation')
-    mu_arith, sigma_arith = 0.03, 0.02
-    expected_mu_log = np.log(1 + mu_arith) - 0.5 * np.log(
-        1 + (sigma_arith / (1 + mu_arith)) ** 2
-    )
-    expected_sigma_log = np.sqrt(np.log(1 + (sigma_arith / (1 + mu_arith)) ** 2))
-
-    assert log_params["inflation"][0] == pytest.approx(expected_mu_log)
-    assert log_params["inflation"][1] == pytest.approx(expected_sigma_log)
-
-
-def test_assets_validation_unique_withdrawal_priority():
-    """
-    Tests that the Assets model fails validation if liquid assets have
+    Tests that the Config model fails validation if liquid assets have
     duplicate withdrawal_priority values.
     """
     invalid_assets_data = {
@@ -68,16 +34,22 @@ def test_assets_validation_unique_withdrawal_priority():
     with pytest.raises(
         ValidationError, match="Withdrawal priorities for liquid assets must be unique"
     ):
-        MarketAssumptions(assets=invalid_assets_data)
+        Config(
+            assets=invalid_assets_data,
+            deterministic_inputs=basic_deterministic_inputs,
+            market_assumptions=basic_market_assumptions,
+            portfolio_rebalances=basic_portfolio_rebalances.rebalances,
+            simulation_parameters=basic_simulation_parameters,
+            paths=basic_paths,
+            shocks=[],
+        )
 
 
 def test_assets_validation_liquid_asset_requires_priority():
     """
     Tests that a liquid asset must have a withdrawal_priority.
     """
-    # invalid_assets_data = {
-    #     "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=None)
-    # }
+
     with pytest.raises(
         ValidationError, match="withdrawal_priority is required for liquid assets"
     ):
@@ -153,15 +125,19 @@ def test_load_and_validate_full_test_config():
     with open(config_path, "rb") as f:
         config_data = tomllib.load(f)
 
+    # The config file is flat in some areas, but the Pydantic model is nested.
+    # We need to construct the nested structure that Config expects before validation.
+    nested_config_data = {
+        "assets": config_data.get("assets", {}),
+        "deterministic_inputs": config_data.get("deterministic_inputs", {}),
+        "market_assumptions": config_data.get("market_assumptions", {}),
+        "portfolio_rebalances": config_data.get("portfolio_rebalances", []),
+        "simulation_parameters": config_data.get("simulation_parameters", {}),
+        "shocks": config_data.get("shocks", []),
+        "paths": config_data.get("paths", {}),
+    }
+
     try:
-        SimulationParameters(**config_data["simulation_parameters"])
-        DeterministicInputs(**config_data["deterministic_inputs"])
-        market_assumptions_data = {
-            **config_data["market_assumptions"],
-            "assets": config_data["assets"],
-        }
-        MarketAssumptions(**market_assumptions_data)
-        PortfolioRebalances(**{"rebalances": config_data["portfolio_rebalances"]})
-        Shocks(**{"events": config_data.get("shocks", [])})
+        Config(**nested_config_data)
     except ValidationError as e:
         pytest.fail(f"Validation of '{config_path}' failed: {e}")

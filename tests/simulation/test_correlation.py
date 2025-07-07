@@ -27,7 +27,7 @@ def market_assumptions_with_correlation() -> MarketAssumptions:
         [0.60, 0.10, 0.00, 0.50, 1.00, 0.40],
         [-0.10, -0.30, 0.10, -0.05, 0.40, 1.00],
     ]
-    correlation_matrix = CorrelationMatrix(assets=assets, matrix=matrix)
+    correlation_matrix = CorrelationMatrix(assets_order=assets, matrix=matrix)
     return MarketAssumptions(
         assets={
             "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=2),
@@ -66,7 +66,7 @@ def test_correlated_sequence_generation(market_assumptions_with_correlation):
     # Reshape the data to (total_months, num_assets) to calculate correlation
     # across all months from all sequences
     reshaped_returns = correlated_return_rates.reshape(
-        -1, len(ma.correlation_matrix.assets)
+        -1, len(ma.correlation_matrix.assets_order)
     )
     empirical_corr_matrix = np.corrcoef(reshaped_returns, rowvar=False)
 
@@ -100,7 +100,7 @@ def market_assumptions_with_identity_correlation() -> MarketAssumptions:
         [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
     ]
-    identity_matrix = CorrelationMatrix(assets=assets, matrix=matrix)
+    identity_matrix = CorrelationMatrix(assets_order=assets, matrix=matrix)
     return MarketAssumptions(
         assets={
             "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=2),
@@ -137,7 +137,7 @@ def test_uncorrelated_sequence_generation(
 
     # --- 3. Calculate Empirical Correlation ---
     reshaped_returns = correlated_return_rates.reshape(
-        -1, len(ma.correlation_matrix.assets)
+        -1, len(ma.correlation_matrix.assets_order)
     )
     empirical_corr_matrix = np.corrcoef(reshaped_returns, rowvar=False)
 

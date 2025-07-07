@@ -9,3 +9,18 @@
 > #file:`firestarter/main.py`
 > #files:`tests/ccnfig/*.py`
 > #files:`tests/simulation/*.py`
+
+
+> #buffers:
+> #buffers:`visible`
+> #files:`**/*.py`
+> #files:`**/*.md`
+> #files:`configs/*.toml`
+> #files:`firestarter/config/*.py`
+> #files:`firestarter/core/*.py`
+> #file:`firestarter/main.py`
+> #files:`tests/ccnfig/*.py`
+> #file:`docs/notes/asset_classes.md`
+> #file:`firestarter/config/config.py`
+> #file:`firestarter/core/simulation_state.py`
+> #file:`firestarter/core/simulation.py`

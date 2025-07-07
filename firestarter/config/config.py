@@ -203,9 +203,6 @@ class MarketAssumptions(BaseModel):
     These parameters are loaded from the 'market_assumptions' section of config.toml.
     """
 
-    assets: dict[str, Asset] = Field(
-        ..., description="A dictionary containing all defined financial assets."
-    )
     correlation_matrix: CorrelationMatrix | None = Field(
         default=None,
         description=(
@@ -213,63 +210,6 @@ class MarketAssumptions(BaseModel):
             "If not provided, assets are assumed to be uncorrelated."
         ),
     )
-
-    @model_validator(mode="after")
-    def check_assets(self) -> "MarketAssumptions":
-        """
-        Validates two conditions across all assets:
-        1. Liquid assets must have a `withdrawal_priority`.
-        2. `withdrawal_priority` must be unique among all liquid assets.
-        """
-        priorities = set()
-        for asset_name, asset in self.assets.items():
-            if asset.is_liquid:
-                if asset.withdrawal_priority is None:
-                    raise ValueError(
-                        f"Liquid asset '{asset_name}' must have a withdrawal_priority."
-                    )
-                if asset.withdrawal_priority in priorities:
-                    raise ValueError(
-                        "Withdrawal priorities for liquid assets must be unique."
-                    )
-                priorities.add(asset.withdrawal_priority)
-        return self
-
-    @staticmethod
-    def _convert_to_lognormal(
-        arith_mu: float, arith_sigma: float
-    ) -> tuple[float, float]:
-        """
-        Helper function to convert arithmetic mean and standard deviation
-        to log-normal parameters (mu_log, sigma_log).
-
-        This matches the implementation of _convert_arithmetic_to_lognormal in helpers.py.
-        """
-        if arith_mu <= -1.0:
-            raise ValueError(
-                f"Arithmetic mean ({arith_mu}) must be strictly greater than -1 "
-                + "to convert to log-normal parameters."
-            )
-
-        ex: float = 1.0 + arith_mu
-        stdx: float = arith_sigma
-
-        if stdx == 0.0:
-            sigma_log: float = 0.0
-        else:
-            sigma_log = float(np.sqrt(np.log(1.0 + (stdx / ex) ** 2)))
-
-        mu_log: float = float(np.log(ex) - 0.5 * sigma_log**2)
-
-        return mu_log, sigma_log
-
-    @property
-    def lognormal(self) -> dict[str, tuple[float, float]]:
-        """Return log-normal parameters for all assets and inflation."""
-        return {
-            asset_name: self._convert_to_lognormal(asset.mu, asset.sigma)
-            for asset_name, asset in self.assets.items()
-        }
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -290,22 +230,6 @@ class PortfolioRebalance(BaseModel):
     weights: dict[str, float] = {}
 
     model_config = ConfigDict(extra="allow", frozen=True)
-
-    @model_validator(mode="before")
-    @classmethod
-    def build_weights(cls, values: dict) -> dict:
-        """
-        Collect all undefined fields into a 'weights' dictionary.
-        """
-        defined_fields = {"year", "description", "weights"}
-        weights = values.get("weights", {})
-
-        for key, value in list(values.items()):
-            if key not in defined_fields:
-                weights[key] = values.pop(key)
-
-        values["weights"] = weights
-        return values
 
     @model_validator(mode="after")
     def check_weights(self) -> "PortfolioRebalance":
@@ -352,19 +276,108 @@ class SimulationParameters(BaseModel):
 
 
 class Shock(BaseModel):
-    """Defines a one-time financial shock."""
+    """Defines a one-time financial shock for a given year."""
 
     year: int
-    asset: str
-    magnitude: float
-    description: str
+    description: str | None = None
+    impact: dict[str, float] = {}
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="allow", frozen=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def build_impact_dict(cls, values: dict) -> dict:
+        """
+        Collect all undefined fields into the 'impact' dictionary.
+        This allows for a cleaner TOML structure, e.g., `stocks = -0.25`.
+        """
+        defined_fields = {"year", "description", "impact"}
+        impact = values.get("impact", {})
+
+        for key, value in list(values.items()):
+            if key not in defined_fields:
+                impact[key] = values.pop(key)
+
+        values["impact"] = impact
+        return values
 
 
 class Shocks(BaseModel):
+    """A container for a list of shock events."""
+
     events: list[Shock] = Field(
         default_factory=list, description="List of shock events."
     )
 
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class Paths(BaseModel):
+    """Defines paths for simulation outputs."""
+
+    output_root: str = Field(
+        default="output", description="The root directory for all output files."
+    )
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class Config(BaseModel):
+    """Top-level container for the entire simulation configuration."""
+
+    assets: dict[str, Asset]
+    deterministic_inputs: DeterministicInputs
+    market_assumptions: MarketAssumptions
+    portfolio_rebalances: list[PortfolioRebalance]
+    simulation_parameters: SimulationParameters
+    shocks: list[Shock] | None = None
+    paths: Paths | None = None
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def validate_cross_config_consistency(self) -> "Config":
+        """
+        Performs validation checks that require access to multiple configuration sections.
+        """
+        # 1. Establish the definitive set of asset names from the top-level assets
+        defined_assets = set(self.assets.keys())
+
+        # 1a. Validate that withdrawal_priority values for liquid assets are unique
+        priorities = [
+            asset.withdrawal_priority
+            for asset in self.assets.values()
+            if asset.is_liquid and asset.withdrawal_priority is not None
+        ]
+        if len(priorities) != len(set(priorities)):
+            raise ValueError("Withdrawal priorities for liquid assets must be unique")
+
+        # 2. Validate the correlation matrix asset list
+        if self.market_assumptions.correlation_matrix:
+            matrix_assets = set(self.market_assumptions.correlation_matrix.assets_order)
+            if defined_assets != matrix_assets:
+                missing = defined_assets - matrix_assets
+                extra = matrix_assets - defined_assets
+                error_msg = "Correlation matrix assets must match defined assets."
+                if missing:
+                    error_msg += f" Missing: {sorted(list(missing))}."
+                if extra:
+                    error_msg += f" Extra: {sorted(list(extra))}."
+                raise ValueError(error_msg)
+
+        # 3. Validate that all shock events target defined assets
+        if self.shocks:
+            for shock in self.shocks:
+                for asset_name in shock.impact:
+                    if asset_name not in defined_assets:
+                        raise ValueError(
+                            f"Shock in year {shock.year} targets an undefined asset: "
+                            f"'{asset_name}'. Valid assets are: {sorted(list(defined_assets))}"
+                        )
+
+        # 4. Validate that rebalance years are unique
+        rebalance_years = [r.year for r in self.portfolio_rebalances]
+        if len(rebalance_years) != len(set(rebalance_years)):
+            raise ValueError("Rebalance years must be unique.")
+
+        return self

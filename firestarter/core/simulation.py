@@ -37,8 +37,9 @@ import numpy as np
 from firestarter.config.config import (
     DeterministicInputs,
     MarketAssumptions,
-    PortfolioRebalances,
-    Shocks,
+    PortfolioRebalance,
+    Asset,
+    Shock,
     SimulationParameters,
 )
 
@@ -49,9 +50,10 @@ from firestarter.core.simulation_state import SimulationState
 class SimulationBuilder:
     def __init__(self):
         self.det_inputs: Optional[DeterministicInputs] = None
+        self.assets: Optional[dict[str, Asset]] = None
         self.market_assumptions: Optional[MarketAssumptions] = None
-        self.portfolio_rebalances: Optional[PortfolioRebalances] = None
-        self.shock_events: Optional[Shocks] = None
+        self.portfolio_rebalances: Optional[list[PortfolioRebalance]] = None
+        self.shock_events: Optional[list[Shock]] = None
         self.sim_params: Optional[SimulationParameters] = None
 
     @classmethod
@@ -62,6 +64,10 @@ class SimulationBuilder:
         self.det_inputs = det_inputs
         return self
 
+    def set_assets(self, assets: dict[str, Asset]):
+        self.assets = assets
+        return self
+
     def set_market_assumptions(self, market_assumptions):
         self.market_assumptions = market_assumptions
         return self
@@ -70,7 +76,7 @@ class SimulationBuilder:
         self.portfolio_rebalances = portfolio_rebalances
         return self
 
-    def set_shock_events(self, shock_events):
+    def set_shock_events(self, shock_events: list[Shock]):
         self.shock_events = shock_events
         return self
 
@@ -82,6 +88,10 @@ class SimulationBuilder:
         # Validate all required fields are set
         if self.det_inputs is None:
             raise ValueError("det_inputs must be set before building the simulation.")
+
+        if self.assets is None:
+            raise ValueError("assets must be set before building the simulation.")
+
         if self.market_assumptions is None:
             raise ValueError(
                 "market_assumptions must be set before building the simulation."
@@ -101,6 +111,7 @@ class SimulationBuilder:
 
         return Simulation(
             self.det_inputs,
+            self.assets,
             self.market_assumptions,
             self.portfolio_rebalances,
             self.shock_events,
@@ -112,15 +123,17 @@ class Simulation:
     def __init__(
         self,
         det_inputs: DeterministicInputs,
+        assets: dict[str, Asset],
         market_assumptions: MarketAssumptions,
-        portfolio_rebalances: PortfolioRebalances,
-        shock_events: Shocks,
+        portfolio_rebalances: list[PortfolioRebalance],
+        shock_events: list[Shock],
         sim_params: SimulationParameters,
     ):
         self.det_inputs: DeterministicInputs = det_inputs
+        self.assets: dict[str, Asset] = assets
         self.market_assumptions: MarketAssumptions = market_assumptions
-        self.portfolio_rebalances: PortfolioRebalances = portfolio_rebalances
-        self.shock_events: Shocks = shock_events
+        self.portfolio_rebalances: list[PortfolioRebalance] = portfolio_rebalances
+        self.shock_events: list[Shock] = shock_events
         self.sim_params: SimulationParameters = sim_params
         self.state: SimulationState = self._initialize_state()
         self.results: Dict[str, Any] = {}
@@ -198,7 +211,7 @@ class Simulation:
         initial_portfolio = self.det_inputs.initial_portfolio
 
         # Find the initial target portfolio weights from the first rebalance event
-        first_reb = self.portfolio_rebalances.rebalances[0]
+        first_reb = self.portfolio_rebalances[0]
         initial_target_weights = first_reb.weights
 
         # Calculate initial total wealth
@@ -226,58 +239,6 @@ class Simulation:
         sigma_m = sigma_a / (12**0.5)
         return mu_m, sigma_m
 
-    # def _generate_correlated_stochastic_sequences(self):
-    #     """
-    #     Generates correlated monthly return and inflation sequences using the
-    #     user-provided correlation matrix in MarketAssumptions.
-    #     """
-    #     # Use a per-process random generator for multiprocessing safety
-    #     if self.sim_params.random_seed is not None:
-    #         rng = np.random.default_rng(self.sim_params.random_seed)
-    #     else:
-    #         rng = np.random.default_rng()
-    #
-    #     market_assumptions = self.market_assumptions
-    #     total_months = self.det_inputs.years_to_simulate * 12
-    #
-    #     # Get an ordered list of assets from the config, which defines the calculation order
-    #     asset_order = list(market_assumptions.assets.keys())
-    #     lognormal_params = market_assumptions.lognormal
-    #
-    #     # --- Dynamically build log-normal parameter vectors ---
-    #     monthly_mu_log_list = []
-    #     monthly_sigma_log_list = []
-    #     for asset_name in asset_order:
-    #         mu_log_annual, sigma_log_annual = lognormal_params[asset_name]
-    #         mu_log_monthly, sigma_log_monthly = self.annual_lognormal_to_monthly(
-    #             mu_log_annual, sigma_log_annual
-    #         )
-    #         monthly_mu_log_list.append(mu_log_monthly)
-    #         monthly_sigma_log_list.append(sigma_log_monthly)
-    #
-    #     monthly_mu_log = np.array(monthly_mu_log_list)
-    #     monthly_sigma_log = np.array(monthly_sigma_log_list)
-    #
-    #     # --- Build monthly log-normal covariance matrix ---
-    #     assert market_assumptions.correlation_matrix is not None
-    #     # The correlation matrix from config is already ordered correctly
-    #     corr_matrix = market_assumptions.correlation_matrix.to_numpy()
-    #     D = np.diag(monthly_sigma_log)
-    #     monthly_cov_log = D @ corr_matrix @ D
-    #
-    #     # --- Draw correlated log returns ---
-    #     log_of_correlated_return_factors = rng.multivariate_normal(
-    #         mean=monthly_mu_log, cov=monthly_cov_log, size=total_months
-    #     )
-    #
-    #     # --- Convert to arithmetic return rates ---
-    #     correlated_return_rates = np.exp(log_of_correlated_return_factors) - 1.0
-    #
-    #     # --- Assign sequences to state dictionary ---
-    #     self.state.monthly_returns_sequences = {
-    #         asset: correlated_return_rates[:, i] for i, asset in enumerate(asset_order)
-    #     }
-
     def _precompute_sequences(self):
         """
         Precompute all monthly sequences needed for the simulation.
@@ -291,6 +252,7 @@ class Simulation:
 
         # --- Generate Correlated Sequences using the Generator ---
         generator = SequenceGenerator(
+            assets=self.assets,
             market_assumptions=self.market_assumptions,
             num_sequences=1,  # A single simulation run is one sequence
             simulation_years=total_years,
@@ -312,23 +274,27 @@ class Simulation:
         # for that year.
         # This annual rate is then converted to a monthly rate and applied to all 12
         # months of that year.
-        for shock in shock_events.events:  # Iterate over the .events attribute
+
+        for shock in shock_events:  # Iterate over the .events attribute
             year_idx = shock.year
-            shock_asset = shock.asset
-            annual_shock_rate = shock.magnitude  # This is an annual rate
+            # Iterate over each asset impacted by the shock
+            for shock_asset, annual_shock_rate in shock.impact.items():
+                if 0 <= year_idx < total_years:
+                    # Convert the annual shock rate to an equivalent monthly rate
+                    monthly_shock_rate = (
+                        (1.0 + annual_shock_rate) ** (1.0 / 12.0)
+                    ) - 1.0
 
-            if 0 <= year_idx < total_years:
-                # Convert the annual shock rate to an equivalent monthly rate
-                monthly_shock_rate = (1.0 + annual_shock_rate) ** (1.0 / 12.0) - 1.0
-
-                if shock_asset in self.state.monthly_returns_sequences:
-                    target_sequence = self.state.monthly_returns_sequences[shock_asset]
-                    for month_offset in range(12):
-                        month_idx_in_simulation = year_idx * 12 + month_offset
-                        if 0 <= month_idx_in_simulation < total_months:
-                            target_sequence[month_idx_in_simulation] = (
-                                monthly_shock_rate
-                            )
+                    if shock_asset in self.state.monthly_returns_sequences:
+                        target_sequence = self.state.monthly_returns_sequences[
+                            shock_asset
+                        ]
+                        for month_offset in range(12):
+                            month_idx_in_simulation = year_idx * 12 + month_offset
+                            if 0 <= month_idx_in_simulation < total_months:
+                                target_sequence[month_idx_in_simulation] = (
+                                    monthly_shock_rate
+                                )
 
         monthly_inflation_sequence = self.state.monthly_returns_sequences["inflation"]
 
@@ -541,7 +507,7 @@ class Simulation:
             # Convert annual fee to a simple monthly fee
             monthly_fee_percentage = annual_fee_percentage / 12.0
 
-            for asset_key, asset_properties in self.market_assumptions.assets.items():
+            for asset_key, asset_properties in self.assets.items():
                 if asset_properties.is_liquid and asset_key in self.state.portfolio:
                     current_value = self.state.portfolio[asset_key]
                     fee_amount = current_value * monthly_fee_percentage
@@ -590,7 +556,7 @@ class Simulation:
 
         # Check if a rebalance is scheduled for this year and this is the first month
         scheduled_rebalance = None
-        for reb in self.portfolio_rebalances.rebalances:
+        for reb in self.portfolio_rebalances:
             if reb.year == current_year and month_in_year == 0:
                 scheduled_rebalance = reb
                 break
@@ -614,7 +580,7 @@ class Simulation:
         # Dynamically determine withdrawal order from config
         liquid_assets_with_priority = [
             (name, asset.withdrawal_priority)
-            for name, asset in self.market_assumptions.assets.items()
+            for name, asset in self.assets.items()
             if asset.is_liquid and asset.withdrawal_priority is not None
         ]
         # Sort by priority, lowest first
