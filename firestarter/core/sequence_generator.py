@@ -7,7 +7,7 @@ Generates precomputed stochastic sequences for market returns and inflation.
 """
 
 import numpy as np
-from firestarter.config.config import MarketAssumptions
+from firestarter.config.config import Asset, MarketAssumptions
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 
@@ -18,29 +18,30 @@ class SequenceGenerator:
 
     def __init__(
         self,
+        assets: dict[str, "Asset"],
         market_assumptions: MarketAssumptions,
         num_sequences: int,
         simulation_years: int,
         seed: int | None = None,
     ):
+        self.assets = assets
         self.market_assumptions = market_assumptions
         self.num_sequences = num_sequences
         self.num_steps = simulation_years * 12
-        self.seed = seed
         self.seed = seed
 
         if market_assumptions.correlation_matrix:
             self.correlation_matrix = market_assumptions.correlation_matrix
         else:
             # Create an identity matrix if none is provided
-            asset_names = list(market_assumptions.assets.keys())
+            asset_names = list(self.assets.keys())
             num_assets = len(asset_names)
             self.correlation_matrix = CorrelationMatrix(
-                assets=asset_names,
+                assets_order=asset_names,
                 matrix=np.identity(num_assets).tolist(),
             )
 
-        self.asset_and_inflation_order = self.correlation_matrix.assets
+        self.asset_and_inflation_order = self.correlation_matrix.assets_order
         self.correlated_monthly_returns = self._generate_correlated_sequences()
 
     def _generate_correlated_sequences(self) -> np.ndarray:
@@ -51,15 +52,14 @@ class SequenceGenerator:
             A numpy array of shape (num_sequences, num_steps, num_assets)
             containing the correlated monthly arithmetic return rates.
         """
-        rng = np.random.default_rng(self.seed)
+        np.random.seed(self.seed)
 
         # --- 1. Extract Annual Arithmetic Parameters ---
-        ma = self.market_assumptions
         mu_arith = np.array(
-            [ma.assets[asset].mu for asset in self.asset_and_inflation_order]
+            [self.assets[asset].mu for asset in self.asset_and_inflation_order]
         )
         sigma_arith = np.array(
-            [ma.assets[asset].sigma for asset in self.asset_and_inflation_order]
+            [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
         )
         corr_matrix = np.array(self.correlation_matrix.matrix)
 
@@ -79,7 +79,7 @@ class SequenceGenerator:
         monthly_cov_log = D @ corr_matrix @ D
 
         # --- 4. Generate Correlated Log-Normal Returns ---
-        log_of_correlated_return_factors = rng.multivariate_normal(
+        log_of_correlated_return_factors = np.random.multivariate_normal(
             mean=monthly_mu_log,
             cov=monthly_cov_log,
             size=(self.num_sequences, self.num_steps),

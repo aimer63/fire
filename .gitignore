@@ -12,8 +12,8 @@ __pycache__/
 .vscode/
 
 # Ignore config files you don't want to commit
-configs/imerio.toml
-configs/carlo.toml
+configs/imerio*
+configs/carlo*
 
 # Ignore all output files and directories
 output/

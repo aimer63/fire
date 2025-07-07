@@ -22,18 +22,14 @@ from tqdm import tqdm
 import tomllib
 import numpy as np
 
-# import pandas as pd
-
-# Import helper functions
-from firestarter.core.helpers import calculate_initial_asset_values
-
 # Import the DeterministicInputs Pydantic model
 from firestarter.config.config import (
+    Config,
     DeterministicInputs,
     MarketAssumptions,
-    PortfolioRebalances,
+    PortfolioRebalance,
     SimulationParameters,
-    Shocks,
+    Shock,
 )
 
 # from firestarter.version import __version__
@@ -50,14 +46,16 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 def run_single_simulation(
     det_inputs: DeterministicInputs,
+    assets: dict[str, Any],
     market_assumptions: MarketAssumptions,
-    portfolio_rebalances: PortfolioRebalances,
-    shock_events: Any,
+    portfolio_rebalances: list[PortfolioRebalance],
+    shock_events: list[Shock],
     sim_params: SimulationParameters,
 ) -> dict[str, Any]:
     builder = SimulationBuilder.new()
     simulation = (
         builder.set_det_inputs(det_inputs)
+        .set_assets(assets)
         .set_market_assumptions(market_assumptions)
         .set_portfolio_rebalances(portfolio_rebalances)
         .set_shock_events(shock_events)
@@ -92,45 +90,45 @@ def main() -> None:
     try:
         with open(config_file_path, "rb") as f:
             config_data = tomllib.load(f)
+
+        # The config file is flat, but the Pydantic model is nested.
+        # We need to construct the nested structure that Config expects.
+        nested_config_data = {
+            "assets": config_data.get("assets", {}),
+            "deterministic_inputs": config_data.get("deterministic_inputs", {}),
+            "market_assumptions": config_data.get("market_assumptions", {}),
+            "portfolio_rebalances": config_data.get("portfolio_rebalances", []),
+            "simulation_parameters": config_data.get("simulation_parameters", {}),
+            "shocks": config_data.get("shocks", []),
+            "paths": config_data.get("paths", {}),
+        }
+        config = Config(**nested_config_data)
+
     except (OSError, tomllib.TOMLDecodeError) as e:
         print(f"Error reading or parsing config file '{config_file_path}': {e}")
         sys.exit(1)
+    except Exception as e:  # Catches Pydantic's ValidationError
+        print(f"Error validating configuration: {e}")
+        sys.exit(1)
 
-    output_root = config_data.get("paths", {}).get("output_root", "output")
+    # Create output directories from the Paths model
+    output_root = config.paths.output_root if config.paths else "output"
     os.makedirs(os.path.join(output_root, "plots"), exist_ok=True)
     os.makedirs(os.path.join(output_root, "reports"), exist_ok=True)
 
-    print("Configuration file parsed successfully. Extracting parameters...")
+    print("Configuration file loaded and validated successfully.")
 
-    # Pydantic: Load and validate deterministic inputs
-    det_inputs: DeterministicInputs = DeterministicInputs(
-        **config_data["deterministic_inputs"]
-    )
-
-    # Pydantic: Load and validate economic assumptions
-    # Manually combine the assets and market_assumptions sections from the config
-    market_assumptions_data = {
-        **config_data["market_assumptions"],
-        "assets": config_data["assets"],
-    }
-    market_assumptions: MarketAssumptions = MarketAssumptions(**market_assumptions_data)
-
-    # Pydantic: Load and validate portfolio rebalances
-    portfolio_rebalances: PortfolioRebalances = PortfolioRebalances(
-        rebalances=config_data["portfolio_rebalances"]
-    )
-
-    # Pydantic: Load and validate simulation parameters
-    sim_params: SimulationParameters = SimulationParameters(
-        **config_data["simulation_parameters"]
-    )
-    num_simulations: int = sim_params.num_simulations
-
-    # Pydantic: Load and validate shocks
-    shocks: Shocks = Shocks(events=config_data.get("shocks", []))
+    # Extract validated data from the config model for simulation
+    det_inputs = config.deterministic_inputs
+    assets = config.assets
+    market_assumptions = config.market_assumptions
+    portfolio_rebalances = config.portfolio_rebalances
+    sim_params = config.simulation_parameters
+    shocks = config.shocks or []
+    num_simulations = sim_params.num_simulations
 
     # Validate portfolio rebalance weights
-    for reb in portfolio_rebalances.rebalances:
+    for reb in portfolio_rebalances:
         reb_sum = sum(reb.weights.values())
         assert np.isclose(reb_sum, 1.0), (
             f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
@@ -144,19 +142,6 @@ def main() -> None:
         + f"< Lower ({det_inputs.bank_lower_bound:,.0f})."
     )
     # print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
-
-    # The initial portfolio is now loaded directly from the config into det_inputs.
-    # The logic to calculate it from a total value and rebalance weights is removed,
-    # as are the now-unused helper function and initial asset value variables.
-
-    # This dictionary is no longer used as initial_portfolio is loaded directly.
-    # initial_assets = {
-    #     "stocks": initial_stocks_value,
-    #     "bonds": initial_bonds_value,
-    #     "str": initial_str_value,
-    #     "fun": initial_fun_value,
-    #     "real_estate": initial_real_estate_value,
-    # }
 
     print(
         "All parameters successfully extracted and assigned to Python variables, "
@@ -177,6 +162,7 @@ def main() -> None:
             executor.submit(
                 run_single_simulation,
                 det_inputs,
+                assets,
                 market_assumptions,
                 portfolio_rebalances,
                 shocks,
@@ -205,7 +191,7 @@ def main() -> None:
     )
 
     # Print config parameters and simulation result summary
-    print_console_summary(simulation_results, config_data)
+    print_console_summary(simulation_results, config.model_dump(exclude_none=True))
 
     # Prepare plot paths dictionary
     plots = {
@@ -242,7 +228,7 @@ def main() -> None:
     print("\n--- Generating markdown report ---")
     generate_markdown_report(
         simulation_results=simulation_results,
-        config=config_data,
+        config=config.model_dump(exclude_none=True),
         config_path=config_file_path,
         output_dir=os.path.join(output_root, "reports"),
         plot_paths=plots,

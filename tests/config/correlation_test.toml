@@ -1,39 +1,61 @@
 
-[market_assumptions.assets.stocks]
+[assets.stocks]
 mu = 0.08
 sigma = 0.15
 is_liquid = true
 withdrawal_priority = 1
-[market_assumptions.assets.bonds]
+[assets.bonds]
 mu = 0.03
 sigma = 0.05
 is_liquid = true
 withdrawal_priority = 2
-[market_assumptions.assets.str]
+[assets.str]
 mu = 0.01
 sigma = 0.02
 is_liquid = true
 withdrawal_priority = 3
-[market_assumptions.assets.fun]
+[assets.fun]
 mu = 0.05
 sigma = 0.10
 is_liquid = true
 withdrawal_priority = 4
-[market_assumptions.assets.real_estate]
+[assets.real_estate]
 mu = 0.04
 sigma = 0.08
 is_liquid = false
-[market_assumptions.assets.inflation]
+[assets.inflation]
 mu = 0.02
 sigma = 0.03
 is_liquid = false
 
-# Invalid matrix (asymmetric)
+portfolio_rebalances = []
+shocks = []
+
+[deterministic_inputs]
+initial_portfolio = { stocks = 10000, bonds = 5000, str = 2000, fun = 1000, real_estate = 0 }
+initial_bank_balance = 1000.0
+bank_lower_bound = 500.0
+bank_upper_bound = 10000.0
+years_to_simulate = 30
+monthly_salary = 0
+salary_inflation_factor = 0.0
+salary_start_year = 0
+salary_end_year = 0
+monthly_pension = 0
+pension_inflation_factor = 0.0
+pension_start_year = 0
+annual_fund_fee = 0.0
+monthly_expenses = 0
+planned_house_purchase_cost = 0
+
+[simulation_parameters]
+num_simulations = 1
+
 [market_assumptions.correlation_matrix]
-assets = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+assets_order = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
 matrix = [
-  [1.0, 0.5, 0.0, 0.0, 0.0, 0.0],
-  [0.4, 1.0, 0.0, 0.0, 0.0, 0.0],
+  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
   [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
   [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
   [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
