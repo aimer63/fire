@@ -7,7 +7,7 @@ Generates precomputed stochastic sequences for market returns and inflation.
 """
 
 import numpy as np
-from firestarter.config.config import Asset, MarketAssumptions
+from firestarter.config.config import Asset
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 
@@ -19,19 +19,19 @@ class SequenceGenerator:
     def __init__(
         self,
         assets: dict[str, "Asset"],
-        market_assumptions: MarketAssumptions,
+        correlation_matrix: CorrelationMatrix,
         num_sequences: int,
         simulation_years: int,
         seed: int | None = None,
     ):
         self.assets = assets
-        self.market_assumptions = market_assumptions
+        self.correlation_matrix = correlation_matrix
         self.num_sequences = num_sequences
         self.num_steps = simulation_years * 12
         self.seed = seed
 
-        if market_assumptions.correlation_matrix:
-            self.correlation_matrix = market_assumptions.correlation_matrix
+        if self.correlation_matrix:
+            self.asset_and_inflation_order = self.correlation_matrix.assets_order
         else:
             # Create an identity matrix if none is provided
             asset_names = list(self.assets.keys())
@@ -40,6 +40,9 @@ class SequenceGenerator:
                 assets_order=asset_names,
                 matrix=np.identity(num_assets).tolist(),
             )
+            self.asset_and_inflation_order = asset_names
+
+        self.correlated_monthly_returns = self._generate_correlated_sequences()
 
         self.asset_and_inflation_order = self.correlation_matrix.assets_order
         self.correlated_monthly_returns = self._generate_correlated_sequences()

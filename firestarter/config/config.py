@@ -197,21 +197,21 @@ class DeterministicInputs(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-class MarketAssumptions(BaseModel):
-    """
-    Pydantic model representing the economic assumptions for the simulation.
-    These parameters are loaded from the 'market_assumptions' section of config.toml.
-    """
-
-    correlation_matrix: CorrelationMatrix | None = Field(
-        default=None,
-        description=(
-            "Optional correlation matrix for asset returns and inflation. "
-            "If not provided, assets are assumed to be uncorrelated."
-        ),
-    )
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
+# class MarketAssumptions(BaseModel):
+#     """
+#     Pydantic model representing the economic assumptions for the simulation.
+#     These parameters are loaded from the 'market_assumptions' section of config.toml.
+#     """
+#
+#     correlation_matrix: CorrelationMatrix | None = Field(
+#         default=None,
+#         description=(
+#             "Optional correlation matrix for asset returns and inflation. "
+#             "If not provided, assets are assumed to be uncorrelated."
+#         ),
+#     )
+#
+#     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class PortfolioRebalance(BaseModel):
@@ -243,24 +243,6 @@ class PortfolioRebalance(BaseModel):
             raise ValueError("Rebalance weights must sum to 1.0.")
 
         return self
-
-
-# class PortfolioRebalances(BaseModel):
-#     """A container for a list of portfolio rebalance events."""
-#
-#     rebalances: List[PortfolioRebalance] = Field(
-#         ..., description="List of portfolio rebalances with year and weights."
-#     )
-#
-#     model_config = ConfigDict(extra="forbid", frozen=True)
-#
-#     @model_validator(mode="after")
-#     def check_unique_years(self) -> "PortfolioRebalances":
-#         """Validate that rebalance years are unique."""
-#         years = [r.year for r in self.rebalances]
-#         if len(years) != len(set(years)):
-#             raise ValueError("Rebalance years must be unique.")
-#         return self
 
 
 class SimulationParameters(BaseModel):
@@ -302,16 +284,6 @@ class Shock(BaseModel):
         return values
 
 
-# class Shocks(BaseModel):
-#     """A container for a list of shock events."""
-#
-#     events: list[Shock] = Field(
-#         default_factory=list, description="List of shock events."
-#     )
-#
-#     model_config = ConfigDict(extra="forbid", frozen=True)
-
-
 class Paths(BaseModel):
     """Defines paths for simulation outputs."""
 
@@ -327,7 +299,13 @@ class Config(BaseModel):
 
     assets: dict[str, Asset]
     deterministic_inputs: DeterministicInputs
-    market_assumptions: MarketAssumptions
+    correlation_matrix: CorrelationMatrix | None = Field(
+        default=None,
+        description=(
+            "Optional correlation matrix for asset returns and inflation. "
+            "If not provided, assets are assumed to be uncorrelated."
+        ),
+    )
     portfolio_rebalances: list[PortfolioRebalance]
     simulation_parameters: SimulationParameters
     shocks: list[Shock] | None = None
@@ -353,8 +331,8 @@ class Config(BaseModel):
             raise ValueError("Withdrawal priorities for liquid assets must be unique")
 
         # 2. Validate the correlation matrix asset list
-        if self.market_assumptions.correlation_matrix:
-            matrix_assets = set(self.market_assumptions.correlation_matrix.assets_order)
+        if self.correlation_matrix:
+            matrix_assets = set(self.correlation_matrix.assets_order)
             if defined_assets != matrix_assets:
                 missing = defined_assets - matrix_assets
                 extra = matrix_assets - defined_assets
