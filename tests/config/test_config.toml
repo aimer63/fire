@@ -227,7 +227,6 @@ matrix = [
 # `asset` must match a key from the [assets] table.
 #
 # Black Friday Crash (October 1929 equivalent)
-# Black Friday Crash (October 1929 equivalent)
 # [[shocks]]
 # year = 10
 # description = "October 1929 equivalent"
@@ -243,4 +242,4 @@ matrix = [
 [[portfolio_rebalances]]
 year = 5
 description = "De-risking for retirement"
-weights = { stocks = 0.80, bonds = 0.15, fun = 0.05 }
+weights = { stocks = 0.60, bonds = 0.40 }

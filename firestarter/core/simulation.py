@@ -513,6 +513,34 @@ class Simulation:
                     fee_amount = current_value * monthly_fee_percentage
                     self.state.portfolio[asset_key] = current_value - fee_amount
 
+    def _rebalance_if_needed(self, month):
+        """
+        Rebalance liquid assets (stocks, bonds, str, fun) according to the current portfolio weights,
+        if a rebalance is scheduled for this year and this is the first month of the year.
+        Real estate is not included in rebalancing.
+        Also updates current_target_portfolio_weights if a rebalance occurs.
+        """
+        current_year = month // 12
+        month_in_year = month % 12
+
+        # Check if a rebalance is scheduled for this year and this is the first month
+        scheduled_rebalance = None
+        for reb in self.portfolio_rebalances:
+            if reb.year == current_year and month_in_year == 0:
+                scheduled_rebalance = reb
+                break
+
+        if scheduled_rebalance is not None:
+            # Build a complete weights dict: missing keys get 0.0
+            all_liquid_assets = [k for k, v in self.assets.items() if v.is_liquid]
+            new_weights = {
+                k: scheduled_rebalance.weights.get(k, 0.0) for k in all_liquid_assets
+            }
+            self.state.current_target_portfolio_weights = new_weights
+
+            # Rebalance liquid assets
+            self._rebalance_liquid_assets()
+
     def _rebalance_liquid_assets(self):
         """
         Rebalances all liquid assets according to the current target portfolio weights.
@@ -543,30 +571,6 @@ class Simulation:
             self.state.portfolio[asset] = (
                 self.state.portfolio.get(asset, 0.0) + amount * weight
             )
-
-    def _rebalance_if_needed(self, month):
-        """
-        Rebalance liquid assets (stocks, bonds, str, fun) according to the current portfolio weights,
-        if a rebalance is scheduled for this year and this is the first month of the year.
-        Real estate is not included in rebalancing.
-        Also updates current_target_portfolio_weights if a rebalance occurs.
-        """
-        current_year = month // 12
-        month_in_year = month % 12
-
-        # Check if a rebalance is scheduled for this year and this is the first month
-        scheduled_rebalance = None
-        for reb in self.portfolio_rebalances:
-            if reb.year == current_year and month_in_year == 0:
-                scheduled_rebalance = reb
-                break
-
-        if scheduled_rebalance is not None:
-            # Update current_target_portfolio_weights in state from the event
-            self.state.current_target_portfolio_weights = scheduled_rebalance.weights
-
-            # Rebalance liquid assets
-            self._rebalance_liquid_assets()
 
     def _withdraw_from_assets(self, amount: float) -> None:
         """
