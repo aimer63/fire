@@ -245,22 +245,22 @@ class PortfolioRebalance(BaseModel):
         return self
 
 
-class PortfolioRebalances(BaseModel):
-    """A container for a list of portfolio rebalance events."""
-
-    rebalances: List[PortfolioRebalance] = Field(
-        ..., description="List of portfolio rebalances with year and weights."
-    )
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    @model_validator(mode="after")
-    def check_unique_years(self) -> "PortfolioRebalances":
-        """Validate that rebalance years are unique."""
-        years = [r.year for r in self.rebalances]
-        if len(years) != len(set(years)):
-            raise ValueError("Rebalance years must be unique.")
-        return self
+# class PortfolioRebalances(BaseModel):
+#     """A container for a list of portfolio rebalance events."""
+#
+#     rebalances: List[PortfolioRebalance] = Field(
+#         ..., description="List of portfolio rebalances with year and weights."
+#     )
+#
+#     model_config = ConfigDict(extra="forbid", frozen=True)
+#
+#     @model_validator(mode="after")
+#     def check_unique_years(self) -> "PortfolioRebalances":
+#         """Validate that rebalance years are unique."""
+#         years = [r.year for r in self.rebalances]
+#         if len(years) != len(set(years)):
+#             raise ValueError("Rebalance years must be unique.")
+#         return self
 
 
 class SimulationParameters(BaseModel):
@@ -302,14 +302,14 @@ class Shock(BaseModel):
         return values
 
 
-class Shocks(BaseModel):
-    """A container for a list of shock events."""
-
-    events: list[Shock] = Field(
-        default_factory=list, description="List of shock events."
-    )
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
+# class Shocks(BaseModel):
+#     """A container for a list of shock events."""
+#
+#     events: list[Shock] = Field(
+#         default_factory=list, description="List of shock events."
+#     )
+#
+#     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class Paths(BaseModel):
