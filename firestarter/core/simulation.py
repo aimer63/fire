@@ -36,13 +36,13 @@ import numpy as np
 # Import the actual types from config.py
 from firestarter.config.config import (
     DeterministicInputs,
-    MarketAssumptions,
     PortfolioRebalance,
     Asset,
     Shock,
     SimulationParameters,
 )
 
+from firestarter.config.correlation_matrix import CorrelationMatrix
 from firestarter.core.sequence_generator import SequenceGenerator
 from firestarter.core.simulation_state import SimulationState
 
@@ -51,7 +51,7 @@ class SimulationBuilder:
     def __init__(self):
         self.det_inputs: Optional[DeterministicInputs] = None
         self.assets: Optional[dict[str, Asset]] = None
-        self.market_assumptions: Optional[MarketAssumptions] = None
+        self.correlation_matrix: Optional[Any] = None
         self.portfolio_rebalances: Optional[list[PortfolioRebalance]] = None
         self.shock_events: Optional[list[Shock]] = None
         self.sim_params: Optional[SimulationParameters] = None
@@ -68,8 +68,8 @@ class SimulationBuilder:
         self.assets = assets
         return self
 
-    def set_market_assumptions(self, market_assumptions):
-        self.market_assumptions = market_assumptions
+    def set_correlation_matrix(self, correlation_matrix):
+        self.correlation_matrix = correlation_matrix
         return self
 
     def set_portfolio_rebalances(self, portfolio_rebalances):
@@ -92,9 +92,9 @@ class SimulationBuilder:
         if self.assets is None:
             raise ValueError("assets must be set before building the simulation.")
 
-        if self.market_assumptions is None:
+        if self.correlation_matrix is None:
             raise ValueError(
-                "market_assumptions must be set before building the simulation."
+                "correlation_matrix must be set before building the simulation."
             )
         if self.portfolio_rebalances is None:
             raise ValueError(
@@ -112,7 +112,7 @@ class SimulationBuilder:
         return Simulation(
             self.det_inputs,
             self.assets,
-            self.market_assumptions,
+            self.correlation_matrix,
             self.portfolio_rebalances,
             self.shock_events,
             self.sim_params,
@@ -124,14 +124,14 @@ class Simulation:
         self,
         det_inputs: DeterministicInputs,
         assets: dict[str, Asset],
-        market_assumptions: MarketAssumptions,
+        correlation_matrix: CorrelationMatrix,
         portfolio_rebalances: list[PortfolioRebalance],
         shock_events: list[Shock],
         sim_params: SimulationParameters,
     ):
         self.det_inputs: DeterministicInputs = det_inputs
         self.assets: dict[str, Asset] = assets
-        self.market_assumptions: MarketAssumptions = market_assumptions
+        self.correlation_matrix = correlation_matrix
         self.portfolio_rebalances: list[PortfolioRebalance] = portfolio_rebalances
         self.shock_events: list[Shock] = shock_events
         self.sim_params: SimulationParameters = sim_params
@@ -253,7 +253,7 @@ class Simulation:
         # --- Generate Correlated Sequences using the Generator ---
         generator = SequenceGenerator(
             assets=self.assets,
-            market_assumptions=self.market_assumptions,
+            correlation_matrix=self.correlation_matrix,
             num_sequences=1,  # A single simulation run is one sequence
             simulation_years=total_years,
             seed=self.sim_params.random_seed,

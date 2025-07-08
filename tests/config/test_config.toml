@@ -189,13 +189,12 @@ is_liquid = false
 
 
 # ==============================================================================
-# 5. MARKET ASSUMPTIONS (STOCHASTIC INPUTS)
-# ==============================================================================
-[market_assumptions]
+# 5. CORRELATION MATRIX 
+# ============================================================================== 
 # Correlation matrix for asset returns and inflation.
 # The `assets` list must match keys from the [assets] tables, plus "inflation".
 # The `matrix` must be square and correspond to the `assets` list order.
-[market_assumptions.correlation_matrix]
+[correlation_matrix]
 assets_order = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
@@ -242,4 +241,4 @@ matrix = [
 [[portfolio_rebalances]]
 year = 5
 description = "De-risking for retirement"
-weights = { stocks = 0.60, bonds = 0.40 }
+weights = { stocks = 0.80, bonds = 0.15, fun = 0.05 }

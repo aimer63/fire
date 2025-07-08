@@ -26,11 +26,11 @@ import numpy as np
 from firestarter.config.config import (
     Config,
     DeterministicInputs,
-    MarketAssumptions,
     PortfolioRebalance,
     SimulationParameters,
     Shock,
 )
+from firestarter.config.correlation_matrix import CorrelationMatrix
 
 # from firestarter.version import __version__
 from firestarter.reporting.markdown_report import generate_markdown_report
@@ -47,7 +47,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 def run_single_simulation(
     det_inputs: DeterministicInputs,
     assets: dict[str, Any],
-    market_assumptions: MarketAssumptions,
+    correlation_matrix: CorrelationMatrix,
     portfolio_rebalances: list[PortfolioRebalance],
     shock_events: list[Shock],
     sim_params: SimulationParameters,
@@ -56,7 +56,7 @@ def run_single_simulation(
     simulation = (
         builder.set_det_inputs(det_inputs)
         .set_assets(assets)
-        .set_market_assumptions(market_assumptions)
+        .set_correlation_matrix(correlation_matrix)
         .set_portfolio_rebalances(portfolio_rebalances)
         .set_shock_events(shock_events)
         .set_sim_params(sim_params)
@@ -91,18 +91,18 @@ def main() -> None:
         with open(config_file_path, "rb") as f:
             config_data = tomllib.load(f)
 
-        # The config file is flat, but the Pydantic model is nested.
-        # We need to construct the nested structure that Config expects.
-        nested_config_data = {
-            "assets": config_data.get("assets", {}),
-            "deterministic_inputs": config_data.get("deterministic_inputs", {}),
-            "market_assumptions": config_data.get("market_assumptions", {}),
-            "portfolio_rebalances": config_data.get("portfolio_rebalances", []),
-            "simulation_parameters": config_data.get("simulation_parameters", {}),
-            "shocks": config_data.get("shocks", []),
-            "paths": config_data.get("paths", {}),
-        }
-        config = Config(**nested_config_data)
+        # # The config file is flat, but the Pydantic model is nested.
+        # # We need to construct the nested structure that Config expects.
+        # nested_config_data = {
+        #     "assets": config_data.get("assets", {}),
+        #     "deterministic_inputs": config_data.get("deterministic_inputs", {}),
+        #     "market_assumptions": config_data.get("market_assumptions", {}),
+        #     "portfolio_rebalances": config_data.get("portfolio_rebalances", []),
+        #     "simulation_parameters": config_data.get("simulation_parameters", {}),
+        #     "shocks": config_data.get("shocks", []),
+        #     "paths": config_data.get("paths", {}),
+        # }
+        config = Config(**config_data)
 
     except (OSError, tomllib.TOMLDecodeError) as e:
         print(f"Error reading or parsing config file '{config_file_path}': {e}")
@@ -121,7 +121,9 @@ def main() -> None:
     # Extract validated data from the config model for simulation
     det_inputs = config.deterministic_inputs
     assets = config.assets
-    market_assumptions = config.market_assumptions
+    correlation_matrix = config.correlation_matrix or CorrelationMatrix(
+        assets_order=[], matrix=[]
+    )
     portfolio_rebalances = config.portfolio_rebalances
     sim_params = config.simulation_parameters
     shocks = config.shocks or []
@@ -163,7 +165,7 @@ def main() -> None:
                 run_single_simulation,
                 det_inputs,
                 assets,
-                market_assumptions,
+                correlation_matrix,
                 portfolio_rebalances,
                 shocks,
                 sim_params,
