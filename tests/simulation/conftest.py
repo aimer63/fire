@@ -1,11 +1,14 @@
-# SPDX-FileCopyrightText: 2025 aimer63
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025-Present aimer <63aimer@gmail.com
+# All rights reserved.
+#
+# Licensed under GNU Affero General Public License v3 (AGPLv3).
+#
 
 import pytest
 from typing import Dict
 
-from firestarter.core.simulation import Simulation, SimulationBuilder
+from firestarter.core.simulation import SimulationBuilder
 from firestarter.config.config import (
     DeterministicInputs,
     PortfolioRebalance,

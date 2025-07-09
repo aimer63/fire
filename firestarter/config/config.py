@@ -1,6 +1,9 @@
-# SPDX-FileCopyrightText: 2025 aimer63
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025-Present aimer <63aimer@gmail.com
+# All rights reserved.
+#
+# Licensed under GNU Affero General Public License v3 (AGPLv3).
+#
 
 """
 Configuration models for the FIRE Monte Carlo simulation tool.
@@ -19,8 +22,6 @@ Classes:
 These models provide type safety and validation for the simulation engine.
 """
 
-# config.py
-# config.py
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 import numpy as np
 from typing import List, Dict

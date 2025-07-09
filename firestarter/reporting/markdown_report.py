@@ -1,6 +1,9 @@
-# SPDX-FileCopyrightText: 2025 aimer63
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025-Present aimer <63aimer@gmail.com
+# All rights reserved.
+#
+# Licensed under GNU Affero General Public License v3 (AGPLv3).
+#
 
 from typing import Any, List, Dict
 import numpy as np
@@ -10,7 +13,6 @@ from datetime import datetime
 from firestarter.core.helpers import calculate_cagr
 
 
-# Placeholder for a function to format config into Markdown
 def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:
     """Formats configuration parameters into a Markdown block."""
     md_config_lines = ["### Loaded Configuration Parameters\n"]
@@ -20,7 +22,6 @@ def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:
     return md_config_lines
 
 
-# Placeholder for a function to format a single case (worst/median/best) into Markdown
 def format_case_for_markdown(
     label: str, case: Dict[str, Any], case_type: str = "Nominal"
 ) -> List[str]:

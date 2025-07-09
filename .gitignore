@@ -24,8 +24,7 @@ build/
 *.egg-info/
 
 # Ignore SPDX update scripts
-check_copyright.sh
-update_copyright_year.sh
+update_copyright.sh
 
 # Ignore mailmap file
 .mailmap
