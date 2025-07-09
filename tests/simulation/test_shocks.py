@@ -5,7 +5,7 @@
 import pytest
 import numpy as np
 from firestarter.core.simulation import Simulation
-from firestarter.config.config import Shock, Shocks
+from firestarter.config.config import Shock
 
 
 def test_shock_overwrites_return_sequence(initialized_simulation: Simulation) -> None:
@@ -18,15 +18,13 @@ def test_shock_overwrites_return_sequence(initialized_simulation: Simulation) ->
     asset_to_shock = "stocks"
     annual_shock_rate = -0.50  # A 50% crash
 
-    # Define the shock event and assign it correctly to the simulation
+    # Define the shock event as a dict for the flat config
     shock = Shock(
         year=shock_year,
-        asset=asset_to_shock,
-        magnitude=annual_shock_rate,
-        description="Market Crash",
+        impact={asset_to_shock: annual_shock_rate},
+        description="Test Shock",
     )
-    # The `shock_events` attribute is a `Shocks` object, not a list
-    sim.shock_events = Shocks(events=[shock])
+    sim.shock_events = [shock]
 
     # Run the pre-computation logic which applies the shocks
     sim._precompute_sequences()
@@ -60,11 +58,10 @@ def test_non_shocked_year_is_unaffected(initialized_simulation: Simulation) -> N
     # 2. Define the shock and re-run the pre-computation
     shock = Shock(
         year=shock_year,
-        asset=asset_to_shock,
-        magnitude=annual_shock_rate,
+        impact={asset_to_shock: annual_shock_rate},
         description="Test Shock",
     )
-    sim.shock_events = Shocks(events=[shock])
+    sim.shock_events = [shock]
     sim._precompute_sequences()
     shocked_returns = sim.state.monthly_returns_sequences[asset_to_shock]
 

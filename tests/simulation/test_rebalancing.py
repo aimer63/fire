@@ -4,7 +4,7 @@
 
 import pytest
 from firestarter.core.simulation import Simulation
-from firestarter.config.config import PortfolioRebalances, PortfolioRebalance
+from firestarter.config.config import PortfolioRebalance
 
 
 def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
@@ -21,7 +21,7 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
     rebalance_event = PortfolioRebalance(year=rebalance_year, weights=new_weights)
 
     # Replace the rebalance schedule on the simulation instance from the fixture
-    sim.portfolio_rebalances = PortfolioRebalances(rebalances=[rebalance_event])
+    sim.portfolio_rebalances = [rebalance_event]
 
     # Set a specific portfolio for this test
     sim.state.portfolio = {
@@ -34,9 +34,7 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
     sim.init()
 
     total_liquid_assets = sum(
-        v
-        for k, v in sim.state.portfolio.items()
-        if sim.market_assumptions.assets[k].is_liquid
+        v for k, v in sim.state.portfolio.items() if sim.assets[k].is_liquid
     )
 
     # Execute the rebalance logic for the correct month
@@ -67,7 +65,7 @@ def test_rebalance_no_event_scheduled_for_year(
         year=rebalance_year,
         weights={"stocks": 1.0, "bonds": 0.0, "str": 0.0, "fun": 0.0},
     )
-    sim.portfolio_rebalances = PortfolioRebalances(rebalances=[rebalance_event])
+    sim.portfolio_rebalances = [rebalance_event]
     sim.init()
 
     # Store initial state for comparison
@@ -96,7 +94,7 @@ def test_rebalance_not_first_month_of_year(
 
     new_weights = {"stocks": 0.6, "bonds": 0.4, "str": 0.0, "fun": 0.0}
     rebalance_event = PortfolioRebalance(year=rebalance_year, weights=new_weights)
-    sim.portfolio_rebalances = PortfolioRebalances(rebalances=[rebalance_event])
+    sim.portfolio_rebalances = [rebalance_event]
     sim.init()
 
     # Store initial state for comparison

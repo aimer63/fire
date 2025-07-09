@@ -184,7 +184,7 @@ is_liquid = false
 # More relistics for the future
 [assets.inflation]
 mu = 0.025
-sigma = 0.0255555
+sigma = 0.025
 is_liquid = false
 
 
@@ -225,8 +225,7 @@ matrix = [
 # given year.
 # `asset` must match a key from the [assets] table.
 #
-# Black Friday Crash (October 1929 equivalent)
-# [[shocks]]
+# Black Friday Crash (October 1929 equivalent) [[shocks]]
 # year = 10
 # description = "October 1929 equivalent"
 # impact = { stocks = -0.35, bonds = 0.02, str = 0.0, fun = -0.15, inflation = -0.023 }
