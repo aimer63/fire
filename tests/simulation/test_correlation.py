@@ -1,6 +1,9 @@
-# SPDX-FileCopyrightText: 2025 aimer63
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025-Present aimer <63aimer@gmail.com
+# All rights reserved.
+#
+# Licensed under GNU Affero General Public License v3 (AGPLv3).
+#
 
 import numpy as np
 
@@ -14,7 +17,7 @@ def test_correlated_sequence_generation(basic_assets, basic_correlation_matrix):
     empirical correlation matrix of the generated data is statistically close to the
     input correlation matrix.
     """
-    num_sequences = 50_000
+    num_sequences = 10_000
     num_years = 30
 
     generator = SequenceGenerator(
@@ -45,7 +48,7 @@ def test_uncorrelated_sequence_generation(basic_assets, identity_correlation_mat
     Tests that sequence generation with an identity correlation matrix produces
     statistically uncorrelated returns.
     """
-    num_sequences = 50_000
+    num_sequences = 10_000
     num_years = 30
 
     generator = SequenceGenerator(

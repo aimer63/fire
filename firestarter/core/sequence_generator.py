@@ -1,7 +1,9 @@
-# SPDX-FileCopyrightText: 2025 aimer63
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
-
+# Copyright (c) 2025-Present aimer <63aimer@gmail.com
+# All rights reserved.
+#
+# Licensed under GNU Affero General Public License v3 (AGPLv3).
+#
 """
 Generates precomputed stochastic sequences for market returns and inflation.
 """
