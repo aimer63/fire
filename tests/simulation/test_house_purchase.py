@@ -34,9 +34,7 @@ def test_handle_house_purchase_success(initialized_simulation: Simulation) -> No
     initial_bank_balance = sim.state.current_bank_balance
     # Store initial values before the purchase
     initial_liquid_assets_total = sum(
-        v
-        for k, v in sim.state.portfolio.items()
-        if sim.market_assumptions.assets[k].is_liquid
+        v for k, v in sim.state.portfolio.items() if sim.assets[k].is_liquid
     )
     initial_real_estate_value = sim.state.portfolio["real_estate"]
 
@@ -63,16 +61,14 @@ def test_handle_house_purchase_success(initialized_simulation: Simulation) -> No
     # Total liquid assets should decrease by the nominal cost
     expected_liquid_total = initial_liquid_assets_total - expected_nominal_cost
     current_liquid_total = sum(
-        v
-        for k, v in sim.state.portfolio.items()
-        if sim.market_assumptions.assets[k].is_liquid
+        v for k, v in sim.state.portfolio.items() if sim.assets[k].is_liquid
     )
     assert current_liquid_total == pytest.approx(expected_liquid_total)
 
     # Remaining liquid assets should be rebalanced according to target weights
     target_weights = sim.state.current_target_portfolio_weights
     for asset, weight in target_weights.items():
-        if sim.market_assumptions.assets[asset].is_liquid:
+        if sim.assets[asset].is_liquid:
             expected_asset_value = current_liquid_total * weight
             assert sim.state.portfolio[asset] == pytest.approx(expected_asset_value)
 

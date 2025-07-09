@@ -18,8 +18,9 @@ def test_simulation_builder_new_initial_state():
         "Should be an instance of SimulationBuilder"
     )
     assert builder.det_inputs is None, "det_inputs should be None initially"
-    assert builder.market_assumptions is None, (
-        "market_assumptions should be None initially"
+    assert builder.assets is None, "market_assumptions should be None initially"
+    assert builder.correlation_matrix is None, (
+        "correlation_matrix should be None initially"
     )
     assert builder.portfolio_rebalances is None, (
         "portfolio_rebalances should be None initially"
@@ -32,7 +33,8 @@ def test_simulation_builder_new_initial_state():
     "setter_method_name, attribute_name",
     [
         ("set_det_inputs", "det_inputs"),
-        ("set_market_assumptions", "market_assumptions"),
+        ("set_assets", "assets"),
+        ("set_correlation_matrix", "correlation_matrix"),
         ("set_portfolio_rebalances", "portfolio_rebalances"),
         ("set_shock_events", "shock_events"),
         ("set_sim_params", "sim_params"),
@@ -56,27 +58,6 @@ def test_simulation_builder_setters(setter_method_name, attribute_name):
     )
 
 
-@pytest.fixture
-def complete_builder() -> SimulationBuilder:
-    """Returns a SimulationBuilder with all required attributes mocked."""
-    builder: SimulationBuilder = SimulationBuilder.new()
-    det_inputs_mock = Mock(name="det_inputs")
-    det_inputs_mock.initial_portfolio = {"stocks": 100000.0}
-    det_inputs_mock.initial_bank_balance = 1000.0
-    builder.set_det_inputs(det_inputs_mock)
-    builder.set_market_assumptions(Mock(name="market_assumptions"))
-    # Provide a mock with a .rebalances attribute that is a list with one mock
-    portfolio_rebalances_mock = Mock(name="portfolio_rebalances")
-    rebalance_event_mock = Mock(name="rebalance_event")
-    rebalance_event_mock.weights = {"stocks": 1.0}
-    portfolio_rebalances_mock.rebalances = [rebalance_event_mock]
-    builder.set_portfolio_rebalances(portfolio_rebalances_mock)
-    builder.set_shock_events(Mock(name="shock_events"))
-    builder.set_sim_params(Mock(name="sim_params"))
-
-    return builder
-
-
 def test_simulation_builder_build_success(complete_builder: SimulationBuilder) -> None:
     """
     Tests that build() returns a Simulation instance when all attributes are set.
@@ -86,7 +67,7 @@ def test_simulation_builder_build_success(complete_builder: SimulationBuilder) -
 
     # Check if the simulation instance received the correct attributes
     assert simulation.det_inputs is complete_builder.det_inputs
-    assert simulation.market_assumptions is complete_builder.market_assumptions
+    assert simulation.assets is complete_builder.assets
     assert simulation.portfolio_rebalances is complete_builder.portfolio_rebalances
     assert simulation.shock_events is complete_builder.shock_events
     assert simulation.sim_params is complete_builder.sim_params
@@ -96,7 +77,8 @@ def test_simulation_builder_build_success(complete_builder: SimulationBuilder) -
     "missing_attribute, error_message_part",
     [
         ("det_inputs", "det_inputs must be set"),
-        ("market_assumptions", "market_assumptions must be set"),
+        ("assets", "assets must be set"),
+        ("correlation_matrix", "correlation_matrix must be set"),
         ("portfolio_rebalances", "portfolio_rebalances must be set"),
         ("shock_events", "shock_events must be set"),
         ("sim_params", "sim_params (SimulationParameters) must be set"),
@@ -112,7 +94,8 @@ def test_simulation_builder_build_failure_missing_attributes(
     # Set all attributes except the one we want to test for being missing
     all_attributes: dict[str, Mock] = {
         "det_inputs": Mock(name="det_inputs"),
-        "market_assumptions": Mock(name="market_assumptions"),
+        "assets": Mock(name="assets"),
+        "correlation_matrix": Mock(name="correlation_matrix"),
         "portfolio_rebalances": Mock(name="portfolio_rebalances"),
         "shock_events": Mock(name="shock_events"),
         "sim_params": Mock(name="sim_params"),

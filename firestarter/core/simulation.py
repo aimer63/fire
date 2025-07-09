@@ -228,17 +228,6 @@ class Simulation:
         )
         return state
 
-    @staticmethod
-    def annual_lognormal_to_monthly(mu_a: float, sigma_a: float) -> tuple[float, float]:
-        """
-        Convert annual lognormal parameters to monthly lognormal parameters.
-        mu_a, sigma_a: annual lognormal parameters (mean and std of the underlying normal distribution)
-        Returns (mu_m, sigma_m): monthly lognormal parameters
-        """
-        mu_m = mu_a / 12
-        sigma_m = sigma_a / (12**0.5)
-        return mu_m, sigma_m
-
     def _precompute_sequences(self):
         """
         Precompute all monthly sequences needed for the simulation.
@@ -274,7 +263,6 @@ class Simulation:
         # for that year.
         # This annual rate is then converted to a monthly rate and applied to all 12
         # months of that year.
-
         for shock in shock_events:  # Iterate over the .events attribute
             year_idx = shock.year
             # Iterate over each asset impacted by the shock

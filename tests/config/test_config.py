@@ -10,13 +10,60 @@ from firestarter.config.config import (
     Config,
     Asset,
     PortfolioRebalance,
-    PortfolioRebalances,
+    SimulationParameters,
 )
+
+
+@pytest.fixture
+def basic_deterministic_inputs():
+    from firestarter.config.config import DeterministicInputs
+
+    return DeterministicInputs(
+        initial_portfolio={"stocks": 100000.0},
+        initial_bank_balance=5000.0,
+        bank_lower_bound=2000.0,
+        bank_upper_bound=10000.0,
+        years_to_simulate=5,
+        monthly_salary=0,
+        salary_inflation_factor=1.0,
+        salary_start_year=0,
+        salary_end_year=0,
+        monthly_pension=0,
+        pension_inflation_factor=1.0,
+        pension_start_year=30,
+        planned_contributions=[],
+        annual_fund_fee=0.001,
+        monthly_expenses=0,
+        planned_extra_expenses=[],
+        planned_house_purchase_cost=0,
+        house_purchase_year=None,
+    )
+
+
+@pytest.fixture
+def basic_paths():
+    return None
+
+
+@pytest.fixture
+def basic_portfolio_rebalances():
+    from firestarter.config.config import PortfolioRebalance
+
+    class Rebalances:
+        rebalances = [PortfolioRebalance(year=10, weights={"stocks": 1.0})]
+
+    return Rebalances()
+
+
+@pytest.fixture
+def basic_simulation_parameters():
+    from firestarter.config.config import SimulationParameters
+
+    return SimulationParameters(num_simulations=1, random_seed=123)
 
 
 def test_assets_validation_unique_withdrawal_priority(
     basic_deterministic_inputs,
-    basic_market_assumptions,
     basic_paths,
     basic_portfolio_rebalances,
     basic_simulation_parameters,
@@ -37,7 +84,6 @@ def test_assets_validation_unique_withdrawal_priority(
         Config(
             assets=invalid_assets_data,
             deterministic_inputs=basic_deterministic_inputs,
-            market_assumptions=basic_market_assumptions,
             portfolio_rebalances=basic_portfolio_rebalances.rebalances,
             simulation_parameters=basic_simulation_parameters,
             paths=basic_paths,
@@ -93,25 +139,40 @@ def test_portfolio_rebalance_weights_cannot_be_empty():
 
 def test_portfolio_rebalances_successful():
     """
-    Tests successful creation of a PortfolioRebalances instance.
+    Tests successful creation of a list of PortfolioRebalance instances.
     """
     rebalance1 = PortfolioRebalance(year=10, weights={"stocks": 0.5, "bonds": 0.5})
     rebalance2 = PortfolioRebalance(year=20, weights={"stocks": 0.4, "bonds": 0.6})
-    rebalances = PortfolioRebalances(rebalances=[rebalance1, rebalance2])
+    rebalances = [rebalance1, rebalance2]
 
-    assert len(rebalances.rebalances) == 2
-    assert rebalances.rebalances[0].year == 10
-    assert rebalances.rebalances[1].weights == {"stocks": 0.4, "bonds": 0.6}
+    assert len(rebalances) == 2
+    assert rebalances[0].year == 10
+    assert rebalances[1].weights == {"stocks": 0.4, "bonds": 0.6}
 
 
-def test_portfolio_rebalances_unique_years():
+def test_portfolio_rebalances_unique_years(basic_deterministic_inputs):
     """
-    Tests that PortfolioRebalances validation fails if rebalance years are not unique.
+    Tests that validation fails if rebalance years are not unique.
     """
     rebalance1 = PortfolioRebalance(year=10, weights={"stocks": 0.5, "bonds": 0.5})
     rebalance2 = PortfolioRebalance(year=10, weights={"stocks": 0.4, "bonds": 0.6})
+    rebalances = [rebalance1, rebalance2]
     with pytest.raises(ValidationError, match="Rebalance years must be unique."):
-        PortfolioRebalances(rebalances=[rebalance1, rebalance2])
+        Config(
+            assets={
+                "stocks": Asset(
+                    mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1
+                )
+            },
+            deterministic_inputs=basic_deterministic_inputs,
+            portfolio_rebalances=rebalances,
+            simulation_parameters=SimulationParameters(
+                num_simulations=1,
+                random_seed=123,
+            ),
+            paths=None,
+            shocks=[],
+        )
 
 
 def test_load_and_validate_full_test_config():
@@ -125,19 +186,7 @@ def test_load_and_validate_full_test_config():
     with open(config_path, "rb") as f:
         config_data = tomllib.load(f)
 
-    # The config file is flat in some areas, but the Pydantic model is nested.
-    # We need to construct the nested structure that Config expects before validation.
-    nested_config_data = {
-        "assets": config_data.get("assets", {}),
-        "deterministic_inputs": config_data.get("deterministic_inputs", {}),
-        "market_assumptions": config_data.get("market_assumptions", {}),
-        "portfolio_rebalances": config_data.get("portfolio_rebalances", []),
-        "simulation_parameters": config_data.get("simulation_parameters", {}),
-        "shocks": config_data.get("shocks", []),
-        "paths": config_data.get("paths", {}),
-    }
-
     try:
-        Config(**nested_config_data)
+        Config(**config_data)
     except ValidationError as e:
         pytest.fail(f"Validation of '{config_path}' failed: {e}")

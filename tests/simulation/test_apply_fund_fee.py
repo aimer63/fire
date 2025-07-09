@@ -31,9 +31,7 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
 
     # Store initial values to compare against
     initial_liquid_assets = {
-        k: v
-        for k, v in sim.state.portfolio.items()
-        if sim.market_assumptions.assets[k].is_liquid
+        k: v for k, v in sim.state.portfolio.items() if sim.assets[k].is_liquid
     }
     initial_real_estate_value = sim.state.portfolio["real_estate"]
     initial_bank_balance = sim.state.current_bank_balance

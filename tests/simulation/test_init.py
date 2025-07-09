@@ -18,7 +18,7 @@ def test_simulation_init_initial_state(initialized_simulation: Simulation) -> No
     state = initialized_simulation.state
     det_inputs = initialized_simulation.det_inputs
     initial_portfolio = det_inputs.initial_portfolio
-    first_rebalance = initialized_simulation.portfolio_rebalances.rebalances[0]
+    first_rebalance = initialized_simulation.portfolio_rebalances[0]
 
     assert state, "State dictionary should be initialized."
 
