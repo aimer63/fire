@@ -26,9 +26,7 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
     }
 
     # Override det_inputs to set the specific portfolio for this test
-    sim.det_inputs = sim.det_inputs.model_copy(
-        update={"initial_portfolio": initial_portfolio}
-    )
+    sim.det_inputs = sim.det_inputs.model_copy(update={"initial_portfolio": initial_portfolio})
     sim.init()  # Re-initialize state with the new portfolio
 
     # Store initial values to compare against
@@ -47,7 +45,7 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
 
     # Manually inject these returns into the precomputed sequences in the state
     for asset, rate in mock_returns.items():
-        sim.state.monthly_returns_sequences[asset][month_to_test] = rate
+        sim.state.monthly_return_reates_sequences[asset][month_to_test] = rate
 
     # Execute the method under test
     sim._apply_monthly_returns(month_to_test)

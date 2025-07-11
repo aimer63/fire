@@ -95,13 +95,9 @@ class SimulationBuilder:
             raise ValueError("assets must be set before building the simulation.")
 
         if self.correlation_matrix is None:
-            raise ValueError(
-                "correlation_matrix must be set before building the simulation."
-            )
+            raise ValueError("correlation_matrix must be set before building the simulation.")
         if self.portfolio_rebalances is None:
-            raise ValueError(
-                "portfolio_rebalances must be set before building the simulation."
-            )
+            raise ValueError("portfolio_rebalances must be set before building the simulation.")
         if self.shock_events is None:
             raise ValueError(
                 "shock_events must be set before building the simulation."  # Corrected message
@@ -249,14 +245,13 @@ class Simulation:
             simulation_years=total_years,
             seed=self.sim_params.random_seed,
         )
-        # Squeeze to remove the num_sequences dimension (shape: [1, months, assets] -> [months, assets])
-        correlated_returns_array = np.squeeze(
-            generator.correlated_monthly_returns, axis=0
-        )
+        # Squeeze to remove the num_sequences dimension
+        # (shape: [1, months, assets] -> [months, assets])
+        return_rates_array = np.squeeze(generator.monthly_return_rates, axis=0)
 
         # --- Convert array to dictionary for use in the simulation ---
-        self.state.monthly_returns_sequences = {
-            asset: correlated_returns_array[:, i]
+        self.state.monthly_return_reates_sequences = {
+            asset: return_rates_array[:, i]
             for i, asset in enumerate(generator.asset_and_inflation_order)
         }
 
@@ -271,27 +266,19 @@ class Simulation:
             for shock_asset, annual_shock_rate in shock.impact.items():
                 if 0 <= year_idx < total_years:
                     # Convert the annual shock rate to an equivalent monthly rate
-                    monthly_shock_rate = (
-                        (1.0 + annual_shock_rate) ** (1.0 / 12.0)
-                    ) - 1.0
+                    monthly_shock_rate = ((1.0 + annual_shock_rate) ** (1.0 / 12.0)) - 1.0
 
-                    if shock_asset in self.state.monthly_returns_sequences:
-                        target_sequence = self.state.monthly_returns_sequences[
-                            shock_asset
-                        ]
+                    if shock_asset in self.state.monthly_return_reates_sequences:
+                        target_sequence = self.state.monthly_return_reates_sequences[shock_asset]
                         for month_offset in range(12):
                             month_idx_in_simulation = year_idx * 12 + month_offset
                             if 0 <= month_idx_in_simulation < total_months:
-                                target_sequence[month_idx_in_simulation] = (
-                                    monthly_shock_rate
-                                )
+                                target_sequence[month_idx_in_simulation] = monthly_shock_rate
 
-        monthly_inflation_sequence = self.state.monthly_returns_sequences["inflation"]
+        monthly_inflation_sequence = self.state.monthly_return_reates_sequences["inflation"]
 
         # --- Cumulative inflation factors (monthly) ---
-        monthly_cumulative_inflation_factors = np.ones(
-            total_months + 1, dtype=np.float64
-        )
+        monthly_cumulative_inflation_factors = np.ones(total_months + 1, dtype=np.float64)
         for month_idx in range(total_months):
             monthly_cumulative_inflation_factors[month_idx + 1] = (
                 monthly_cumulative_inflation_factors[month_idx]
@@ -333,9 +320,7 @@ class Simulation:
                     )
                 monthly_nominal_salary_sequence[month_idx] = salary_cumulative
 
-        self.state.monthly_cumulative_inflation_factors = (
-            monthly_cumulative_inflation_factors
-        )
+        self.state.monthly_cumulative_inflation_factors = monthly_cumulative_inflation_factors
         self.state.monthly_nominal_pension_sequence = monthly_nominal_pension_sequence
         self.state.monthly_nominal_salary_sequence = monthly_nominal_salary_sequence
 
@@ -374,14 +359,14 @@ class Simulation:
     def _handle_expenses(self, month):
         """
         Deducts regular monthly expenses and planned extra expenses from the bank balance.
-        Expenses are inflation-adjusted. Planned extra expenses are applied at the first month of their year.
+        Expenses are inflation-adjusted.
+        Planned extra expenses are applied at the first month of their year.
         """
         det_inputs = self.det_inputs
 
         # Regular monthly expenses (inflation-adjusted)
         nominal_monthly_expenses = (
-            det_inputs.monthly_expenses
-            * self.state.monthly_cumulative_inflation_factors[month]
+            det_inputs.monthly_expenses * self.state.monthly_cumulative_inflation_factors[month]
         )
         total_expenses = nominal_monthly_expenses
 
@@ -390,9 +375,7 @@ class Simulation:
             current_year = month // 12
             for expense in det_inputs.planned_extra_expenses:
                 if expense.year == current_year:
-                    inflation_factor = self.state.monthly_cumulative_inflation_factors[
-                        month
-                    ]
+                    inflation_factor = self.state.monthly_cumulative_inflation_factors[month]
                     nominal_amount = expense.amount * inflation_factor
                     total_expenses += nominal_amount
 
@@ -406,7 +389,8 @@ class Simulation:
         using the unified _withdraw_from_assets method.
         If assets are insufficient, marks the simulation as failed.
         Adds the house value to the portfolio under the 'real_estate' key.
-        After purchase, rebalances remaining liquid assets according to current target portfolio weights.
+        After purchase, rebalances remaining liquid assets according to current target
+        portfolio weights.
         """
         det_inputs = self.det_inputs
         house_purchase_year = det_inputs.house_purchase_year
@@ -420,9 +404,7 @@ class Simulation:
         # Only purchase at the first month of the scheduled year
         if month == purchase_month:
             # Inflation-adjusted nominal house cost
-            cumulative_inflation = self.state.monthly_cumulative_inflation_factors[
-                month
-            ]
+            cumulative_inflation = self.state.monthly_cumulative_inflation_factors[month]
             nominal_house_cost = house_cost_real * cumulative_inflation
 
             # Withdraw funds from liquid assets to cover the cost. This temporarily
@@ -443,7 +425,7 @@ class Simulation:
             else:
                 self.state.portfolio["real_estate"] = float(nominal_house_cost)
 
-            # --- Rebalance remaining liquid assets according to current target portfolio weights ---
+            # Rebalance remaining liquid assets according to current target portfolio weights``
             self._rebalance_liquid_assets()
 
     def _handle_bank_account(self, month):
@@ -479,7 +461,7 @@ class Simulation:
         """
         Apply monthly returns to all asset values at the end of the month.
         """
-        returns = self.state.monthly_returns_sequences
+        returns = self.state.monthly_return_reates_sequences
         for asset in self.state.portfolio:
             # The 'inflation' sequence is in `returns`, but not in the portfolio
             if asset in returns:
@@ -505,9 +487,9 @@ class Simulation:
 
     def _rebalance_if_needed(self, month):
         """
-        Rebalance liquid assets (stocks, bonds, str, fun) according to the current portfolio weights,
-        if a rebalance is scheduled for this year and this is the first month of the year.
-        Real estate is not included in rebalancing.
+        Rebalance liquid assets (stocks, bonds, str, fun) according to the current
+        portfolio weights, if a rebalance is scheduled for this year and this is
+        the first month of the year. Real estate is not included in rebalancing.
         Also updates current_target_portfolio_weights if a rebalance occurs.
         """
         current_year = month // 12
@@ -523,9 +505,7 @@ class Simulation:
         if scheduled_rebalance is not None:
             # Build a complete weights dict: missing keys get 0.0
             all_liquid_assets = [k for k, v in self.assets.items() if v.is_liquid]
-            new_weights = {
-                k: scheduled_rebalance.weights.get(k, 0.0) for k in all_liquid_assets
-            }
+            new_weights = {k: scheduled_rebalance.weights.get(k, 0.0) for k in all_liquid_assets}
             self.state.current_target_portfolio_weights = new_weights
 
             # Rebalance liquid assets
@@ -538,9 +518,7 @@ class Simulation:
         weights = self.state.current_target_portfolio_weights
         liquid_asset_keys = weights.keys()
 
-        total_liquid = sum(
-            self.state.portfolio.get(asset, 0.0) for asset in liquid_asset_keys
-        )
+        total_liquid = sum(self.state.portfolio.get(asset, 0.0) for asset in liquid_asset_keys)
 
         if total_liquid > 0:
             # Assuming weights sum to 1.0 as validated in config parsing
@@ -558,9 +536,7 @@ class Simulation:
         """
         weights = self.state.current_target_portfolio_weights
         for asset, weight in weights.items():
-            self.state.portfolio[asset] = (
-                self.state.portfolio.get(asset, 0.0) + amount * weight
-            )
+            self.state.portfolio[asset] = self.state.portfolio.get(asset, 0.0) + amount * weight
 
     def _withdraw_from_assets(self, amount: float) -> None:
         """
@@ -634,13 +610,12 @@ class Simulation:
         if months_lasted > 0:
             last_month_idx = months_lasted - 1
             final_nominal_wealth = self.results["wealth_history"][last_month_idx]
-            final_cumulative_inflation = (
-                self.state.monthly_cumulative_inflation_factors[last_month_idx]
-            )
+            final_cumulative_inflation = self.state.monthly_cumulative_inflation_factors[
+                last_month_idx
+            ]
             final_bank_balance = self.results["bank_balance_history"][last_month_idx]
             final_allocations_nominal = {
-                key: self.results[f"{key}_history"][last_month_idx]
-                for key in asset_keys
+                key: self.results[f"{key}_history"][last_month_idx] for key in asset_keys
             }
         else:  # months_lasted == 0
             final_nominal_wealth = self.state.initial_total_wealth
@@ -652,8 +627,7 @@ class Simulation:
         final_real_wealth = final_nominal_wealth / final_cumulative_inflation
 
         final_allocations_real = {
-            k: float(v / final_cumulative_inflation)
-            for k, v in final_allocations_nominal.items()
+            k: float(v / final_cumulative_inflation) for k, v in final_allocations_nominal.items()
         }
 
         result = {
@@ -670,7 +644,7 @@ class Simulation:
             "final_allocations_real": final_allocations_real,
             "initial_total_wealth": self.state.initial_total_wealth,
             # --- State and histories ---
-            "monthly_returns_sequences": self.state.monthly_returns_sequences,
+            "monthly_returns_sequences": self.state.monthly_return_reates_sequences,
             "monthly_cumulative_inflation_factors": trunc_only(
                 self.state.monthly_cumulative_inflation_factors
             ),
