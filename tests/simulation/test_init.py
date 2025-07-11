@@ -7,6 +7,7 @@
 
 from firestarter.core.constants import ASSET_KEYS
 from firestarter.core.simulation import Simulation
+
 # Fixtures are now in conftest.py
 
 
@@ -68,18 +69,13 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
             f"'{seq_name}' should have length {total_months}."
         )
 
-    assert hasattr(state, "monthly_returns_sequences")
+    assert hasattr(state, "monthly_return_reates_sequences")
     # ASSET_KEYS + inflation
-    assert len(state.monthly_returns_sequences) == len(ASSET_KEYS) + 1
-    for asset_key in state.monthly_returns_sequences:
-        assert len(state.monthly_returns_sequences[asset_key]) == total_months
+    assert len(state.monthly_return_reates_sequences) == len(ASSET_KEYS) + 1
+    for asset_key in state.monthly_return_reates_sequences:
+        assert len(state.monthly_return_reates_sequences[asset_key]) == total_months
 
     assert hasattr(state, "monthly_cumulative_inflation_factors")
     assert len(state.monthly_cumulative_inflation_factors) == total_months + 1, (
         "Cumulative inflation factors should have length total_months + 1."
     )
-
-    assert hasattr(state, "monthly_returns_sequences")
-    for asset_key in ASSET_KEYS:
-        assert asset_key in state.monthly_returns_sequences
-        assert len(state.monthly_returns_sequences[asset_key]) == total_months

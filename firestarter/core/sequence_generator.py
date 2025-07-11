@@ -44,12 +44,9 @@ class SequenceGenerator:
             )
             self.asset_and_inflation_order = asset_names
 
-        self.correlated_monthly_returns = self._generate_correlated_sequences()
+        self.monthly_return_rates = self._generate_sequences()
 
-        self.asset_and_inflation_order = self.correlation_matrix.assets_order
-        self.correlated_monthly_returns = self._generate_correlated_sequences()
-
-    def _generate_correlated_sequences(self) -> np.ndarray:
+    def _generate_sequences(self) -> np.ndarray:
         """
         Generates correlated random sequences for all assets and inflation.
 
@@ -57,12 +54,10 @@ class SequenceGenerator:
             A numpy array of shape (num_sequences, num_steps, num_assets)
             containing the correlated monthly arithmetic return rates.
         """
-        np.random.seed(self.seed)
+        rng = np.random.default_rng(self.seed)
 
         # --- 1. Extract Annual Arithmetic Parameters ---
-        mu_arith = np.array(
-            [self.assets[asset].mu for asset in self.asset_and_inflation_order]
-        )
+        mu_arith = np.array([self.assets[asset].mu for asset in self.asset_and_inflation_order])
         sigma_arith = np.array(
             [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
         )
@@ -84,12 +79,12 @@ class SequenceGenerator:
         monthly_cov_log = D @ corr_matrix @ D
 
         # --- 4. Generate Correlated Log-Normal Returns ---
-        log_of_correlated_return_factors = np.random.multivariate_normal(
+        log_of_return_factors = rng.multivariate_normal(
             mean=monthly_mu_log,
             cov=monthly_cov_log,
             size=(self.num_sequences, self.num_steps),
         )
 
         # --- 5. Convert to Arithmetic Returns ---
-        correlated_return_rates = np.exp(log_of_correlated_return_factors) - 1.0
-        return correlated_return_rates
+        return_rates = np.exp(log_of_return_factors) - 1.0
+        return return_rates

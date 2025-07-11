@@ -17,15 +17,13 @@ up computation.
 
 ## Random Number Generation
 
-- For independent asset return draws, simple NumPy random functions (e.g., `np.random.lognormal`)
-  are used. These are thread-safe and parallel-friendly.
 - For correlated asset/inflation draws, `np.random.Generator.multivariate_normal` is used with a
-  per-process random generator (`np.random.default_rng(seed)`), ensuring reproducibility and
+  per-process random generator (`np.random.default_rng(self.seed)`), ensuring reproducibility and
   independence between processes.
 
 ## Caveat: Multivariate Draws and BLAS/LAPACK Threading
 
-When using correlated draws (`multivariate_normal`), NumPy relies on underlying BLAS/LAPACK
+When using correlated draws (`multivariate_normal`), NumPy relies on underlying [BLAS/LAPACK](https://www.netlib.org/lapack/)
 libraries (such as OpenBLAS or MKL) for linear algebra operations. By default, these libraries may
 use all available CPU cores for a single process, which can cause:
 

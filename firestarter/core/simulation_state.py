@@ -25,16 +25,10 @@ class SimulationState:
     simulation_failed: bool
 
     # Precomputed stochastic sequences
-    monthly_returns_sequences: Dict[str, np.ndarray] = field(default_factory=dict)
-    monthly_cumulative_inflation_factors: np.ndarray = field(
-        default_factory=lambda: np.array([])
-    )
-    monthly_nominal_pension_sequence: np.ndarray = field(
-        default_factory=lambda: np.array([])
-    )
-    monthly_nominal_salary_sequence: np.ndarray = field(
-        default_factory=lambda: np.array([])
-    )
+    monthly_return_reates_sequences: Dict[str, np.ndarray] = field(default_factory=dict)
+    monthly_cumulative_inflation_factors: np.ndarray = field(default_factory=lambda: np.array([]))
+    monthly_nominal_pension_sequence: np.ndarray = field(default_factory=lambda: np.array([]))
+    monthly_nominal_salary_sequence: np.ndarray = field(default_factory=lambda: np.array([]))
 
     # Tracking current simulation time
     current_month_index: int = 0
