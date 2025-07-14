@@ -12,171 +12,239 @@ This document explains all parameters available in the main TOML configuration f
 
 ## [simulation_parameters]
 
-- **num_simulations** _(int)_  
-  Number of Monte Carlo simulation runs to perform.
+- **`[simulation_parameters]`** _(Dict)_
+
+  - **num_simulations** _(int)_  
+    Number of Monte Carlo simulation runs to perform.
 
 ---
 
-## [paths]
+## Paths
 
-- **output_root** _(str)_  
-  Directory where all output (reports, plots, etc.) will be saved. Relative to the project root.
+- **`paths`** _(Dict)_
+  Directory paths used by the simulation.
 
----
-
-## [deterministic_inputs]
-
-- **initial_investment** _(float)_  
-  Initial value of your investment portfolio (e.g., EUR).
-
-- **initial_bank_balance** _(float)_  
-  Initial cash/bank account balance.
-
-- **bank_lower_bound** _(float)_  
-  Minimum allowed bank balance (if it drops below, funds are topped up from investments).
-
-- **bank_upper_bound** _(float)_  
-  Maximum allowed bank balance (excess is invested).
-
-- **years_to_simulate** _(int)_  
-  Number of years to simulate.
-
-- **monthly_salary** _(float)_  
-  Real (inflation-adjusted) monthly salary at simulation start.
-
-- **salary_inflation_factor** _(float)_  
-  How salary grows relative to inflation (1.0 = matches inflation, 1.01 = 1% above inflation).
-
-- **salary_start_year** _(int)_  
-  Year index when salary starts (0 = first year).
-
-- **salary_end_year** _(int)_  
-  Year index when salary ends (exclusive).
-
-- **monthly_pension** _(float)_  
-  Real (inflation-adjusted) monthly pension amount.
-
-- **pension_inflation_factor** _(float)_  
-  How pension grows relative to inflation.
-
-- **pension_start_year** _(int)_  
-  Year index when pension starts.
-
-- **planned_contributions** _(list of dicts)_  
-  List of one-time contributions (as a fixed nominal amount). Each dict has `amount` (float) and
-  `year` (int).
-
-- **annual_fund_fee** _(float)_  
-  Annual fee on investments (e.g., 0.002 for 0.2%).
-
-- **monthly_expenses** _(float)_  
-  Fixed monthly living expenses (in today's money).
-
-- **planned_extra_expenses** _(list of dicts)_  
-  List of one-time extra expenses (in today's money). Each dict has `amount` (float) and `year`
-  (int).
-
-- **planned_house_purchase_cost** _(float)_  
-  Real cost of the house to be purchased.
-
-- **house_purchase_year** _(int)_  
-  Year index when the house is purchased.
+  - **output_root** _(str)_  
+    Directory where all output (reports, plots, etc.) will be saved. Relative to the project root.
 
 ---
 
-## [market_assumptions]
+## Deterministic inputs
 
-- **stock_mu, stock_sigma** _(float)_  
-  Mean and standard deviation of annual stock returns.
+- **`[deterministic_inputs]`** _(Dict)_
+  All non stochastic inputs that are fixed and do not vary across simulation runs.
 
-- **bond_mu, bond_sigma** _(float)_  
-  Mean and standard deviation of annual bond returns.
+  - **initial_investment** _(float)_  
+    Initial value of your investment portfolio (e.g., EUR).
 
-- **str_mu, str_sigma** _(float)_  
-  Mean and standard deviation of annual short-term reserve (cash) returns.
+  - **initial_bank_balance** _(float)_  
+    Initial cash/bank account balance.
 
-- **fun_mu, fun_sigma** _(float)_  
-  Mean and standard deviation of annual "fun money" (e.g., hight volatility assets
-  like crypto, commodities... or any combination of such assets) returns.
+  - **bank_lower_bound** _(float)_  
+    Minimum allowed bank balance (if it drops below, funds are topped up from investments).
 
-- **real_estate_mu, real_estate_sigma** _(float)_  
-  Mean and standard deviation of annual real estate returns (capital gains, net of maintenance).
+  - **bank_upper_bound** _(float)_  
+    Maximum allowed bank balance (excess is invested).
 
-- **pi_mu, pi_sigma** _(float)_  
-  Mean and standard deviation of annual inflation.
+  - **years_to_simulate** _(int)_  
+    Number of years to simulate.
+
+  - **monthly_salary** _(float)_  
+    Real (inflation-adjusted) monthly salary at simulation start.
+
+  - **salary_inflation_factor** _(float)_  
+    How salary grows relative to inflation (1.0 = matches inflation, 1.01 = 1% above inflation).
+
+  - **salary_start_year** _(int)_  
+    Year index when salary starts (0 = first year).
+
+  - **salary_end_year** _(int)_  
+    Year index when salary ends (exclusive).
+
+  - **monthly_pension** _(float)_  
+    Real (inflation-adjusted) monthly pension amount.
+
+  - **pension_inflation_factor** _(float)_  
+    How pension grows relative to inflation.
+
+  - **pension_start_year** _(int)_  
+    Year index when pension starts.
+
+  - **planned_contributions** _(list of dicts)_  
+    List of one-time contributions (as a fixed nominal amount). Each dict has `amount` (float) and
+    `year` (int).
+
+  - **annual_fund_fee** _(float)_  
+    Annual fee on investments (e.g., 0.002 for 0.2%).
+
+  - **monthly_expenses** _(float)_  
+    Fixed monthly living expenses (in today's money).
+
+  - **planned_extra_expenses** _(list of dicts)_  
+    List of one-time extra expenses (in today's money). Each dict has `amount` (float) and `year`
+    (int).
+
+  - **planned_house_purchase_cost** _(float)_  
+    Real cost of the house to be purchased.
+
+  - **house_purchase_year** _(int)_  
+    Year index when the house is purchased.
 
 ---
 
-### Correlation Matrix
+## Assets
 
-You can specify correlations between asset returns and inflation using the optional
-`correlation_matrix` parameter under `[market_assumptions]`. This matrix controls the statistical
-dependence between annual returns for stocks, bonds, short-term reserves (STR), "fun money", real
-estate, and inflation.
+- **`[assets]`** _(dict)_
+  Each asset in the configuration file is defined with the following parameters:
 
-- The matrix must be 6x6, symmetric, with 1.0 on the diagonal.
-- The order of assets is: stocks, bonds, str, fun, real_estate, inflation.
-- Each row is a list of six floats, corresponding to the correlation coefficients with each asset.
-- All elements must be between -1 and 1, and the matrix must be positive semi-definite.
+  - **mu**:  
+    The sample mean return of the asset, expressed as a decimal.  
+    _Example_: `0.07` means a 7% expected return per year.
+
+  - **sigma**:  
+    The sample annual standard deviation (volatility) of returns, as a decimal.  
+    _Example_: `0.15` means a 15% standard deviation per year.
+
+  - **is_liquid**:  
+    Boolean value (`true` or `false`).  
+    Indicates whether the asset is liquid (can be bought/sold to cover expenses and
+    included in rebalancing).  
+    Set to `false` for illiquid assets (e.g., real estate), which are not rebalanced
+    or sold for cash flow.
+
+  - **withdrawal_priority**:  
+    _(Required for liquid assets only)_  
+    Integer indicating the order in which assets are sold to cover cash shortfalls.  
+    Lower numbers are sold first.  
+    This value must be unique among liquid assets.  
+    Omit this parameter for illiquid assets.
+
+---
+
+These parameters allow the simulation to model each asset’s risk, return, liquidity,
+and withdrawal behavior accurately.
+
+_Example_:
+
+```toml
+[assets.stocks]
+mu = 0.07
+sigma = 0.15
+is_liquid = true
+withdrawal_priority = 2
+
+[assets.bonds]
+mu = 0.02
+sigma = 0.06
+is_liquid = true
+withdrawal_priority = 1
+
+[assets.real_estate]
+mu = -0.0054
+sigma = 0.0416
+is_liquid = false
+
+[assets.inflation]
+mu = 0.02
+sigma = 0.01
+is_liquid = false
+```
+
+---
+
+## Correlation matrix
+
+You specify correlations in between asset returns and inflation using a
+`[correlation_matrix]` parameter. This matrix controls the statistical
+dependence between assets and inflation.
+
+- The matrix must be square, symmetric and positive semi-definite, with 1.0 on the diagonal.
+- The order of assets is specified in the parameter `assets_order`.
+- All elements must be between -1 and 1.
 
 **Example:**
 
 ```toml
-[market_assumptions.correlation_matrix]
-#              Stk   Bnd   str    fun  r_e     pi
-stocks      = [1.00, -0.30, 0.15, 0.45, 0.75, -0.20]
-bonds       = [-0.30, 1.00, 0.40, -0.10, -0.25, 0.10]
-str         = [0.15, 0.40, 1.00, -0.05, 0.20, 0.60]
-fun         = [0.45, -0.10, -0.05, 1.00, 0.35, 0.15]
-real_estate = [0.75, -0.25, 0.20, 0.35, 1.00, 0.05]
-inflation   = [-0.20, 0.10, 0.60, 0.15, 0.05, 1.00]
+[correlation_matrix]
+assets_order = ["stocks", "bonds", "real_estate", "inflation"]
+matrix = [
+  [1.0, 0.3, 0.2, -0.1],
+  [0.3, 1.0, 0.1, 0.0],
+  [0.2, 0.1, 1.0, 0.05],
+  [-0.1, 0.0, 0.05, 1.0]
+]
 ```
 
-If omitted, the simulation assumes all returns and inflation are uncorrelated, you can have
-independent returns and inflation also specifying the identity matrix.
+You can have independent returns and inflation specifying the identity matrix.
 
-**Note:** Correlations affect the joint simulation of asset returns and inflation, allowing for more
-realistic modeling of economic scenarios where, for example, inflation and stock returns may move
-together or in opposition.
+**Note:** Correlations affect the joint simulation of asset returns and inflation,
+allowing for more realistic modeling of economic scenarios where, for example,
+inflation and stock returns may move together or in opposition.
 
 For more details and validation rules, see the test file:
 `tests/config/test_validate_correlation.py`.
 
 ---
 
-## [shocks]
+## Shocks
 
-- **events** _(list of dicts)_ List of market shock events. Each event is a dictionary with:
+- **`[[shocks]]`** _(list of dicts)_  
+  List of market shock events. Each event is a dictionary with:
   - **year**: Year index of the shock (int)
-  - **asset**: Asset affected (e.g., "Stocks", "Bonds", "STR", "Fun", "Real Estate", "Inflation")
-  - **magnitude**: Absolute annual rate that overrides the stochastic model (e.g., -0.35 for -35%).
+  - **description**: (optional) Description of the shock event (str)
+  - **impact**: Dictionary mapping asset names (str) to shock magnitudes (float).  
+    Each key is an asset (e.g., "stocks", "bonds", "inflation"), and the value is
+    the absolute annual rate that overrides the stochastic model (e.g., -0.35 for -35%).
+
+**Example:**
+
+```toml
+[[shocks]]
+year = 10
+description = "October 1929 equivalent"
+impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
+```
 
 ---
 
-## [portfolio_rebalances]
+## Portfolio Rebalances
 
-- **rebalances** _(list of dicts)_ List of scheduled portfolio rebalances. Each entry is a
-  dictionary:
+- **`[[portfolio_rebalances]]`** _(list of dicts)_
+  Defines when and how the liquid portfolio is rebalanced to target weights.
 
-  - **year**: Year index when the rebalance occurs (int). The rebalance is triggered at the
-    beginning of this year.
-  - **stocks**: Portfolio weight for stocks (float, 0–1, liquid assets only)
-  - **bonds**: Portfolio weight for bonds (float, 0–1, liquid assets only)
-  - **str**: Portfolio weight for short-term reserves/cash (float, 0–1)
-  - **fun**: Portfolio weight for "fun money" (float, 0–1)
+  - **year**: _Type:_ integer  
+    _Description:_ The simulation year (0-indexed) when this rebalance occurs.  
+    _Required:_ Yes
 
-  **Note:**
+  - **description**:  
+    _Type:_ string (optional)  
+    _Description:_ Optional human-readable description of the rebalance event.
 
-  - year 0 must always have a rebalance to set initial weights.
-  - The sum of weights for each rebalance must be 1.0.
-  - Each year can only have one rebalance event scheduled.
-  - There must be a rebalance at year 0 to set initial weights.
-  - Real estate is not included in portfolio weights; it is handled separately.
+  - **weights**:  
+    _Type:_ table (dictionary)  
+    _Description:_
+    - Maps liquid asset names to their target weights (as decimals).
+    - Must sum to 1.0.
+    - Only include assets where `is_liquid = true`.
+
+**Example:**
+
+```toml
+[[portfolio_rebalances]]
+year = 3
+weights = { stocks = 0.80, bonds = 0.20 }
+
+[[portfolio_rebalances]]
+year = 10
+description = "De-risking for retirement"
+weights = { stocks = 0.60, bonds = 0.40 }
+```
 
 ---
+
+**Notes:**
+
+- Each rebalance year must be unique.
+- Weights must sum to exactly 1.0 and only reference liquid assets.
 
 For more details and examples, see [usage.md](usage.md) and [README.md](../README.md).
-
-```
-
-```

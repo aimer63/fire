@@ -33,67 +33,92 @@ pip install -r requirements.txt
 All simulation parameters are set in a TOML config file (e.g., `configs/config.toml`).  
 Key sections include:
 
-- `[simulation_parameters]`: Number of simulations, etc.
-- `[paths]`: Output directory.
-- `[deterministic_inputs]`: Initial investment, years to simulate, etc.
-- `[economic_assumptions]`: Asset return assumptions.
-- `[portfolio_rebalances]`: List of scheduled portfolio rebalances.
-- `[shocks]`: (Optional) Market shock events.
-
 See the [Configuration Reference](config.md) for a full list and explanation of all parameters.
-
-**Example:**
-
-```toml
-[simulation_parameters]
-num_simulations = 10000
-
-[paths]
-output_root = "output"
-
-[deterministic_inputs]
-initial_investment = 100_000
-years_to_simulate = 30
-# ...other parameters...
-
-[market_assumptions]
-stock_mu = 0.07
-stock_sigma = 0.15
-# ...other parameters...
-
-[portfolio_rebalances]
-rebalances = [
-  { year = 0, stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
-  { year = 10, stocks = 0.40, bonds = 0.50, str = 0.05, fun = 0.05 }
-]
-```
 
 ---
 
 ## 4. Running the Simulation
 
-From the project root, you can run the simulation in two ways:
+You can run firestarter using a config file with either a shell script (Linux/macOS)
+or a PowerShell script (Windows). Anyhow these two scripts are in the project root.
 
-**A. Using Python directly:**
+### Option 1: Bash script (Linux/macOS)
+
+1. Create a file named `firestarter.sh` with the following content:
+
+   ```sh
+   #!/bin/bash
+   # Runs the firestarter simulation.
+   # If no config file is provided, defaults to configs/config.toml
+
+   export OMP_NUM_THREADS=1
+   export OPENBLAS_NUM_THREADS=1
+   export MKL_NUM_THREADS=1
+   export NUMEXPR_NUM_THREADS=1
+
+   CONFIG_FILE=${1:-configs/config.toml}
+
+   python -m firestarter.main "$CONFIG_FILE"
+
+   ```
+
+2. Make it executable:
+
+   ```sh
+   chmod +x firestarter.sh
+   ```
+
+3. Run the script (optionally specify a config file):
+
+   ```sh
+   ./firestarter.sh [config.toml]
+   ```
+
+### Option 2: PowerShell script (Windows)
+
+1. Create a file named `firestarter.ps1` with following content:
+
+   ```powershell
+   # Runs the firestarter simulation.
+   # If no config file is provided, defaults to configs/config.toml
+
+   param(
+       [string]$ConfigFile = "configs/config.toml"
+   )
+
+   $env:OMP_NUM_THREADS = "1"
+   $env:OPENBLAS_NUM_THREADS = "1"
+   $env:MKL_NUM_THREADS = "1"
+   $env:NUMEXPR_NUM_THREADS = "1"
+
+   python -m firestarter.main $ConfigFile
+   ```
+
+2. Run the script in PowerShell (optionally specify a config file):
+
+   ```powershell
+   .\firestarter.ps1 [config.toml]
+   ```
+
+Alternatively, you can run firestarter directly (make sure to set the environment variables first):
 
 ```sh
-python -m firestarter.main configs/config.toml
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+python -m firestarter.main config.toml
 ```
 
-- Replace `configs/config.toml` with your config file path if needed.
+For Windows (PowerShell), set the environment variables before running:
 
-**B. Using the provided shell script:**
-
-```sh
-./firestarter.sh [your_config.toml]
+```powershell
+$env:OMP_NUM_THREADS = "1"
+$env:OPENBLAS_NUM_THREADS = "1"
+$env:MKL_NUM_THREADS = "1"
+$env:NUMEXPR_NUM_THREADS = "1"
+python -m firestarter.main config.toml
 ```
-
-- If you omit the argument, it defaults to `configs/config.toml`.
-- Make sure the script is executable:
-
-  ```sh
-  chmod +x firestarter.sh
-  ```
 
 ---
 
@@ -106,36 +131,13 @@ python -m firestarter.main configs/config.toml
 
 ---
 
-## 6. Customizing Your Simulation
+## 6. Further Reading
 
-- **Portfolio rebalancing:**  
-  Edit the `[portfolio_rebalances]` section to schedule changes in asset allocation by year.
-- **House purchase:**  
-  Set `house_purchase_year` and `planned_house_purchase_cost` in `[deterministic_inputs]`.
-- **Market shocks:**  
-  Add events to the `[shocks]` section to simulate crashes or booms.
-
----
-
-## 7. Troubleshooting
-
-- **Config errors:**  
-  If the simulation fails to start, check for typos or missing fields in your TOML file.
-- **Duplicate rebalance years:**  
-  Each year in `[portfolio_rebalances]` must be unique.
-- **Output not found:**  
-  Ensure `[paths] output_root` is set and the directory is writable.
+- [README](../README.md): Project overview and configuration example.
+- [Configuration reference](docs/config.md): Full configuration parameter reference.
+- [Monte Carlo method](docs/montecarlo.md): Mathematical background.
+- [Real estate](docs/real_estate.md): Real estate modeling details.
+- [Inflation](docs/inflation.md): Inflation modeling details.
+- [Returns](docs/returns.md): Assets returns modeling details.
 
 ---
-
-## 8. Further Reading
-
-- [README.md](../README.md): Project overview and configuration example.
-- [docs/config.md](config.md): Full configuration parameter reference.
-- [docs/Montecarlo.md](Montecarlo.md): Mathematical background.
-- [docs/real_estate.md](real_estate.md): Real estate modeling details.
-- [TODO.md](../TODO.md): Planned features and improvements.
-
----
-
-For questions or issues, open an issue on GitHub or contact the project maintainer.
