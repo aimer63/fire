@@ -77,7 +77,7 @@ real_estate = [0.1, 0.0, 0.0, 0.0, 1.0, 0.2]  # Correlated with stocks and infla
 inflation   = [0.3, 0.2, 0.1, 0.0, 0.2, 1.0]
 ```
 
-See `docs/config.md` for details on configuring the correlation matrix.
+See `../docs/config.md` for details on configuring the correlation matrix.
 
 ## Practical Notes
 

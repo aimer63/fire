@@ -2,7 +2,7 @@
 
 This document explains the structure and workflow of the new simulation engine implemented in
 `simulation.py`. The engine is designed to model financial independence and early retirement
-(FIRE) scenarios with high flexibility and modularity.
+(FIRE) scenarios.
 
 ---
 
@@ -33,9 +33,10 @@ Once configured, it produces a ready-to-run `Simulation` instance.
 Encapsulates all simulation logic and state.  
 Key responsibilities:
 
-- Precomputes all necessary sequences (returns, inflation, contributions, etc.)
+- Precomputes all necessary sequences (returns, inflation, contributions, etc.).
+  See `generate_sequences.py`.
 - Runs the main simulation loop, handling all monthly flows and events
-- Applies returns, rebalancing, and records results
+- Applies returns, rebalancing, shocks, and records results
 - Handles withdrawals and marks the simulation as failed if assets are insufficient
 
 ---
@@ -44,8 +45,8 @@ Key responsibilities:
 
 For a detailed explanation of how **returns** and **inflation** are handled in the simulation, see:
 
-- [Notes on Monthly vs Annual Returns and Inflation](returns.md)
-- [Inflation Handling in the FIRE Simulation](inflation.md)
+- [Assets Returns and Inflation](../docs/returns.md)
+- [Inflation Handling in the FIRE Simulation](../docs/inflation.md)
 
 ---
 
