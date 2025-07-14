@@ -7,7 +7,7 @@ This guide explains how to install the `firestarter` package from a GitHub relea
 
 ## 1. Download the Release
 
-1. Go to the [GitHub Releases page](https://github.com/<your-username>/<your-repo>/releases).
+1. Go to the [GitHub Releases page](https://github.com/aimer63/fire/releases).
 2. Download the latest `.whl` file (e.g., `firestarter-0.1.0b1-py3-none-any.whl`) to your computer.
 
 ---
@@ -45,19 +45,38 @@ downloaded the `.whl` file, and run:
 pip install firestarter-0.1.0b1-py3-none-any.whl
 ```
 
+Verify the installation:
+
+```sh
+python -c "import firestarter; print(firestarter.__version__)"
+```
+
 ---
 
 ## 4. Run firestarter
 
-- **Linux/macOS/Windows:**
+You can run firestarter directly (make sure to set the environment variables first) or
+with a shell script, see [Usage](docs/usage.md).
 
-  - Prepare a config.toml file
+```sh
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+python -m firestarter.main config.toml
+```
 
-  ```sh
-  python -m firestarter.main config.toml
-  ```
+For Windows (PowerShell):
 
----
+```powershell
+$env:OMP_NUM_THREADS = "1"
+$env:OPENBLAS_NUM_THREADS = "1"
+$env:MKL_NUM_THREADS = "1"
+$env:NUMEXPR_NUM_THREADS = "1"
+python -m firestarter.main config.toml
+```
+
+See usage [Usage](docs/usage.md) for details.
 
 ## 5. Upgrading firestarter
 
@@ -81,10 +100,5 @@ To upgrade to a newer version (e.g., from `v0.1.0b1` to `v0.1.0b2`):
    ```sh
    python -c "import firestarter; print(firestarter.__version__)"
    ```
-
-## Notes
-
-- If you encounter a "pip not found" error, try `python -m pip install ...` instead.
-- For advanced usage and configuration, see the [README](../README.md).
 
 ---

@@ -32,48 +32,28 @@ from firestarter.config.correlation_matrix import CorrelationMatrix
 class PlannedContribution(BaseModel):
     """Represents a planned, single-year, contribution."""
 
-    amount: float = Field(..., description="Real (today's money) amount of the contribution.")
-    year: int = Field(..., ge=0, description="Year index (0-indexed) when the contribution occurs.")
+    amount: float = Field(
+        ..., description="Real (today's money) amount of the contribution."
+    )
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when the contribution occurs."
+    )
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class PlannedExtraExpense(BaseModel):
     """Represents a planned, single-year, extra expense."""
 
-    amount: float = Field(..., description="Real (today's money) amount of the expense.")
-    year: int = Field(..., ge=0, description="Year index (0-indexed) when the expense occurs.")
+    amount: float = Field(
+        ..., description="Real (today's money) amount of the expense."
+    )
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when the expense occurs."
+    )
     description: str | None = Field(
         default=None, description="Optional description of the expense."
     )
     model_config = ConfigDict(extra="forbid", frozen=True)
-
-
-class Asset(BaseModel):
-    """Represents a single financial asset class."""
-
-    mu: float = Field(..., description="Expected annual arithmetic mean return.")
-    sigma: float = Field(..., description="Expected annual standard deviation of returns.")
-    is_liquid: bool = Field(
-        ...,
-        description="True if the asset is part of the liquid, rebalanceable portfolio.",
-    )
-    withdrawal_priority: int | None = Field(
-        default=None,
-        description="Order for selling to cover cash shortfalls (lower is sold first). Required for liquid assets.",
-    )
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    @model_validator(mode="after")
-    def check_withdrawal_priority(self) -> "Asset":
-        """Ensure withdrawal_priority is set correctly based on liquidity."""
-        is_liquid = self.is_liquid
-        priority = self.withdrawal_priority
-
-        if is_liquid and priority is None:
-            raise ValueError("withdrawal_priority is required for liquid assets")
-        if not is_liquid and priority is not None:
-            raise ValueError("withdrawal_priority must not be set for illiquid assets")
-        return self
 
 
 class DeterministicInputs(BaseModel):
@@ -86,7 +66,9 @@ class DeterministicInputs(BaseModel):
         ...,
         description="Initial value of portfolio assets, mapping asset name to amount.",
     )
-    initial_bank_balance: float = Field(..., description="Initial bank account balance.")
+    initial_bank_balance: float = Field(
+        ..., description="Initial bank account balance."
+    )
 
     bank_lower_bound: float = Field(
         ...,
@@ -107,7 +89,9 @@ class DeterministicInputs(BaseModel):
         ..., description="Total number of years the retirement simulation will run."
     )
 
-    monthly_salary: float = Field(..., description="Initial real (today's money) monthly salary.")
+    monthly_salary: float = Field(
+        ..., description="Initial real (today's money) monthly salary."
+    )
     salary_inflation_factor: float = Field(
         ...,
         description=(
@@ -118,7 +102,8 @@ class DeterministicInputs(BaseModel):
     salary_start_year: int = Field(
         ...,
         description=(
-            "Year index (0-indexed) when salary income starts. " "E.g., 0 for immediate start."
+            "Year index (0-indexed) when salary income starts. "
+            "E.g., 0 for immediate start."
         ),
     )
     salary_end_year: int = Field(
@@ -129,7 +114,9 @@ class DeterministicInputs(BaseModel):
         ),
     )
 
-    monthly_pension: float = Field(..., description="Initial real (today's money) monthly pension.")
+    monthly_pension: float = Field(
+        ..., description="Initial real (today's money) monthly pension."
+    )
     pension_inflation_factor: float = Field(
         ...,
         description=(
@@ -143,7 +130,9 @@ class DeterministicInputs(BaseModel):
 
     planned_contributions: list[PlannedContribution] = Field(
         default_factory=list,
-        description=("List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"),
+        description=(
+            "List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"
+        ),
     )
 
     annual_fund_fee: float = Field(
@@ -179,6 +168,36 @@ class DeterministicInputs(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class Asset(BaseModel):
+    """Represents a single financial asset class."""
+
+    mu: float = Field(..., description="Expected annual arithmetic mean return.")
+    sigma: float = Field(
+        ..., description="Expected annual standard deviation of returns."
+    )
+    is_liquid: bool = Field(
+        ...,
+        description="True if the asset is part of the liquid, rebalanceable portfolio.",
+    )
+    withdrawal_priority: int | None = Field(
+        default=None,
+        description="Order for selling to cover cash shortfalls (lower is sold first). Required for liquid assets.",
+    )
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def check_withdrawal_priority(self) -> "Asset":
+        """Ensure withdrawal_priority is set correctly based on liquidity."""
+        is_liquid = self.is_liquid
+        priority = self.withdrawal_priority
+
+        if is_liquid and priority is None:
+            raise ValueError("withdrawal_priority is required for liquid assets")
+        if not is_liquid and priority is not None:
+            raise ValueError("withdrawal_priority must not be set for illiquid assets")
+        return self
+
+
 class PortfolioRebalance(BaseModel):
     """
     Represents a single portfolio rebalance event.
@@ -211,7 +230,9 @@ class PortfolioRebalance(BaseModel):
 
 
 class SimulationParameters(BaseModel):
-    num_simulations: int = Field(..., gt=0, description="Number of Monte Carlo simulations to run.")
+    num_simulations: int = Field(
+        ..., gt=0, description="Number of Monte Carlo simulations to run."
+    )
     random_seed: int | None = Field(
         default=None,
         description="Optional random seed for deterministic runs. If None, uses entropy.",

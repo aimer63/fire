@@ -105,16 +105,6 @@ $\pi \approx 4 \cdot \frac{1}{n} \sum_{i=1}^n I_i$
 
 ---
 
-## Variance Reduction Techniques
-
-To improve efficiency, various variance reduction techniques are used:
-
-- **Antithetic Variates:** Use negatively correlated variables to reduce variance.
-- **Control Variates:** Use known quantities to adjust the estimator.
-- **Importance Sampling:** Change the sampling distribution to focus on important regions.
-
----
-
 ## Applications in Finance
 
 In finance, Monte Carlo simulation is used for:
@@ -175,8 +165,6 @@ their parameters are estimated from historical financial data or based on econom
   distributions, with mean and standard deviation estimated from long-term historical returns. In
   some cases, more sophisticated models (e.g., fat-tailed or regime-switching distributions) may be
   used to better capture market behavior.
-- **Inflation:** Inflation rates are usually modeled as a normal distribution, with parameters (mean
-  and variance) derived from historical inflation data for the relevant country or region.
 
 It is important to periodically review and update these assumptions to reflect changing economic
 conditions or new data, as the choice of distributions and their parameters has a significant impact
@@ -246,8 +234,3 @@ futures, it provides a probabilistic foundation for retirement decisions.
 - Robert, C. P., & Casella, G. (2005). _Monte Carlo Statistical Methods_. Springer.
 - Glasserman, P. (2004). _Monte Carlo Methods in Financial Engineering_. Springer.
 - Wikipedia: [Monte Carlo method](https://en.wikipedia.org/wiki/Monte_Carlo_method)
-
----
-
-_This document is typeset in Markdown with embedded LaTeX for mathematical clarity and is compatible
-with Obsidian and GitHub._

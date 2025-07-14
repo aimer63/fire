@@ -7,7 +7,7 @@
 > #files:`firestarter/config/*.py`
 > #files:`firestarter/core/*.py`
 > #file:`firestarter/main.py`
-> #files:`tests/ccnfig/*.py`
+> #files:`tests/config/*.py`
 > #files:`tests/simulation/*.py`
 
 
