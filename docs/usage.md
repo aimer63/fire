@@ -134,10 +134,10 @@ python -m firestarter.main config.toml
 ## 6. Further Reading
 
 - [README](../README.md): Project overview and configuration example.
-- [Configuration reference](docs/config.md): Full configuration parameter reference.
-- [Monte Carlo method](docs/montecarlo.md): Mathematical background.
-- [Real estate](docs/real_estate.md): Real estate modeling details.
-- [Inflation](docs/inflation.md): Inflation modeling details.
-- [Returns](docs/returns.md): Assets returns modeling details.
+- [Configuration reference](../docs/config.md): Full configuration parameter reference.
+- [Monte Carlo method](../docs/montecarlo.md): Mathematical background.
+- [Real estate](../docs/real_estate.md): Real estate modeling details.
+- [Inflation](../docs/inflation.md): Inflation modeling details.
+- [Returns](../docs/returns.md): Assets returns modeling details.
 
 ---

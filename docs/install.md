@@ -56,7 +56,7 @@ python -c "import firestarter; print(firestarter.__version__)"
 ## 4. Run firestarter
 
 You can run firestarter directly (make sure to set the environment variables first) or
-with a shell script, see [Usage](docs/usage.md).
+with a shell script, see [Usage](../docs/usage.md).
 
 ```sh
 export OMP_NUM_THREADS=1
@@ -76,13 +76,13 @@ $env:NUMEXPR_NUM_THREADS = "1"
 python -m firestarter.main config.toml
 ```
 
-See usage [Usage](docs/usage.md) for details.
+See usage [Usage](../docs/usage.md) for details.
 
 ## 5. Upgrading firestarter
 
 To upgrade to a newer version (e.g., from `v0.1.0b1` to `v0.1.0b2`):
 
-1. Download the new `.whl` file from the [GitHub Releases page](https://github.com/<your-username>/<your-repo>/releases).
+1. Download the new `.whl` file from the [GitHub Releases page](https://github.com/aimer63/fire/releases).
 2. (Optional but recommended) Uninstall the old version:
 
    ```sh
