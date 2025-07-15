@@ -98,11 +98,11 @@ This document explains all parameters available in the main TOML configuration f
   Each asset in the configuration file is defined with the following parameters:
 
   - **mu**:  
-    The sample mean return of the asset, expressed as a decimal.  
+    The sample mean return of the asset, expressed as a float.  
     _Example_: `0.07` means a 7% expected return per year.
 
   - **sigma**:  
-    The sample annual standard deviation (volatility) of returns, as a decimal.  
+    The sample annual standard deviation (volatility) of returns, as a float.  
     _Example_: `0.15` means a 15% standard deviation per year.
 
   - **is_liquid**:  
@@ -201,7 +201,7 @@ For more details and validation rules, see the test file:
 ```toml
 [[shocks]]
 year = 10
-description = "October 1929 equivalent"
+description = "October 1929"
 impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 ```
 
@@ -223,7 +223,7 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
   - **weights**:  
     _Type:_ table (dictionary)  
     _Description:_
-    - Maps liquid asset names to their target weights (as decimals).
+    - Maps liquid asset names to their target weights (as floats).
     - Must sum to 1.0.
     - Only include assets where `is_liquid = true`.
 
