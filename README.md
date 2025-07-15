@@ -6,61 +6,34 @@ and market shocks over time to estimate the probability of financial success.
 
 ---
 
-## Project Structure
-
-```
-fire/
-├── firestarter/           # Main Python package (all source code)
-│   ├── core/              # Core simulation engine and helpers
-│   ├── reporting/         # Reporting and plotting modules
-│   ├── config/            # Pydantic config models and schema
-│   ├── main.py            # Main entry point
-│   └── version.py         # Version info
-├── configs/               # TOML configuration files
-│   └── config.toml        # Example config (user-editable)
-├── output/                # All simulation outputs (auto-created)
-│   ├── plots/             # Generated plots (PNG)
-│   └── reports/           # Markdown reports
-├── data/                  # (Optional) Historical data for assets
-├── tests/                 # Unit and integration tests
-├── firestarter.sh         # Bash script to run the simulation
-├── requirements.txt       # Python dependencies
-└── README.md              # This file
-```
-
----
-
-## Key Components
+## Key features
 
 - **Configuration**  
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
-  wealth, income, expenses, asset allocation, economic assumptions (returns, inflation), simulation
-  parameters, and market shocks.  
-  Configuration is validated and parsed using Pydantic models in `firestarter/config/config.py`.
+  wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
+  assets and inflation correlation, simulation parameters and market shocks.
 
-- **Simulation Engine**  
-  The main simulation logic is in `firestarter/core/simulation.py`. For each run, it:
+- **[Simulation Engine](/docs/simulation_engine.md)**  
+  The main simulation logic for each run it:
 
   - Initializes asset values and bank balance
   - Simulates monthly/annual investment returns, inflation, and expenses
   - Handles salary, pension, contributions, and planned extra expenses
   - Manages liquidity (bank account bounds, topping up or investing excess)
+  - Manages portfolio rebalances
+  - Applies fees on funds
   - Applies market shocks if configured
   - Optionally simulates a house purchase at a specified time
-  - Tracks asset allocation and rebalancing
+  - Tracks assets allocation
 
-- **Reporting & Plotting**
+- **[Reporting & Plotting](/docs/output.md)**
 
-  - `firestarter/reporting/console_report.py` prints a summary to the console.
-  - `firestarter/reporting/markdown_report.py` generates a Markdown report summarizing the
+  - Prints a summary to the console.
+  - Generates a Markdown report summarizing the
     simulation results, including links to generated plots.
-  - `firestarter/reporting/grapth_report.py` generates all plots for wealth evolution, bank account
+  - Generates all plots for wealth evolution, bank account
     trajectories, and distributions of outcomes.
   - Output directories for plots and reports are set via the config file and created automatically.
-
-- **Data**  
-  The `data/` directory can contain historical price/return data for assets (e.g., stocks, bonds,
-  Ethereum, silver) used for parameter estimation or backtesting.
 
 ---
 
@@ -71,7 +44,7 @@ fire/
    income, expenses, investment strategy, simulation parameters, and any market shocks.  
    You can set the output directory root in the `[paths]` section.
 
-2. **Run the simulation**  
+2. **[Run the simulation](/docs/usage.md)**  
    From the project root, use the provided shell script or Python command:
 
    ```sh
@@ -95,61 +68,73 @@ fire/
 ## Configuration Example (`configs/config.toml`)
 
 ```toml
-[paths]
-output_root = "output"
-
 [simulation_parameters]
-num_simulations = 10000
+num_simulations = 10_000
+# random_seed = 42
+
+[paths]
+output_root = "output/"
 
 [deterministic_inputs]
-initial_investment = 100_000
-initial_bank_balance = 0
-bank_lower_bound = 0
-bank_upper_bound = 0
-years_to_simulate = 20
+initial_portfolio = {
+  stocks = 100000.0, bonds = 30000.0 }
+
+initial_bank_balance = 8000.0
+
+bank_lower_bound = 5000.0
+bank_upper_bound = 10000.0
+
+years_to_simulate = 40
 # ... (other parameters) ...
 
-[market_assumptions]
-stock_mu = 0.07
-stock_sigma = 0.15
-# ... (other parameters) ...
+[assets.stocks]
+mu = 0.07
+sigma = 0.15
+is_liquid = true
+withdrawal_priority = 2
 
-# Optionally, specify a correlation matrix to model correlations between asset returns and inflation.
-# This allows for more realistic scenarios where, for example, inflation and stock returns may move together.
-[market_assumptions.correlation_matrix]
-#              Stk   Bnd   str    fun  r_e     pi
-stocks      = [1.00, -0.30, 0.15, 0.45, 0.75, -0.20]
-bonds       = [-0.30, 1.00, 0.40, -0.10, -0.25, 0.10]
-str         = [0.15, 0.40, 1.00, -0.05, 0.20, 0.60]
-fun         = [0.45, -0.10, -0.05, 1.00, 0.35, 0.15]
-real_estate = [0.75, -0.25, 0.20, 0.35, 1.00, 0.05]
-inflation   = [-0.20, 0.10, 0.60, 0.15, 0.05, 1.00]
+[assets.bonds]
+mu = 0.03
+sigma = 0.055
+is_liquid = true
+withdrawal_priority = 1
 
-[portfolio_rebalances]
-rebalances = [
-  { year = 0, stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
-  { year = 10, stocks = 0.40, bonds = 0.50, str = 0.05, fun = 0.05 }
+# Asset inflation must exist.
+[assets.inflation]
+mu = 0.025
+sigma = 0.025
+is_liquid = false
+
+[correlation_matrix]
+assets_order = ["stocks", "bonds", "inflation"]
+# Identity matrix. Indipendent variables, no correlation.
+matrix = [
+  #stk, bnd, pi
+  [1.0, 0.0, 0.0], # stocks
+  [0.0, 1.0, 0.0], # bonds
+  [0.0, 0.0, 1.0], # inflation
 ]
+
+[[shocks]]
+year = 10
+description = "October 1929"
+impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
+
+[[portfolio_rebalances]]
+year = 20
+description = "De-risking for retirement"
+weights = { stocks = 0.60, bonds = 0.40 }
 ```
-
-**Note:**
-
-- The portfolio weights are specified in the `[portfolio_rebalances]` section as a list of
-  rebalances, each with a `year` and weights for liquid assets (`stocks`, `bonds`, `str`, `fun`).
-  There must be one at `year = 0` to give initial values at the portfolio assets.
-- There is no `real_estate` weight; real estate is handled separately at the time of house purchase.
-- **See [Real Estate Modeling](docs/real_estate.md) for details on how real estate is handled.**
-- If the correlation matrix is omitted, the simulation assumes all returns and inflation are
-  uncorrelated.
 
 ---
 
 ## Output
 
-- **Reports**: Markdown files in `output/reports/` with simulation summary and plot links.
-- **Plots**: PNG images in `output/plots/` for all major simulation results.
+- **Reports**: Markdown files in `output_root/reports/` with simulation summary and plot links.
+- **Plots**: PNG images in `output_root/plots/` for all major simulation results.
 - **All output paths are relative to the project root and configurable via `[paths] output_root` in
   your TOML config.**
+- See [Output](docs/output.md) for details on the generated files.]
 
 ---
 
@@ -179,7 +164,7 @@ pytest
 
 ## Purpose
 
-This tool helps users understand the likelihood of their retirement plan succeeding under
+This tool helps users understand the likelihood of a retirement plan succeeding under
 uncertainty, visualize possible outcomes, and make informed decisions about savings, spending, and
 asset allocation.
 
@@ -191,16 +176,12 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 ### 📚 Documentation Index
 
-- [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
-- [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
-- [Monte Carlo Theory](docs/Montecarlo.md): Mathematical background and simulation theory.
-- [Real Estate Modeling](docs/real_estate.md): Details on how real estate is handled in the
-  simulation.
 - [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a
   GitHub release.
-- [Release Process](docs/release.md): How to prepare and publish a new release.
-- [TODO & Improvement Plan](TODO.md): Roadmap and planned features.
+- [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
+- [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
+- [Monte Carlo Theory](docs/montecarlo.md): Mathematical background and simulation theory.
 
 ---
 
-**For more details, see the docstrings in each module or open an issue!**
+**For more details, see the docstrings in each module.**

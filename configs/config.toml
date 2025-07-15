@@ -1,21 +1,33 @@
 # config.toml
 
-
 # NOTE:
 # The simulation assumes all assets, liabilities, incomes, expenses, and flows are denominated in a single currency.
 # There is no currency conversion or multi-currency support; all values must be provided and interpreted in the same 
 # currency throughout the simulation.
 
-# --- Simulation Parameters ---
+# This is a comprehensive configuration file for the FIRE Monte Carlo simulation.
+# It is designed to exercise all features and validation rules of the configuration parser.
+
+# ==============================================================================
+# 1. SIMULATION PARAMETERS
+# ==============================================================================
 [simulation_parameters]
-num_simulations = 10000
+# Number of Monte Carlo simulation runs to perform.
+num_simulations = 10_000
 # random_seed = 42        # Seed for random number generation, can be any integer
 
-# --- Outputs ---
+# ==============================================================================
+# 2. PATHS
+# ==============================================================================
 [paths]
-output_root = "output"
+# Directory where all output (reports, plots, etc.) will be saved.
+# Relative to the project root.
+output_root = "output/"
 
-# The years are counted from zero, so, if we are 2025:
+# ==============================================================================
+# 3. DETERMINISTIC INPUTS
+# ==============================================================================
+# The years are counted from zero, so, if we are in 2025:
 # 0 2025
 # 1 2026
 # 2 2027
@@ -23,75 +35,84 @@ output_root = "output"
 # 4 2029
 # 5 2030
 # 6
-# --- Deterministic Inputs (Your Personal Financial Plan) ---
+#
+# Initial values for each asset, mapping asset keys from the [assets] tables to amounts.
 [deterministic_inputs]
-initial_investment = 100_000 # Initial Investment Value (e.g., EUR)
-initial_bank_balance = 5000  # Initial Bank Account Balance (e.g., EUR)
+initial_portfolio = { stocks = 200_000.0, bonds = 20_000.0, str = 15_000.0, eth = 10_000.0, ag = 10_000.0, real_estate = 0.0 }
 
-# Bank account lower and upper bound in real money
-# if it goes below it will be topped, if it goes above it will be invested
-# from the investment
-bank_lower_bound = 5000
-bank_upper_bound = 10_000
+# Initial cash/bank account balance.
+initial_bank_balance = 8000.0
 
-# Number of years the simulation will run
-years_to_simulate = 10
+# Bank balance thresholds for automatic investment/divestment.
+bank_lower_bound = 5000.0
+bank_upper_bound = 10000.0
 
-# In flows
+# Total duration of the simulation.
+years_to_simulate = 70
 
-# To the bank:
-monthly_salary = 0            # Initial real monthly salary (e.g., 2500 EUR in today's money)
-salary_inflation_factor = 1.0 # Factor by which salary adjusts to inflation (1.0 = same as inflation, 1.01 = 1% above inflation)
-salary_start_year = 0         # Year index when salary starts (e.g., 0 for immediate start)
-salary_end_year = 0           # Year index when salary ends (e.g., 5 for 5 years of salary, exclusive of Year 5 itself)
+# --- Income Streams ---
+# Real (inflation-adjusted) monthly salary.
+# Assume you are 30 years old and want to retire at 50. (You have to earn a lot)
+monthly_salary = 4000.0
+salary_inflation_factor = 1.01 # Salary grows 1% faster than inflation.
+salary_start_year = 0
+salary_end_year = 20           # Salary stops at the beginning of year 25.
 
-# The pension when it will arrive... if
-monthly_pension = 0
-pension_inflation_factor = 0.6 # Factor by which pension adjusts to inflation (1.0 = same as inflation, 0.6 = 60% below inflation)
-pension_start_year = 0
+# Real (inflation-adjusted) monthly pension.
+monthly_pension = 4000.0
+pension_inflation_factor = 0.6 # Pension grows exactly with inflation.
+pension_start_year = 37
 
-# To the investment:
+# --- Contributions & Expenses ---
+# One-time contributions (fixed nominal amounts, not inflation-adjusted).
+# planned_contributions = [
+#   { amount = 20_000, year = 2 },
+#   { amount = 20_000, year = 3 },
+#   { amount = 10_000, year = 4 },
+# ]
 
-# Planned Contributions, nominal amount.
-# planned_contributions = []
-planned_contributions = [
-  { amount = 30000, year = 2 },
-  { amount = 30000, year = 4 },
-  { amount = 30000, year = 6 },
-  { amount = 30000, year = 8 },
-  { amount = 30000, year = 10 },
+# Annual fee on all liquid investments (e.g., 0.0015 for 0.15%).
+annual_fund_fee = 0.0015
+
+# Fixed monthly living expenses (in today's money, will be inflation-adjusted).
+monthly_expenses = 2500.0
+
+# One-time extra expenses (in today's money, will be inflation-adjusted).
+planned_extra_expenses = [
+  { amount = 30_000.0, year = 20, description = "Buy a car" },
 ]
 
-# Out flows
-annual_fund_fee = 0.002 # 0.2%
-
-# Fixed monthly exepense for the life level you want to keep
-# Real amount, today's money, the simulation will inflate the value according
-# to the drawn inflation rate.
-monthly_expenses = 0
-
-# Real amount, today's money, the simulation will inflate the value according
-# to the drawn inflation rate.
-planned_extra_expenses = [{ amount = 0, year = 0 }]
-
-# Real cost at today of the house to be purchased
-planned_house_purchase_cost = 0
+# --- Major Life Events ---
+# Real cost of a house purchase.
+planned_house_purchase_cost = 0.0
 house_purchase_year = 0
 
-# --- Economic Assumptions (Averages and Volatilities) ---
-[market_assumptions]
+# ==============================================================================
+# 4. ASSET DEFINITIONS
+# ==============================================================================
+# Defines all financial assets available in the simulation using a table for each asset.
+# The key of the table (e.g., "stocks") is the unique identifier for the asset.
+# - `mu`: Expected annual sample mean return.
+# - `sigma`: Expected annual sample standard deviation of returns.
+# - `is_liquid`: Boolean indicating if the asset is part of the liquid portfolio
+#                that can be rebalanced and sold to cover expenses.
+# - `withdrawal_priority`: (For liquid assets only) Order in which assets are
+#                          sold to cover cash shortfalls (lower number = sold first).
+#
 # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
 # stock_mu = 0.1017
 # stock_sigma = 0.1478
-
+#
 # The 2016-2025 period was exceptionally strong for global equities.
 # For a long-term simulation (30+ years), it's advisable to temper expectations
 # based on very long-term historical averages and current market valuations.
-stock_mu = 0.07
-stock_sigma = 0.15
-# stock_sigma = 0.0
+[assets.stocks]
+mu = 0.07
+sigma = 0.15
+is_liquid = true
+withdrawal_priority = 2
 
 # European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR)
 # annual total returns from 2004-2023.
@@ -103,27 +124,20 @@ stock_sigma = 0.15
 # The 2004-2023 period includes many years of historically very low and even
 # negative interest rates in Europe. The environment has shifted, and current
 # yields are significantly higher.
-bond_mu = 0.03
-bond_sigma = 0.055
+[assets.bonds]
+mu = 0.03
+sigma = 0.055
+is_liquid = true
+withdrawal_priority = 1
 
-
-# Short-Term Reserves (STR) parameters based on historical Eurozone overnight rates (EONIA/€STR) from 2004-2023.
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
-str_mu = 0.0085
-str_sigma = 0.0197
-
-# "Fun Money" (50% Ethereum, 50% Silver) Parameters based on annual returns from 2016-2023.
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
-# fun_mu = 1.2438
-# fun_sigma = 0.6805
-
-# "Fun Money" (50% Ethereum, 50% Silver): Based on the conservative values below
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
-fun_mu = 0.16
-fun_sigma = 0.45
+# Statistical parameters for Euro Short-Term Rate (STR), derived from
+# historical EONIA (1999-Sep 2019) and ESTR (Oct 2019-May 2025) annual average rates.
+# These are annual arithmetic mean and standard deviation.
+[assets.str]
+mu = 0.0152
+sigma = 0.0181
+is_liquid = true
+withdrawal_priority = 0
 
 # Ethereum: from 2016 to 2025
 # fun_mu = 2.3755
@@ -132,6 +146,11 @@ fun_sigma = 0.45
 # Ethereum: Conservative values
 # fun_mu = 0.25
 # fun_sigma = 0.90
+[assets.eth]
+mu = 0.25
+sigma = 0.90
+is_liquid = true
+withdrawal_priority = 3
 
 # Silver: from 2016 to 2025
 # fun_mu = 0.1120
@@ -140,99 +159,98 @@ fun_sigma = 0.45
 # Silver: Conservative values
 # fun_mu = 0.07
 # fun_sigma = 0.32
+[assets.ag]
+mu = 0.07
+sigma = 0.32
+is_liquid = true
+withdrawal_priority = 4
 
+# Illiquid assets are handled separately and not part of portfolio rebalancing.
+# They do not require a withdrawal_priority.
+#
 # Real Estate (Italy) parameters based on annual capital gains from 2004-2023, net of 1.5% annual maintenance.
 # Note: Excludes rental income. Maintenance cost is an assumed average.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
-real_estate_mu = -0.0054
-real_estate_sigma = 0.0416
+[assets.real_estate]
+mu = -0.0054
+sigma = 0.0416
+is_liquid = false
 
 # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
 # MU_PI: Arithmetic Mean of inflation
 # SIGMA_PI: Arithmetic Standard Deviation of inflation
 # mu_pi = 0.0220
 # sigma_pi = 0.0229
-
+#
 # More relistics for the future
-pi_mu = 0.025
-pi_sigma = 0.025
-# pi_sigma = 0.0
+[assets.inflation]
+mu = 0.025
+sigma = 0.025
+is_liquid = false
 
-# Injects market shocks/crisis
-[shocks]
-events = []
-# events = [
-# Black Friday Crash (October 1929 equivalent) - Now applied to Year 0.
-# Note: Without a 'month' field, this shock will be applied based on how your
-# simulation.py handles year-only shocks (e.g., at the start of Year 0).
-# The specific 'October' timing of Black Friday is not preserved here.
-# {year = 10, asset = "stocks", magnitude = -0.35},        # Stock market was down significantly for 1929 (~30-40% from peak to year-end)
-# {year = 10, asset = "bonds", magnitude = 0.02},          # Bonds could still show a small positive annual return (flight to safety)
-# {year = 10, asset = "str", magnitude = 0.0},             # Short-Term Reserves / cash remain stable
-# {year = 10, asset = "fun", magnitude = -0.15},           # Fun (50% Bitcoin, 50% Silver)
-# {year = 10, asset = "real_estate", magnitude = -0.05},   # Real Estate declines began, though much slower and deeper over time.
-#
-# # Internet Bubble Burst (e.g., representing a year like 2000-2002)
-# {year = 15, asset = "stocks", magnitude = -0.25},       # S&P 500 down ~20% in worst years, Nasdaq much more.
-# {year = 15, asset = "bonds", magnitude = 0.10},         # Bonds saw strong gains as a safe haven.
-# {year = 15, asset = "str", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
-# {year = 15, asset = "fun", magnitude = -0.10},          # Fun (50% Bitcoin, 50% Silver)
-# {year = 15, asset = "real_estate", magnitude = 0.05},   # Real Estate often performed well or was unaffected during this period.
-#
-# # Great Recession (Worst year, e.g., 2008)
-# {year = 20, asset = "stocks", magnitude = -0.37},       # S&P 500 down ~37% in 2008.
-# {year = 20, asset = "bonds", magnitude = 0.05},         # Bonds saw positive returns as safe havens.
-# {year = 20, asset = "str", magnitude = 0.0},            # Short-Term Reserves / cash remain stable.
-# {year = 20, asset = "fun", magnitude = -0.30},          # Fun (50% Bitcoin, 50% Silver)
-# {year = 20, asset = "real_estate", magnitude = -0.18},  # Significant residential real estate price declines.
-#  ]
 
-# events = [
-#     # Crypto shock
-#     {year = 30, asset = "stocks", magnitude = -0.1},
-#     {year = 30, asset = "bonds", magnitude = 0.02},
-#     {year = 30, asset = "str", magnitude = 0.0},
-#     {year = 30, asset = "fun", magnitude = -1.0},
-#     {year = 30, asset = "real_estate", magnitude = -0.05},
-#     {year = 31, asset = "stocks", magnitude = 0.05},
-#     {year = 31, asset = "bonds", magnitude = 0.02},
-#     {year = 31, asset = "str", magnitude = 0.0},
-#     {year = 31, asset = "fun", magnitude = -1.0},
-#     {year = 31, asset = "real_estate", magnitude = -0.05},
-#     {year = 32, asset = "stocks", magnitude = 0.095},
-#     {year = 32, asset = "bonds", magnitude = 0.019},
-#     {year = 32, asset = "str", magnitude = 0.0085},
-#     {year = 32, asset = "fun", magnitude = -1.0},
-#     {year = 32, asset = "real_estate", magnitude = -0.05},
-# ]
-
-# events = [
-#     # Stagflation
-#     {year = 10, asset = "stocks", magnitude = -0.1},
-#     {year = 10, asset = "bonds", magnitude = 0.06},
-#     {year = 10, asset = "str", magnitude = 0.0},
-#     {year = 10, asset = "fun", magnitude = 0.0},
-#     {year = 10, asset = "real_estate", magnitude = -0.05},
-#     {year = 10, asset = "inflation", magnitude = 0.05},
-#
-#     {year = 11, asset = "stocks", magnitude = 0.0002},
-#     {year = 11, asset = "bonds", magnitude = 0.012},
-#     {year = 11, asset = "str", magnitude = 0.0},
-#     {year = 11, asset = "fun", magnitude = 0.0},
-#     {year = 11, asset = "real_estate", magnitude = -0.05},
-#     {year = 11, asset = "inflation", magnitude = 0.15},
-#
-#     {year = 12, asset = "stocks", magnitude = 0.003},
-#     {year = 12, asset = "bonds", magnitude = 0.019},
-#     {year = 12, asset = "str", magnitude = 0.0085},
-#     {year = 12, asset = "fun", magnitude = 0.0},
-#     {year = 12, asset = "real_estate", magnitude = -0.05},
-#     {year = 12, asset = "inflation", magnitude = 0.08},
-# ]
-
-[portfolio_rebalances]
-rebalances = [
-  { year = 0, stocks = 0.60, bonds = 0.35, str = 0.00, fun = 0.05 },
-  { year = 20, stocks = 0.40, bonds = 0.60, str = 0.00, fun = 0.00 },
+# ==============================================================================
+# 5. CORRELATION MATRIX 
+# ============================================================================== 
+# Correlation matrix for asset returns and inflation.
+# The `assets` list must match keys from the [assets] tables, plus "inflation".
+# The `matrix` must be square and correspond to the `assets` list order.
+[correlation_matrix]
+assets_order = [
+  "stocks",
+  "bonds",
+  "str",
+  "eth",
+  "ag",
+  "real_estate",
+  "inflation",
 ]
+
+# Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
+matrix = [
+  # stk,  bnd,  str,  eth,  ag,   re,   pi
+  [1.00, -0.05, 0.02, 0.15, 0.29, 0.67, 0.02],   # Stocks
+  [-0.05, 1.00, 0.50, 0.03, -0.10, -0.10, 0.31], # Bonds
+  [0.02, 0.50, 1.00, 0.02, 0.03, 0.15, 0.38],    # STR
+  [0.15, 0.03, 0.02, 1.00, 0.09, 0.10, 0.04],    # Eth
+  [0.29, -0.10, 0.03, 0.09, 1.00, 0.08, -0.02],  # Ag
+  [0.67, -0.10, 0.15, 0.10, 0.08, 1.00, -0.09],  # Real Estate
+  [0.02, 0.31, 0.38, 0.04, -0.02, -0.09, 1.00],  # Inflation
+]
+
+# # Identity matrix. Indipendent variables, no correlation.
+# matrix = [
+#   #stk, bnd, str, eth, ag,  re,  pi
+#   [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
+#   [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Bonds
+#   [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # STR
+#   [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # Eth
+#   [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Ag
+#   [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Real Estate
+#   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
+# ]
+# ==============================================================================
+# 6. SHOCKS
+# ==============================================================================
+# Defines specific, one-off market events that override stochastic returns for a
+# given year.
+# `asset` must match a key from the [assets] table.
+#
+# Black Friday Crash (October 1929 equivalent) 
+[[shocks]]
+year = 10
+description = "October 1929"
+impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
+
+
+# ==============================================================================
+# 7. PORTFOLIO REBALANCES
+# ==============================================================================
+# Defines the target asset allocation for the liquid portfolio at different stages.
+# A rebalance must be defined for year 0 to set the initial allocation.
+# Weights must sum to 1.0 and only include keys for assets where `is_liquid = true`.
+[[portfolio_rebalances]]
+year = 20
+description = "De-risking for retirement"
+weights = { stocks = 0.60, bonds = 0.40 }
