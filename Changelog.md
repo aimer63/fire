@@ -4,7 +4,10 @@
 
 ### Changed
 
-- Normalized asset names and keys throughout the codebase for consistency.
+- Assets are now configurable. Assets are defined in the `[assets]` section of `config`.
+  Inflation is aggregated with assets because it can be correlated with them and it
+  makes the sequences generation cleaner, so an `inflation` asset has to exist in the configuration.
+  Now Simulation supports arbitrary assets with no code changes.
 
 ## [v0.1.0b3] - 2025-06
 
