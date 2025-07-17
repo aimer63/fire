@@ -167,6 +167,14 @@ class DeterministicInputs(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    @model_validator(mode="after")
+    def validate_bank_bounds(self) -> "DeterministicInputs":
+        if self.bank_lower_bound > self.bank_upper_bound:
+            raise ValueError(
+                "bank_lower_bound must be less than or equal to bank_upper_bound"
+            )
+        return self
+
 
 class Asset(BaseModel):
     """Represents a single financial asset class."""
@@ -184,6 +192,14 @@ class Asset(BaseModel):
         description="Order for selling to cover cash shortfalls (lower is sold first). Required for liquid assets.",
     )
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def check_mu_and_sigma(self) -> "Asset":
+        if self.mu <= -1.0:
+            raise ValueError("mu must be greater than -1.0")
+        if self.sigma < 0:
+            raise ValueError("sigma must be non-negative")
+        return self
 
     @model_validator(mode="after")
     def check_withdrawal_priority(self) -> "Asset":
@@ -304,6 +320,10 @@ class Config(BaseModel):
         """
         # 1. Establish the definitive set of asset names from the top-level assets
         defined_assets = set(self.assets.keys())
+        if "inflation" not in defined_assets:
+            raise ValueError(
+                "An asset named 'inflation' must be defined in the assets section."
+            )
 
         # 1a. Validate that withdrawal_priority values for liquid assets are unique
         priorities = [
@@ -313,6 +333,16 @@ class Config(BaseModel):
         ]
         if len(priorities) != len(set(priorities)):
             raise ValueError("Withdrawal priorities for liquid assets must be unique")
+
+        # 1b. Validate that all assets in initial_portfolio are declared in assets
+        initial_portfolio_assets = set(
+            self.deterministic_inputs.initial_portfolio.keys()
+        )
+        undeclared_assets = initial_portfolio_assets - defined_assets
+        if undeclared_assets:
+            raise ValueError(
+                f"Assets in initial_portfolio not declared in [assets]: {sorted(list(undeclared_assets))}"
+            )
 
         # 2. Validate the correlation matrix asset list
         if self.correlation_matrix:
