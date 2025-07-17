@@ -101,7 +101,7 @@ def test_sequence_mean_and_std_match_asset_params(
 
     for i, asset_name in enumerate(identity_correlation_matrix.assets_order):
         asset = basic_assets[asset_name]
-        # Use exact formulas for annualizing mean and std of returns
+        # Annualize mean and std of returns
         sample_mean = (
             np.log(reshaped_returns[:, i] + 1).mean()
         ) * 12  # log-returns annualized mean

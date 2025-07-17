@@ -14,7 +14,7 @@ and market shocks over time to estimate the probability of financial success.
   assets and inflation correlation, simulation parameters and market shocks.
 
 - **[Simulation Engine](/docs/simulation_engine.md)**  
-  The main simulation logic for each run it:
+  The main simulation logic, for each run it:
 
   - Initializes asset values and bank balance
   - Simulates monthly/annual investment returns, inflation, and expenses
@@ -178,8 +178,9 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 - [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a
   GitHub release.
-- [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
 - [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
+- [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
+- [Results](docs/output.md): Detailed explanation of all outputs of the simulation.
 - [Monte Carlo Theory](docs/montecarlo.md): Mathematical background and simulation theory.
 
 ---

@@ -66,11 +66,8 @@ class SequenceGenerator:
         # --- 2. Convert to Monthly Log-Normal Parameters ---
         ex = 1.0 + mu_arith
         vx = sigma_arith**2
-        with np.errstate(divide="ignore", invalid="ignore"):
-            mu_log_annual = np.log(ex) - 0.5 * np.log(1 + vx / ex**2)
-            sigma_log_annual = np.sqrt(np.log(1 + vx / ex**2))
-        mu_log_annual = np.nan_to_num(mu_log_annual)
-        sigma_log_annual = np.nan_to_num(sigma_log_annual)
+        mu_log_annual = np.log(ex) - 0.5 * np.log(1 + vx / ex**2)
+        sigma_log_annual = np.sqrt(np.log(1 + vx / ex**2))
         monthly_mu_log = mu_log_annual / 12
         monthly_sigma_log = sigma_log_annual / np.sqrt(12)
 

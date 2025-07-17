@@ -227,9 +227,9 @@ matrix = [
 #
 # Black Friday Crash (October 1929 equivalent) 
 [[shocks]]
-# year = 10
-# description = "October 1929 equivalent"
-# impact = { stocks = -0.35, bonds = 0.02, str = 0.0, fun = -0.15, inflation = -0.023 }
+year = 10
+description = "October 1929 equivalent"
+impact = { stocks = -0.35, bonds = 0.02, str = 0.0, fun = -0.15, inflation = -0.023 }
 
 
 # ==============================================================================

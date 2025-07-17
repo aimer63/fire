@@ -11,7 +11,6 @@ Main entry point for running FIRE Monte Carlo simulations.
 
 - Loads configuration from TOML files.
 - Validates parameters using Pydantic models.
-- Supports multiple scheduled portfolio rebalances.
 - Runs simulations and generates reports and plots.
 """
 
@@ -73,7 +72,6 @@ def main() -> None:
     Main workflow for the FIRE simulation tool.
 
     - Loads and validates configuration.
-    - Validates portfolio rebalance weights.
     - Runs Monte Carlo simulations using the current rebalance schedule.
     - Performs analysis and generates reports and plots.
     """
@@ -93,17 +91,6 @@ def main() -> None:
         with open(config_file_path, "rb") as f:
             config_data = tomllib.load(f)
 
-        # # The config file is flat, but the Pydantic model is nested.
-        # # We need to construct the nested structure that Config expects.
-        # nested_config_data = {
-        #     "assets": config_data.get("assets", {}),
-        #     "deterministic_inputs": config_data.get("deterministic_inputs", {}),
-        #     "market_assumptions": config_data.get("market_assumptions", {}),
-        #     "portfolio_rebalances": config_data.get("portfolio_rebalances", []),
-        #     "simulation_parameters": config_data.get("simulation_parameters", {}),
-        #     "shocks": config_data.get("shocks", []),
-        #     "paths": config_data.get("paths", {}),
-        # }
         config = Config(**config_data)
 
     except (OSError, tomllib.TOMLDecodeError) as e:
@@ -131,26 +118,7 @@ def main() -> None:
     shocks = config.shocks or []
     num_simulations = sim_params.num_simulations
 
-    # Validate portfolio rebalance weights
-    for reb in portfolio_rebalances:
-        reb_sum = sum(reb.weights.values())
-        assert np.isclose(reb_sum, 1.0), (
-            f"Rebalance weights for year {reb.year} sum to {reb_sum:.4f}, not 1.0."
-        )
-    print(
-        "All portfolio rebalance weights successfully validated: sum to 1.0 for each rebalance."
-    )
-
-    assert det_inputs.bank_upper_bound >= det_inputs.bank_lower_bound, (
-        f"Bounds invalid: Upper ({det_inputs.bank_upper_bound:,.0f}) "
-        + f"< Lower ({det_inputs.bank_lower_bound:,.0f})."
-    )
-    # print("Bank account bounds successfully validated: Upper bound >= Lower bound.")
-
-    print(
-        "All parameters successfully extracted and assigned to Python variables, "
-        + "including derived ones."
-    )
+    print("All parameters successfully extracted and assigned to Python variables, ")
 
     # Run Monte Carlo simulations in parallel
     simulation_results = []

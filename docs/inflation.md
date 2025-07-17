@@ -13,7 +13,7 @@ and provides tools for converting between nominal (future) and real (today's) va
 
 Inflation is randomly drawn together the others assets, because it can have
 a correlation with them, so you find inflation sequences in `state.monthly_return_reates_sequences["inflation"]`.
-`real_estate` and `inflation` are the only "assets" who has a mandatory key.
+`real_estate` and `inflation` are the only "assets" who have a mandatory key.
 The simulation manages inflation using two primary sequences from monthly data:
 
 ### 1. **Monthly Inflation Rate Sequence**

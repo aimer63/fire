@@ -6,7 +6,8 @@
 # currency throughout the simulation.
 
 # This is a comprehensive configuration file for the FIRE Monte Carlo simulation.
-# It is designed to exercise all features and validation rules of the configuration parser.
+# It is designed to exercise all features and validation rules of the configuration
+# parser.
 
 # ==============================================================================
 # 1. SIMULATION PARAMETERS
@@ -31,15 +32,18 @@ output_root = "output/"
 # 0 2025
 # 1 2026
 # 2 2027
-# 3 2028
-# 4 2029
-# 5 2030
-# 6
+# 3
 #
 # Initial values for each asset, mapping asset keys from the [assets] tables to amounts.
-[deterministic_inputs]
-initial_portfolio = { stocks = 200_000.0, bonds = 20_000.0, str = 15_000.0, eth = 10_000.0, ag = 10_000.0, real_estate = 0.0 }
+[deterministic_inputs.initial_portfolio]
+stocks = 200_000.0
+bonds = 20_000.0
+str = 15_000.0
+eth = 10_000.0
+ag = 10_000.0
+real_estate = 0.0
 
+[deterministic_inputs]
 # Initial cash/bank account balance.
 initial_bank_balance = 8000.0
 
@@ -65,11 +69,11 @@ pension_start_year = 37
 
 # --- Contributions & Expenses ---
 # One-time contributions (fixed nominal amounts, not inflation-adjusted).
-# planned_contributions = [
-#   { amount = 20_000, year = 2 },
-#   { amount = 20_000, year = 3 },
-#   { amount = 10_000, year = 4 },
-# ]
+planned_contributions = [
+  { year = 5, amount = 20_000 },
+  { year = 10, amount = 20_000 },
+  { year = 15, amount = 10_000 },
+]
 
 # Annual fee on all liquid investments (e.g., 0.0015 for 0.15%).
 annual_fund_fee = 0.0015
@@ -208,28 +212,28 @@ assets_order = [
 ]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
-matrix = [
-  # stk,  bnd,  str,  eth,  ag,   re,   pi
-  [1.00, -0.05, 0.02, 0.15, 0.29, 0.67, 0.02],   # Stocks
-  [-0.05, 1.00, 0.50, 0.03, -0.10, -0.10, 0.31], # Bonds
-  [0.02, 0.50, 1.00, 0.02, 0.03, 0.15, 0.38],    # STR
-  [0.15, 0.03, 0.02, 1.00, 0.09, 0.10, 0.04],    # Eth
-  [0.29, -0.10, 0.03, 0.09, 1.00, 0.08, -0.02],  # Ag
-  [0.67, -0.10, 0.15, 0.10, 0.08, 1.00, -0.09],  # Real Estate
-  [0.02, 0.31, 0.38, 0.04, -0.02, -0.09, 1.00],  # Inflation
-]
-
-# # Identity matrix. Indipendent variables, no correlation.
 # matrix = [
-#   #stk, bnd, str, eth, ag,  re,  pi
-#   [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
-#   [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Bonds
-#   [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # STR
-#   [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # Eth
-#   [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Ag
-#   [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Real Estate
-#   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
+#   # stk,  bnd,  str,  eth,  ag,   re,   pi
+#   [1.00, -0.05, 0.02, 0.15, 0.29, 0.67, 0.02],   # Stocks
+#   [-0.05, 1.00, 0.50, 0.03, -0.10, -0.10, 0.31], # Bonds
+#   [0.02, 0.50, 1.00, 0.02, 0.03, 0.15, 0.38],    # STR
+#   [0.15, 0.03, 0.02, 1.00, 0.09, 0.10, 0.04],    # Eth
+#   [0.29, -0.10, 0.03, 0.09, 1.00, 0.08, -0.02],  # Ag
+#   [0.67, -0.10, 0.15, 0.10, 0.08, 1.00, -0.09],  # Real Estate
+#   [0.02, 0.31, 0.38, 0.04, -0.02, -0.09, 1.00],  # Inflation
 # ]
+
+# Identity matrix. Indipendent variables, no correlation.
+matrix = [
+  #stk, bnd, str, eth, ag,  re,  pi
+  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
+  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Bonds
+  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # STR
+  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # Eth
+  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Ag
+  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Real Estate
+  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
+]
 # ==============================================================================
 # 6. SHOCKS
 # ==============================================================================
