@@ -10,7 +10,7 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
+export QT_QPA_PLATFORM=xcb
 CONFIG_FILE=${1:-configs/config.toml}
 
 python -m firestarter.main "$CONFIG_FILE"
-

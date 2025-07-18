@@ -68,15 +68,15 @@ def print_console_summary(
 
     print("\n--- Final Wealth Distribution Statistics (Successful Simulations) ---")
     print("Nominal Final Wealth:")
-    print(f"  Median (P50): {median_nominal_wealth:,.2f} EUR")
-    print(f"  25th Percentile (P25): {p25_nominal_wealth:,.2f} EUR")
-    print(f"  75th Percentile (P75): {p75_nominal_wealth:,.2f} EUR")
-    print(f"  Interquartile Range (P75-P25): {iqr_nominal_wealth:,.2f} EUR")
+    print(f"  Median (P50): {median_nominal_wealth:,.2f} ")
+    print(f"  25th Percentile (P25): {p25_nominal_wealth:,.2f} ")
+    print(f"  75th Percentile (P75): {p75_nominal_wealth:,.2f} ")
+    print(f"  Interquartile Range (P75-P25): {iqr_nominal_wealth:,.2f} ")
     print("Real Final Wealth (Today's Money):")
-    print(f"  Median (P50): {median_real_wealth:,.2f} EUR")
-    print(f"  25th Percentile (P25): {p25_real_wealth:,.2f} EUR")
-    print(f"  75th Percentile (P75): {p75_real_wealth:,.2f} EUR")
-    print(f"  Interquartile Range (P75-P25): {iqr_real_wealth:,.2f} EUR")
+    print(f"  Median (P50): {median_real_wealth:,.2f} ")
+    print(f"  25th Percentile (P25): {p25_real_wealth:,.2f} ")
+    print(f"  75th Percentile (P75): {p75_real_wealth:,.2f} ")
+    print(f"  Interquartile Range (P75-P25): {iqr_real_wealth:,.2f} ")
 
     # --- Nominal Results ---
     print("\n=== Nominal Results (cases selected by nominal final wealth) ===\n")
@@ -87,8 +87,8 @@ def print_console_summary(
 
     def print_case_nominal(label: str, case: Dict[str, Any]) -> None:
         print(f"{label} Successful Case:")
-        print(f"  Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} EUR")
-        print(f"  Final Wealth (Real): {case['final_real_wealth']:,.2f} EUR")
+        print(f"  Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} ")
+        print(f"  Final Wealth (Real): {case['final_real_wealth']:,.2f} ")
         initial_wealth = case["initial_total_wealth"]
         final_wealth = case["final_nominal_wealth"]
         months_lasted = case["months_lasted"]
@@ -109,8 +109,8 @@ def print_console_summary(
             )
             print(f"  Final Allocations (percent): {alloc_percent}")
         if allocations:
-            asset_str = ", ".join(f"{k}: {v:,.2f} EUR" for k, v in allocations.items())
-            print(f"  Nominal Asset Values: {asset_str}, Bank: {bank:,.2f} EUR")
+            asset_str = ", ".join(f"{k}: {v:,.2f} " for k, v in allocations.items())
+            print(f"  Nominal Asset Values: {asset_str}, Bank: {bank:,.2f} ")
             summed = sum(allocations.values()) + bank
             if abs(summed - total_nominal) > 1e-2:
                 print("  WARNING: Sum does not match final total wealth!")
@@ -131,8 +131,8 @@ def print_console_summary(
 
     def print_case_real(label: str, case: Dict[str, Any]) -> None:
         print(f"{label} Successful Case:")
-        print(f"  Final Wealth (Real): {case['final_real_wealth']:,.2f} EUR")
-        print(f"  Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} EUR")
+        print(f"  Final Wealth (Real): {case['final_real_wealth']:,.2f} ")
+        print(f"  Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} ")
         initial_wealth = case["initial_total_wealth"]
         final_wealth = case["final_real_wealth"]
         months_lasted = case["months_lasted"]
@@ -153,8 +153,8 @@ def print_console_summary(
             )
             print(f"  Final Allocations (percent): {alloc_percent}")
         if allocations:
-            asset_str = ", ".join(f"{k}: {v:,.2f} EUR" for k, v in allocations.items())
-            print(f"  Nominal Asset Values: {asset_str}, Bank: {bank:,.2f} EUR")
+            asset_str = ", ".join(f"{k}: {v:,.2f} " for k, v in allocations.items())
+            print(f"  Nominal Asset Values: {asset_str}, Bank: {bank:,.2f} ")
             summed = sum(allocations.values()) + bank
             if abs(summed - total_nominal) > 1e-2:
                 print("  WARNING: Sum does not match final total wealth!")
