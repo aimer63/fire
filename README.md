@@ -35,6 +35,22 @@ and market shocks over time to estimate the probability of financial success.
     trajectories, and distributions of outcomes.
   - Output directories for plots and reports are set via the config file and created automatically.
 
+  - Plots include:
+
+    Wealth evolution over time
+    ![Wealth evolution over time](docs/pics/wealth_evolution_samples_nominal.png)
+
+    Bank account balance trajectories
+    ![Bank account balance trajectories](docs/pics/bank_account_trajectories_nominal.png)
+
+    Duration distribution of failed cases
+    ![Duration distribution of failed cases](docs/pics/retirement_duration_distribution.png)
+
+    Distribution of final wealth for successful outcomes
+    ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
+
+    all the corrisponding plots in real terms and others.
+
 ---
 
 ## Typical Workflow
