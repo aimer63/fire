@@ -8,7 +8,7 @@ and market shocks over time to estimate the probability of financial success.
 
 ## Key features
 
-- **Configuration**  
+- **[Configuration](/docs/config.md)**  
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters and market shocks.
@@ -29,12 +29,12 @@ and market shocks over time to estimate the probability of financial success.
 - **[Reporting & Plotting](/docs/output.md)**
 
   - Prints a summary to the console.
-  - Generates a Markdown report summarizing the
+  - Generates a report in markdown summarizing the
     simulation results, including links to generated plots.
+    [Report example](docs/reports/summary.md).
   - Generates all plots for wealth evolution, bank account
     trajectories, and distributions of outcomes.
   - Output directories for plots and reports are set via the config file and created automatically.
-
   - Plots include:
 
     Wealth evolution over time
