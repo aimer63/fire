@@ -44,7 +44,8 @@ or a PowerShell script (Windows). Anyhow these two scripts are in the project ro
 
 ### Option 1: Bash script (Linux/macOS)
 
-1. Create a file named `firestarter.sh` with the following content:
+1. Create a file named `firestarter.sh` with the following content, or use the one
+   provided in the root of the project, i.e. [firestarter.sh](../firestarter.sh):
 
    ```sh
    #!/bin/bash
@@ -76,7 +77,8 @@ or a PowerShell script (Windows). Anyhow these two scripts are in the project ro
 
 ### Option 2: PowerShell script (Windows)
 
-1. Create a file named `firestarter.ps1` with following content:
+1. Create a file named `firestarter.ps1` with following content, or use the one
+   provided in the root of the project, i.e. [firestarter.ps1](../firestarter.ps1):
 
    ```powershell
    # Runs the firestarter simulation.
