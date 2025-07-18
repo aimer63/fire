@@ -7,17 +7,36 @@
 
 from typing import Any, List, Dict
 import numpy as np
+import tomli_w
 import json
 import os
 from datetime import datetime
+import re
 from firestarter.core.helpers import calculate_cagr
 
 
 def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:
     """Formats configuration parameters into a Markdown block."""
     md_config_lines = ["### Loaded Configuration Parameters\n"]
-    md_config_lines.append("```json\n")
-    md_config_lines.append(json.dumps(config, indent=2, ensure_ascii=False) + "\n")
+    # md_config_lines.append("```json\n")
+    # md_config_lines.append(json.dumps(config, indent=2, ensure_ascii=False) + "\n")
+    # md_config_lines.append("```\n\n")
+    toml_str = tomli_w.dumps(config)
+    # Reformat matrix rows: replace each multi-line row with a single line
+    # toml_str = re.sub(
+    #     r"\[\s*([\d\.,\s]+?)\s*\]",
+    #     lambda m: "[" + ", ".join(x.strip() for x in m.group(1).split(",")) + "]",
+    #     toml_str,
+    # )
+    toml_str = re.sub(
+        r"\[\s*([\d\.,\s]+?)\s*\]",
+        lambda m: "["
+        + ", ".join(x.strip() for x in m.group(1).split(",") if x.strip())
+        + "]",
+        toml_str,
+    )
+    md_config_lines.append("```toml\n")
+    md_config_lines.append(toml_str + "\n")
     md_config_lines.append("```\n\n")
     return md_config_lines
 
@@ -42,11 +61,9 @@ def format_case_for_markdown(
         cagr_wealth_for_calc_val = final_nominal_wealth
         md_case_lines.append(f"#### {label} Successful Case (Nominal):\n\n")
         md_case_lines.append(
-            f"- **Final Wealth (Nominal):** {final_wealth_display:,.2f} EUR\n"
+            f"- **Final Wealth (Nominal):** {final_wealth_display:,.2f} \n"
         )
-        md_case_lines.append(
-            f"- **Final Wealth (Real):** {final_wealth_other:,.2f} EUR\n"
-        )
+        md_case_lines.append(f"- **Final Wealth (Real):** {final_wealth_other:,.2f} \n")
         cagr_label = "Nominal"
     else:  # Real
         final_wealth_display = final_real_wealth
@@ -54,10 +71,10 @@ def format_case_for_markdown(
         cagr_wealth_for_calc_val = final_real_wealth
         md_case_lines.append(f"#### {label} Successful Case (Real):\n\n")
         md_case_lines.append(
-            f"- **Final Wealth (Real):** {final_wealth_display:,.2f} EUR\n"
+            f"- **Final Wealth (Real):** {final_wealth_display:,.2f} \n"
         )
         md_case_lines.append(
-            f"- **Final Wealth (Nominal):** {final_wealth_other:,.2f} EUR\n"
+            f"- **Final Wealth (Nominal):** {final_wealth_other:,.2f} \n"
         )
         cagr_label = "Real"
 
@@ -79,9 +96,9 @@ def format_case_for_markdown(
 
     asset_value_parts = []
     for k, v_asset in allocations.items():
-        asset_value_parts.append(f"{k}: {v_asset:,.2f} EUR")
+        asset_value_parts.append(f"{k}: {v_asset:,.2f} ")
     md_case_lines.append(
-        f"- **Nominal Asset Values:** {', '.join(asset_value_parts)}, Bank: {bank:,.2f} EUR\n"
+        f"- **Nominal Asset Values:** {', '.join(asset_value_parts)}, Bank: {bank:,.2f} \n"
     )
     md_case_lines.append("\n")
     return md_case_lines
@@ -112,8 +129,6 @@ def generate_markdown_report(
     md_content.append(f"- **FIRE Plan Success Rate:** {success_rate:.2f}%\n")
     md_content.append(f"- **Number of failed simulations:** {num_failed}\n")
 
-    # failed_months = [r["months_lasted"] for r in simulation_results if not r["success"]]
-    # avg_months_failed = sum(failed_months) / num_failed
     if num_failed > 0:
         avg_months_failed = (
             sum(r["months_lasted"] for r in simulation_results if not r["success"])
@@ -161,16 +176,16 @@ def generate_markdown_report(
             "|-------------------------------|-------------------------------|-----------------------------------|\n"
         )
         md_content.append(
-            f"| Median (P50)                  | {median_nominal_wealth:,.2f} EUR    | {median_real_wealth:,.2f} EUR           |\n"
+            f"| Median (P50)                  | {median_nominal_wealth:,.2f}  | {median_real_wealth:,.2f}         |\n"
         )
         md_content.append(
-            f"| 25th Percentile (P25)         | {p25_nominal_wealth:,.2f} EUR     | {p25_real_wealth:,.2f} EUR           |\n"
+            f"| 25th Percentile (P25)         | {p25_nominal_wealth:,.2f}     | {p25_real_wealth:,.2f}            |\n"
         )
         md_content.append(
-            f"| 75th Percentile (P75)         | {p75_nominal_wealth:,.2f} EUR     | {p75_real_wealth:,.2f} EUR           |\n"
+            f"| 75th Percentile (P75)         | {p75_nominal_wealth:,.2f}     | {p75_real_wealth:,.2f}            |\n"
         )
         md_content.append(
-            f"| Interquartile Range (P75-P25) | {iqr_nominal_wealth:,.2f} EUR     | {iqr_real_wealth:,.2f} EUR           |\n"
+            f"| Interquartile Range (P75-P25) | {iqr_nominal_wealth:,.2f}     | {iqr_real_wealth:,.2f}            |\n"
         )
         md_content.append("\n")
 
