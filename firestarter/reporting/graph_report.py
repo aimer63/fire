@@ -23,7 +23,7 @@ def plot_retirement_duration_distribution(
         bins=np.arange(0, total_retirement_years + 1, 1.0).tolist(),
         edgecolor="black",
     )
-    plt.title("Distribution of Retirement Duration for Failed Simulations")
+    plt.title("Distribution of duration for Failed Simulations")
     plt.xlabel("Years Lasted")
     plt.ylabel("Number of Simulations")
     plt.grid(axis="y", alpha=0.75)
@@ -221,13 +221,9 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
             alpha=1.0,
         )
 
-    plt.title(
-        f"Sampled Wealth Evolution Over Retirement ({'Real' if real else 'Nominal'} Terms)"
-    )
-    plt.xlabel("Years in Retirement")
-    plt.ylabel(
-        f"Total Wealth (EUR{" in today's money" if real else ' at time of value'})"
-    )
+    plt.title(f"Sampled Wealth Evolution({'Real' if real else 'Nominal'} Terms)")
+    plt.xlabel("Years")
+    plt.ylabel(f"Total Wealth ({'real value' if real else 'nominal value'})")
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.yscale("log")
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
@@ -272,8 +268,8 @@ def plot_failed_wealth_evolution_samples(
     plt.title(
         f"Sampled Wealth Evolution for Failed Simulations ({'Real' if real else 'Nominal'} Terms)"
     )
-    plt.xlabel("Years in Retirement")
-    plt.ylabel(f"Total Wealth ({'Real' if real else 'Nominal'} Terms)")
+    plt.xlabel("Years")
+    plt.ylabel(f"Total Wealth ({'real value' if real else 'nominal value'})")
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.yscale("log")
     plt.tight_layout()
@@ -378,8 +374,8 @@ def plot_bank_account_trajectories(
     )
 
     plt.title(f"Bank Account Trajectories ({'Real' if real else 'Nominal'})")
-    plt.xlabel("Years in Retirement")
-    plt.ylabel(f"Bank Account Balance (EUR{" in today's money" if real else ''})")
+    plt.xlabel("Years")
+    plt.ylabel(f"Bank Account Balance ({'real value' if real else 'nominal value'})")
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
     plt.tight_layout(rect=(0, 0, 0.85, 1))

@@ -63,13 +63,17 @@ and market shocks over time to estimate the probability of financial success.
 2. **[Run the simulation](/docs/usage.md)**  
    From the project root, use the provided shell script or Python command:
 
-   ```sh
+   ```shell
    ./firestarter.sh configs/config.toml
    ```
 
    or
 
-   ```sh
+   ```shell
+   export OMP_NUM_THREADS=1
+   export OPENBLAS_NUM_THREADS=1
+   export MKL_NUM_THREADS=1
+   export NUMEXPR_NUM_THREADS=1
    python -m firestarter.main configs/config.toml
    ```
 
@@ -173,6 +177,7 @@ pip install -r requirements.txt
 If you have tests in the `tests/` directory, run them with:
 
 ```sh
+cd fire
 pytest
 ```
 
