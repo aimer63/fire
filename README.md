@@ -31,7 +31,9 @@ and market shocks over time to estimate the probability of financial success.
   - Prints a summary to the console.
   - Generates a report in markdown summarizing the
     simulation results, including links to generated plots.
+
     [Report example](docs/reports/summary.md).
+
   - Generates all plots for wealth evolution, bank account
     trajectories, and distributions of outcomes.
   - Output directories for plots and reports are set via the config file and created automatically.
