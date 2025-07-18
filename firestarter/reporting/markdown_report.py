@@ -18,16 +18,8 @@ from firestarter.core.helpers import calculate_cagr
 def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:
     """Formats configuration parameters into a Markdown block."""
     md_config_lines = ["### Loaded Configuration Parameters\n"]
-    # md_config_lines.append("```json\n")
-    # md_config_lines.append(json.dumps(config, indent=2, ensure_ascii=False) + "\n")
-    # md_config_lines.append("```\n\n")
     toml_str = tomli_w.dumps(config)
     # Reformat matrix rows: replace each multi-line row with a single line
-    # toml_str = re.sub(
-    #     r"\[\s*([\d\.,\s]+?)\s*\]",
-    #     lambda m: "[" + ", ".join(x.strip() for x in m.group(1).split(",")) + "]",
-    #     toml_str,
-    # )
     toml_str = re.sub(
         r"\[\s*([\d\.,\s]+?)\s*\]",
         lambda m: "["
