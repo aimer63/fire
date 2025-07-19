@@ -4,9 +4,10 @@
 
 ### Key Steps
 
-1. **User Configuration**: The user will provide a full, symmetric positive semidefinite
+1. **User Configuration**: The user will provide a full, symmetric positive semi-definite
    **correlation matrix** in the configuration file. This matrix will define the
-   correlation coefficient for every pair of assets (e.g., stocks vs. bonds, bonds vs. inflation).
+   correlation coefficient for every pair of assets and inflation (e.g., stocks vs. bonds,
+   bonds vs. inflation).
 
 2. **Build Covariance Matrix**: At the start of a simulation run, the engine will take the
    user provided correlation matrix and the already configured annual sample mean and standard
@@ -37,17 +38,16 @@ accidental omissions.
 # The `assets` list must match keys from the [assets] tables, plus "inflation".
 # The `matrix` must be square and correspond to the `assets` list order.
 [correlation_matrix]
-assets_order = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+assets_order = ["stocks", "bonds", "str", "real_estate", "inflation"]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
 # matrix = [
-   # Stk,   Bnd,   STR,   Fun,   R.Est, Infl
-   [1.00, -0.30, 0.00, 0.45, 0.15, -0.20], # Stocks
-   [-0.30, 1.00, 0.40, -0.10, 0.05, 0.10], # Bonds
-   [0.00, 0.40, 1.00, -0.05, 0.00, 0.60],  # STR
-   [0.45, -0.10, -0.05, 1.00, 0.25, 0.15], # Fun
-   [0.15, 0.05, 0.00, 0.25, 1.00, 0.05],   # Real Estate
-   [-0.20, 0.10, 0.60, 0.15, 0.05, 1.00],  # Inflation
+   # stk,  bnd,  str,  r.est, infl
+   [1.00, -0.30, 0.00, 0.15, -0.20], # stocks
+   [-0.30, 1.00, 0.40, 0.05, 0.10],  # bonds
+   [0.00,  0.40, 1.00, 0.00, 0.60],  # str (short term rate money market)
+   [0.15,  0.05, 0.00, 1.00, 0.05],  # real_estate
+   [-0.20, 0.10, 0.60, 0.05, 1.00],  # inflation
 ]
 ```
 
