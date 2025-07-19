@@ -170,6 +170,8 @@ dependence in between assets and inflation.
 - The order of assets is specified in the parameter `assets_order`.
 - All elements must be between -1 and 1.
 
+See [Correlation](correlation.md)
+
 **Example:**
 
 ```toml

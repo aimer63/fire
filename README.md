@@ -26,7 +26,7 @@ asset allocation.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance](https://finance.yahoo.com/), [Investing.com](https://www.investing.com/), [Federal Reserve Economic Data](https://fred.stlouisfed.org/), etc.
   Inflation, although not an asset, is defined in this section because it is correlated
-  with assets through a correlation matrix, and the mechanism for generating random
+  with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating random
   values for assets and inflation from `mu` and `sigma` is the same.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
@@ -276,6 +276,44 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 - [Results](docs/output.md): Detailed explanation of all outputs of the simulation.
 - [Monte Carlo Theory](docs/montecarlo.md): Mathematical background and simulation theory.
 
----
+## **For more details, see the docstrings in each module.**
 
-**For more details, see the docstrings in each module.**
+## Further Readings
+
+- **Books**:
+
+  - _The Bogleheads’ Guide to Investing_ by Taylor Larimore, Mel Lindauer, and Michael LeBoeuf:
+    A practical guide to low-cost investing and financial independence, covering asset
+    allocation and risk management.
+  - _Quantitative Finance for Dummies_ by Steve Bell: An accessible introduction to
+    financial modeling, including Monte Carlo simulations and volatility.
+  - _The Millionaire Next Door_ by Thomas J. Stanley and William D. Danko: insights
+    into wealth-building habits and strategies for financial independence.
+
+- **Online Resources**:
+
+  - [Bogleheads Wiki](https://www.bogleheads.org/wiki/Main_Page): A comprehensive resource on investing, retirement planning
+    and portfolio management, with a focus on low-cost, passive strategies.
+  - [Investopedia: Monte Carlo Simulation](https://www.investopedia.com/terms/m/montecarlosimulation.asp): A clear explanation of Monte Carlo methods
+    in financial planning and risk analysis.
+  - [Portfolio Visualizer](https://www.portfoliovisualizer.com/): A free tool for Monte Carlo simulations and portfolio analysis,
+    useful for testing your FIRE assumptions.
+  - [Federal Reserve Economic Data (FRED)](https://fred.stlouisfed.org/): Historical data on inflation, interest rates
+    and asset returns to inform your simulation parameters.
+
+- **Academic/Technical**:
+
+  - _“Monte Carlo Methods in Financial Engineering”_ by Paul Glasserman: A rigorous text
+    on Monte Carlo techniques for financial modeling, including asset return simulations.
+  - [“Asset Return Volatility” (Investopedia)](https://www.investopedia.com/terms/v/volatility.asp): Explains volatility as the standard deviation
+    of returns, key for configuring your `mu` and `sigma` parameters.
+  - [Coursera: Financial Engineering and Risk Management](https://www.coursera.org/specializations/financial-engineering): An online course covering
+    advanced topics like correlation matrices and portfolio optimization.
+
+- **Communities**:
+  - [r/financialindependence](https://www.reddit.com/r/financialindependence/): A Reddit community discussing FIRE strategies, with real-world
+    insights and case studies.
+  - [X Platform: #FIRE](https://x.com/explore/tabs/topics/financial-independence): Follow discussions on FIRE and Monte Carlo simulations for real-time
+    community insights.
+
+These resources provide a mix of practical, theoretical, and data-driven content to enhance your use of this tool and FIRE planning knowledge.
