@@ -11,10 +11,10 @@ and market shocks over time to estimate the probability of financial success.
 - **[Configuration](/docs/config.md)**  
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
-  assets and inflation correlation, simulation parameters and market shocks.
+  assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
 
-  Investment assets are defined in the configuration, for each asset you specify `mu`,
-  the sample mean of return rate and `sigma`, the sample standard deviation.
+  Investment assets are defined in the configuration. For each asset you specify `mu`,
+  the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance](https://finance.yahoo.com/), [Investing.com](https://www.investing.com/), [Federal Reserve Economic Data](https://fred.stlouisfed.org/), etc.
   Inflation, although not an asset, is defined in this section because it is correlated
@@ -63,7 +63,7 @@ and market shocks over time to estimate the probability of financial success.
   # mu_pi = 0.0220
   # sigma_pi = 0.0229
   #
-  # More relistic for the future
+  # More conservative for the future
   [assets.inflation]
   mu = 0.025
   sigma = 0.025
@@ -71,6 +71,7 @@ and market shocks over time to estimate the probability of financial success.
   ```
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
+
   The main simulation logic, for each run it:
 
   - Initializes assets values and bank balance
@@ -82,6 +83,16 @@ and market shocks over time to estimate the probability of financial success.
   - Applies market shocks if configured
   - Optionally simulates a house purchase at a specified time
   - Tracks assets allocation
+
+  The simulation invest all fund in bank account exceeding the `bank_upper_bound`
+  in liquid assets.
+
+  **The simulation assumes all assets, liabilities, incomes, expenses, and flows are
+  denominated in a single currency. There is no currency conversion or multi-currency support;
+  all values must be provided and interpreted in the same currency throughout the simulation.**
+
+  **The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
+  contributions, etc. are to be considered net of taxes.**
 
 - **[Reporting & Plotting](/docs/output.md)**
 
