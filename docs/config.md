@@ -1,10 +1,13 @@
 # Configuration Reference: FIRE Monte Carlo Simulation Tool
 
 > **Note:**  
-> The simulation assumes all assets, liabilities, incomes, expenses, and flows are denominated in a
-> single currency of your choice.  
+> _The simulation assumes all assets, liabilities, incomes, expenses, and flows
+> are denominated in a single currency of your choice.
 > There is no currency conversion or multi-currency support; all values must be provided and
-> interpreted in the same currency throughout the simulation.
+> interpreted in the same currency throughout the simulation._
+>
+> _The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
+> contributions, etc. are to be considered net of taxes._
 
 This document explains all parameters available in the main TOML configuration file (`config.toml`).
 
@@ -16,6 +19,11 @@ This document explains all parameters available in the main TOML configuration f
 
   - **num_simulations** _(int)_  
     Number of Monte Carlo simulation runs to perform.
+
+  - **random_seed** _(int)_  
+    Seed for random number generation.  
+    Use any integer for reproducible results.  
+    If omitted, results will vary each run.
 
 ---
 
@@ -156,7 +164,7 @@ is_liquid = false
 
 You specify correlations in between asset returns and inflation using a
 `[correlation_matrix]` parameter. This matrix controls the statistical
-dependence between assets and inflation.
+dependence in between assets and inflation.
 
 - The matrix must be square, symmetric and positive semi-definite, with 1.0 on the diagonal.
 - The order of assets is specified in the parameter `assets_order`.

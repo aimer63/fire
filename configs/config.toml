@@ -15,7 +15,7 @@
 [simulation_parameters]
 # Number of Monte Carlo simulation runs to perform.
 num_simulations = 10_000
-# random_seed = 42        # Seed for random number generation, can be any integer
+random_seed = 42         # Seed for random number generation, can be any integer
 
 # ==============================================================================
 # 2. PATHS
