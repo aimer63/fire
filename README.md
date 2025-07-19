@@ -13,10 +13,67 @@ and market shocks over time to estimate the probability of financial success.
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters and market shocks.
 
-- **[Simulation Engine](/docs/simulation_engine.md)**  
+  Investment assets are defined in the configuration, for each asset you specify `mu`,
+  the sample mean of return rate and `sigma`, the sample standard deviation.
+  You can find these data for a specific period on several online sources, such as
+  [Yahoo Finance](https://finance.yahoo.com/), [Investing.com](https://www.investing.com/), [Federal Reserve Economic Data](https://fred.stlouisfed.org/), etc.
+  Inflation, although not an asset, is defined in this section because it is correlated
+  with assets through a correlation matrix, and the mechanism for generating random
+  values for assets and inflation from `mu` and `sigma` is the same.
+  The inflation asset is mandatory because it's used to track all the real values, wealth,
+  expenses...
+
+  **Example**:
+
+  ```toml
+  # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025
+  # MU: Arithmetic Mean
+  # SIGMA: Arithmetic Standard Deviation
+  # mu = 0.1017
+  # sigma = 0.1478
+  #
+  # The 2016-2025 period was exceptionally strong for global equities
+  # For a long-term simulation (30+ years), it's advisable to temper expectations
+  # based on very long-term historical averages and current market valuations
+  [assets.stocks]
+  mu = 0.07
+  sigma = 0.15
+  is_liquid = true
+  withdrawal_priority = 2
+
+  # European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR)
+  # annual total returns from 2004-2023.
+  # MU: Arithmetic Mean
+  # SIGMA: Arithmetic Standard Deviation
+  # bond_mu = 0.0193
+  # bond_sigma = 0.0535
+  #
+  # The 2004-2023 period includes many years of historically very low and even
+  # negative interest rates in Europe. The environment has shifted, and current
+  # yields are significantly higher.
+  [assets.bonds]
+  mu = 0.03
+  sigma = 0.055
+  is_liquid = true
+  withdrawal_priority = 1
+
+  # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
+  # MU_PI: Arithmetic Mean of inflation
+  # SIGMA_PI: Arithmetic Standard Deviation of inflation
+  # mu_pi = 0.0220
+  # sigma_pi = 0.0229
+  #
+  # More relistic for the future
+  [assets.inflation]
+  mu = 0.025
+  sigma = 0.025
+  is_liquid = false
+  ```
+
+- **[Simulation Engine](/docs/simulation_engine.md)**
   The main simulation logic, for each run it:
 
-  - Initializes asset values and bank balance
+  - Initializes assets values and bank balance
   - Simulates monthly/annual investment returns, inflation, and expenses
   - Handles salary, pension, contributions, and planned extra expenses
   - Manages liquidity (bank account bounds, topping up or investing excess)
@@ -32,52 +89,52 @@ and market shocks over time to estimate the probability of financial success.
   - Generates a report in markdown summarizing the
     simulation results, including links to generated plots.
 
-    [Report example](docs/reports/summary.md).
+  [Report example](docs/reports/summary.md).
 
   - Generates all plots for wealth evolution, bank account
     trajectories, and distributions of outcomes.
   - Output directories for plots and reports are set via the config file and created automatically.
   - Plots include:
 
-    Wealth evolution over time
-    ![Wealth evolution over time](docs/pics/wealth_evolution_samples_nominal.png)
+  Wealth evolution over time
+  ![Wealth evolution over time](docs/pics/wealth_evolution_samples_nominal.png)
 
-    Bank account balance trajectories
-    ![Bank account balance trajectories](docs/pics/bank_account_trajectories_nominal.png)
+  Bank account balance trajectories
+  ![Bank account balance trajectories](docs/pics/bank_account_trajectories_nominal.png)
 
-    Duration distribution of failed cases
-    ![Duration distribution of failed cases](docs/pics/retirement_duration_distribution.png)
+  Duration distribution of failed cases
+  ![Duration distribution of failed cases](docs/pics/retirement_duration_distribution.png)
 
-    Distribution of final wealth for successful outcomes
-    ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
+  Distribution of final wealth for successful outcomes
+  ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
 
-    all the corrisponding plots in real terms and others.
+  all the corrisponding plots in real terms and others.
 
 ---
 
 ## Typical Workflow
 
-1. **Configure your plan**  
+1. **Configure your plan**
    Edit a TOML file in `configs/` (e.g., `configs/config.toml`), specifying your starting wealth,
-   income, expenses, investment strategy, simulation parameters, and any market shocks.  
+   income, expenses, investment strategy, simulation parameters, and any market shocks.
    You can set the output directory root in the `[paths]` section.
 
-2. **[Run the simulation](/docs/usage.md)**  
+2. **[Run the simulation](/docs/usage.md)**
    From the project root, use the provided shell script or Python command:
 
-   ```shell
-   ./firestarter.sh configs/config.toml
-   ```
+```shell
+./firestarter.sh configs/config.toml
+```
 
-   or
+or
 
-   ```shell
-   export OMP_NUM_THREADS=1
-   export OPENBLAS_NUM_THREADS=1
-   export MKL_NUM_THREADS=1
-   export NUMEXPR_NUM_THREADS=1
-   python -m firestarter.main configs/config.toml
-   ```
+```shell
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+python -m firestarter.main configs/config.toml
+```
 
 3. **Review the results**
    - **Markdown report**: Generated in `output/reports/`, summarizing success rate, failed
@@ -87,7 +144,7 @@ and market shocks over time to estimate the probability of financial success.
 
 ---
 
-## Configuration Example (`configs/config.toml`)
+## Configuration Example
 
 ```toml
 [simulation_parameters]
