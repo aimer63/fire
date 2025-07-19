@@ -276,7 +276,7 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 - [Results](docs/output.md): Detailed explanation of all outputs of the simulation.
 - [Monte Carlo Theory](docs/montecarlo.md): Mathematical background and simulation theory.
 
-## **For more details, see the docstrings in each module.**
+**For more details, see the docstrings in each module.**
 
 ## Further Readings
 
