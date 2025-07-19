@@ -296,8 +296,6 @@ For mathematical background, advanced usage, and additional guides, see the [doc
     and portfolio management, with a focus on low-cost, passive strategies.
   - [Investopedia: Monte Carlo Simulation](https://www.investopedia.com/terms/m/montecarlosimulation.asp): A clear explanation of Monte Carlo methods
     in financial planning and risk analysis.
-  - [Portfolio Visualizer](https://www.portfoliovisualizer.com/): A free tool for Monte Carlo simulations and portfolio analysis,
-    useful for testing your FIRE assumptions.
   - [Federal Reserve Economic Data (FRED)](https://fred.stlouisfed.org/): Historical data on inflation, interest rates
     and asset returns to inform your simulation parameters.
 
@@ -305,10 +303,10 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
   - _“Monte Carlo Methods in Financial Engineering”_ by Paul Glasserman: A rigorous text
     on Monte Carlo techniques for financial modeling, including asset return simulations.
+  - _Options, Futures, and Other Derivatives_ by John C. Hull: A foundational text on derivatives pricing,
+    volatility modeling, and Monte Carlo simulations, ideal for understanding asset return dynamics.
   - [“Asset Return Volatility” (Investopedia)](https://www.investopedia.com/terms/v/volatility.asp): Explains volatility as the standard deviation
     of returns, key for configuring your `mu` and `sigma` parameters.
-  - [Coursera: Financial Engineering and Risk Management](https://www.coursera.org/specializations/financial-engineering): An online course covering
-    advanced topics like correlation matrices and portfolio optimization.
 
 - **Communities**:
   - [r/financialindependence](https://www.reddit.com/r/financialindependence/): A Reddit community discussing FIRE strategies, with real-world
