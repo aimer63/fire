@@ -1,3 +1,5 @@
+<img src="fire.jpg" alt="FIRE Icon" width="120" height="100" />
+
 # FIRE Monte Carlo Simulation Tool
 
 This project is a Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement)
@@ -267,7 +269,7 @@ pytest
 
 For mathematical background, advanced usage, and additional guides, see the [docs/](docs/) folder.
 
-### 📚 Documentation Index
+### 📃 Documentation Index
 
 - [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a
   GitHub release.
@@ -278,7 +280,7 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 **For more details, see the docstrings in each module.**
 
-## Further Readings
+## 📚 Further Readings
 
 - **Books**:
 
@@ -301,11 +303,12 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 - **Academic/Technical**:
 
-  - _“Monte Carlo Methods in Financial Engineering”_ by Paul Glasserman: A rigorous text
+  - _Monte Carlo Methods in Financial Engineering_ by Paul Glasserman: A rigorous text
     on Monte Carlo techniques for financial modeling, including asset return simulations.
-  - _Options, Futures, and Other Derivatives_ by John C. Hull: A foundational text on derivatives pricing,
-    volatility modeling, and Monte Carlo simulations, ideal for understanding asset return dynamics.
-  - [“Asset Return Volatility” (Investopedia)](https://www.investopedia.com/terms/v/volatility.asp): Explains volatility as the standard deviation
+  - _Options, Futures, and Other Derivatives_ by John C. Hull: A foundational text on
+    derivatives pricing, volatility modeling, and Monte Carlo simulations, ideal for
+    understanding asset return dynamics.
+  - [Investopedia: Asset Return Volatility](https://www.investopedia.com/terms/v/volatility.asp): Explains volatility as the standard deviation
     of returns, key for configuring your `mu` and `sigma` parameters.
 
 - **Communities**:
