@@ -6,6 +6,14 @@ and market shocks over time to estimate the probability of financial success.
 
 ---
 
+## Purpose
+
+This tool aim to help users understand the likelihood of a retirement plan succeeding under
+uncertainty, visualize possible outcomes, and make informed decisions about savings, spending, and
+asset allocation.
+
+---
+
 ## Key features
 
 - **[Configuration](/docs/config.md)**  
@@ -85,14 +93,14 @@ and market shocks over time to estimate the probability of financial success.
   - Tracks assets allocation
 
   The simulation invest all fund in bank account exceeding the `bank_upper_bound`
-  in liquid assets.
+  in _"liquid"_ assets.
 
-  **The simulation assumes all assets, liabilities, incomes, expenses, and flows are
+  **_The simulation assumes all assets, liabilities, incomes, expenses, and flows are
   denominated in a single currency. There is no currency conversion or multi-currency support;
-  all values must be provided and interpreted in the same currency throughout the simulation.**
+  all values must be provided and interpreted in the same currency throughout the simulation._**
 
-  **The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
-  contributions, etc. are to be considered net of taxes.**
+  **_The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
+  contributions, etc. are to be considered net of taxes._**
 
 - **[Reporting & Plotting](/docs/output.md)**
 
@@ -126,11 +134,13 @@ and market shocks over time to estimate the probability of financial success.
 ## Typical Workflow
 
 1. **Configure your plan**
+
    Edit a TOML file in `configs/` (e.g., `configs/config.toml`), specifying your starting wealth,
    income, expenses, investment strategy, simulation parameters, and any market shocks.
    You can set the output directory root in the `[paths]` section.
 
 2. **[Run the simulation](/docs/usage.md)**
+
    From the project root, use the provided shell script or Python command:
 
 ```shell
@@ -244,20 +254,12 @@ pip install -r requirements.txt
 
 ## Running Tests
 
-If you have tests in the `tests/` directory, run them with:
+Tests are in the `tests/` directory, run them with:
 
 ```sh
 cd fire
 pytest
 ```
-
----
-
-## Purpose
-
-This tool helps users understand the likelihood of a retirement plan succeeding under
-uncertainty, visualize possible outcomes, and make informed decisions about savings, spending, and
-asset allocation.
 
 ---
 
