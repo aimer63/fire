@@ -1,6 +1,10 @@
+# FIRE Monte Carlo Simulation Tool
+
 <img src="fire.jpg" alt="FIRE Icon" width="120" height="100" />
 
-# FIRE Monte Carlo Simulation Tool
+![Logo](fire-small.jpg)
+
+---
 
 This project is a Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement)
 planning. It models a user's retirement plan, simulating investment growth, withdrawals, expenses,
