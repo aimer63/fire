@@ -44,6 +44,7 @@ def test_record_results_initialization_and_first_month(
         "str_history": [None] * total_months,
         "fun_history": [None] * total_months,
         "real_estate_history": [None] * total_months,
+        "inflation_history": [None] * total_months,
     }
 
     # Record state for month 0
@@ -89,6 +90,7 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
         "str_history": [None] * total_months,
         "fun_history": [None] * total_months,
         "real_estate_history": [None] * total_months,
+        "inflation_history": [None] * total_months,
     }
     # Record for month 0 with realistic values, assuming a house is owned
     sim.state.current_bank_balance = 20_000.0

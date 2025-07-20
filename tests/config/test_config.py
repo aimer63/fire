@@ -76,9 +76,8 @@ def test_assets_validation_unique_withdrawal_priority(
     """
     invalid_assets_data = {
         "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1),
-        "bonds": Asset(
-            mu=0.02, sigma=0.05, is_liquid=True, withdrawal_priority=1
-        ),  # Duplicate
+        "bonds": Asset(mu=0.02, sigma=0.05, is_liquid=True, withdrawal_priority=1),
+        "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
     }
     with pytest.raises(
         ValidationError, match="Withdrawal priorities for liquid assets must be unique"
@@ -164,7 +163,8 @@ def test_portfolio_rebalances_unique_years(basic_deterministic_inputs):
             assets={
                 "stocks": Asset(
                     mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1
-                )
+                ),
+                "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
             },
             deterministic_inputs=basic_deterministic_inputs,
             portfolio_rebalances=rebalances,
