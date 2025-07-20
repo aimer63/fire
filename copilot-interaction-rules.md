@@ -15,28 +15,23 @@ results are logically correct and reflect the true state of the code and data.**
 **If the user's instructions need clarification, Copilot will ask the user for clarification. Do not
 guess or provide a bogus fix or implementation.**
 
-## 🔒 Type Safety & Explicitness
+## Type Safety & Explicitness
 
 - Strict type safety is preferred.
 - Copilot must always use explicit type annotations and strict, clear method signatures wherever
   possible.
 - Favor static, type-safe code throughout all code and suggestions.
-- Avoid silent defaults, let the bugs and the errors surface quickly. Especially in prototyping
-  phases, it is crucial to catch errors early. Prefer direct dict access over `get` methods, and
-  avoid silent defaults like `x if x is None`.
 
-## 🔄 Development Workflow
+## Development Workflow
 
 1. **Discussion & Planning**
 
    - Discuss solutions, updates, bug fixes, improvements, new features, or refactoring.
-   - Document decisions and plans in the TODO.md file.
 
 2. **Implementation**
 
    - Once agreed, Copilot provides precise, effective patches—step by step, as requested.
    - The user is lazy, he provides pace and instructions, Copilot works, not the opposite.
-   - Copilot respect the rules of the linter.
 
 3. **Testing & Debugging**
 
@@ -47,8 +42,7 @@ guess or provide a bogus fix or implementation.**
    - Choose the next implementation or improvement to tackle.
 
 5. **Repeat**
+
    - Return to step 1 and continue the cycle.
 
 ---
-
-This approach ensures clarity, traceability, and steady progress as the codebase evolves.

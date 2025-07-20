@@ -40,5 +40,6 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 ```
 
 - [ ] Think about house purchase and illiquid assets management.
+- [ ] Study inflation persistence/stickiness and find a better model than lognormal
 
 ---

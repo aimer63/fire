@@ -14,7 +14,16 @@ license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy", "pandas", "matplotlib", "pydantic", "tomli", "tqdm"]
+dependencies = [
+  "numpy",
+  "pandas",
+  "pandas-stubs",
+  "matplotlib",
+  "pydantic",
+  "tomli",
+  "tomli-w",
+  "tqdm",
+]
 
 [project.scripts]
 fire = "firestarter.main:main"

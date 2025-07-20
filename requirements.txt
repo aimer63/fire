@@ -2,7 +2,7 @@ numpy
 pandas
 pandas-stubs
 matplotlib
-pdantic
+pydantic
 tomli
 tomli-w
 tqdm
