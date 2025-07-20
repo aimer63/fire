@@ -119,7 +119,8 @@ asset allocation.
   - Generates all plots for wealth evolution, bank account
     trajectories, and distributions of outcomes.
   - Output directories for plots and reports are set via the config file and created automatically.
-  - Plots include:
+
+  Plots include:
 
   Wealth evolution over time
   ![Wealth evolution over time](docs/pics/wealth_evolution_samples_nominal.png)
@@ -215,7 +216,7 @@ is_liquid = false
 assets_order = ["stocks", "bonds", "inflation"]
 # Identity matrix. Indipendent variables, no correlation.
 matrix = [
-  #stk, bnd, pi
+#  stk, bnd, pi
   [1.0, 0.0, 0.0], # stocks
   [0.0, 1.0, 0.0], # bonds
   [0.0, 0.0, 1.0], # inflation
@@ -236,11 +237,11 @@ weights = { stocks = 0.60, bonds = 0.40 }
 
 ## Output
 
-- **Reports**: Markdown files in `output_root/reports/` with simulation summary and plot links.
-- **Plots**: PNG images in `output_root/plots/` for all major simulation results.
+- **Reports**: Markdown files in `<output_root>/reports/` with simulation summary and plot links.
+- **Plots**: PNG images in `<output_root>/plots/` for all major simulation results.
 - **All output paths are relative to the project root and configurable via `[paths] output_root` in
   your TOML config.**
-- See [Output](docs/output.md) for details on the generated files.]
+- See [Output](docs/output.md) for details on the generated files.
 
 ---
 
@@ -248,7 +249,7 @@ weights = { stocks = 0.60, bonds = 0.40 }
 
 - Python 3.10+
 - See `requirements.txt` for dependencies:
-  - numpy, pandas, matplotlib, pydantic, tomli, jinja2
+  - numpy, pandas, pandas-stubs, matplotlib, pdantic, tomli, tomli-w, tqdm
 
 Install with:
 

@@ -28,4 +28,17 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
   ]
 ```
 
+- [ ] Change monthly expenses management using steps like:
+
+```toml
+  # Real values, in between steps and after the last step it will grow with inflation
+  monthly_expenses_steps = [
+    { year = 0, monthly_amount =  2000 },
+    { year = 2, monthly_amount =  2200 },
+    { year = 5, monthly_amount =  2500 },
+  ]
+```
+
+- [ ] Think about house purchase and illiquid assets management.
+
 ---
