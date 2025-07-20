@@ -97,12 +97,14 @@ asset allocation.
   The simulation invest all fund in bank account exceeding the `bank_upper_bound`
   in _"liquid"_ assets.
 
-  **_The simulation assumes all assets, liabilities, incomes, expenses, and flows are
-  denominated in a single currency. There is no currency conversion or multi-currency support;
-  all values must be provided and interpreted in the same currency throughout the simulation._**
+  **Note**:
 
-  **_The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
-  contributions, etc. are to be considered net of taxes._**
+  > _The simulation assumes all assets, liabilities, incomes, expenses, and flows are
+  > denominated in a single currency. There is no currency conversion or multi-currency support;
+  > all values must be provided and interpreted in the same currency throughout the simulation._
+  >
+  > _The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
+  > contributions, etc. are to be considered net of taxes._
 
 - **[Reporting & Plotting](/docs/output.md)**
 
@@ -129,7 +131,7 @@ asset allocation.
   Distribution of final wealth for successful outcomes
   ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
 
-  all the corrisponding plots in real terms and others.
+  all the corresponding plots in real terms and others.
 
 ---
 
@@ -294,6 +296,7 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 - **Online Resources**:
 
+  - [Early Retirement Now](https://earlyretirementnow.com/): A detailed blog on FIRE strategies.
   - [Bogleheads Wiki](https://www.bogleheads.org/wiki/Main_Page): A comprehensive resource on investing, retirement planning
     and portfolio management, with a focus on low-cost, passive strategies.
   - [Investopedia: Monte Carlo Simulation](https://www.investopedia.com/terms/m/montecarlosimulation.asp): A clear explanation of Monte Carlo methods
