@@ -1,7 +1,5 @@
 # FIRE Monte Carlo Simulation Tool
 
-<img src="fire.jpg" alt="FIRE Icon" width="120" height="100" />
-
 ![Logo](fire-small.png)
 
 ---
