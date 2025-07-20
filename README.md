@@ -27,6 +27,7 @@ asset allocation.
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance](https://finance.yahoo.com/), [Investing.com](https://www.investing.com/), [Federal Reserve Economic Data](https://fred.stlouisfed.org/), etc.
+
   Inflation, although not an asset, is defined in this section because it is correlated
   with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating random
   values for assets and inflation from `mu` and `sigma` is the same.
@@ -85,7 +86,8 @@ asset allocation.
   The main simulation logic, for each run it:
 
   - Initializes assets values and bank balance
-  - Simulates monthly/annual investment returns, inflation, and expenses
+  - Simulates monthly/annual investment returns, inflation
+  - Handles withdrawals for expenses and marks the simulation as failed if assets are insufficient
   - Handles salary, pension, contributions, and planned extra expenses
   - Manages liquidity (bank account bounds, topping up or investing excess)
   - Manages portfolio rebalances
@@ -94,7 +96,7 @@ asset allocation.
   - Optionally simulates a house purchase at a specified time
   - Tracks assets allocation
 
-  The simulation invest all fund in bank account exceeding the `bank_upper_bound`
+  Savings: the simulation invest all fund in bank account exceeding the `bank_upper_bound`
   in _"liquid"_ assets.
 
   **Note**:
