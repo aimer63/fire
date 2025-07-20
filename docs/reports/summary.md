@@ -1,74 +1,74 @@
 # FIRE Plan Simulation Report
 
-Report generated on: 2025-07-18 19:14:18
+Report generated on: 2025-07-20 19:38:34
 Using configuration: `config.toml`
 
 ## FIRE Plan Simulation Summary
 
-- **FIRE Plan Success Rate:** 73.53%
-- **Number of failed simulations:** 2647
-- **Average months lasted in failed simulations:** 583.6
+- **FIRE Plan Success Rate:** 73.24%
+- **Number of failed simulations:** 2676
+- **Average months lasted in failed simulations:** 578.9
 
 ## Final Wealth Distribution Statistics (Successful Simulations)
 
-| Statistic                     | Nominal Final Wealth | Real Final Wealth (Today's Money) |
-| ----------------------------- | -------------------- | --------------------------------- |
-| Median (P50)                  | 10,053,670.41        | 1,961,863.82                      |
-| 25th Percentile (P25)         | 3,737,646.84         | 723,917.64                        |
-| 75th Percentile (P75)         | 24,909,933.61        | 4,961,694.15                      |
-| Interquartile Range (P75-P25) | 21,172,286.77        | 4,237,776.50                      |
+| Statistic                     | Nominal Final Wealth          | Real Final Wealth (Today's Money) |
+|-------------------------------|-------------------------------|-----------------------------------|
+| Median (P50)                  | 9,733,605.32  | 1,884,340.38         |
+| 25th Percentile (P25)         | 3,519,505.68     | 690,592.31            |
+| 75th Percentile (P75)         | 23,814,975.58     | 4,676,239.31            |
+| Interquartile Range (P75-P25) | 20,295,469.90     | 3,985,647.00            |
 
 ## Nominal Results (cases selected by nominal final wealth)
 
 #### Worst Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 23,552.26
-- **Final Wealth (Real):** 5,779.24
-- **Your life CAGR (Nominal):** -3.39%
+- **Final Wealth (Nominal):** 31,552.40
+- **Final Wealth (Real):** 6,989.37
+- **Your life CAGR (Nominal):** -2.98%
 - **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
-- **Nominal Asset Values:** stocks: 3,175.64 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 20,376.61
+- **Nominal Asset Values:** stocks: 8,980.70 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 22,571.70
 
 #### Median Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 10,053,670.41
-- **Final Wealth (Real):** 2,251,563.26
-- **Your life CAGR (Nominal):** 5.34%
+- **Final Wealth (Nominal):** 9,734,195.60
+- **Final Wealth (Real):** 2,476,902.00
+- **Your life CAGR (Nominal):** 5.29%
 - **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
-- **Nominal Asset Values:** stocks: 10,031,344.44 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 22,325.98
+- **Nominal Asset Values:** stocks: 9,714,545.66 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 19,649.94
 
 #### Best Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 105,583,739,399.30
-- **Final Wealth (Real):** 23,541,937,647.10
-- **Your life CAGR (Nominal):** 20.24%
-- **Final Allocations (percent):** stocks: 94.8%, bonds: 5.2%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
-- **Nominal Asset Values:** stocks: 100,082,782,938.91 , bonds: 5,500,934,035.78 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 22,424.61
+- **Final Wealth (Nominal):** 56,107,196,713.70
+- **Final Wealth (Real):** 10,011,406,732.53
+- **Your life CAGR (Nominal):** 19.16%
+- **Final Allocations (percent):** stocks: 99.6%, bonds: 0.4%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 55,856,739,482.29 , bonds: 250,429,209.77 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 28,021.63
 
 ## Real Results (cases selected by real final wealth)
 
 #### Worst Successful Case (Real)
 
-- **Final Wealth (Real):** 5,045.05
-- **Final Wealth (Nominal):** 31,537.15
-- **Your life CAGR (Real):** -5.49%
+- **Final Wealth (Real):** 5,841.34
+- **Final Wealth (Nominal):** 36,003.82
+- **Your life CAGR (Real):** -5.29%
 - **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
-- **Nominal Asset Values:** stocks: 281.62 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 31,255.53
+- **Nominal Asset Values:** stocks: 5,185.73 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 30,818.09
 
 #### Median Successful Case (Real)
 
-- **Final Wealth (Real):** 1,961,863.82
-- **Final Wealth (Nominal):** 9,908,430.19
-- **Your life CAGR (Real):** 2.91%
+- **Final Wealth (Real):** 1,884,449.40
+- **Final Wealth (Nominal):** 8,879,755.16
+- **Your life CAGR (Real):** 2.85%
 - **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
-- **Nominal Asset Values:** stocks: 9,883,177.59 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 25,252.59
+- **Nominal Asset Values:** stocks: 8,856,194.55 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 23,560.61
 
 #### Best Successful Case (Real)
 
-- **Final Wealth (Real):** 23,541,937,647.10
-- **Final Wealth (Nominal):** 105,583,739,399.30
-- **Your life CAGR (Real):** 17.69%
-- **Final Allocations (percent):** stocks: 94.8%, bonds: 5.2%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
-- **Nominal Asset Values:** stocks: 100,082,782,938.91 , bonds: 5,500,934,035.78 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 22,424.61
+- **Final Wealth (Real):** 10,011,406,732.53
+- **Final Wealth (Nominal):** 56,107,196,713.70
+- **Your life CAGR (Real):** 16.26%
+- **Final Allocations (percent):** stocks: 99.6%, bonds: 0.4%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 55,856,739,482.29 , bonds: 250,429,209.77 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 28,021.63
 
 ## Visualizations
 
@@ -230,5 +230,4 @@ output_root = "output/"
 ```
 
 ---
-
 Generated by firestarter FIRE Plan Monte Carlo simulation

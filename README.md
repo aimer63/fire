@@ -32,7 +32,7 @@ asset allocation.
 
   Inflation, although not an asset, is defined in this section because it is correlated
   with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating random
-  values for assets and inflation from `mu` and `sigma` is the same.
+  values for assets return and inflation from `mu` and `sigma` is the same.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
 

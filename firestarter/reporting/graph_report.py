@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+plt.style.use("dark_background")
+
 
 def plot_retirement_duration_distribution(
     failed_sims: pd.DataFrame, total_retirement_years: int, filename: str
@@ -120,7 +122,14 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
 
     # Percentile boundaries
     percentiles = [0, 20, 40, 60, 80, 100]
-    colors = ["orange", "gold", "limegreen", "dodgerblue", "navy"]
+    colors = [
+        "orange",
+        "gold",
+        "limegreen",
+        "dodgerblue",
+        "magenta",
+    ]  # Changed "navy" to "magenta" for 80-100th percentile
+
     lw = 1.2
 
     # Plot 5 trajectories for each percentile range, but only one legend entry
@@ -288,7 +297,7 @@ def plot_bank_account_trajectories(
 
     # Percentile boundaries and colors (same as wealth plot)
     percentiles = [0, 20, 40, 60, 80, 100]
-    colors = ["orange", "gold", "limegreen", "dodgerblue", "navy"]
+    colors = ["orange", "gold", "limegreen", "dodgerblue", "magenta"]
     lw = 1.2
 
     # Plot 5 trajectories for each percentile range, only first in legend
@@ -348,7 +357,7 @@ def plot_bank_account_trajectories(
     # Plot lower and upper bounds (real value in both plots)
     plt.axhline(
         y=bank_lower_bound,
-        color="black",
+        color="yellow",  # Changed from "black" to "yellow" for visibility on dark background
         linestyle="--",
         linewidth=1.5,
         label=f"Bank Lower Bound ({bank_lower_bound:,.0f}€, real value)",
