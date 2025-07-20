@@ -15,7 +15,7 @@ def plot_retirement_duration_distribution(
     failed_sims: pd.DataFrame, total_retirement_years: int, filename: str
 ):
     if failed_sims.empty:
-        print("No failed simulations to plot retirement duration distribution.")
+        print("No failed simulations to plot duration distribution.")
         return
     plt.figure(figsize=(10, 6))
     plt.hist(
@@ -36,6 +36,9 @@ def plot_final_wealth_distribution(
     successful_sims: pd.DataFrame, column: str, title: str, xlabel: str, filename: str
 ):
     data = successful_sims[column].clip(lower=1.0)
+    if data.empty:
+        print(f"No successful simulations to plot for {title}.")
+        return
 
     plt.figure(figsize=(10, 6))  # Keep consistent figure size
 
@@ -52,9 +55,7 @@ def plot_final_wealth_distribution(
         # Ensure view_min and view_max are valid for logspace and distinct
         if view_min <= 0:
             view_min = 1e-9  # Must be positive
-        if (
-            view_max <= view_min
-        ):  # Handles center_val being very small or zero after clipping
+        if view_max <= view_min:  # Handles center_val being very small or zero after clipping
             if center_val > 1e-9:  # if center_val is not effectively zero
                 view_max = view_min * 1.01  # Ensure max > min by a small factor
             else:  # center_val is effectively zero, create a tiny range around it
@@ -71,9 +72,7 @@ def plot_final_wealth_distribution(
         # Use the width of a middle hypothetical bin for our single bar
         # This makes its relative width consistent with the multi-bar plot's logic
         mid_idx = num_bins_for_width_calc // 2
-        bar_width = (
-            hypothetical_bin_edges[mid_idx + 1] - hypothetical_bin_edges[mid_idx]
-        )
+        bar_width = hypothetical_bin_edges[mid_idx + 1] - hypothetical_bin_edges[mid_idx]
 
         plt.bar(
             [center_val],
@@ -93,9 +92,7 @@ def plot_final_wealth_distribution(
     else:
         # Use 50 bins for the histogram (51 edges)
         bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 51)
-        plt.hist(
-            data, bins=bins.tolist(), edgecolor="black"
-        )  # Matplotlib default color is fine
+        plt.hist(data, bins=bins.tolist(), edgecolor="black")  # Matplotlib default color is fine
         plt.xscale("log")
         plt.title(title)
         plt.xlabel(xlabel)
@@ -111,7 +108,9 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     plt.figure(figsize=(14, 8))
     successful = results_df[results_df["success"]]
     if successful.empty:
-        print("No successful simulations to plot wealth evolution.")
+        print(
+            f"No successful simulations to plot {'real' if real else 'nominal'} wealth evolution."
+        )
         return
 
     # Sort by final real/nominal wealth
@@ -141,9 +140,7 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
             row = sorted_successful.iloc[idx]
             wealth = np.array(row["wealth_history"], dtype=np.float64)
             if real:
-                inflation = np.array(
-                    row["monthly_cumulative_inflation_factors"], dtype=np.float64
-                )
+                inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
                 wealth = wealth / inflation[: len(wealth)]
             if j == 0:
                 if i == 4:  # 80-100th percentile, show the true max
@@ -163,9 +160,7 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
                 else:
                     upper_idx = end - 1 if end > start else start
                     upper_row = sorted_successful.iloc[upper_idx]
-                    upper_wealth = np.array(
-                        upper_row["wealth_history"], dtype=np.float64
-                    )
+                    upper_wealth = np.array(upper_row["wealth_history"], dtype=np.float64)
                     if real:
                         inflation = np.array(
                             upper_row["monthly_cumulative_inflation_factors"],
@@ -208,9 +203,7 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     ]:
         wealth = np.array(row["wealth_history"], dtype=np.float64)
         if real:
-            inflation = np.array(
-                row["monthly_cumulative_inflation_factors"], dtype=np.float64
-            )
+            inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
             wealth = wealth / inflation[: len(wealth)]
         plt.plot(
             np.arange(0, len(wealth)) / 12.0,
@@ -232,29 +225,23 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     # Do not close the figure, keep it open for interactive display
 
 
-def plot_failed_wealth_evolution_samples(
-    results_df: pd.DataFrame, real: bool, filename: str
-):
+def plot_failed_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename: str):
     plt.figure(figsize=(14, 8))
     failed = results_df[~results_df["success"]]
     if failed.empty:
-        print("No failed simulations to plot wealth evolution.")
+        print(f"No failed simulations to plot {'real' if real else 'nominal'} wealth evolution.")
         return
 
     # Take a sample of up to 25 simulations for clarity
     num_samples = 25
     sample_df = (
-        failed.sample(n=num_samples, random_state=42)
-        if len(failed) > num_samples
-        else failed
+        failed.sample(n=num_samples, random_state=42) if len(failed) > num_samples else failed
     )
 
     for _, row in sample_df.iterrows():
         wealth = np.array(row["wealth_history"], dtype=np.float64)
         if real:
-            inflation = np.array(
-                row["monthly_cumulative_inflation_factors"], dtype=np.float64
-            )
+            inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
             wealth = wealth / inflation[: len(wealth)]
 
         plt.plot(
@@ -286,7 +273,12 @@ def plot_bank_account_trajectories(
     plt.figure(figsize=(14, 8))
     successful = results_df[results_df["success"]]
     if successful.empty:
-        print("No successful simulations to plot bank account trajectories.")
+        print(
+            (
+                f"No successful simulations to plot "
+                f"{'real' if real else 'nominal'} bank account trajectories."
+            )
+        )
         return
 
     # Sort by final real/nominal wealth (same as wealth plot)
@@ -314,9 +306,7 @@ def plot_bank_account_trajectories(
             row = sorted_successful.iloc[idx]
             bank = np.array(row["bank_balance_history"], dtype=np.float64)
             if real:
-                inflation = np.array(
-                    row["monthly_cumulative_inflation_factors"], dtype=np.float64
-                )
+                inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
                 bank = bank / inflation[: len(bank)]
             final_val = bank[-1] if len(bank) > 0 else 0.0
             label = (
@@ -342,9 +332,7 @@ def plot_bank_account_trajectories(
     ]:
         bank = np.array(row["bank_balance_history"], dtype=np.float64)
         if real:
-            inflation = np.array(
-                row["monthly_cumulative_inflation_factors"], dtype=np.float64
-            )
+            inflation = np.array(row["monthly_cumulative_inflation_factors"], dtype=np.float64)
             bank = bank / inflation[: len(bank)]
         final_val = bank[-1] if len(bank) > 0 else 0.0
         label = f"{case} (Final {'Real' if real else 'Nominal'}: {final_val:,.0f}€)"
