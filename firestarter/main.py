@@ -167,8 +167,8 @@ def main() -> None:
 
     # Prepare plot paths dictionary
     plots = {
-        "Retirement Duration Distribution": os.path.join(
-            "..", "plots", "retirement_duration_distribution.png"
+        "Failed Duration Distribution": os.path.join(
+            "..", "plots", "failed_duration_distribution.png"
         ),
         "Final Wealth Distribution (Nominal)": os.path.join(
             "..", "plots", "final_wealth_distribution_nominal.png"
