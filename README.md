@@ -302,10 +302,8 @@ For mathematical background, advanced usage, and additional guides, see the [doc
   - [Early Retirement Now](https://earlyretirementnow.com/): A detailed blog on FIRE strategies.
   - [Bogleheads Wiki](https://www.bogleheads.org/wiki/Main_Page): A comprehensive resource on investing, retirement planning
     and portfolio management, with a focus on low-cost, passive strategies.
-  - [Investopedia: Monte Carlo Simulation](https://www.investopedia.com/terms/m/montecarlosimulation.asp): A clear explanation of Monte Carlo methods
-    in financial planning and risk analysis.
-  - [Federal Reserve Economic Data (FRED)](https://fred.stlouisfed.org/): Historical data on inflation, interest rates
-    and asset returns to inform your simulation parameters.
+  - [Investopedia: Monte Carlo Simulation](https://www.investopedia.com/terms/m/montecarlosimulation.asp): A clear explanation of Monte Carlo
+    methods in financial planning and risk analysis.
 
 - **Academic/Technical**:
 
@@ -320,7 +318,5 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 - **Communities**:
   - [r/financialindependence](https://www.reddit.com/r/financialindependence/): A Reddit community discussing FIRE strategies, with real-world
     insights and case studies.
-  - [X Platform: #FIRE](https://x.com/explore/tabs/topics/financial-independence): Follow discussions on FIRE and Monte Carlo simulations for real-time
-    community insights.
 
 These resources provide a mix of practical, theoretical, and data-driven content to enhance your use of this tool and FIRE planning knowledge.
