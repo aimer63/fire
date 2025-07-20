@@ -1,4 +1,4 @@
-# FIRE Monte Carlo Simulation Tool
+# Firestarter (FIRE Simulation Tool)
 
 ![Logo](fire-small.png)
 
