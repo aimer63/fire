@@ -5,12 +5,10 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 import pytest
-import tomllib
-from pathlib import Path
+
 
 from pydantic import ValidationError
 
-from firestarter.config.config import Config
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 # A known valid correlation matrix (identity matrix)

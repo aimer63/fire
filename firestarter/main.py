@@ -19,7 +19,11 @@ import time
 import shutil
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 
 # Import the DeterministicInputs Pydantic model
@@ -104,9 +108,7 @@ def main() -> None:
     # Extract validated data from the config model for simulation
     det_inputs = config.deterministic_inputs
     assets = config.assets
-    correlation_matrix = config.correlation_matrix or CorrelationMatrix(
-        assets_order=[], matrix=[]
-    )
+    correlation_matrix = config.correlation_matrix or CorrelationMatrix(assets_order=[], matrix=[])
     portfolio_rebalances = config.portfolio_rebalances
     sim_params = config.simulation_parameters
     shocks = config.shocks or []

@@ -97,9 +97,7 @@ def test_assets_validation_liquid_asset_requires_priority():
     Tests that a liquid asset must have a withdrawal_priority.
     """
 
-    with pytest.raises(
-        ValidationError, match="withdrawal_priority is required for liquid assets"
-    ):
+    with pytest.raises(ValidationError, match="withdrawal_priority is required for liquid assets"):
         Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=None)
 
 
@@ -161,9 +159,7 @@ def test_portfolio_rebalances_unique_years(basic_deterministic_inputs):
     with pytest.raises(ValidationError, match="Rebalance years must be unique."):
         Config(
             assets={
-                "stocks": Asset(
-                    mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1
-                ),
+                "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1),
                 "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
             },
             deterministic_inputs=basic_deterministic_inputs,
@@ -181,7 +177,11 @@ def test_load_and_validate_full_test_config():
     """
     Tests that the comprehensive `tests/config/test_config.toml` is valid.
     """
-    import tomllib
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        import tomli as tomllib
+
     from pathlib import Path
 
     config_path = Path("tests/config/test_config.toml")
