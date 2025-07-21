@@ -5,7 +5,30 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 """
-Generates precomputed stochastic sequences for market returns and inflation.
+This module provides the SequenceGenerator class, which generates precomputed stochastic
+sequences for asset returns and inflation used in FIRE Monte Carlo simulations.
+
+Key features:
+- Supports correlated random sampling of asset returns and inflation using a user-supplied
+  correlation matrix.
+- Converts annual arithmetic mean and standard deviation parameters to monthly log-normal
+  parameters for realistic simulation.
+- Handles both user-supplied and default (identity) correlation matrices.
+- Produces reproducible results with optional random seed control.
+- Outputs sequences as numpy arrays for efficient downstream simulation.
+
+Typical usage:
+    generator = SequenceGenerator(
+        assets=assets_dict,
+        correlation_matrix=correlation_matrix,
+        num_sequences=1000,
+        simulation_years=40,
+        seed=42,
+    )
+    monthly_return_rates = generator.monthly_return_rates
+
+Classes:
+    - SequenceGenerator: Generates and holds all stochastic sequences for a simulation set.
 """
 
 import numpy as np
@@ -57,7 +80,9 @@ class SequenceGenerator:
         rng = np.random.default_rng(self.seed)
 
         # --- 1. Extract Annual Arithmetic Parameters ---
-        mu_arith = np.array([self.assets[asset].mu for asset in self.asset_and_inflation_order])
+        mu_arith = np.array(
+            [self.assets[asset].mu for asset in self.asset_and_inflation_order]
+        )
         sigma_arith = np.array(
             [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
         )

@@ -4,6 +4,21 @@
 #
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
+
+"""
+This module provides functions for generating and printing human-readable summaries
+of FIRE Monte Carlo simulation results directly to the console.
+
+The main function, print_console_summary, displays a comprehensive summary of simulation
+outcomes, including success rates, failure statistics, and detailed statistics for both
+nominal and real wealth distributions. It also presents representative simulation cases
+(worst, median, best) for both nominal and real wealth, including final allocations and
+asset breakdowns.
+
+Designed for aiding users in quickly understanding the key results and scenario
+characteristics of their FIRE plan simulations.
+"""
+
 from typing import Any, List, Dict
 import numpy as np
 import json

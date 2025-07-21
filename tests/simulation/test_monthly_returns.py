@@ -45,7 +45,7 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
 
     # Manually inject these returns into the precomputed sequences in the state
     for asset, rate in mock_returns.items():
-        sim.state.monthly_return_reates_sequences[asset][month_to_test] = rate
+        sim.state.monthly_return_rates_sequences[asset][month_to_test] = rate
 
     # Execute the method under test
     sim._apply_monthly_returns(month_to_test)

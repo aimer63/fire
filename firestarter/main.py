@@ -5,8 +5,6 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 """
-main.py
-
 Main entry point for running FIRE Monte Carlo simulations.
 
 - Loads configuration from TOML files.
@@ -19,9 +17,10 @@ import os
 from typing import Any
 import time
 import shutil
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 import tomllib
-import numpy as np
+
 
 # Import the DeterministicInputs Pydantic model
 from firestarter.config.config import (
@@ -33,16 +32,11 @@ from firestarter.config.config import (
 )
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
-# from firestarter.version import __version__
 from firestarter.reporting.markdown_report import generate_markdown_report
 from firestarter.reporting.console_report import print_console_summary
 from firestarter.reporting.graph_report import generate_all_plots
 
-
 from firestarter.core.simulation import SimulationBuilder
-
-
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 def run_single_simulation(
@@ -72,12 +66,12 @@ def main() -> None:
     Main workflow for the FIRE simulation tool.
 
     - Loads and validates configuration.
-    - Runs Monte Carlo simulations using the current rebalance schedule.
+    - Runs Monte Carlo simulations.
     - Performs analysis and generates reports and plots.
     """
     import multiprocessing
 
-    # Config loading, parameter assignment, derived calculations, and assertions
+    # Config loading and parameter assignment
     config_file_path: str = "config.toml"
     if len(sys.argv) > 1:
         config_file_path = sys.argv[1]
@@ -118,12 +112,12 @@ def main() -> None:
     shocks = config.shocks or []
     num_simulations = sim_params.num_simulations
 
-    print("All parameters successfully extracted and assigned to Python variables, ")
+    print("All parameters successfully extracted.")
 
     # Run Monte Carlo simulations in parallel
     simulation_results = []
     start_time = time.time()
-    print(f"\nRunning {num_simulations} Monte Carlo simulations ")
+    print(f"\nRunning {num_simulations} Monte Carlo simulations")
 
     max_workers = multiprocessing.cpu_count()
     term_width = shutil.get_terminal_size().columns
@@ -162,7 +156,7 @@ def main() -> None:
         + f"Total time elapsed: {total_simulation_elapsed_time:.2f} seconds."
     )
 
-    # Print config parameters and simulation result summary
+    # Print simulation result summary
     print_console_summary(simulation_results, config.model_dump(exclude_none=True))
 
     # Prepare plot paths dictionary

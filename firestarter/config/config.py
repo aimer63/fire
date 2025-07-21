@@ -13,18 +13,24 @@ configuration data from TOML files. The models correspond to sections in the
 configuration file and ensure that all required parameters for the simulation
 are present and correctly typed.
 
+Features:
+- Strict type validation for all simulation parameters.
+- Cross-section consistency checks (e.g., asset names, withdrawal priorities).
+
 Classes:
-    - DeterministicInputs: User-controllable financial plan parameters loaded from the
-      [deterministic_inputs] section of config.toml.
-    - EconomicAssumptions: Economic and market return assumptions loaded from the
-      [economic_assumptions] section of config.toml.
+    - DeterministicInputs: User-controllable financial plan parameters.
+    - Asset: Financial asset class definition.
+    - PortfolioRebalance: Portfolio rebalance event.
+    - SimulationParameters: Simulation run parameters.
+    - Shock: One-time financial shock event.
+    - Paths: Output paths for simulation results.
+    - Config: Top-level container for the entire simulation configuration.
 
 These models provide type safety and validation for the simulation engine.
 """
 
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 import numpy as np
-from typing import List, Dict
 
 from firestarter.config.correlation_matrix import CorrelationMatrix
 

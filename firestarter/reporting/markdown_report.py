@@ -4,6 +4,23 @@
 #
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
+"""
+This module provides functions for generating detailed Markdown reports summarizing
+the results of FIRE Monte Carlo simulations.
+
+Key functionalities:
+- Formats simulation configuration parameters as TOML code blocks for reproducibility.
+- Summarizes overall simulation outcomes, including success rates and failure statistics.
+- Computes and presents wealth distribution statistics (median, percentiles, interquartile range)
+  for both nominal and real wealth.
+- Selects and details representative simulation cases (worst, median, best) for both nominal
+  and real wealth, including asset allocations and values.
+- Embeds visualizations such as plots, if available, into the Markdown report.
+- Outputs a complete, timestamped Markdown file suitable for sharing or record-keeping.
+
+Intended for use as part of the reporting pipeline to provide a comprehensive,
+human-readable summary of simulation results.
+"""
 
 from typing import Any, List, Dict
 import numpy as np
@@ -21,7 +38,9 @@ def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:
     # Reformat matrix rows: replace each multi-line row with a single line
     toml_str = re.sub(
         r"\[\s*([\d\.,\s]+?)\s*\]",
-        lambda m: "[" + ", ".join(x.strip() for x in m.group(1).split(",") if x.strip()) + "]",
+        lambda m: "["
+        + ", ".join(x.strip() for x in m.group(1).split(",") if x.strip())
+        + "]",
         toml_str,
     )
     md_config_lines.append("```toml\n")
@@ -49,7 +68,9 @@ def format_case_for_markdown(
         final_wealth_other = final_real_wealth
         cagr_wealth_for_calc_val = final_nominal_wealth
         md_case_lines.append(f"#### {label} Successful Case (Nominal):\n\n")
-        md_case_lines.append(f"- **Final Wealth (Nominal):** {final_wealth_display:,.2f} \n")
+        md_case_lines.append(
+            f"- **Final Wealth (Nominal):** {final_wealth_display:,.2f} \n"
+        )
         md_case_lines.append(f"- **Final Wealth (Real):** {final_wealth_other:,.2f} \n")
         cagr_label = "Nominal"
     else:  # Real
@@ -57,8 +78,12 @@ def format_case_for_markdown(
         final_wealth_other = final_nominal_wealth
         cagr_wealth_for_calc_val = final_real_wealth
         md_case_lines.append(f"#### {label} Successful Case (Real):\n\n")
-        md_case_lines.append(f"- **Final Wealth (Real):** {final_wealth_display:,.2f} \n")
-        md_case_lines.append(f"- **Final Wealth (Nominal):** {final_wealth_other:,.2f} \n")
+        md_case_lines.append(
+            f"- **Final Wealth (Real):** {final_wealth_display:,.2f} \n"
+        )
+        md_case_lines.append(
+            f"- **Final Wealth (Nominal):** {final_wealth_other:,.2f} \n"
+        )
         cagr_label = "Real"
 
     cagr = calculate_cagr(initial_wealth, cagr_wealth_for_calc_val, years)
@@ -73,7 +98,9 @@ def format_case_for_markdown(
     for k, v_asset in allocations.items():
         percent = v_asset / total_assets * 100
         alloc_percent_parts.append(f"{k}: {percent:.1f}%")
-    md_case_lines.append(f"- **Final Allocations (percent):** {', '.join(alloc_percent_parts)}\n")
+    md_case_lines.append(
+        f"- **Final Allocations (percent):** {', '.join(alloc_percent_parts)}\n"
+    )
 
     asset_value_parts = []
     for k, v_asset in allocations.items():
@@ -112,7 +139,8 @@ def generate_markdown_report(
 
     if num_failed > 0:
         avg_months_failed = (
-            sum(r["months_lasted"] for r in simulation_results if not r["success"]) / num_failed
+            sum(r["months_lasted"] for r in simulation_results if not r["success"])
+            / num_failed
         )
         md_content.append(
             f"- **Average months lasted in failed simulations:** {avg_months_failed:.1f}\n"
@@ -121,8 +149,12 @@ def generate_markdown_report(
 
     # Final Wealth Distribution Statistics
     successful_sims = [r for r in simulation_results if r["success"]]
-    if not successful_sims:  # This check is for flow control, not error prevention for calculation
-        md_content.append("## Final Wealth Distribution Statistics (Successful Simulations)\n\n")
+    if (
+        not successful_sims
+    ):  # This check is for flow control, not error prevention for calculation
+        md_content.append(
+            "## Final Wealth Distribution Statistics (Successful Simulations)\n\n"
+        )
         md_content.append("No successful simulations to report.\n\n")
     else:
         nominal_final_wealths = np.array(
@@ -142,7 +174,9 @@ def generate_markdown_report(
         p75_real_wealth = np.percentile(real_final_wealths, 75)
         iqr_real_wealth = p75_real_wealth - p25_real_wealth
 
-        md_content.append("## Final Wealth Distribution Statistics (Successful Simulations)\n\n")
+        md_content.append(
+            "## Final Wealth Distribution Statistics (Successful Simulations)\n\n"
+        )
         md_content.append(
             "| Statistic                     | Nominal Final Wealth          | Real Final Wealth (Today's Money) |\n"
         )
@@ -165,25 +199,39 @@ def generate_markdown_report(
 
     # Nominal and Real Results sections
     if successful_sims:
-        md_content.append("## Nominal Results (cases selected by nominal final wealth)\n\n")
-        sorted_by_nominal = sorted(successful_sims, key=lambda r: r["final_nominal_wealth"])
+        md_content.append(
+            "## Nominal Results (cases selected by nominal final wealth)\n\n"
+        )
+        sorted_by_nominal = sorted(
+            successful_sims, key=lambda r: r["final_nominal_wealth"]
+        )
         if sorted_by_nominal:
-            md_content.extend(format_case_for_markdown("Worst", sorted_by_nominal[0], "Nominal"))
+            md_content.extend(
+                format_case_for_markdown("Worst", sorted_by_nominal[0], "Nominal")
+            )
             md_content.extend(
                 format_case_for_markdown(
                     "Median", sorted_by_nominal[len(sorted_by_nominal) // 2], "Nominal"
                 )
             )
-            md_content.extend(format_case_for_markdown("Best", sorted_by_nominal[-1], "Nominal"))
+            md_content.extend(
+                format_case_for_markdown("Best", sorted_by_nominal[-1], "Nominal")
+            )
 
         md_content.append("## Real Results (cases selected by real final wealth)\n\n")
         sorted_by_real = sorted(successful_sims, key=lambda r: r["final_real_wealth"])
         if sorted_by_real:
-            md_content.extend(format_case_for_markdown("Worst", sorted_by_real[0], "Real"))
             md_content.extend(
-                format_case_for_markdown("Median", sorted_by_real[len(sorted_by_real) // 2], "Real")
+                format_case_for_markdown("Worst", sorted_by_real[0], "Real")
             )
-            md_content.extend(format_case_for_markdown("Best", sorted_by_real[-1], "Real"))
+            md_content.extend(
+                format_case_for_markdown(
+                    "Median", sorted_by_real[len(sorted_by_real) // 2], "Real"
+                )
+            )
+            md_content.extend(
+                format_case_for_markdown("Best", sorted_by_real[-1], "Real")
+            )
 
     # Visualizations
     md_content.append("## Visualizations\n\n")

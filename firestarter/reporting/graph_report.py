@@ -4,6 +4,25 @@
 #
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
+"""
+Provides functions for generating and saving plots that visualize the results of
+FIRE Monte Carlo simulations.
+
+Key functionalities:
+- Plots distributions of durations for failed simulations.
+- Plots distributions of final wealth (nominal and real) using histograms with log-scaled axes.
+- Plots sample trajectories of wealth evolution for both successful and failed simulations,
+  in both nominal and real terms.
+- Highlights representative cases (worst, best, and percentile ranges) for deeper
+  insight into simulation outcomes.
+- Draws reference lines for bank account lower and upper bounds.
+- Includes a utility function to generate all standard plots and save them to a specified
+  output directory.
+
+These visualizations are intended to support analysis, diagnostics, and communication
+of FIRE simulation results by providing clear graphical summaries of key metrics and scenarios.
+"""
+
 import os
 from typing import List, Dict, Any
 import numpy as np
@@ -241,7 +260,8 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.yscale("log")
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
-    plt.tight_layout(rect=(0, 0, 0.85, 1))
+    # plt.tight_layout(rect=(0, 0, 0.85, 1))
+    plt.tight_layout()
     plt.savefig(filename)
     # Do not close the figure, keep it open for interactive display
 
@@ -399,7 +419,8 @@ def plot_bank_account_trajectories(
     plt.ylabel(f"Bank Account Balance ({'real value' if real else 'nominal value'})")
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="small")
-    plt.tight_layout(rect=(0, 0, 0.85, 1))
+    # plt.tight_layout(rect=(0, 0, 0.85, 1))
+    plt.tight_layout()
     plt.savefig(filename)
     # Do not close the figure, keep it open for interactive display
 

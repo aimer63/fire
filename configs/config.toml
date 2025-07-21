@@ -1,10 +1,5 @@
 # config.toml
 
-# NOTE:
-# The simulation assumes all assets, liabilities, incomes, expenses, and flows are denominated in a single currency.
-# There is no currency conversion or multi-currency support; all values must be provided and interpreted in the same 
-# currency throughout the simulation.
-
 # This is a comprehensive configuration file for the FIRE Monte Carlo simulation.
 # It is designed to exercise all features and validation rules of the configuration
 # parser.

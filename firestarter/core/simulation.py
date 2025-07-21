@@ -17,6 +17,7 @@ Key features:
   rebalancing
 - Evolves asset values monthly according to stochastic returns and inflation
 - Supports planned shocks and house purchase
+- Supports scheduled portfolio rebalances
 - Records detailed monthly histories of wealth, balances, and asset values
 - Marks simulation as failed if withdrawals cannot be covered by liquid assets
 - Supports user-defined correlation between asset returns and inflation via a
@@ -257,7 +258,7 @@ class Simulation:
         return_rates_array = np.squeeze(generator.monthly_return_rates, axis=0)
 
         # --- Convert array to dictionary for use in the simulation ---
-        self.state.monthly_return_reates_sequences = {
+        self.state.monthly_return_rates_sequences = {
             asset: return_rates_array[:, i]
             for i, asset in enumerate(generator.asset_and_inflation_order)
         }
@@ -277,8 +278,8 @@ class Simulation:
                         (1.0 + annual_shock_rate) ** (1.0 / 12.0)
                     ) - 1.0
 
-                    if shock_asset in self.state.monthly_return_reates_sequences:
-                        target_sequence = self.state.monthly_return_reates_sequences[
+                    if shock_asset in self.state.monthly_return_rates_sequences:
+                        target_sequence = self.state.monthly_return_rates_sequences[
                             shock_asset
                         ]
                         for month_offset in range(12):
@@ -288,7 +289,7 @@ class Simulation:
                                     monthly_shock_rate
                                 )
 
-        monthly_inflation_sequence = self.state.monthly_return_reates_sequences[
+        monthly_inflation_sequence = self.state.monthly_return_rates_sequences[
             "inflation"
         ]
 
@@ -485,7 +486,7 @@ class Simulation:
         """
         Apply monthly returns to all asset values at the end of the month.
         """
-        returns = self.state.monthly_return_reates_sequences
+        returns = self.state.monthly_return_rates_sequences
         for asset in self.state.portfolio:
             # The 'inflation' sequence is in `returns`, but not in the portfolio
             if asset in returns:
@@ -677,7 +678,7 @@ class Simulation:
             "final_allocations_real": final_allocations_real,
             "initial_total_wealth": self.state.initial_total_wealth,
             # --- State and histories ---
-            "monthly_returns_sequences": self.state.monthly_return_reates_sequences,
+            "monthly_returns_sequences": self.state.monthly_return_rates_sequences,
             "monthly_cumulative_inflation_factors": trunc_only(
                 self.state.monthly_cumulative_inflation_factors
             ),

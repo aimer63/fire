@@ -37,7 +37,7 @@ def test_shock_overwrites_return_sequence(initialized_simulation: Simulation) ->
     expected_monthly_rate = (1.0 + annual_shock_rate) ** (1.0 / 12.0) - 1.0
 
     # Get the return sequence for the shocked asset
-    shocked_sequence = sim.state.monthly_return_reates_sequences[asset_to_shock]
+    shocked_sequence = sim.state.monthly_return_rates_sequences[asset_to_shock]
 
     # Check that all 12 months of the shock year have the new rate
     for month_offset in range(12):
@@ -56,7 +56,7 @@ def test_non_shocked_year_is_unaffected(initialized_simulation: Simulation) -> N
 
     # 1. Precompute sequences WITHOUT the shock to get a baseline
     sim._precompute_sequences()
-    baseline_returns = np.copy(sim.state.monthly_return_reates_sequences[asset_to_shock])
+    baseline_returns = np.copy(sim.state.monthly_return_rates_sequences[asset_to_shock])
 
     # 2. Define the shock and re-run the pre-computation
     shock = Shock(
@@ -66,7 +66,7 @@ def test_non_shocked_year_is_unaffected(initialized_simulation: Simulation) -> N
     )
     sim.shock_events = [shock]
     sim._precompute_sequences()
-    shocked_returns = sim.state.monthly_return_reates_sequences[asset_to_shock]
+    shocked_returns = sim.state.monthly_return_rates_sequences[asset_to_shock]
 
     # 3. Assert that a non-shocked month retains its original value
     # We check the month immediately before the shock period starts

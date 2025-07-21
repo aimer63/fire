@@ -58,8 +58,8 @@ asset allocation.
   # annual total returns from 2004-2023.
   # MU: Arithmetic Mean
   # SIGMA: Arithmetic Standard Deviation
-  # bond_mu = 0.0193
-  # bond_sigma = 0.0535
+  # mu = 0.0193
+  # sigma = 0.0535
   #
   # The 2004-2023 period includes many years of historically very low and even
   # negative interest rates in Europe. The environment has shifted, and current
@@ -71,10 +71,10 @@ asset allocation.
   withdrawal_priority = 1
 
   # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
-  # MU_PI: Arithmetic Mean of inflation
-  # SIGMA_PI: Arithmetic Standard Deviation of inflation
-  # mu_pi = 0.0220
-  # sigma_pi = 0.0229
+  # MU: Arithmetic Mean of inflation
+  # SIGMA: Arithmetic Standard Deviation of inflation
+  # mu = 0.0220
+  # sigma = 0.0229
   #
   # More conservative for the future
   [assets.inflation]
@@ -103,8 +103,8 @@ asset allocation.
 
   **Note**:
 
-  > _The simulation assumes all assets, liabilities, incomes, expenses, and flows are
-  > denominated in a single currency. There is no currency conversion or multi-currency support;
+  > _The simulation assumes all assets, incomes, expenses, and flows are denominated
+  > in a single currency. There is no currency conversion or multi-currency support;
   > all values must be provided and interpreted in the same currency throughout the simulation._
   >
   > _The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
@@ -167,9 +167,9 @@ python -m firestarter.main configs/config.toml
 ```
 
 3. **Review the results**
-   - **Markdown report**: Generated in `output/reports/`, summarizing success rate, failed
+   - **Markdown report**: Generated in `<output_root>/reports/`, summarizing success rate, failed
      simulations, best/worst/average cases, and links to plots.
-   - **Plots**: Generated in `output/plots/`, visualizing wealth evolution, bank account
+   - **Plots**: Generated in `<output_root>/plots/`, visualizing wealth evolution, bank account
      trajectories, and distributions.
 
 ---
