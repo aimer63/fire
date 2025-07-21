@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [v0.1.0b4] - 2025-07
 
 ### Changed
 
