@@ -103,11 +103,11 @@ class DeterministicInputs(BaseModel):
     )
 
     monthly_salary_steps: list[SalaryStep] = Field(
-        ...,
+        default_factory=list,
         description="List of salary steps, each with a start year and monthly amount.",
     )
     salary_inflation_factor: float = Field(
-        ...,
+        default=0.0,
         ge=0.0,
         description=(
             "Quota of inflation that is applied to salary after the last step. "
@@ -115,7 +115,7 @@ class DeterministicInputs(BaseModel):
         ),
     )
     salary_end_year: int = Field(
-        ...,
+        default=0,
         ge=0,
         description="Year index (0-indexed) when salary income ends (exclusive). Salary stops before this year begins.",
     )
@@ -173,11 +173,20 @@ class DeterministicInputs(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    @model_validator(mode="after")
     def validate_salary_steps(self) -> "DeterministicInputs":
-        years = [step.year for step in self.monthly_salary_steps]
-        if not years:
+        # If salary steps are not provided or empty, skip further checks
+        if not self.monthly_salary_steps:
             return self
+        # If salary steps are present, require explicit user specification of inflation factor and end year
+        if "salary_inflation_factor" not in self.__pydantic_fields_set__:
+            raise ValueError(
+                "salary_inflation_factor must be explicitly specified when monthly_salary_steps are provided."
+            )
+        if "salary_end_year" not in self.__pydantic_fields_set__:
+            raise ValueError(
+                "salary_end_year must be explicitly specified when monthly_salary_steps are provided."
+            )
+        years = [step.year for step in self.monthly_salary_steps]
         if len(set(years)) != len(years):
             raise ValueError("Years in monthly_salary_steps must be unique.")
         if sorted(years) != years:
