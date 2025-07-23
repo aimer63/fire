@@ -41,5 +41,7 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 
 - [ ] Think about house purchase and illiquid assets management.
 - [ ] Study inflation persistence/stickiness and find a better model than lognormal
+      The problem is inflation is not a random walk, it has a trend and it is persistent,
+      I think because it is a result of monetary policy and so "not" a random process.
 
 ---

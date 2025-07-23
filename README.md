@@ -251,7 +251,7 @@ weights = { stocks = 0.60, bonds = 0.40 }
 
 - Python 3.10+
 - See `requirements.txt` for dependencies:
-  - numpy, pandas, pandas-stubs, matplotlib, pdantic, tomli, tomli-w, tqdm
+  - numpy, pandas, pandas-stubs, matplotlib, pydantic, tomli, tomli-w, tqdm
 
 Install with:
 

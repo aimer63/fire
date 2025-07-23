@@ -26,14 +26,3 @@
 > #file:`firestarter/core/simulation.py`
 
 
-> #buffers:
-> #buffers:`visible`
-> #files:`configs/*.toml`
-> #files:`firestarter/config/*.py`
-> #files:`firestarter/core/*.py`
-> #files:`firestarter/reporting/*.py`
-> #file:`firestarter/main.py`
-> #files:`docs/*.md`
-> #files:`docs/notes/*.md`
-> #file:`docs/notes/asset_classes.md`
-> #file:`docs/notes/assets_validation.md`

@@ -17,7 +17,7 @@ num_simulations = 10_000
 # ==============================================================================
 [paths]
 # Directory where all output (reports, plots, etc.) will be saved.
-# Relative to the project root.
+# Relative to the working directory.
 output_root = "output/"
 
 # ==============================================================================
@@ -30,6 +30,7 @@ output_root = "output/"
 # 3
 #
 # Initial values for each asset, mapping asset keys from the [assets] tables to amounts.
+# `asset` must match a key from the [assets] table.
 [deterministic_inputs.initial_portfolio]
 stocks = 200_000.0
 bonds = 20_000.0
@@ -101,8 +102,8 @@ house_purchase_year = 0
 # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
-# stock_mu = 0.1017
-# stock_sigma = 0.1478
+# mu = 0.1017
+# sigma = 0.1478
 #
 # The 2016-2025 period was exceptionally strong for global equities.
 # For a long-term simulation (30+ years), it's advisable to temper expectations
@@ -117,8 +118,8 @@ withdrawal_priority = 2
 # annual total returns from 2004-2023.
 # MU: Arithmetic Mean
 # SIGMA: Arithmetic Standard Deviation
-# bond_mu = 0.0193
-# bond_sigma = 0.0535
+# mu = 0.0193
+# sigma = 0.0535
 
 # The 2004-2023 period includes many years of historically very low and even
 # negative interest rates in Europe. The environment has shifted, and current
@@ -139,12 +140,10 @@ is_liquid = true
 withdrawal_priority = 0
 
 # Ethereum: from 2016 to 2025
-# fun_mu = 2.3755
-# fun_sigma = 1.3320
+# mu = 2.3755
+# sigma = 1.3320
 
 # Ethereum: Conservative values
-# fun_mu = 0.25
-# fun_sigma = 0.90
 [assets.eth]
 mu = 0.25
 sigma = 0.90
@@ -152,19 +151,17 @@ is_liquid = true
 withdrawal_priority = 3
 
 # Silver: from 2016 to 2025
-# fun_mu = 0.1120
-# fun_sigma = 0.2794
+# mu = 0.1120
+# sigma = 0.2794
 
 # Silver: Conservative values
-# fun_mu = 0.07
-# fun_sigma = 0.32
 [assets.ag]
 mu = 0.07
 sigma = 0.32
 is_liquid = true
 withdrawal_priority = 4
 
-# Illiquid assets are handled separately and not part of portfolio rebalancing.
+# Illiquid assets are handled separately and are not part of portfolio rebalancing.
 # They do not require a withdrawal_priority.
 #
 # Real Estate (Italy) parameters based on annual capital gains from 2004-2023, net of 1.5% annual maintenance.
@@ -179,8 +176,8 @@ is_liquid = false
 # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
 # MU_PI: Arithmetic Mean of inflation
 # SIGMA_PI: Arithmetic Standard Deviation of inflation
-# mu_pi = 0.0220
-# sigma_pi = 0.0229
+# mu = 0.0220
+# sigma = 0.0229
 #
 # More relistics for the future
 [assets.inflation]
