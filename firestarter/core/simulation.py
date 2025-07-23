@@ -308,15 +308,57 @@ class Simulation:
         monthly_nominal_salary_sequence = np.zeros(total_months, dtype=np.float64)
 
         pension_start_month_idx = det_inputs.pension_start_year * 12
-        salary_start_month_idx = det_inputs.salary_start_year * 12
-        salary_end_month_idx = det_inputs.salary_end_year * 12
 
-        # Partial indexation: compound only a fraction of inflation each month
+        # --- Salary steps logic ---
+        salary_steps = sorted(det_inputs.monthly_salary_steps, key=lambda s: s.year)
+        salary_inflation_factor = det_inputs.salary_inflation_factor
+
+        # Handle empty salary steps: salary is zero for all months
+        if not salary_steps:
+            monthly_nominal_salary_sequence[:] = 0.0
+        else:
+            # Build a list of (start_month, monthly_amount) for each step
+            salary_step_months = [
+                (step.year * 12, step.monthly_amount) for step in salary_steps
+            ]
+
+            # After last step, salary grows with inflation and salary_inflation_factor
+            last_step_start_month, last_step_amount = salary_step_months[-1]
+            salary_end_month_idx = det_inputs.salary_end_year * 12
+
+            salary_cumulative = 0.0
+            current_step_idx = 0
+            for month_idx in range(total_months):
+                # Advance to next step if needed
+                if (
+                    current_step_idx + 1 < len(salary_step_months)
+                    and month_idx >= salary_step_months[current_step_idx + 1][0]
+                ):
+                    current_step_idx += 1
+
+                step_start_month, step_amount = salary_step_months[current_step_idx]
+
+                if month_idx < step_start_month:
+                    monthly_nominal_salary_sequence[month_idx] = 0.0
+                elif month_idx >= salary_end_month_idx:
+                    monthly_nominal_salary_sequence[month_idx] = 0.0
+                elif current_step_idx < len(salary_step_months) - 1:
+                    # Within a defined step
+                    monthly_nominal_salary_sequence[month_idx] = step_amount
+                else:
+                    # After last step: apply inflation and salary_inflation_factor
+                    if month_idx == step_start_month:
+                        salary_cumulative = step_amount
+                    else:
+                        salary_cumulative *= 1.0 + (
+                            monthly_inflation_sequence[month_idx - 1]
+                            * salary_inflation_factor
+                        )
+                    monthly_nominal_salary_sequence[month_idx] = salary_cumulative
+
+        # --- Pension logic ---
         pension_cumulative = det_inputs.monthly_pension
-        salary_cumulative = det_inputs.monthly_salary
-
         for month_idx in range(total_months):
-            # Pension
             if month_idx >= pension_start_month_idx:
                 if month_idx == pension_start_month_idx:
                     pension_cumulative = det_inputs.monthly_pension
@@ -326,17 +368,6 @@ class Simulation:
                         * det_inputs.pension_inflation_factor
                     )
                 monthly_nominal_pension_sequence[month_idx] = pension_cumulative
-
-            # Salary
-            if salary_start_month_idx <= month_idx < salary_end_month_idx:
-                if month_idx == salary_start_month_idx:
-                    salary_cumulative = det_inputs.monthly_salary
-                else:
-                    salary_cumulative *= 1.0 + (
-                        monthly_inflation_sequence[month_idx - 1]
-                        * det_inputs.salary_inflation_factor
-                    )
-                monthly_nominal_salary_sequence[month_idx] = salary_cumulative
 
         self.state.monthly_cumulative_inflation_factors = (
             monthly_cumulative_inflation_factors

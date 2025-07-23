@@ -62,6 +62,17 @@ class PlannedExtraExpense(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class SalaryStep(BaseModel):
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when this salary step starts."
+    )
+    monthly_amount: float = Field(
+        ..., ge=0.0, description="Monthly salary amount (today's money) for this step."
+    )
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
 class DeterministicInputs(BaseModel):
     """
     Pydantic model representing the deterministic financial inputs for the simulation.
@@ -95,29 +106,22 @@ class DeterministicInputs(BaseModel):
         ..., description="Total number of years the retirement simulation will run."
     )
 
-    monthly_salary: float = Field(
-        ..., description="Initial real (today's money) monthly salary."
+    monthly_salary_steps: list[SalaryStep] = Field(
+        ...,
+        description="List of salary steps, each with a start year and monthly amount.",
     )
     salary_inflation_factor: float = Field(
         ...,
+        ge=0.0,
         description=(
-            "Factor by which salary adjusts to inflation (1.0 = tracks inflation, "
-            "1.01 = 1% above inflation)."
-        ),
-    )
-    salary_start_year: int = Field(
-        ...,
-        description=(
-            "Year index (0-indexed) when salary income starts. "
-            "E.g., 0 for immediate start."
+            "Quota of inflation that is applied to salary after the last step. "
+            "1.0 = tracks inflation, 0.0 = no inflation adjustment, >1.0 = grows faster than inflation."
         ),
     )
     salary_end_year: int = Field(
         ...,
-        description=(
-            "Year index (0-indexed) when salary income ends (exclusive). "
-            "E.g., 5 for 5 years of salary, meaning salary ends *before* Year 5 begins."
-        ),
+        ge=0,
+        description="Year index (0-indexed) when salary income ends (exclusive). Salary stops before this year begins.",
     )
 
     monthly_pension: float = Field(
@@ -172,6 +176,24 @@ class DeterministicInputs(BaseModel):
     )
 
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def validate_salary_steps(self) -> "DeterministicInputs":
+        years = [step.year for step in self.monthly_salary_steps]
+        if len(set(years)) != len(years):
+            raise ValueError("Years in monthly_salary_steps must be unique.")
+        if not years:
+            raise ValueError("At least one salary step must be provided.")
+        if sorted(years) != years:
+            raise ValueError(
+                "Years in monthly_salary_steps must be sorted in ascending order."
+            )
+        last_step_year = years[-1]
+        if self.salary_end_year < last_step_year:
+            raise ValueError(
+                "salary_end_year must be >= the last year in monthly_salary_steps."
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_bank_bounds(self) -> "DeterministicInputs":
