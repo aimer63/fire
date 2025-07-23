@@ -6,6 +6,7 @@
 #
 
 from firestarter.core.simulation import Simulation
+from firestarter.config.config import SalaryStep
 
 # Fixtures like initialized_simulation are automatically discovered from conftest.py
 # DeterministicInputs is used for type hinting and modifying fixture values,
@@ -37,10 +38,9 @@ def test_simulation_process_income_with_salary_and_pension(
     # --- Scenario 1: Salary and Pension active ---
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
-            "monthly_salary": 1000.0,
-            "salary_start_year": 0,
-            "salary_end_year": sim.det_inputs.years_to_simulate,  # Active throughout
+            "monthly_salary_steps": [SalaryStep(year=0, monthly_amount=1000.0)],
             "salary_inflation_factor": 0.0,  # Simplifies expected value
+            "salary_end_year": sim.det_inputs.years_to_simulate,  # Active throughout
             "monthly_pension": 500.0,
             "pension_start_year": 0,  # Active throughout
             "pension_inflation_factor": 0.0,  # Simplifies expected value
@@ -74,7 +74,7 @@ def test_simulation_process_income_with_salary_and_pension(
     # --- Scenario 3: No income (pension not started yet, salary off) ---
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
-            "monthly_salary": 0.0,  # Turn off salary
+            "monthly_salary_steps": [],  # Turn off salary
             "pension_start_year": 2,  # Pension starts in year 2 (month 24)
         }
     )
