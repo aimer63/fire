@@ -79,10 +79,6 @@ class DeterministicInputs(BaseModel):
     These parameters are loaded from the 'deterministic_inputs' section of config.toml.
     """
 
-    initial_portfolio: dict[str, float] = Field(
-        ...,
-        description="Initial value of portfolio assets, mapping asset name to amount.",
-    )
     initial_bank_balance: float = Field(
         ..., description="Initial bank account balance."
     )
@@ -180,10 +176,10 @@ class DeterministicInputs(BaseModel):
     @model_validator(mode="after")
     def validate_salary_steps(self) -> "DeterministicInputs":
         years = [step.year for step in self.monthly_salary_steps]
+        if not years:
+            return self
         if len(set(years)) != len(years):
             raise ValueError("Years in monthly_salary_steps must be unique.")
-        if not years:
-            raise ValueError("At least one salary step must be provided.")
         if sorted(years) != years:
             raise ValueError(
                 "Years in monthly_salary_steps must be sorted in ascending order."
@@ -200,6 +196,10 @@ class DeterministicInputs(BaseModel):
         if self.bank_lower_bound > self.bank_upper_bound:
             raise ValueError(
                 "bank_lower_bound must be less than or equal to bank_upper_bound"
+            )
+        if self.initial_bank_balance < self.bank_lower_bound:
+            raise ValueError(
+                "initial_bank_balance must be greater than or equal to bank_lower_bound"
             )
         return self
 
@@ -353,7 +353,7 @@ class Config(BaseModel):
                 "An asset named 'inflation' must be defined in the assets section."
             )
 
-        # 1a. Validate that withdrawal_priority values for liquid assets are unique
+        # 1. Validate that withdrawal_priority values for liquid assets are unique
         priorities = [
             asset.withdrawal_priority
             for asset in self.assets.values()
@@ -361,16 +361,6 @@ class Config(BaseModel):
         ]
         if len(priorities) != len(set(priorities)):
             raise ValueError("Withdrawal priorities for liquid assets must be unique")
-
-        # 1b. Validate that all assets in initial_portfolio are declared in assets
-        initial_portfolio_assets = set(
-            self.deterministic_inputs.initial_portfolio.keys()
-        )
-        undeclared_assets = initial_portfolio_assets - defined_assets
-        if undeclared_assets:
-            raise ValueError(
-                f"Assets in initial_portfolio not declared in [assets]: {sorted(list(undeclared_assets))}"
-            )
 
         # 2. Validate the correlation matrix asset list
         if self.correlation_matrix:
@@ -400,4 +390,9 @@ class Config(BaseModel):
         if len(rebalance_years) != len(set(rebalance_years)):
             raise ValueError("Rebalance years must be unique.")
 
+        # 5. Enforce presence of a rebalance at year 0
+        if 0 not in rebalance_years:
+            raise ValueError(
+                "A portfolio rebalance at year 0 is required to set initial target weights."
+            )
         return self

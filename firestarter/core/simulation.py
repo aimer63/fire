@@ -174,11 +174,11 @@ class Simulation:
             self.state.current_month_index = month
             self.state.current_year_index = month // 12
 
-            # 1. Income: Add salary and pension for the current year.
-            self._process_income(month)
-
-            # 2. Contributions: Apply planned contributions to liquid assets.
+            # 1. Contributions: Apply planned contributions to liquid assets.
             self._handle_contributions(month)
+
+            # 2. Income: Add salary and pension for the current year.
+            self._process_income(month)
 
             # 3. Expenses: Deduct regular and extra expenses from the bank account.
             self._handle_expenses(month)
@@ -207,18 +207,21 @@ class Simulation:
 
         return self._build_result()
 
-    # --- Helper methods (stubs for now) ---
     def _initialize_state(self):
         """
         Initialize all state variables for the simulation.
         Returns a SimulationState dataclass holding the simulation state.
         """
         # The portfolio is initialized directly from the user-provided initial assets
-        initial_portfolio = self.det_inputs.initial_portfolio
+        # initial_portfolio = self.det_inputs.initial_portfolio
 
-        # Find the initial target portfolio weights from the first rebalance event
-        first_reb = self.portfolio_rebalances[0]
-        initial_target_weights = first_reb.weights
+        # Initialize portfolio with zeros for all assets
+        initial_portfolio = {k: 0.0 for k in self.assets.keys()}
+
+        # Find the initial target portfolio weights from the rebalance at year 0
+        initial_target_weights = next(
+            reb.weights for reb in self.portfolio_rebalances if reb.year == 0
+        )
 
         # Calculate initial total wealth
         initial_total_wealth = self.det_inputs.initial_bank_balance + sum(
@@ -323,7 +326,6 @@ class Simulation:
             ]
 
             # After last step, salary grows with inflation and salary_inflation_factor
-            last_step_start_month, last_step_amount = salary_step_months[-1]
             salary_end_month_idx = det_inputs.salary_end_year * 12
 
             salary_cumulative = 0.0
@@ -668,7 +670,7 @@ class Simulation:
         def trunc_only(arr):
             return arr[:months_lasted]
 
-        asset_keys = self.det_inputs.initial_portfolio.keys()
+        asset_keys = self.assets.keys()
 
         if months_lasted > 0:
             last_month_idx = months_lasted - 1
@@ -685,7 +687,7 @@ class Simulation:
             final_nominal_wealth = self.state.initial_total_wealth
             final_cumulative_inflation = 1.0
             final_bank_balance = self.det_inputs.initial_bank_balance
-            final_allocations_nominal = self.det_inputs.initial_portfolio
+            final_allocations_nominal = {k: 0.0 for k in asset_keys}
 
         final_investment = final_nominal_wealth - final_bank_balance
         final_real_wealth = final_nominal_wealth / final_cumulative_inflation
