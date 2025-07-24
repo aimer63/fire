@@ -55,8 +55,10 @@ For a detailed explanation of how **returns** and **inflation** are handled in t
 ### 1. **Initialization**
 
 - The builder sets up all configuration objects.
-- `Simulation.init()` initializes the simulation state and precomputes all time-series data needed
-  for the run (e.g., monthly sequences for market returns and inflation).
+- The initial portfolio is determined by a planned contribution at year 0 and the weights
+  in the year 0 rebalance event.
+- `Simulation.init()` initializes the simulation state and precomputes all time-series
+  data needed for the run (e.g., monthly sequences for market returns and inflation).
 
 ### 2. **Main Simulation Loop (`Simulation.run()`)**
 

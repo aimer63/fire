@@ -185,8 +185,9 @@ num_simulations = 10_000
 output_root = "output/"
 
 [deterministic_inputs]
-initial_portfolio = {
-  stocks = 100000.0, bonds = 30000.0 }
+initial_bank_balance = 8000.0
+# To set your initial portfolio, use a planned contribution at year 0 and specify the allocation with a rebalance at year 0.
+planned_contributions = [{ year = 0, amount = 130000.0 }]
 
 initial_bank_balance = 8000.0
 
@@ -229,6 +230,16 @@ year = 10
 description = "October 1929"
 impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 
+[[portfolio_rebalances]]
+year = 0
+description = "Initial allocation"
+weights = { stocks = 0.80, bonds = 0.20 }
+
+# To set your initial portfolio, use a planned contribution at year 0 and specify
+# the allocation with a rebalance at year 0.
+# There must always be a rebalance event for year 0 even if a planned contribution
+# at year 0 is not specified, the weights are used to allocate all subsequent investments
+# until the next rebalance.
 [[portfolio_rebalances]]
 year = 20
 description = "De-risking for retirement"

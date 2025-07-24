@@ -65,6 +65,7 @@ This document explains all parameters available in the main TOML configuration f
       Salary is set to zero before the first step and after `salary_end_year`.
       After the last defined step, salary grows with inflation, scaled by `salary_inflation_factor`.
       If this list is omitted or empty, no salary is paid at any time.
+
       _Example:_
 
     ```toml
@@ -79,7 +80,8 @@ This document explains all parameters available in the main TOML configuration f
 
   - **salary_inflation_factor** _(float)_  
     How salary grows relative to inflation after the last step.
-    (1.0 = matches inflation, 1.01 = 1% above inflation, 0.0 = not inflation adjusted).
+    (e.g. 1.0 = matches inflation, 1.01 = 1% above inflation, 0.6 = inflation adjustment
+    accounts only for the 60% of inflation, 0.0 = not inflation adjusted).
 
   - **salary_start_year** _(int)_  
     Year index when salary starts (0 = first year).
@@ -267,12 +269,13 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 
 ### Example: Setting the initial portfolio
 
-To start with 60% stocks and 40% bonds, with an initial investment of 100,000:
+To start with 80% stocks and 20% bonds, with an initial investment of 100,000:
 
 ```toml
 [deterministic_inputs]
 initial_bank_balance = 10_000.0
 planned_contributions = [{ year = 0, amount = 100_000.0 }]
+...
 
 [[portfolio_rebalances]]
 year = 0
