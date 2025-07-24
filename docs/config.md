@@ -180,6 +180,12 @@ sigma = 0.01
 is_liquid = false
 ```
 
+Inflation, although not an asset, is defined in this section because it is correlated
+with assets through a [correlation matrix](correlation.md), and the mechanism for generating random
+values for assets return and inflation from `mu` and `sigma` is the same.
+The inflation asset is mandatory because it's used to track all the real values, wealth,
+expenses...
+
 ---
 
 ## Correlation matrix
@@ -275,7 +281,7 @@ To start with 80% stocks and 20% bonds, with an initial investment of 100,000:
 [deterministic_inputs]
 initial_bank_balance = 10_000.0
 planned_contributions = [{ year = 0, amount = 100_000.0 }]
-...
+# ... others parameters ...
 
 [[portfolio_rebalances]]
 year = 0
