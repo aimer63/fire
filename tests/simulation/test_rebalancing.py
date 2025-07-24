@@ -22,9 +22,11 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
     # Define a new set of weights for the rebalance event
     new_weights = {"stocks": 0.6, "bonds": 0.4, "str": 0.0, "fun": 0.0}
     rebalance_event = PortfolioRebalance(year=rebalance_year, weights=new_weights)
+    initial_weights = {"stocks": 1.0, "bonds": 0.0, "str": 0.0, "fun": 0.0}
+    initial_rebalance = PortfolioRebalance(year=0, weights=initial_weights)
 
     # Replace the rebalance schedule on the simulation instance from the fixture
-    sim.portfolio_rebalances = [rebalance_event]
+    sim.portfolio_rebalances = [initial_rebalance, rebalance_event]
 
     # Set a specific portfolio for this test
     sim.state.portfolio = {
@@ -64,11 +66,13 @@ def test_rebalance_no_event_scheduled_for_year(
     rebalance_year = 5
     year_to_test = 3  # A year with no rebalance scheduled
 
+    initial_weights = {"stocks": 1.0, "bonds": 0.0, "str": 0.0, "fun": 0.0}
+    initial_rebalance = PortfolioRebalance(year=0, weights=initial_weights)
     rebalance_event = PortfolioRebalance(
         year=rebalance_year,
         weights={"stocks": 1.0, "bonds": 0.0, "str": 0.0, "fun": 0.0},
     )
-    sim.portfolio_rebalances = [rebalance_event]
+    sim.portfolio_rebalances = [initial_rebalance, rebalance_event]
     sim.init()
 
     # Store initial state for comparison
@@ -95,9 +99,11 @@ def test_rebalance_not_first_month_of_year(
     sim = initialized_simulation
     rebalance_year = 5
 
+    initial_weights = {"stocks": 1.0, "bonds": 0.0, "str": 0.0, "fun": 0.0}
+    initial_rebalance = PortfolioRebalance(year=0, weights=initial_weights)
     new_weights = {"stocks": 0.6, "bonds": 0.4, "str": 0.0, "fun": 0.0}
     rebalance_event = PortfolioRebalance(year=rebalance_year, weights=new_weights)
-    sim.portfolio_rebalances = [rebalance_event]
+    sim.portfolio_rebalances = [initial_rebalance, rebalance_event]
     sim.init()
 
     # Store initial state for comparison

@@ -6,7 +6,9 @@
 #
 
 import pytest
+
 from firestarter.core.simulation import Simulation
+from firestarter.config.config import PlannedContribution
 
 
 def test_handle_bank_account_successful_top_up(
@@ -26,13 +28,7 @@ def test_handle_bank_account_successful_top_up(
         update={
             "bank_lower_bound": lower_bound,
             "bank_upper_bound": upper_bound,
-            "initial_portfolio": {
-                "stocks": 50_000.0,
-                "bonds": 0,
-                "str": 0,
-                "fun": 0,
-                "real_estate": 0.0,
-            },
+            "planned_contributions": [PlannedContribution(year=0, amount=20_000.0)],
         }
     )
     sim.init()
@@ -74,13 +70,7 @@ def test_handle_bank_account_failed_top_up(
         update={
             "bank_lower_bound": lower_bound,
             "bank_upper_bound": upper_bound,
-            "initial_portfolio": {
-                "stocks": 3_000.0,
-                "bonds": 0,
-                "str": 0,
-                "fun": 0,
-                "real_estate": 0.0,
-            },
+            "planned_contributions": [PlannedContribution(year=0, amount=0.0)],
         }
     )
     sim.init()
@@ -110,13 +100,7 @@ def test_handle_bank_account_invest_excess(
         update={
             "bank_lower_bound": lower_bound,
             "bank_upper_bound": upper_bound,
-            "initial_portfolio": {
-                "stocks": 50_000.0,
-                "bonds": 50_000.0,
-                "str": 0,
-                "fun": 0,
-                "real_estate": 0.0,
-            },
+            "planned_contributions": [],
         }
     )
     sim.init()
@@ -155,13 +139,7 @@ def test_handle_bank_account_no_action(initialized_simulation: Simulation) -> No
         update={
             "bank_lower_bound": lower_bound,
             "bank_upper_bound": upper_bound,
-            "initial_portfolio": {
-                "stocks": 50_000.0,
-                "bonds": 0,
-                "str": 0,
-                "fun": 0,
-                "real_estate": 0.0,
-            },
+            "planned_contributions": [],
         }
     )
     sim.init()

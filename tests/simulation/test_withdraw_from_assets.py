@@ -7,6 +7,7 @@
 
 import pytest
 from firestarter.core.simulation import Simulation
+from firestarter.config.config import PlannedContribution
 
 # The withdrawal priority is documented in `_withdraw_from_assets` as:
 # STR, Bonds, Stocks, Fun
@@ -20,16 +21,36 @@ def test_withdraw_from_assets_success_single_asset(
     Tests a successful withdrawal that is fully covered by the first-priority asset.
     """
     sim = initialized_simulation
-    initial_portfolio = {
-        "stocks": 50_000.0,
-        "bonds": 50_000.0,
-        "str": 50_000.0,
-        "fun": 50_000.0,
-        "real_estate": 0.0,
-    }
+    # Desired initial portfolio
+    stocks = 50_000.0
+    bonds = 50_000.0
+    str_ = 50_000.0
+    fun = 50_000.0
+    total = stocks + bonds + str_ + fun
+
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"initial_portfolio": initial_portfolio}
+        update={
+            "planned_contributions": [PlannedContribution(year=0, amount=total)],
+            "initial_bank_balance": 0.0,
+        }
     )
+    # Set rebalance weights for year 0
+    sim.portfolio_rebalances = [
+        reb
+        if reb.year != 0
+        else reb.model_copy(
+            update={
+                "weights": {
+                    "stocks": stocks / total,
+                    "bonds": bonds / total,
+                    "str": str_ / total,
+                    "fun": fun / total,
+                    "real_estate": 0.0,
+                }
+            }
+        )
+        for reb in sim.portfolio_rebalances
+    ]
     sim.init()
     sim.state.current_bank_balance = 0.0
 
@@ -50,16 +71,36 @@ def test_withdraw_from_assets_success_multiple_assets(
     partially draws from the second.
     """
     sim = initialized_simulation
-    initial_portfolio = {
-        "stocks": 50_000.0,
-        "bonds": 50_000.0,
-        "str": 10_000.0,  # Lower amount to force depletion
-        "fun": 50_000.0,
-        "real_estate": 0.0,
-    }
+    # Desired initial portfolio
+    stocks = 50_000.0
+    bonds = 50_000.0
+    str_ = 10_000.0
+    fun = 50_000.0
+    total = stocks + bonds + str_ + fun
+
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"initial_portfolio": initial_portfolio}
+        update={
+            "planned_contributions": [PlannedContribution(year=0, amount=total)],
+            "initial_bank_balance": 0.0,
+        }
     )
+    # Set rebalance weights for year 0
+    sim.portfolio_rebalances = [
+        reb
+        if reb.year != 0
+        else reb.model_copy(
+            update={
+                "weights": {
+                    "stocks": stocks / total,
+                    "bonds": bonds / total,
+                    "str": str_ / total,
+                    "fun": fun / total,
+                    "real_estate": 0.0,
+                }
+            }
+        )
+        for reb in sim.portfolio_rebalances
+    ]
     sim.init()
     sim.state.current_bank_balance = 0.0
 
@@ -81,16 +122,35 @@ def test_withdraw_from_assets_failure_insufficient_funds(
     of all liquid assets.
     """
     sim = initialized_simulation
-    initial_portfolio = {
-        "stocks": 10_000.0,
-        "bonds": 10_000.0,
-        "str": 10_000.0,
-        "fun": 10_000.0,
-        "real_estate": 0.0,
-    }
+    stocks = 10_000.0
+    bonds = 10_000.0
+    str_ = 10_000.0
+    fun = 10_000.0
+    total = stocks + bonds + str_ + fun
+
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"initial_portfolio": initial_portfolio}
+        update={
+            "planned_contributions": [PlannedContribution(year=0, amount=total)],
+            "initial_bank_balance": 0.0,
+        }
     )
+    # Set rebalance weights for year 0
+    sim.portfolio_rebalances = [
+        reb
+        if reb.year != 0
+        else reb.model_copy(
+            update={
+                "weights": {
+                    "stocks": stocks / total,
+                    "bonds": bonds / total,
+                    "str": str_ / total,
+                    "fun": fun / total,
+                    "real_estate": 0.0,
+                }
+            }
+        )
+        for reb in sim.portfolio_rebalances
+    ]
     sim.init()
     sim.state.current_bank_balance = 0.0
     total_liquid_assets = sum(
@@ -114,16 +174,35 @@ def test_withdraw_from_assets_success_all_assets(
     Tests a successful withdrawal that draws from all liquid assets according to priority.
     """
     sim = initialized_simulation
-    initial_portfolio = {
-        "stocks": 10_000.0,
-        "bonds": 10_000.0,
-        "str": 10_000.0,
-        "fun": 50_000.0,
-        "real_estate": 0.0,
-    }
+    stocks = 10_000.0
+    bonds = 10_000.0
+    str_ = 10_000.0
+    fun = 50_000.0
+    total = stocks + bonds + str_ + fun
+
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={"initial_portfolio": initial_portfolio}
+        update={
+            "planned_contributions": [PlannedContribution(year=0, amount=total)],
+            "initial_bank_balance": 0.0,
+        }
     )
+    # Set rebalance weights for year 0
+    sim.portfolio_rebalances = [
+        reb
+        if reb.year != 0
+        else reb.model_copy(
+            update={
+                "weights": {
+                    "stocks": stocks / total,
+                    "bonds": bonds / total,
+                    "str": str_ / total,
+                    "fun": fun / total,
+                    "real_estate": 0.0,
+                }
+            }
+        )
+        for reb in sim.portfolio_rebalances
+    ]
     sim.init()
     sim.state.current_bank_balance = 0.0
 

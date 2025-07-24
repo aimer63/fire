@@ -138,7 +138,13 @@ class Simulation:
         self.portfolio_rebalances: list[PortfolioRebalance] = portfolio_rebalances
         self.shock_events: list[Shock] = shock_events
         self.sim_params: SimulationParameters = sim_params
-        self.state: SimulationState = self._initialize_state()
+        self.state: SimulationState = SimulationState(
+            current_bank_balance=0.0,
+            portfolio={},
+            current_target_portfolio_weights={},
+            initial_total_wealth=0.0,
+            simulation_failed=False,
+        )  # I t will be properly initialized in self.initialize_state()
         self.results: Dict[str, Any] = {}
 
     @property
@@ -164,8 +170,6 @@ class Simulation:
             "wealth_history": [None] * total_months,
             "bank_balance_history": [None] * total_months,
         }
-        # for asset_name in self.state.portfolio:
-        #     self.results[f"{asset_name}_history"] = [None] * total_months
 
         for asset_name in self.assets:
             self.results[f"{asset_name}_history"] = [None] * total_months
@@ -175,7 +179,10 @@ class Simulation:
             self.state.current_year_index = month // 12
 
             # 1. Contributions: Apply planned contributions to liquid assets.
-            self._handle_contributions(month)
+            if month != 0:
+                # To skip the contribution at year 0, alreaty applied in initialize_state
+                # to set the initial allocation
+                self._handle_contributions(month)
 
             # 2. Income: Add salary and pension for the current year.
             self._process_income(month)
@@ -213,7 +220,6 @@ class Simulation:
         Returns a SimulationState dataclass holding the simulation state.
         """
         # The portfolio is initialized directly from the user-provided initial assets
-        # initial_portfolio = self.det_inputs.initial_portfolio
 
         # Initialize portfolio with zeros for all assets
         initial_portfolio = {k: 0.0 for k in self.assets.keys()}
@@ -235,7 +241,13 @@ class Simulation:
             initial_total_wealth=initial_total_wealth,
             simulation_failed=False,
         )
-        return state
+
+        # Apply planned contribution at year 0 to set up initial allocation
+        # This must be done here so it is not reapplied in simulation.run
+        self.state = state
+        self._handle_contributions(0)
+
+        return self.state
 
     def _precompute_sequences(self):
         """
@@ -576,7 +588,8 @@ class Simulation:
         Rebalances all liquid assets according to the current target portfolio weights.
         """
         weights = self.state.current_target_portfolio_weights
-        liquid_asset_keys = weights.keys()
+        # Only include liquid assets in rebalancing
+        liquid_asset_keys = [k for k in weights.keys() if self.assets[k].is_liquid]
 
         total_liquid = sum(
             self.state.portfolio.get(asset, 0.0) for asset in liquid_asset_keys
@@ -584,7 +597,8 @@ class Simulation:
 
         if total_liquid > 0:
             # Assuming weights sum to 1.0 as validated in config parsing
-            for asset, weight in weights.items():
+            for asset in liquid_asset_keys:
+                weight = weights[asset]
                 self.state.portfolio[asset] = total_liquid * weight
         else:
             # If total liquid is zero, zero out all liquid assets

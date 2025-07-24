@@ -29,16 +29,6 @@ output_root = "output/"
 # 2 2027
 # 3
 #
-# Initial values for each asset, mapping asset keys from the [assets] tables to amounts.
-# `asset` must match a key from the [assets] table.
-[deterministic_inputs.initial_portfolio]
-stocks = 200_000.0
-bonds = 20_000.0
-str = 15_000.0
-eth = 10_000.0
-ag = 10_000.0
-real_estate = 0.0
-
 [deterministic_inputs]
 # Initial cash/bank account balance.
 initial_bank_balance = 8000.0
@@ -250,6 +240,11 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 # Defines the target asset allocation for the liquid portfolio at different stages.
 # A rebalance must be defined for year 0 to set the initial allocation.
 # Weights must sum to 1.0 and only include keys for assets where `is_liquid = true`.
+[[portfolio_rebalances]]
+year = 0
+description = "Initial allocation"
+weights = { stocks = 0.80, bonds = 0.10, eth = 0.05, ag = 0.05 }
+
 [[portfolio_rebalances]]
 year = 20
 description = "De-risking for retirement"
