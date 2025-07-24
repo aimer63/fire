@@ -33,7 +33,8 @@ This document explains all parameters available in the main TOML configuration f
   Directory paths used by the simulation.
 
   - **output_root** _(str)_  
-    Directory where all output (reports, plots, etc.) will be saved. Relative to the project root.
+    Directory where all output (reports, plots, etc.) will be saved. Relative to
+    the project root.
 
 ---
 
@@ -41,9 +42,6 @@ This document explains all parameters available in the main TOML configuration f
 
 - **`[deterministic_inputs]`** _(Dict)_
   All non stochastic inputs that are fixed and do not vary across simulation runs.
-
-  - **initial_investment** _(float)_  
-    Initial value of your investment portfolio (e.g., EUR).
 
   - **initial_bank_balance** _(float)_  
     Initial cash/bank account balance.
@@ -62,7 +60,8 @@ This document explains all parameters available in the main TOML configuration f
     Each entry is a dictionary with:
 
     - `year` (int): The simulation year (0-indexed) when this salary step begins.
-    - `monthly_amount` (float): The nominal (not inflation-adjusted) monthly salary paid from this year onward.
+    - `monthly_amount` (float): The nominal (not inflation-adjusted) monthly salary
+      paid from this year onward.
       Salary is set to zero before the first step and after `salary_end_year`.
       After the last defined step, salary grows with inflation, scaled by `salary_inflation_factor`.
       If this list is omitted or empty, no salary is paid at any time.
@@ -75,10 +74,12 @@ This document explains all parameters available in the main TOML configuration f
     ]
     ```
 
-    In this example, a salary of 3000 is paid from year 0 to 9, then 4000 from year 10 onward (growing with inflation after year 10).
+    In this example, a salary of 3000 is paid from year 0 to 9, then 4000 from
+    year 10 onward (growing with inflation after year 10).
 
   - **salary_inflation_factor** _(float)_  
-    How salary grows relative to inflation after the last step (1.0 = matches inflation, 1.01 = 1% above inflation).
+    How salary grows relative to inflation after the last step.
+    (1.0 = matches inflation, 1.01 = 1% above inflation, 0.0 = not inflation adjusted).
 
   - **salary_start_year** _(int)_  
     Year index when salary starts (0 = first year).
@@ -96,8 +97,10 @@ This document explains all parameters available in the main TOML configuration f
     Year index when pension starts.
 
   - **planned_contributions** _(list of dicts)_  
-    List of one-time contributions (as a fixed nominal amount). Each dict has `amount` (float) and
-    `year` (int).
+    List of one-time contributions (as a fixed nominal amount).
+    Each dict has `amount` (float) and `year` (int).
+    To set your initial portfolio, specify a planned contribution at `year = 0`
+    and set the desired allocation using the weights in the year 0 rebalance event.
 
   - **annual_fund_fee** _(float)_  
     Annual fee on investments (e.g., 0.002 for 0.2%).
@@ -250,15 +253,30 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
   - **weights**:  
     _Type:_ table (dictionary)  
     _Description:_
+
     - Maps liquid asset names to their target weights (as floats).
     - Must sum to 1.0.
     - Only include assets where `is_liquid = true`.
 
-**Example:**
+  - Each rebalance year must be unique.
+  - There must always be a rebalance event for year 0. This sets the initial allocation
+    and the weights for all the subsequent investments until the next rebalance event.
+    The initial allocation of assets is determined by the planned contribution at year 0
+    and the weights specified in the rebalance event for year 0.
+  - Weights must sum to exactly 1.0 and only reference liquid assets.
+
+### Example: Setting the initial portfolio
+
+To start with 60% stocks and 40% bonds, with an initial investment of 100,000:
 
 ```toml
+[deterministic_inputs]
+initial_bank_balance = 10_000.0
+planned_contributions = [{ year = 0, amount = 100_000.0 }]
+
 [[portfolio_rebalances]]
-year = 3
+year = 0
+description = "Initial allocation"
 weights = { stocks = 0.80, bonds = 0.20 }
 
 [[portfolio_rebalances]]
@@ -268,10 +286,5 @@ weights = { stocks = 0.60, bonds = 0.40 }
 ```
 
 ---
-
-**Notes:**
-
-- Each rebalance year must be unique.
-- Weights must sum to exactly 1.0 and only reference liquid assets.
 
 For more details and examples, see [usage.md](usage.md) and [README.md](../README.md).
