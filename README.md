@@ -20,7 +20,7 @@ asset allocation.
 
 ## Key features
 
-- **[Configuration](/docs/config.md)**  
+- **[Configuration](/docs/configuration_guide.md)**  
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
