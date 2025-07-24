@@ -22,23 +22,22 @@ def basic_deterministic_inputs():
     from firestarter.config.config import DeterministicInputs
 
     return DeterministicInputs(
-        initial_portfolio={"stocks": 100000.0},
         initial_bank_balance=5000.0,
         bank_lower_bound=2000.0,
         bank_upper_bound=10000.0,
         years_to_simulate=5,
-        monthly_salary_steps=[SalaryStep(year=0, monthly_amount=0.0)],
+        monthly_salary_steps=[],
+        monthly_expenses=0,
+        planned_contributions=[],
+        annual_fund_fee=0.001,
+        planned_extra_expenses=[],
+        planned_house_purchase_cost=0,
+        house_purchase_year=None,
         salary_inflation_factor=1.0,
         salary_end_year=5,
         monthly_pension=0,
         pension_inflation_factor=1.0,
         pension_start_year=30,
-        planned_contributions=[],
-        annual_fund_fee=0.001,
-        monthly_expenses=0,
-        planned_extra_expenses=[],
-        planned_house_purchase_cost=0,
-        house_purchase_year=None,
     )
 
 

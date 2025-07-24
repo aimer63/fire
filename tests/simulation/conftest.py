@@ -40,7 +40,6 @@ def basic_initial_assets() -> Dict[str, float]:
 def basic_det_inputs(basic_initial_assets) -> DeterministicInputs:
     """Minimal DeterministicInputs for testing."""
     return DeterministicInputs(
-        initial_portfolio=basic_initial_assets,
         initial_bank_balance=5000.0,
         bank_lower_bound=2000.0,
         bank_upper_bound=10000.0,

@@ -7,6 +7,7 @@
 
 import pytest
 from firestarter.core.simulation import Simulation
+from firestarter.config.config import PlannedContribution
 
 
 def test_handle_house_purchase_success(initialized_simulation: Simulation) -> None:
@@ -22,16 +23,36 @@ def test_handle_house_purchase_success(initialized_simulation: Simulation) -> No
         update={
             "house_purchase_year": purchase_year,
             "planned_house_purchase_cost": house_cost,
-            "initial_portfolio": {
-                "stocks": 300_000.0,
-                "bonds": 50_000.0,
-                "str": 20_000.0,
-                "fun": 10_000.0,
-                "real_estate": 0.0,
-            },
+            "initial_bank_balance": 0.0,
+            "planned_contributions": [PlannedContribution(year=0, amount=380_000.0)],
         }
     )
+    # Set rebalance weights for year 0 to match the desired allocation
+    sim.portfolio_rebalances = [
+        reb
+        if reb.year != 0
+        else reb.model_copy(
+            update={
+                "weights": {
+                    "stocks": 300_000.0 / 380_000.0,
+                    "bonds": 50_000.0 / 380_000.0,
+                    "str": 20_000.0 / 380_000.0,
+                    "fun": 10_000.0 / 380_000.0,
+                    "real_estate": 0.0,
+                }
+            }
+        )
+        for reb in sim.portfolio_rebalances
+    ]
     sim.init()  # Re-initialize with new inputs
+    assert sim.state.portfolio == {
+        "stocks": 300_000.0,
+        "bonds": 50_000.0,
+        "str": 20_000.0,
+        "fun": 10_000.0,
+        "real_estate": 0.0,
+        "inflation": 0.0,
+    }
 
     # Store initial values before the purchase
     initial_bank_balance = sim.state.current_bank_balance
@@ -86,20 +107,31 @@ def test_handle_house_purchase_failure_insufficient_assets(
     purchase_year = 5
     house_cost = 500_000.0  # More than available assets
 
-    # Set insufficient initial assets
+    # Set insufficient initial assets via planned contributions and rebalance weights
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "house_purchase_year": purchase_year,
             "planned_house_purchase_cost": house_cost,
-            "initial_portfolio": {
-                "stocks": 100_000.0,
-                "bonds": 0.0,
-                "str": 0.0,
-                "fun": 0.0,
-                "real_estate": 0.0,
-            },
+            "initial_bank_balance": 0.0,
+            "planned_contributions": [PlannedContribution(year=0, amount=100_000.0)],
         }
     )
+    sim.portfolio_rebalances = [
+        reb
+        if reb.year != 0
+        else reb.model_copy(
+            update={
+                "weights": {
+                    "stocks": 1.0,
+                    "bonds": 0.0,
+                    "str": 0.0,
+                    "fun": 0.0,
+                    "real_estate": 0.0,
+                }
+            }
+        )
+        for reb in sim.portfolio_rebalances
+    ]
     sim.init()
 
     # Execute the house purchase logic
