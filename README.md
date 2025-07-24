@@ -186,7 +186,8 @@ output_root = "output/"
 
 [deterministic_inputs]
 initial_bank_balance = 8000.0
-# To set your initial portfolio, use a planned contribution at year 0 and specify the allocation with a rebalance at year 0.
+# To set your initial portfolio, use a planned contribution at year 0 and specify the
+# allocation with a rebalance at year 0.
 planned_contributions = [{ year = 0, amount = 130000.0 }]
 
 initial_bank_balance = 8000.0
