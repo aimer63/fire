@@ -11,18 +11,16 @@
 > #files:`tests/simulation/*.py`
 
 
-> #buffers:
+> #buffer:
 > #buffers:`visible`
-> #files:`**/*.py`
-> #files:`**/*.md`
-> #files:`configs/*.toml`
-> #files:`firestarter/config/*.py`
-> #files:`firestarter/core/*.py`
-> #file:`firestarter/main.py`
-> #files:`tests/ccnfig/*.py`
-> #file:`docs/notes/asset_classes.md`
 > #file:`firestarter/config/config.py`
 > #file:`firestarter/core/simulation_state.py`
+> #file:`firestarter/core/sequence_generator.py`
 > #file:`firestarter/core/simulation.py`
+> #file:`firestarter/core/main.py`
+> #file:`configs/config.toml`
+> #file:`tests/config/*.py`
+> #file:`tests/simulation/*.py`
+> #file:`docs/*.md`
 
 

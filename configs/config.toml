@@ -81,7 +81,7 @@ monthly_expenses = 2500.0
 
 # One-time extra expenses (in today's money, will be inflation-adjusted).
 planned_extra_expenses = [
-  { amount = 30_000.0, year = 37, description = "Buy a car" },
+  { amount = 30_000.0, year = 20, description = "Buy a car" },
 ]
 
 # --- Major Life Events ---
