@@ -44,8 +44,8 @@ bank_upper_bound = 10000.0
 years_to_simulate = 70
 
 # --- Income Streams ---
-# Nominal amounts, income will be adjusted for inflation only for the years after
-# the last income step according with the `income_inflation_factor`. 
+# Amounts in today's money, for the years after  the last income step 
+# income will be adjusted for inflation according with the `income_inflation_factor`. 
 monthly_income_steps = [
   { year = 0, monthly_amount = 4000.0 },
   { year = 5, monthly_amount = 5000.0 },
@@ -60,7 +60,7 @@ income_end_year = 20          # Slary stops, you are 50, you retire.
 
 # Real (inflation-adjusted) monthly pension.
 monthly_pension = 4000.0
-pension_inflation_factor = 0.6 # Pension grows exactly with inflation.
+pension_inflation_factor = 0.75 # Pension grows 75% of inflation.
 pension_start_year = 37
 
 # --- Contributions & Expenses ---

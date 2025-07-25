@@ -313,45 +313,41 @@ class Simulation:
         # --- Income steps logic ---
         income_steps = sorted(det_inputs.monthly_income_steps, key=lambda s: s.year)
         income_inflation_factor = det_inputs.income_inflation_factor
+        income_end_month_idx = det_inputs.income_end_year * 12
 
-        # Handle empty income steps: income is zero for all months
+        monthly_nominal_income_sequence = np.zeros(total_months, dtype=np.float64)
+
         if not income_steps:
             monthly_nominal_income_sequence[:] = 0.0
         else:
             # Build a list of (start_month, monthly_amount) for each step
             income_step_months = [(step.year * 12, step.monthly_amount) for step in income_steps]
+            step_inflated_amounts = []
+            for step_start_month, step_real_amount in income_step_months:
+                inflation_factor = monthly_cumulative_inflation_factors[step_start_month]
+                step_inflated_amounts.append(step_real_amount * inflation_factor)
 
-            # After last step, income grows with inflation and income_inflation_factor
-            income_end_month_idx = det_inputs.income_end_year * 12
+            # For all steps except the last, fill with constant value
+            for idx in range(len(income_step_months) - 1):
+                start = income_step_months[idx][0]
+                end = income_step_months[idx + 1][0]
+                monthly_nominal_income_sequence[start:end] = step_inflated_amounts[idx]
 
-            income_cumulative = 0.0
-            current_step_idx = 0
-            for month_idx in range(total_months):
-                # Advance to next step if needed
-                if (
-                    current_step_idx + 1 < len(income_step_months)
-                    and month_idx >= income_step_months[current_step_idx + 1][0]
-                ):
-                    current_step_idx += 1
-
-                step_start_month, step_amount = income_step_months[current_step_idx]
-
-                if month_idx < step_start_month:
-                    monthly_nominal_income_sequence[month_idx] = 0.0
-                elif month_idx >= income_end_month_idx:
-                    monthly_nominal_income_sequence[month_idx] = 0.0
-                elif current_step_idx < len(income_step_months) - 1:
-                    # Within a defined step
-                    monthly_nominal_income_sequence[month_idx] = step_amount
+            # For the last step: grow with inflation and income_inflation_factor
+            last_start = income_step_months[-1][0]
+            last_income = step_inflated_amounts[-1]
+            for month in range(last_start, min(income_end_month_idx, total_months)):
+                if month == last_start:
+                    monthly_nominal_income_sequence[month] = last_income
                 else:
-                    # After last step: apply inflation and income_inflation_factor
-                    if month_idx == step_start_month:
-                        income_cumulative = step_amount
-                    else:
-                        income_cumulative *= 1.0 + (
-                            monthly_inflation_sequence[month_idx - 1] * income_inflation_factor
-                        )
-                    monthly_nominal_income_sequence[month_idx] = income_cumulative
+                    prev = monthly_nominal_income_sequence[month - 1]
+                    monthly_nominal_income_sequence[month] = prev * (
+                        1.0 + monthly_inflation_sequence[month - 1] * income_inflation_factor
+                    )
+
+            # After income_end_year: zero
+            if income_end_month_idx < total_months:
+                monthly_nominal_income_sequence[income_end_month_idx:] = 0.0
 
         # --- Pension logic ---
         pension_cumulative = det_inputs.monthly_pension

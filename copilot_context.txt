@@ -24,3 +24,14 @@
 > #file:`docs/*.md`
 
 
+> #buffer:
+> #buffers:`visible`
+> #file:`firestarter/config/config.py`
+> #file:`firestarter/core/simulation_state.py`
+> #file:`firestarter/core/sequence_generator.py`
+> #file:`firestarter/core/simulation.py`
+> #file:`firestarter/core/main.py`
+> #file:`configs/config.toml`
+> #file:`tests/config/*.py`
+> #file:`tests/simulation/*.py`
+> #file:`docs/*.md`
