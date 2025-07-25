@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from firestarter.config.config import (
     Config,
     Asset,
-    SalaryStep,
+    IncomeStep,
     PortfolioRebalance,
     SimulationParameters,
 )
@@ -26,15 +26,15 @@ def basic_deterministic_inputs():
         bank_lower_bound=2000.0,
         bank_upper_bound=10000.0,
         years_to_simulate=5,
-        monthly_salary_steps=[],
+        monthly_income_steps=[],
         monthly_expenses=0,
         planned_contributions=[],
         annual_fund_fee=0.001,
         planned_extra_expenses=[],
         planned_house_purchase_cost=0,
         house_purchase_year=None,
-        salary_inflation_factor=1.0,
-        salary_end_year=5,
+        income_inflation_factor=1.0,
+        income_end_year=5,
         monthly_pension=0,
         pension_inflation_factor=1.0,
         pension_start_year=30,
@@ -96,9 +96,7 @@ def test_assets_validation_liquid_asset_requires_priority():
     Tests that a liquid asset must have a withdrawal_priority.
     """
 
-    with pytest.raises(
-        ValidationError, match="withdrawal_priority is required for liquid assets"
-    ):
+    with pytest.raises(ValidationError, match="withdrawal_priority is required for liquid assets"):
         Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=None)
 
 
@@ -160,9 +158,7 @@ def test_portfolio_rebalances_unique_years(basic_deterministic_inputs):
     with pytest.raises(ValidationError, match="Rebalance years must be unique."):
         Config(
             assets={
-                "stocks": Asset(
-                    mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1
-                ),
+                "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1),
                 "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
             },
             deterministic_inputs=basic_deterministic_inputs,

@@ -6,7 +6,7 @@
 > There is no currency conversion or multi-currency support; all values must be provided and
 > interpreted in the same currency throughout the simulation._
 >
-> _The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
+> _The simulation does not consider any fiscal aspects, therefore parameters such as income, pension,
 > contributions, etc. are to be considered net of taxes._
 
 This document explains all parameters available in the main TOML configuration file (`config.toml`).
@@ -55,39 +55,39 @@ This document explains all parameters available in the main TOML configuration f
   - **years_to_simulate** _(int)_  
     Number of years to simulate.
 
-  - **monthly_salary_steps** _(list of dicts)_  
-    Defines the salary schedule as a list of step changes.  
+  - **monthly_income_steps** _(list of dicts)_  
+    Defines the income schedule as a list of step changes.  
     Each entry is a dictionary with:
 
-    - `year` (int): The simulation year (0-indexed) when this salary step begins.
-    - `monthly_amount` (float): The nominal (not inflation-adjusted) monthly salary
+    - `year` (int): The simulation year (0-indexed) when this income step begins.
+    - `monthly_amount` (float): The nominal (not inflation-adjusted) monthly income
       paid from this year onward.
-      Salary is set to zero before the first step and after `salary_end_year`.
-      After the last defined step, salary grows with inflation, scaled by `salary_inflation_factor`.
-      If this list is omitted or empty, no salary is paid at any time.
+      Income is set to zero before the first step and after `income_end_year`.
+      After the last defined step, income grows with inflation, scaled by `income_inflation_factor`.
+      If this list is omitted or empty, no income is paid at any time.
 
       _Example:_
 
     ```toml
-    monthly_salary_steps = [
+    monthly_income_steps = [
       { year = 0, monthly_amount = 3000.0 },
       { year = 10, monthly_amount = 4000.0 }
     ]
     ```
 
-    In this example, a salary of 3000 is paid from year 0 to 9, then 4000 from
+    In this example, a income of 3000 is paid from year 0 to 9, then 4000 from
     year 10 onward (growing with inflation after year 10).
 
-  - **salary_inflation_factor** _(float)_  
-    How salary grows relative to inflation after the last step.
+  - **income_inflation_factor** _(float)_  
+    How income grows relative to inflation after the last step.
     (e.g. 1.0 = matches inflation, 1.01 = 1% above inflation, 0.6 = inflation adjustment
     accounts only for the 60% of inflation, 0.0 = not inflation adjusted).
 
-  - **salary_start_year** _(int)_  
-    Year index when salary starts (0 = first year).
+  - **income_start_year** _(int)_  
+    Year index when income starts (0 = first year).
 
-  - **salary_end_year** _(int)_  
-    Year index when salary ends (exclusive).
+  - **income_end_year** _(int)_  
+    Year index when income ends (exclusive).
 
   - **monthly_pension** _(float)_  
     Real (inflation-adjusted) monthly pension amount.

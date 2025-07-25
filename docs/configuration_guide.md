@@ -105,7 +105,7 @@ You can further configure:
 
 - Shocks (unexpected events)
 - Correlation matrix (for assets/inflation correlation modeling)
-- Fund fees, pension, salary, and more
+- Fund fees, pension, income, and more
 
 ---
 

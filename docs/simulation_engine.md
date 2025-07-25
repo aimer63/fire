@@ -11,7 +11,7 @@ This document explains the structure and workflow of the new simulation engine i
 The simulation engine models the evolution of a user's portfolio and bank account over time,
 considering:
 
-- Income (salary, pension)
+- Income (income, pension)
 - Expenses (regular and extra)
 - Contributions
 - Asset allocation and rebalancing
@@ -64,7 +64,7 @@ For a detailed explanation of how **returns** and **inflation** are handled in t
 
 For each month:
 
-1. **Income:** Calculates and adds salary and pension for the current month.
+1. **Income:** Calculates and adds income and pension for the current month.
 2. **Contributions:** Apply planned contributions to liquid assets.
 3. **Expenses:** Deduct regular and extra expenses from the bank account.
 4. **House Purchase:** If scheduled, withdraw from assets to buy a house and add its value to real
