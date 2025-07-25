@@ -156,14 +156,14 @@ initial_bank_balance = 8000.0
 bank_lower_bound = 5000.0
 bank_upper_bound = 10000.0
 years_to_simulate = 70
-monthly_salary_steps = [
+monthly_income_steps = [
     { year = 0, monthly_amount = 4000.0 },
     { year = 5, monthly_amount = 5000.0 },
     { year = 10, monthly_amount = 7000.0 },
     { year = 15, monthly_amount = 10000.0 },
 ]
-salary_inflation_factor = 0.6
-salary_end_year = 20
+income_inflation_factor = 0.6
+income_end_year = 20
 monthly_pension = 4000.0
 pension_inflation_factor = 0.6
 pension_start_year = 37

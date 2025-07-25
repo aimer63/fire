@@ -16,12 +16,12 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 ## 🟦 Future Features / Ideas
 
 - [ ] Add scenario comparison (multiple configs in one run).
-- [ ] Change salary management using steps like:
+- [ ] Change income management using steps like:
 
 ```toml
   # Nominal values, after the last step it will grow with inflation
-  # and salary_inflation_factor
-  salary_steps = [
+  # and income_inflation_factor
+  income_steps = [
     { year = 0, monthly_amount =  3000 },
     { year = 2, monthly_amount =  3200 },
     { year = 5, monthly_amount =  3500 },

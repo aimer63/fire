@@ -10,7 +10,7 @@ from typing import Dict
 
 from firestarter.core.simulation import SimulationBuilder
 from firestarter.config.config import (
-    SalaryStep,
+    IncomeStep,
     DeterministicInputs,
     PortfolioRebalance,
     SimulationParameters,
@@ -44,9 +44,9 @@ def basic_det_inputs(basic_initial_assets) -> DeterministicInputs:
         bank_lower_bound=2000.0,
         bank_upper_bound=10000.0,
         years_to_simulate=5,
-        monthly_salary_steps=[SalaryStep(year=0, monthly_amount=0.0)],
-        salary_inflation_factor=1.0,
-        salary_end_year=5,
+        monthly_income_steps=[IncomeStep(year=0, monthly_amount=0.0)],
+        income_inflation_factor=1.0,
+        income_end_year=5,
         monthly_pension=0,
         pension_inflation_factor=1.0,
         pension_start_year=30,

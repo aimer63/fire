@@ -35,7 +35,7 @@ The simulation manages inflation using two primary sequences from monthly data:
     `state.monthly_return_reates_sequences[inflation]`.
 - **Usage:** This is the **primary tool** for converting any real (today's money) value to its
   nominal (future money) equivalent at any specific month. It is used for:
-  - Adjusting extra expenses, salary, pension, and house purchase costs
+  - Adjusting extra expenses, income, pension, and house purchase costs
     (which are specified in real terms by year) to their nominal values at the start of the relevant
     year (i.e., indexed at `year_idx * 12`).
   - Converting nominal asset values and balances to real terms for reporting and plotting.
@@ -45,7 +45,7 @@ The simulation manages inflation using two primary sequences from monthly data:
 
 ## How Inflation Is Applied
 
-- Most of the flows (expenses, salary, pension, house purchase) and bank account bounds,
+- Most of the flows (expenses, income, pension, house purchase) and bank account bounds,
   which are typically defined in real terms in the configuration, are converted to **nominal terms**
   using the `state.monthly_cumulative_inflation_factors` stored in the state.
 - For items specified by year (e.g., a ectra_expensesin year `N`), the

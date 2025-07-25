@@ -96,13 +96,9 @@ class SimulationBuilder:
             raise ValueError("assets must be set before building the simulation.")
 
         if self.correlation_matrix is None:
-            raise ValueError(
-                "correlation_matrix must be set before building the simulation."
-            )
+            raise ValueError("correlation_matrix must be set before building the simulation.")
         if self.portfolio_rebalances is None:
-            raise ValueError(
-                "portfolio_rebalances must be set before building the simulation."
-            )
+            raise ValueError("portfolio_rebalances must be set before building the simulation.")
         if self.shock_events is None:
             raise ValueError(
                 "shock_events must be set before building the simulation."  # Corrected message
@@ -184,7 +180,7 @@ class Simulation:
                 # to set the initial allocation
                 self._handle_contributions(month)
 
-            # 2. Income: Add salary and pension for the current year.
+            # 2. Income: Add income and pension for the current year.
             self._process_income(month)
 
             # 3. Expenses: Deduct regular and extra expenses from the bank account.
@@ -289,86 +285,73 @@ class Simulation:
             for shock_asset, annual_shock_rate in shock.impact.items():
                 if 0 <= year_idx < total_years:
                     # Convert the annual shock rate to an equivalent monthly rate
-                    monthly_shock_rate = (
-                        (1.0 + annual_shock_rate) ** (1.0 / 12.0)
-                    ) - 1.0
+                    monthly_shock_rate = ((1.0 + annual_shock_rate) ** (1.0 / 12.0)) - 1.0
 
                     if shock_asset in self.state.monthly_return_rates_sequences:
-                        target_sequence = self.state.monthly_return_rates_sequences[
-                            shock_asset
-                        ]
+                        target_sequence = self.state.monthly_return_rates_sequences[shock_asset]
                         for month_offset in range(12):
                             month_idx_in_simulation = year_idx * 12 + month_offset
                             if 0 <= month_idx_in_simulation < total_months:
-                                target_sequence[month_idx_in_simulation] = (
-                                    monthly_shock_rate
-                                )
+                                target_sequence[month_idx_in_simulation] = monthly_shock_rate
 
-        monthly_inflation_sequence = self.state.monthly_return_rates_sequences[
-            "inflation"
-        ]
+        monthly_inflation_sequence = self.state.monthly_return_rates_sequences["inflation"]
 
         # --- Cumulative inflation factors (monthly) ---
-        monthly_cumulative_inflation_factors = np.ones(
-            total_months + 1, dtype=np.float64
-        )
+        monthly_cumulative_inflation_factors = np.ones(total_months + 1, dtype=np.float64)
         for month_idx in range(total_months):
             monthly_cumulative_inflation_factors[month_idx + 1] = (
                 monthly_cumulative_inflation_factors[month_idx]
                 * (1.0 + monthly_inflation_sequence[month_idx])
             )
 
-        # --- Precompute nominal pension and salary monthly sequences with partial indexation ---
+        # --- Precompute nominal pension and income monthly sequences with partial indexation ---
         monthly_nominal_pension_sequence = np.zeros(total_months, dtype=np.float64)
-        monthly_nominal_salary_sequence = np.zeros(total_months, dtype=np.float64)
+        monthly_nominal_income_sequence = np.zeros(total_months, dtype=np.float64)
 
         pension_start_month_idx = det_inputs.pension_start_year * 12
 
-        # --- Salary steps logic ---
-        salary_steps = sorted(det_inputs.monthly_salary_steps, key=lambda s: s.year)
-        salary_inflation_factor = det_inputs.salary_inflation_factor
+        # --- Income steps logic ---
+        income_steps = sorted(det_inputs.monthly_income_steps, key=lambda s: s.year)
+        income_inflation_factor = det_inputs.income_inflation_factor
 
-        # Handle empty salary steps: salary is zero for all months
-        if not salary_steps:
-            monthly_nominal_salary_sequence[:] = 0.0
+        # Handle empty income steps: income is zero for all months
+        if not income_steps:
+            monthly_nominal_income_sequence[:] = 0.0
         else:
             # Build a list of (start_month, monthly_amount) for each step
-            salary_step_months = [
-                (step.year * 12, step.monthly_amount) for step in salary_steps
-            ]
+            income_step_months = [(step.year * 12, step.monthly_amount) for step in income_steps]
 
-            # After last step, salary grows with inflation and salary_inflation_factor
-            salary_end_month_idx = det_inputs.salary_end_year * 12
+            # After last step, income grows with inflation and income_inflation_factor
+            income_end_month_idx = det_inputs.income_end_year * 12
 
-            salary_cumulative = 0.0
+            income_cumulative = 0.0
             current_step_idx = 0
             for month_idx in range(total_months):
                 # Advance to next step if needed
                 if (
-                    current_step_idx + 1 < len(salary_step_months)
-                    and month_idx >= salary_step_months[current_step_idx + 1][0]
+                    current_step_idx + 1 < len(income_step_months)
+                    and month_idx >= income_step_months[current_step_idx + 1][0]
                 ):
                     current_step_idx += 1
 
-                step_start_month, step_amount = salary_step_months[current_step_idx]
+                step_start_month, step_amount = income_step_months[current_step_idx]
 
                 if month_idx < step_start_month:
-                    monthly_nominal_salary_sequence[month_idx] = 0.0
-                elif month_idx >= salary_end_month_idx:
-                    monthly_nominal_salary_sequence[month_idx] = 0.0
-                elif current_step_idx < len(salary_step_months) - 1:
+                    monthly_nominal_income_sequence[month_idx] = 0.0
+                elif month_idx >= income_end_month_idx:
+                    monthly_nominal_income_sequence[month_idx] = 0.0
+                elif current_step_idx < len(income_step_months) - 1:
                     # Within a defined step
-                    monthly_nominal_salary_sequence[month_idx] = step_amount
+                    monthly_nominal_income_sequence[month_idx] = step_amount
                 else:
-                    # After last step: apply inflation and salary_inflation_factor
+                    # After last step: apply inflation and income_inflation_factor
                     if month_idx == step_start_month:
-                        salary_cumulative = step_amount
+                        income_cumulative = step_amount
                     else:
-                        salary_cumulative *= 1.0 + (
-                            monthly_inflation_sequence[month_idx - 1]
-                            * salary_inflation_factor
+                        income_cumulative *= 1.0 + (
+                            monthly_inflation_sequence[month_idx - 1] * income_inflation_factor
                         )
-                    monthly_nominal_salary_sequence[month_idx] = salary_cumulative
+                    monthly_nominal_income_sequence[month_idx] = income_cumulative
 
         # --- Pension logic ---
         pension_cumulative = det_inputs.monthly_pension
@@ -383,15 +366,13 @@ class Simulation:
                     )
                 monthly_nominal_pension_sequence[month_idx] = pension_cumulative
 
-        self.state.monthly_cumulative_inflation_factors = (
-            monthly_cumulative_inflation_factors
-        )
+        self.state.monthly_cumulative_inflation_factors = monthly_cumulative_inflation_factors
         self.state.monthly_nominal_pension_sequence = monthly_nominal_pension_sequence
-        self.state.monthly_nominal_salary_sequence = monthly_nominal_salary_sequence
+        self.state.monthly_nominal_income_sequence = monthly_nominal_income_sequence
 
     def _process_income(self, month):
         """
-        For each month, add the precomputed *monthly* salary and pension for the current month.
+        For each month, add the precomputed *monthly* income and pension for the current month.
         These values are now drawn and adjusted monthly.
         """
         income = 0.0
@@ -400,9 +381,9 @@ class Simulation:
         if month < len(self.state.monthly_nominal_pension_sequence):
             income += self.state.monthly_nominal_pension_sequence[month]
 
-        # Salary (precomputed, already inflation/adjustment adjusted)
-        if month < len(self.state.monthly_nominal_salary_sequence):
-            income += self.state.monthly_nominal_salary_sequence[month]
+        # Income (precomputed, already inflation/adjustment adjusted)
+        if month < len(self.state.monthly_nominal_income_sequence):
+            income += self.state.monthly_nominal_income_sequence[month]
 
         self.state.current_bank_balance += float(income)
 
@@ -431,8 +412,7 @@ class Simulation:
 
         # Regular monthly expenses (inflation-adjusted)
         nominal_monthly_expenses = (
-            det_inputs.monthly_expenses
-            * self.state.monthly_cumulative_inflation_factors[month]
+            det_inputs.monthly_expenses * self.state.monthly_cumulative_inflation_factors[month]
         )
         total_expenses = nominal_monthly_expenses
 
@@ -441,9 +421,7 @@ class Simulation:
             current_year = month // 12
             for expense in det_inputs.planned_extra_expenses:
                 if expense.year == current_year:
-                    inflation_factor = self.state.monthly_cumulative_inflation_factors[
-                        month
-                    ]
+                    inflation_factor = self.state.monthly_cumulative_inflation_factors[month]
                     nominal_amount = expense.amount * inflation_factor
                     total_expenses += nominal_amount
 
@@ -472,9 +450,7 @@ class Simulation:
         # Only purchase at the first month of the scheduled year
         if month == purchase_month:
             # Inflation-adjusted nominal house cost
-            cumulative_inflation = self.state.monthly_cumulative_inflation_factors[
-                month
-            ]
+            cumulative_inflation = self.state.monthly_cumulative_inflation_factors[month]
             nominal_house_cost = house_cost_real * cumulative_inflation
 
             # Withdraw funds from liquid assets to cover the cost. This temporarily
@@ -575,9 +551,7 @@ class Simulation:
         if scheduled_rebalance is not None:
             # Build a complete weights dict: missing keys get 0.0
             all_liquid_assets = [k for k, v in self.assets.items() if v.is_liquid]
-            new_weights = {
-                k: scheduled_rebalance.weights.get(k, 0.0) for k in all_liquid_assets
-            }
+            new_weights = {k: scheduled_rebalance.weights.get(k, 0.0) for k in all_liquid_assets}
             self.state.current_target_portfolio_weights = new_weights
 
             # Rebalance liquid assets
@@ -591,9 +565,7 @@ class Simulation:
         # Only include liquid assets in rebalancing
         liquid_asset_keys = [k for k in weights.keys() if self.assets[k].is_liquid]
 
-        total_liquid = sum(
-            self.state.portfolio.get(asset, 0.0) for asset in liquid_asset_keys
-        )
+        total_liquid = sum(self.state.portfolio.get(asset, 0.0) for asset in liquid_asset_keys)
 
         if total_liquid > 0:
             # Assuming weights sum to 1.0 as validated in config parsing
@@ -612,9 +584,7 @@ class Simulation:
         """
         weights = self.state.current_target_portfolio_weights
         for asset, weight in weights.items():
-            self.state.portfolio[asset] = (
-                self.state.portfolio.get(asset, 0.0) + amount * weight
-            )
+            self.state.portfolio[asset] = self.state.portfolio.get(asset, 0.0) + amount * weight
 
     def _withdraw_from_assets(self, amount: float) -> None:
         """
@@ -689,13 +659,12 @@ class Simulation:
         if months_lasted > 0:
             last_month_idx = months_lasted - 1
             final_nominal_wealth = self.results["wealth_history"][last_month_idx]
-            final_cumulative_inflation = (
-                self.state.monthly_cumulative_inflation_factors[last_month_idx]
-            )
+            final_cumulative_inflation = self.state.monthly_cumulative_inflation_factors[
+                last_month_idx
+            ]
             final_bank_balance = self.results["bank_balance_history"][last_month_idx]
             final_allocations_nominal = {
-                key: self.results[f"{key}_history"][last_month_idx]
-                for key in asset_keys
+                key: self.results[f"{key}_history"][last_month_idx] for key in asset_keys
             }
         else:  # months_lasted == 0
             final_nominal_wealth = self.state.initial_total_wealth
@@ -707,8 +676,7 @@ class Simulation:
         final_real_wealth = final_nominal_wealth / final_cumulative_inflation
 
         final_allocations_real = {
-            k: float(v / final_cumulative_inflation)
-            for k, v in final_allocations_nominal.items()
+            k: float(v / final_cumulative_inflation) for k, v in final_allocations_nominal.items()
         }
 
         result = {

@@ -41,16 +41,16 @@ bank_upper_bound = 10000.0
 years_to_simulate = 70
 
 # --- Income Streams ---
-# Real (inflation-adjusted) monthly salary.
+# Real (inflation-adjusted) monthly income.
 # Assume you are 30 years old and want to retire at 50. (You have to earn a lot)
-monthly_salary_steps = [
+monthly_income_steps = [
   { year = 0, monthly_amount = 4000.0 },
   { year = 5, monthly_amount = 5000.0 },
   { year = 10, monthly_amount = 7000.0 },
   { year = 15, monthly_amount = 10000.0 },
 ]
-salary_inflation_factor = 1.01 # Salary grows 1% faster than inflation.
-salary_end_year = 20 # Salary stops at the beginning of year 25.
+income_inflation_factor = 1.01 # Income grows 1% faster than inflation.
+income_end_year = 20 # Income stops at the beginning of year 25.
 
 # Real (inflation-adjusted) monthly pension.
 monthly_pension = 4000.0

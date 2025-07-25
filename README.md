@@ -90,7 +90,7 @@ asset allocation.
   - Initializes assets values and bank balance
   - Simulates monthly/annual investment returns, inflation
   - Handles withdrawals for expenses and marks the simulation as failed if assets are insufficient
-  - Handles salary, pension, contributions, and planned extra expenses
+  - Handles income, pension, contributions, and planned extra expenses
   - Manages liquidity (bank account bounds, topping up or investing excess)
   - Manages portfolio rebalances
   - Applies fees on funds
@@ -107,7 +107,7 @@ asset allocation.
   > in a single currency. There is no currency conversion or multi-currency support;
   > all values must be provided and interpreted in the same currency throughout the simulation._
   >
-  > _The simulation does not consider any fiscal aspects, therefore parameters such as salary, pension,
+  > _The simulation does not consider any fiscal aspects, therefore parameters such as income, pension,
   > contributions, etc. are to be considered net of taxes._
 
 - **[Reporting & Plotting](/docs/output.md)**

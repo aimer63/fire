@@ -11,7 +11,7 @@ This module provides a structured container for all variables that change during
 the course of a simulation, including:
 - Current bank balance and portfolio asset values
 - Target portfolio weights for rebalancing
-- Precomputed stochastic sequences (monthly returns, inflation, salary, pension)
+- Precomputed stochastic sequences (monthly returns, inflation, income, pension)
 - Simulation progress tracking (current month and year)
 - Failure state flag for early termination
 
@@ -33,15 +33,9 @@ class SimulationState:
 
     # Precomputed stochastic sequences
     monthly_return_rates_sequences: Dict[str, np.ndarray] = field(default_factory=dict)
-    monthly_cumulative_inflation_factors: np.ndarray = field(
-        default_factory=lambda: np.array([])
-    )
-    monthly_nominal_pension_sequence: np.ndarray = field(
-        default_factory=lambda: np.array([])
-    )
-    monthly_nominal_salary_sequence: np.ndarray = field(
-        default_factory=lambda: np.array([])
-    )
+    monthly_cumulative_inflation_factors: np.ndarray = field(default_factory=lambda: np.array([]))
+    monthly_nominal_pension_sequence: np.ndarray = field(default_factory=lambda: np.array([]))
+    monthly_nominal_income_sequence: np.ndarray = field(default_factory=lambda: np.array([]))
 
     # Tracking current simulation time
     current_month_index: int = 0
