@@ -5,13 +5,9 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 
+import pytest
 from firestarter.core.simulation import Simulation
 from firestarter.config.config import IncomeStep
-
-# Fixtures like initialized_simulation are automatically discovered from conftest.py
-# DeterministicInputs is used for type hinting and modifying fixture values,
-# but the fixture itself (basic_det_inputs) is in conftest.py
-# from firestarter.config.config import DeterministicInputs
 
 
 def test_simulation_process_income_no_income(
@@ -85,3 +81,113 @@ def test_simulation_process_income_with_income_and_pension(
     assert (
         sim.state.current_bank_balance == original_fixture_bank_balance + expected_income_scenario3
     ), "Scenario 3: Bank balance should not change if pension hasn't started and no income."
+
+
+def test_pension_steps_real_to_nominal_basic(
+    initialized_simulation: Simulation,
+) -> None:
+    """
+    Tests that monthly_pension is interpreted as real (today's money) and converted to nominal using inflation.
+    Uses a fixed inflation sequence for deterministic results.
+    """
+    sim = initialized_simulation
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={
+            "years_to_simulate": 5,
+            "monthly_pension": 1000.0,
+            "pension_inflation_factor": 1.0,
+            "pension_start_year": 1,
+        }
+    )
+    sim.init()
+    monthly_inflation_sequence = sim.state.monthly_return_rates_sequences["inflation"]
+
+    # Months 0-11: pension should be 0 (not started yet)
+    for month in range(0, 12):
+        actual = sim.state.monthly_nominal_pension_sequence[month]
+        assert actual == 0.0, f"Month {month}: {actual} != 0.0"
+
+    # Months 12+: pension should be 1000.0 for the start month, then indexed by inflation
+    expected = None
+    for month in range(12, sim.det_inputs.years_to_simulate * 12):
+        if month == 12:
+            expected = 1000.0
+        else:
+            expected *= 1.0 + monthly_inflation_sequence[month - 1]
+        actual = sim.state.monthly_nominal_pension_sequence[month]
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
+
+
+def test_pension_steps_partial_indexation(initialized_simulation: Simulation) -> None:
+    """
+    Tests that monthly_pension is indexed to inflation by pension_inflation_factor.
+    Uses a fixed inflation sequence for deterministic results.
+    """
+    sim = initialized_simulation
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={
+            "years_to_simulate": 5,
+            "monthly_pension": 1000.0,
+            "pension_inflation_factor": 0.5,
+            "pension_start_year": 0,
+        }
+    )
+    sim.init()
+
+    monthly_inflation_sequence = sim.state.monthly_return_rates_sequences["inflation"]
+    pension_seq = sim.state.monthly_nominal_pension_sequence
+
+    expected = 1000.0
+    for month in range(sim.det_inputs.years_to_simulate * 12):
+        if month == 0:
+            expected = 1000.0
+        else:
+            expected *= 1.0 + monthly_inflation_sequence[month - 1] * 0.5
+        assert pension_seq[month] == pytest.approx(
+            expected
+        ), f"Month {month}: {pension_seq[month]} != {expected}"
+
+
+def test_income_steps_real_to_nominal_basic(initialized_simulation: Simulation) -> None:
+    """
+    Tests that monthly_income_steps are interpreted as real (today's money) and converted to nominal using inflation.
+    Uses a fixed inflation sequence for deterministic results.
+    """
+    sim = initialized_simulation
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={
+            "monthly_income_steps": [
+                IncomeStep(year=0, monthly_amount=1000.0),
+                IncomeStep(year=2, monthly_amount=2000.0),
+            ],
+            "income_inflation_factor": 0.5,
+            "income_end_year": 4,
+            "years_to_simulate": 4,
+        }
+    )
+    sim.init()
+    monthly_inflation_sequence = sim.state.monthly_return_rates_sequences["inflation"]
+
+    # Months 0-23: income should be exactly 1000.0
+    for month in range(0, 24):
+        actual = sim.state.monthly_nominal_income_sequence[month]
+        expected = 1000.0
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
+
+    # Month 24: start of last step, inflation-adjusted
+    inflation_factor_24 = 1.0
+    for i in range(24):
+        inflation_factor_24 *= 1.0 + monthly_inflation_sequence[i]
+    expected = 2000.0 * inflation_factor_24
+
+    # Months 24-47: grow with inflation and income_inflation_factor
+    for month in range(24, 48):
+        if month > 24:
+            expected *= 1.0 + monthly_inflation_sequence[month - 1] * 0.5
+        actual = sim.state.monthly_nominal_income_sequence[month]
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
+
+    # Months 48+: income should be 0 (income_end_year = 4)
+    for month in range(48, sim.det_inputs.years_to_simulate * 12):
+        actual = sim.state.monthly_nominal_income_sequence[month]
+        assert actual == 0.0, f"Month {month}: {actual} != 0.0"

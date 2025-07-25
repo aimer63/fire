@@ -30,3 +30,6 @@ fire = "firestarter.main:main"
 
 [tool.setuptools.packages.find]
 include = ["firestarter*"]
+
+[tool.ruff]
+ignore = ["E501"]
