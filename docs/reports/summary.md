@@ -1,74 +1,80 @@
 # FIRE Plan Simulation Report
 
-Report generated on: 2025-07-24 12:20:42
+Report generated on: 2025-07-26 16:25:11
 Using configuration: `config.toml`
 
 ## FIRE Plan Simulation Summary
 
-- **FIRE Plan Success Rate:** 70.15%
-- **Number of failed simulations:** 2985
-- **Average months lasted in failed simulations:** 578.5
+- **FIRE Plan Success Rate:** 99.18%
+- **Number of failed simulations:** 82
+- **Average months lasted in failed simulations:** 209.0
 
 ## Final Wealth Distribution Statistics (Successful Simulations)
 
 | Statistic                     | Nominal Final Wealth          | Real Final Wealth (Today's Money) |
 |-------------------------------|-------------------------------|-----------------------------------|
-| Median (P50)                  | 9,477,741.48  | 1,762,743.87         |
-| 25th Percentile (P25)         | 3,600,072.23     | 678,297.13            |
-| 75th Percentile (P75)         | 22,380,777.30     | 4,336,351.09            |
-| Interquartile Range (P75-P25) | 18,780,705.07     | 3,658,053.95            |
+| Median (P50)                  | 13,982,998.30  | 2,538,218.88         |
+| 25th Percentile (P25)         | 7,771,846.63     | 1,381,654.68            |
+| 75th Percentile (P75)         | 26,900,633.18     | 4,961,089.74            |
+| Interquartile Range (P75-P25) | 19,128,786.55     | 3,579,435.06            |
 
 ## Nominal Results (cases selected by nominal final wealth)
 
 #### Worst Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 24,790.71
-- **Final Wealth (Real):** 6,153.34
-- **Your life CAGR (Nominal):** 1.63%
-- **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%, inflation: 0.0%
-- **Nominal Asset Values:** stocks: 4,646.59 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , inflation: 0.00 , Bank: 20,144.12
+- **Final Wealth (Nominal):** 1,286,663.33
+- **Final Wealth (Real):** 242,972.05
+- **Cumulative Inflation Factor:** 5.2955
+- **Your life CAGR (Nominal):** 7.53%
+- **Final Allocations (percent):** stocks: 49.0%, bonds: 51.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 605,093.52 , bonds: 628,614.61 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 52,955.20
 
 #### Median Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 9,477,741.48
-- **Final Wealth (Real):** 2,181,489.57
-- **Your life CAGR (Nominal):** 10.64%
-- **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%, inflation: 0.0%
-- **Nominal Asset Values:** stocks: 9,456,018.38 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , inflation: 0.00 , Bank: 21,723.10
+- **Final Wealth (Nominal):** 13,983,187.27
+- **Final Wealth (Real):** 2,666,273.85
+- **Cumulative Inflation Factor:** 5.2445
+- **Your life CAGR (Nominal):** 11.26%
+- **Final Allocations (percent):** stocks: 96.0%, bonds: 4.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 13,372,449.10 , bonds: 558,293.49 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 52,444.68
 
 #### Best Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 1,561,374,224.98
-- **Final Wealth (Real):** 298,305,313.59
-- **Your life CAGR (Nominal):** 19.01%
-- **Final Allocations (percent):** stocks: 97.6%, bonds: 2.4%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%, inflation: 0.0%
-- **Nominal Asset Values:** stocks: 1,523,933,739.48 , bonds: 37,414,314.76 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , inflation: 0.00 , Bank: 26,170.74
+- **Final Wealth (Nominal):** 1,759,017,738.80
+- **Final Wealth (Real):** 410,403,135.94
+- **Cumulative Inflation Factor:** 4.2861
+- **Your life CAGR (Nominal):** 19.21%
+- **Final Allocations (percent):** stocks: 94.2%, bonds: 5.8%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 1,657,192,172.88 , bonds: 101,782,705.20 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 42,860.73
 
 ## Real Results (cases selected by real final wealth)
 
 #### Worst Successful Case (Real)
 
-- **Final Wealth (Real):** 5,298.27
-- **Final Wealth (Nominal):** 28,576.10
-- **Your life CAGR (Real):** -0.59%
-- **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%, inflation: 0.0%
-- **Nominal Asset Values:** stocks: 1,608.71 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , inflation: 0.00 , Bank: 26,967.39
+- **Final Wealth (Real):** 180,453.56
+- **Final Wealth (Nominal):** 1,452,048.46
+- **Cumulative Inflation Factor:** 8.0467
+- **Your life CAGR (Real):** 4.55%
+- **Final Allocations (percent):** stocks: 53.5%, bonds: 46.5%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 734,217.05 , bonds: 637,364.80 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 80,466.60
 
 #### Median Successful Case (Real)
 
-- **Final Wealth (Real):** 1,762,743.87
-- **Final Wealth (Nominal):** 10,899,607.97
-- **Your life CAGR (Real):** 8.01%
-- **Final Allocations (percent):** stocks: 100.0%, bonds: 0.0%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%, inflation: 0.0%
-- **Nominal Asset Values:** stocks: 10,868,691.37 , bonds: 0.00 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , inflation: 0.00 , Bank: 30,916.60
+- **Final Wealth (Real):** 2,538,877.30
+- **Final Wealth (Nominal):** 10,684,805.85
+- **Cumulative Inflation Factor:** 4.2085
+- **Your life CAGR (Real):** 8.58%
+- **Final Allocations (percent):** stocks: 91.2%, bonds: 8.8%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 9,708,237.99 , bonds: 934,483.10 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 42,084.77
 
 #### Best Successful Case (Real)
 
-- **Final Wealth (Real):** 298,305,313.59
-- **Final Wealth (Nominal):** 1,561,374,224.98
-- **Your life CAGR (Real):** 16.23%
-- **Final Allocations (percent):** stocks: 97.6%, bonds: 2.4%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%, inflation: 0.0%
-- **Nominal Asset Values:** stocks: 1,523,933,739.48 , bonds: 37,414,314.76 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , inflation: 0.00 , Bank: 26,170.74
+- **Final Wealth (Real):** 410,403,135.94
+- **Final Wealth (Nominal):** 1,759,017,738.80
+- **Cumulative Inflation Factor:** 4.2861
+- **Your life CAGR (Real):** 16.76%
+- **Final Allocations (percent):** stocks: 94.2%, bonds: 5.8%, str: 0.0%, eth: 0.0%, ag: 0.0%, real_estate: 0.0%
+- **Nominal Asset Values:** stocks: 1,657,192,172.88 , bonds: 101,782,705.20 , str: 0.00 , eth: 0.00 , ag: 0.00 , real_estate: 0.00 , Bank: 42,860.73
 
 ## Visualizations
 
@@ -165,18 +171,19 @@ monthly_income_steps = [
 income_inflation_factor = 0.6
 income_end_year = 20
 monthly_pension = 4000.0
-pension_inflation_factor = 0.6
+pension_inflation_factor = 0.75
 pension_start_year = 37
-planned_contributions = [
-    { amount = 0.0, year = 0 },
-]
+planned_contributions = []
 annual_fund_fee = 0.0015
-monthly_expenses = 2500.0
-planned_extra_expenses = [
-    { amount = 30000.0, year = 37, description = "Buy a car" },
+monthly_expenses_steps = [
+    { year = 0, monthly_amount = 3500.0 },
+    { year = 20, monthly_amount = 3000.0 },
+    { year = 37, monthly_amount = 2500.0 },
+    { year = 50, monthly_amount = 1500.0 },
 ]
-planned_house_purchase_cost = 0.0
-house_purchase_year = 0
+planned_extra_expenses = [
+    { amount = 30000.0, year = 20, description = "Buy a car" },
+]
 
 [correlation_matrix]
 assets_order = [
