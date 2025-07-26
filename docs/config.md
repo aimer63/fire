@@ -60,10 +60,12 @@ This document explains all parameters available in the main TOML configuration f
     Each entry is a dictionary with:
 
     - `year` (int): The simulation year (0-indexed) when this income step begins.
-    - `monthly_amount` (float): The nominal (not inflation-adjusted) monthly income
-      paid from this year onward.
+    - `monthly_amount` (float): The monthly income expressed in today's money
+      paid from this year onward until the next step. In between steps the amount is
+      not adjusted for inflation.
+      From the beginning of the last defined step, income grows with inflation
+      scaled by `income_inflation_factor`.
       Income is set to zero before the first step and after `income_end_year`.
-      After the last defined step, income grows with inflation, scaled by `income_inflation_factor`.
       If this list is omitted or empty, no income is paid at any time.
 
       _Example:_
@@ -73,18 +75,16 @@ This document explains all parameters available in the main TOML configuration f
       { year = 0, monthly_amount = 3000.0 },
       { year = 10, monthly_amount = 4000.0 }
     ]
+    income_inflation_factor = 1.0
     ```
 
     In this example, a income of 3000 is paid from year 0 to 9, then 4000 from
     year 10 onward (growing with inflation after year 10).
 
   - **income_inflation_factor** _(float)_  
-    How income grows relative to inflation after the last step.
+    How income grows relative to inflation from the last step.
     (e.g. 1.0 = matches inflation, 1.01 = 1% above inflation, 0.6 = inflation adjustment
     accounts only for the 60% of inflation, 0.0 = not inflation adjusted).
-
-  - **income_start_year** _(int)_  
-    Year index when income starts (0 = first year).
 
   - **income_end_year** _(int)_  
     Year index when income ends (exclusive).
