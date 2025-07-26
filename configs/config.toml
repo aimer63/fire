@@ -29,8 +29,8 @@ output_root = "output/"
 # 2 2027
 # 3
 #
-# Imagine you are 30 and you want to retire at 50, ambitious! 
-# The pension (if you will have one) kick in at 67 so at year 37 of the simulation.
+# Imagine you are 30 and you want to retire at 50, ambitious!
+# Suppose the pension (if you will have one) kicks in at 67 so at year 37 of the simulation.
 # The simulation runs for 70 years to verify you can survive until 100.
 [deterministic_inputs]
 # Initial cash/bank account balance.
@@ -44,8 +44,9 @@ bank_upper_bound = 10000.0
 years_to_simulate = 70
 
 # --- Income Streams ---
-# Amounts in today's money, for the years after  the last income step 
-# income will be adjusted for inflation according with the `income_inflation_factor`. 
+# Amounts in today's money.
+# For the years after the last income step income will be adjusted for inflation scaled
+# with the `income_inflation_factor`. 
 # Income starts at the year of the first step and continues until income_end_year.
 monthly_income_steps = [
   { year = 0, monthly_amount = 4000.0 },
@@ -59,10 +60,14 @@ monthly_income_steps = [
 income_inflation_factor = 0.6
 income_end_year = 20          # Slary stops, you are 50, you retire.
 
-# Real (inflation-adjusted) monthly pension.
+# Monthly pension.
+# The pension starts at the nominal velue `monthly_pension` the year `pension_start_year`.
+# After that this value is adjusted with inflation scaled by `pension_inflation_factor`.
+# Pay attention on how your pension fund estimate your pension at the year of retirement
+# and if and how the value is inflation adjusted after retirement.
 monthly_pension = 4000.0
 pension_inflation_factor = 0.75 # Pension grows 75% of inflation.
-pension_start_year = 35         # Pension starts at 67, you are 37 years into the simulation.
+pension_start_year = 37         # Pension starts at 67, you are 37 years into the simulation.
 
 # --- Contributions & Expenses ---
 # One-time contributions (fixed nominal amounts, not inflation-adjusted).

@@ -91,7 +91,10 @@ This document explains all parameters available in the main TOML configuration f
     It must be > the year of the last income step.
 
   - **monthly_pension** _(float)_  
-    Real (inflation-adjusted) monthly pension amount.
+    The pension starts at the nominal value `monthly_pension` the year `pension_start_year`.
+    After that this value is adjusted with inflation scaled by `pension_inflation_factor`.
+    Pay attention on how your pension fund estimate your pension at the year of retirement
+    and if and how the value is inflation adjusted after retirement.
 
   - **pension_inflation_factor** _(float)_  
     How pension grows relative to inflation.
