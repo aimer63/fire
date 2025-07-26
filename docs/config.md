@@ -114,12 +114,6 @@ This document explains all parameters available in the main TOML configuration f
     List of one-time extra expenses (in today's money). Each dict has `amount` (float) and `year`
     (int).
 
-  - **planned_house_purchase_cost** _(float)_  
-    Real cost of the house to be purchased.
-
-  - **house_purchase_year** _(int)_  
-    Year index when the house is purchased.
-
 ---
 
 ## Assets
@@ -139,8 +133,9 @@ This document explains all parameters available in the main TOML configuration f
     Boolean value (`true` or `false`).  
     Indicates whether the asset is liquid (can be bought/sold to cover expenses and
     included in rebalancing).  
-    Set to `false` for illiquid assets (e.g., real estate), which are not rebalanced
-    or sold for cash flow.
+    Set to `false` for illiquid assets, which are not rebalanced
+    or sold for cash flow. Illiquid assets are only tracked, if they start at zero
+    there will they remain.
 
   - **withdrawal_priority**:  
     _(Required for liquid assets only)_  
@@ -148,6 +143,13 @@ This document explains all parameters available in the main TOML configuration f
     Lower numbers are sold first.  
     This value must be unique among liquid assets.  
     Omit this parameter for illiquid assets.
+
+Inflation, although not an asset, must be defined in this section because it is correlated
+with assets through a [correlation matrix](correlation.md), and the mechanism for generating random
+values for assets return and inflation from `mu` and `sigma` is the same.
+The inflation asset is mandatory because it's used to track all the real values, wealth,
+expenses...
+The name must be `inflation`.
 
 ---
 
@@ -179,12 +181,6 @@ mu = 0.02
 sigma = 0.01
 is_liquid = false
 ```
-
-Inflation, although not an asset, is defined in this section because it is correlated
-with assets through a [correlation matrix](correlation.md), and the mechanism for generating random
-values for assets return and inflation from `mu` and `sigma` is the same.
-The inflation asset is mandatory because it's used to track all the real values, wealth,
-expenses...
 
 ---
 

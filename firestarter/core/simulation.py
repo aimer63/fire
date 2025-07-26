@@ -16,7 +16,6 @@ Key features:
 - Handles monthly flows: income, contributions, expenses, withdrawals, and asset
   rebalancing
 - Evolves asset values monthly according to stochastic returns and inflation
-- Supports planned shocks and house purchase
 - Supports scheduled portfolio rebalances
 - Records detailed monthly histories of wealth, balances, and asset values
 - Marks simulation as failed if withdrawals cannot be covered by liquid assets
@@ -405,7 +404,6 @@ class Simulation:
         Handles planned one-time contributions.
         Planned contribution are all applied the first month of the year
         Contributions are allocated according to the current target portfolio weights,
-        but NEVER to real estate (see real_estate.md).
         """
         det_inputs = self.det_inputs
 
@@ -505,7 +503,7 @@ class Simulation:
         """
         Rebalance liquid assets (stocks, bonds, str, fun) according to the current
         portfolio weights, if a rebalance is scheduled for this year and this is
-        the first month of the year. Real estate is not included in rebalancing.
+        the first month of the year.
         Also updates current_target_portfolio_weights if a rebalance occurs.
         """
         current_year = month // 12

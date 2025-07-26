@@ -11,9 +11,9 @@ and provides tools for converting between nominal (future) and real (today's) va
 
 ## Key Concepts and Sequences
 
-Inflation is randomly drawn together the others assets, because it can have
+Inflation is randomly drawn together the others assets because it can have
 a correlation with them, so you find inflation sequences in `state.monthly_return_reates_sequences["inflation"]`.
-`real_estate` and `inflation` are the only "assets" who have a mandatory key.
+`inflation` is the only "asset" that must exist and who have a mandatory key.
 The simulation manages inflation using two primary sequences from monthly data:
 
 ### 1. **Monthly Inflation Rate Sequence**
@@ -35,9 +35,7 @@ The simulation manages inflation using two primary sequences from monthly data:
     `state.monthly_return_reates_sequences[inflation]`.
 - **Usage:** This is the **primary tool** for converting any real (today's money) value to its
   nominal (future money) equivalent at any specific month. It is used for:
-  - Adjusting extra expenses, income, pension, and house purchase costs
-    (which are specified in real terms by year) to their nominal values at the start of the relevant
-    year (i.e., indexed at `year_idx * 12`).
+  - Adjusting extra expenses, income, pension
   - Converting nominal asset values and balances to real terms for reporting and plotting.
   - Adjusting bank account bounds (specified in real terms) to nominal values for each month.
 
@@ -45,10 +43,10 @@ The simulation manages inflation using two primary sequences from monthly data:
 
 ## How Inflation Is Applied
 
-- Most of the flows (expenses, income, pension, house purchase) and bank account bounds,
-  which are typically defined in real terms in the configuration, are converted to **nominal terms**
+- Most of the flows (expenses, income, pension) and bank account bounds,
+  which are typically defined in today's money in the configuration, are converted to **nominal terms**
   using the `state.monthly_cumulative_inflation_factors` stored in the state.
-- For items specified by year (e.g., a ectra_expensesin year `N`), the
+- For items specified by year (e.g., a extra_expense in year `N`), the
   `state.monthly_cumulative_inflation_factors[N * 12]` is used to get the cumulative inflation up
   to the start of that year.
 - All asset balances are managed in nominal terms during the simulation.

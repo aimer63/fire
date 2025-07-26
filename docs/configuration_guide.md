@@ -19,8 +19,6 @@ years_to_simulate = 40
 initial_bank_balance = 10000.0
 monthly_expenses = 2000.0
 planned_contributions = [{ year = 0, amount = 100000.0 }]
-house_purchase_year = 10
-planned_house_purchase_cost = 250000.0
 ```
 
 - `planned_contributions`: List of one-time contributions. To set your initial portfolio, specify a contribution at `year = 0`.
@@ -113,7 +111,7 @@ You can further configure:
 
 - Always include a rebalance for year 0.
 - Only liquid assets can be rebalanced or withdrawn to cover expenses.
-- Real estate is not included in rebalancing or liquid withdrawals.
+- Real estate being defined as illiquid is not included in rebalancing or liquid withdrawals.
 
 ---
 

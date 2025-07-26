@@ -9,7 +9,7 @@ simulation tool.
 
 This package simulates financial independence and early retirement (FIRE) scenarios using Monte
 Carlo methods.  
-It models investment returns, expenses, rebalancing, house purchases, and more, to help you assess
+It models investment returns, expenses, rebalancing and more, to help you assess
 the probability of financial success over time.
 
 ---
@@ -138,7 +138,6 @@ python -m firestarter.main config.toml
 - [README](../README.md): Project overview and configuration example.
 - [Configuration reference](../docs/config.md): Full configuration parameter reference.
 - [Monte Carlo method](../docs/montecarlo.md): Mathematical background.
-- [Real estate](../docs/real_estate.md): Real estate modeling details.
 - [Inflation](../docs/inflation.md): Inflation modeling details.
 - [Returns](../docs/returns.md): Assets returns modeling details.
 

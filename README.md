@@ -95,7 +95,6 @@ asset allocation.
   - Manages portfolio rebalances
   - Applies fees on funds
   - Applies market shocks if configured
-  - Optionally simulates a house purchase at a specified time
   - Tracks assets allocation
 
   Savings: the simulation invest all fund in bank account exceeding the `bank_upper_bound`
