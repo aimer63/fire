@@ -269,13 +269,13 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
 def plot_failed_wealth_evolution_samples(
     results_df: pd.DataFrame, real: bool, filename: str
 ):
-    plt.figure(figsize=(14, 8))
     failed = results_df[~results_df["success"]]
     if failed.empty:
         print(
             f"No failed simulations to plot {'real' if real else 'nominal'} wealth evolution."
         )
         return
+    plt.figure(figsize=(14, 8))
 
     # Take a sample of up to 25 simulations for clarity
     num_samples = 25
