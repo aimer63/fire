@@ -44,10 +44,12 @@ bank_upper_bound = 10000.0
 years_to_simulate = 70
 
 # --- Income Streams ---
-# Amounts in today's money.
-# For the years after the last income step income will be adjusted for inflation scaled
-# with the `income_inflation_factor`. 
-# Income starts at the year of the first step and continues until income_end_year.
+# The monthly income expressed in today's money paid from this year onward until 
+# the next step. In between steps the amount is not adjusted for inflation.
+# From the beginning of the last defined step, income grows with inflation
+# scaled by `income_inflation_factor`.
+# Income is set to zero before the first step and after `income_end_year`.
+# If this list is omitted or empty, no income is paid at any time.
 monthly_income_steps = [
   { year = 0, monthly_amount = 4000.0 },
   { year = 5, monthly_amount = 5000.0 },
@@ -60,6 +62,19 @@ monthly_income_steps = [
 income_inflation_factor = 0.6
 income_end_year = 20          # Slary stops, you are 50, you retire.
 
+# Expenses.
+monthly_expenses_steps = [
+  { year = 0, monthly_amount = 3500.0 },
+  { year = 20, monthly_amount = 3000.0 },
+  { year = 37, monthly_amount = 2500.0 },
+  { year = 50, monthly_amount = 1500.0 },
+]
+
+# One-time extra expenses (in today's money, will be inflation-adjusted).
+planned_extra_expenses = [
+  { amount = 30_000.0, year = 20, description = "Buy a car" },
+]
+
 # Monthly pension.
 # The pension starts at the nominal velue `monthly_pension` the year `pension_start_year`.
 # After that this value is adjusted with inflation scaled by `pension_inflation_factor`.
@@ -69,7 +84,7 @@ monthly_pension = 4000.0
 pension_inflation_factor = 0.75 # Pension grows 75% of inflation.
 pension_start_year = 37         # Pension starts at 67, you are 37 years into the simulation.
 
-# --- Contributions & Expenses ---
+# --- Contributions ---
 # One-time contributions (fixed nominal amounts, not inflation-adjusted).
 # The contribution at year 0 sets the initial investment, 0 otherwise.
 planned_contributions = [
@@ -82,13 +97,6 @@ planned_contributions = [
 # Annual fee on all liquid investments (e.g., 0.0015 for 0.15%).
 annual_fund_fee = 0.0015
 
-# Fixed monthly living expenses (in today's money, will be inflation-adjusted).
-monthly_expenses = 2500.0
-
-# One-time extra expenses (in today's money, will be inflation-adjusted).
-planned_extra_expenses = [
-  { amount = 30_000.0, year = 20, description = "Buy a car" },
-]
 
 # ==============================================================================
 # 4. ASSET DEFINITIONS

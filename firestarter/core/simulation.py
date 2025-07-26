@@ -315,6 +315,7 @@ class Simulation:
         # --- Precompute nominal pension and income monthly sequences with partial indexation ---
         monthly_nominal_pension_sequence = np.zeros(total_months, dtype=np.float64)
         monthly_nominal_income_sequence = np.zeros(total_months, dtype=np.float64)
+        monthly_nominal_expenses_sequence = np.zeros(total_months, dtype=np.float64)
 
         pension_start_month_idx = det_inputs.pension_start_year * 12
 
@@ -376,11 +377,38 @@ class Simulation:
                     )
                 monthly_nominal_pension_sequence[month_idx] = pension_cumulative
 
+        # --- Expenses steps logic (inflation-adjusted within each step) ---
+        expense_steps = sorted(det_inputs.monthly_expenses_steps, key=lambda s: s.year)
+        if not expense_steps:
+            monthly_nominal_expenses_sequence[:] = 0.0
+        else:
+            # Build a list of (start_month, monthly_amount) for each step
+            expense_step_months = [
+                (step.year * 12, step.monthly_amount) for step in expense_steps
+            ]
+            step_ranges = []
+            for idx in range(len(expense_step_months)):
+                start = expense_step_months[idx][0]
+                if idx + 1 < len(expense_step_months):
+                    end = expense_step_months[idx + 1][0]
+                else:
+                    end = total_months
+                step_ranges.append((start, end, expense_step_months[idx][1]))
+
+            for start, end, base_amount in step_ranges:
+                base_inflation = monthly_cumulative_inflation_factors[start]
+                for month in range(start, min(end, total_months)):
+                    inflation = monthly_cumulative_inflation_factors[month]
+                    monthly_nominal_expenses_sequence[month] = base_amount * (
+                        inflation / base_inflation
+                    )
+
         self.state.monthly_cumulative_inflation_factors = (
             monthly_cumulative_inflation_factors
         )
         self.state.monthly_nominal_pension_sequence = monthly_nominal_pension_sequence
         self.state.monthly_nominal_income_sequence = monthly_nominal_income_sequence
+        self.state.monthly_nominal_expenses_sequence = monthly_nominal_expenses_sequence
 
     def _process_income(self, month):
         """
@@ -421,11 +449,12 @@ class Simulation:
         """
         det_inputs = self.det_inputs
 
-        # Regular monthly expenses (inflation-adjusted)
-        nominal_monthly_expenses = (
-            det_inputs.monthly_expenses
-            * self.state.monthly_cumulative_inflation_factors[month]
-        )
+        # Regular monthly expenses (inflation-adjusted, precomputed)
+        nominal_monthly_expenses = 0.0
+        if month < len(self.state.monthly_nominal_expenses_sequence):
+            nominal_monthly_expenses = self.state.monthly_nominal_expenses_sequence[
+                month
+            ]
         total_expenses = nominal_monthly_expenses
 
         # Planned extra expenses (applied at the first month of the year)

@@ -33,9 +33,19 @@ class SimulationState:
 
     # Precomputed stochastic sequences
     monthly_return_rates_sequences: Dict[str, np.ndarray] = field(default_factory=dict)
-    monthly_cumulative_inflation_factors: np.ndarray = field(default_factory=lambda: np.array([]))
-    monthly_nominal_pension_sequence: np.ndarray = field(default_factory=lambda: np.array([]))
-    monthly_nominal_income_sequence: np.ndarray = field(default_factory=lambda: np.array([]))
+    monthly_cumulative_inflation_factors: np.ndarray = field(
+        default_factory=lambda: np.array([])
+    )
+
+    monthly_nominal_income_sequence: np.ndarray = field(
+        default_factory=lambda: np.array([])
+    )
+    monthly_nominal_pension_sequence: np.ndarray = field(
+        default_factory=lambda: np.array([])
+    )
+    monthly_nominal_expenses_sequence: np.ndarray = field(
+        default_factory=lambda: np.array([])
+    )
 
     # Tracking current simulation time
     current_month_index: int = 0
