@@ -109,44 +109,56 @@ This document explains all parameters available in the main TOML configuration f
     To set your initial portfolio, specify a planned contribution at `year = 0`
     and set the desired allocation using the weights in the year 0 rebalance event.
 
-  - **annual_fund_fee** _(float)_  
-    Annual fee on investments (e.g., 0.002 for 0.2%).
+  - **monthly_expenses_steps** _(list of dicts)_  
+    Defines the monthly expenses as a list of step changes.  
+    Each entry is a dictionary with:
 
-  - **monthly_expenses** _(float)_  
-    Fixed monthly living expenses (in today's money).
+    - `year` (int): The simulation year (0-indexed) when this expense step begins.
+    - `monthly_amount` (float): The monthly expense expressed in today's money
+      paid from this year onward until the next step.
+      Opposite of `monthly_income_steps` in between steps the amount is adjusted
+      for inflation.
+      From the beginning of the last defined step, expenses grow with inflation
+      until the end of the simulation.
+      Monthly expenses are mandatory and there must be an entry at year 0.
+      No `expenses_inflation_factor` in this case, expenses are less rigid than
+      income and pension ;-).
 
-  - **planned_extra_expenses** _(list of dicts)_  
-    List of one-time extra expenses (in today's money). Each dict has `amount` (float) and `year`
-    (int).
+      _Example:_
 
----
+    ```toml
+    monthly_expenses_steps = [
+      { year = 0, monthly_amount = 2000.0 },
+      { year = 15, monthly_amount = 2500.0 }
+    ]
+    ```
 
 ## Assets
 
 - **`[assets]`** _(dict)_
   Each asset in the configuration file is defined with the following parameters:
 
-  - **mu**:  
-    The sample mean return of the asset, expressed as a float.  
+  - **mu**:
+    The sample mean return of the asset, expressed as a float.
     _Example_: `0.07` means a 7% expected return per year.
 
-  - **sigma**:  
-    The sample annual standard deviation (volatility) of returns, as a float.  
+  - **sigma**:
+    The sample annual standard deviation (volatility) of returns, as a float.
     _Example_: `0.15` means a 15% standard deviation per year.
 
-  - **is_liquid**:  
-    Boolean value (`true` or `false`).  
+  - **is_liquid**:
+    Boolean value (`true` or `false`).
     Indicates whether the asset is liquid (can be bought/sold to cover expenses and
-    included in rebalancing).  
+    included in rebalancing).
     Set to `false` for illiquid assets, which are not rebalanced
     or sold for cash flow. Illiquid assets are only tracked, if they start at zero
     there will they remain.
 
-  - **withdrawal_priority**:  
-    _(Required for liquid assets only)_  
-    Integer indicating the order in which assets are sold to cover cash shortfalls.  
-    Lower numbers are sold first.  
-    This value must be unique among liquid assets.  
+  - **withdrawal_priority**:
+    _(Required for liquid assets only)_
+    Integer indicating the order in which assets are sold to cover cash shortfalls.
+    Lower numbers are sold first.
+    This value must be unique among liquid assets.
     Omit this parameter for illiquid assets.
 
 Inflation, although not an asset, must be defined in this section because it is correlated
