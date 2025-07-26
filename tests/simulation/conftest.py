@@ -11,6 +11,7 @@ from typing import Dict
 from firestarter.core.simulation import SimulationBuilder
 from firestarter.config.config import (
     IncomeStep,
+    ExpenseStep,
     DeterministicInputs,
     PortfolioRebalance,
     SimulationParameters,
@@ -27,17 +28,31 @@ def basic_sim_params() -> SimulationParameters:
     return SimulationParameters(num_simulations=1, random_seed=123)
 
 
-@pytest.fixture
-def basic_initial_assets() -> Dict[str, float]:
-    """Minimal initial_assets for testing."""
-    assets = {key: 0.0 for key in ASSET_KEYS}
-    assets["stocks"] = 100000.0
-    assets["real_estate"] = 0.0
-    return assets
+# @pytest.fixture
+# def basic_initial_assets() -> Dict[str, float]:
+#     """Minimal initial_assets for testing."""
+#     assets = {key: 0.0 for key in ASSET_KEYS}
+#     assets["stocks"] = 100000.0
+#     assets["real_estate"] = 0.0
+#     return assets
 
 
 @pytest.fixture
-def basic_det_inputs(basic_initial_assets) -> DeterministicInputs:
+def basic_assets():
+    from firestarter.config.config import Asset
+
+    return {
+        "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=2),
+        "bonds": Asset(mu=0.03, sigma=0.05, is_liquid=True, withdrawal_priority=1),
+        "str": Asset(mu=0.01, sigma=0.01, is_liquid=True, withdrawal_priority=0),
+        "fun": Asset(mu=0.10, sigma=0.30, is_liquid=True, withdrawal_priority=3),
+        "real_estate": Asset(mu=0.04, sigma=0.10, is_liquid=False),
+        "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
+    }
+
+
+@pytest.fixture
+def basic_det_inputs() -> DeterministicInputs:
     """Minimal DeterministicInputs for testing."""
     return DeterministicInputs(
         initial_bank_balance=5000.0,
@@ -45,15 +60,15 @@ def basic_det_inputs(basic_initial_assets) -> DeterministicInputs:
         bank_upper_bound=10000.0,
         years_to_simulate=5,
         monthly_income_steps=[IncomeStep(year=0, monthly_amount=0.0)],
+        monthly_expenses_steps=[ExpenseStep(year=0, monthly_amount=0.0)],
+        planned_contributions=[PlannedContribution(amount=10000, year=1)],
+        annual_fund_fee=0.001,  # 0.1%
+        planned_extra_expenses=[PlannedExtraExpense(amount=500, year=2)],
         income_inflation_factor=1.0,
         income_end_year=5,
         monthly_pension=0,
         pension_inflation_factor=1.0,
         pension_start_year=30,
-        planned_contributions=[PlannedContribution(amount=1200, year=1)],
-        annual_fund_fee=0.001,  # 0.1%
-        monthly_expenses=0,
-        planned_extra_expenses=[PlannedExtraExpense(amount=500, year=2)],
     )
 
 
@@ -79,20 +94,6 @@ def basic_portfolio_rebalances():
 def basic_shocks():
     # Return an empty list for shocks in the flat config.
     return []
-
-
-@pytest.fixture
-def basic_assets():
-    from firestarter.config.config import Asset
-
-    return {
-        "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=2),
-        "bonds": Asset(mu=0.03, sigma=0.05, is_liquid=True, withdrawal_priority=1),
-        "str": Asset(mu=0.01, sigma=0.01, is_liquid=True, withdrawal_priority=0),
-        "fun": Asset(mu=0.10, sigma=0.30, is_liquid=True, withdrawal_priority=3),
-        "real_estate": Asset(mu=0.04, sigma=0.10, is_liquid=False),
-        "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
-    }
 
 
 @pytest.fixture
