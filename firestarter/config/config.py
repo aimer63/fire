@@ -73,6 +73,17 @@ class IncomeStep(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class ExpenseStep(BaseModel):
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when this expense step starts."
+    )
+    monthly_amount: float = Field(
+        ..., ge=0.0, description="Monthly expense amount (today's money) for this step."
+    )
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
 class DeterministicInputs(BaseModel):
     """
     Pydantic model representing the deterministic financial inputs for the simulation.
@@ -145,9 +156,9 @@ class DeterministicInputs(BaseModel):
         ...,
         description="Total Expense Ratio (TER) as an annual percentage of investment assets.",
     )
-    monthly_expenses: float = Field(
+    monthly_expenses_steps: list[ExpenseStep] = Field(
         ...,
-        description="Initial real (today's money) fixed monthly expenses for living costs.",
+        description="List of expense steps, each with a start year and monthly amount.",
     )
     planned_extra_expenses: list[PlannedExtraExpense] = Field(
         default_factory=list,
@@ -186,6 +197,24 @@ class DeterministicInputs(BaseModel):
             )
         if self.pension_start_year < self.income_end_year:
             raise ValueError("pension_start_year must be >= the year income_end_year.")
+        return self
+
+    @model_validator(mode="after")
+    def validate_expense_steps(self) -> "DeterministicInputs":
+        # If expense steps are not provided or empty, raise error
+        if not self.monthly_expenses_steps:
+            raise ValueError("monthly_expenses_steps must be provided and non-empty.")
+        years = [step.year for step in self.monthly_expenses_steps]
+        if len(set(years)) != len(years):
+            raise ValueError("Years in monthly_expenses_steps must be unique.")
+        if sorted(years) != years:
+            raise ValueError(
+                "Years in monthly_expenses_steps must be sorted in ascending order."
+            )
+        if years[0] != 0:
+            raise ValueError(
+                "The first step in monthly_expenses_steps must start at year 0."
+            )
         return self
 
     @model_validator(mode="after")
