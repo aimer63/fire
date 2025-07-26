@@ -84,11 +84,6 @@ planned_extra_expenses = [
   { amount = 30_000.0, year = 20, description = "Buy a car" },
 ]
 
-# --- Major Life Events ---
-# Real cost of a house purchase.
-planned_house_purchase_cost = 0.0
-house_purchase_year = 0
-
 # ==============================================================================
 # 4. ASSET DEFINITIONS
 # ==============================================================================

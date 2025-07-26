@@ -54,8 +54,6 @@ def basic_det_inputs(basic_initial_assets) -> DeterministicInputs:
         annual_fund_fee=0.001,  # 0.1%
         monthly_expenses=0,
         planned_extra_expenses=[PlannedExtraExpense(amount=500, year=2)],
-        planned_house_purchase_cost=0,
-        house_purchase_year=None,
     )
 
 
