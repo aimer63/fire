@@ -88,7 +88,7 @@ def test_simulation_process_income_with_income_and_pension(
     )
 
 
-def test_pension_steps_real_to_nominal_basic(
+def test_pension_real_to_nominal_basic(
     initialized_simulation: Simulation,
 ) -> None:
     """
@@ -125,7 +125,9 @@ def test_pension_steps_real_to_nominal_basic(
         )
 
 
-def test_pension_steps_partial_indexation(initialized_simulation: Simulation) -> None:
+def test_pension_steps_partial__partial_indexation(
+    initialized_simulation: Simulation,
+) -> None:
     """
     Tests that monthly_pension is indexed to inflation by pension_inflation_factor.
     Uses a fixed inflation sequence for deterministic results.

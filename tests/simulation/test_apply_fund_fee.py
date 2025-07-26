@@ -21,16 +21,17 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "annual_fund_fee": annual_fee,
-            "initial_portfolio": {
-                "stocks": 100_000.0,
-                "bonds": 50_000.0,
-                "str": 20_000.0,
-                "fun": 10_000.0,
-                "real_estate": 500_000.0,
-            },
         }
     )
     sim.init()
+    # Set the initial portfolio directly (bypassing det_inputs)
+    sim.state.portfolio = {
+        "stocks": 100_000.0,
+        "bonds": 50_000.0,
+        "str": 20_000.0,
+        "fun": 10_000.0,
+        "real_estate": 500_000.0,
+    }
 
     # Store initial values to compare against
     initial_liquid_assets = {

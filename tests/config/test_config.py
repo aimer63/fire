@@ -12,6 +12,7 @@ from firestarter.config.config import (
     Config,
     Asset,
     IncomeStep,
+    ExpenseStep,
     PortfolioRebalance,
     SimulationParameters,
 )
@@ -26,8 +27,8 @@ def basic_deterministic_inputs():
         bank_lower_bound=2000.0,
         bank_upper_bound=10000.0,
         years_to_simulate=5,
-        monthly_income_steps=[],
-        monthly_expenses=0,
+        monthly_income_steps=[IncomeStep(year=0, monthly_amount=2000.0)],
+        monthly_expenses_steps=[ExpenseStep(year=0, monthly_amount=1000.0)],
         planned_contributions=[],
         annual_fund_fee=0.001,
         planned_extra_expenses=[],
