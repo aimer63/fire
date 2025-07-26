@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+- Removed house purchase
+- Income now is managed with income steps
 - Renamed salary to income
 
 ## [v0.1.0b4] - 2025-07

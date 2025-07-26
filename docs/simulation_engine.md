@@ -15,7 +15,6 @@ considering:
 - Expenses (regular and extra)
 - Contributions
 - Asset allocation and rebalancing
-- House purchase
 - Market returns, inflation, and shocks
 - Bank account liquidity bounds and withdrawals
 - Market shocks
@@ -67,18 +66,16 @@ For each month:
 1. **Income:** Calculates and adds income and pension for the current month.
 2. **Contributions:** Apply planned contributions to liquid assets.
 3. **Expenses:** Deduct regular and extra expenses from the bank account.
-4. **House Purchase:** If scheduled, withdraw from assets to buy a house and add its value to real
-   estate.
-5. **Bank Account Management:**
+4. **Bank Account Management:**
    - If the bank balance is below the lower bound, withdraw from assets in the specified
      priority order to top up.
    - If above the upper bound, invest the excess into liquid assets according to
      the current portfolio weights.
    - If assets are insufficient to cover a shortfall, mark the simulation as failed and exit early.
-6. **Returns:** Apply monthly returns to all assets (including real estate).
-7. **Rebalancing:** If scheduled, rebalance liquid assets according to the current portfolio
+5. **Returns:** Apply monthly returns to all assets (including illiquid).
+6. **Rebalancing:** If scheduled, rebalance liquid assets according to the current portfolio
    weights.
-8. **Recording:** Save the current state (wealth, balances, asset values) for this month.
+7. **Recording:** Save the current state (wealth, balances, asset values) for this month.
 
 ### 3. **Result Construction**
 
