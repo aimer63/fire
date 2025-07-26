@@ -38,16 +38,24 @@ from firestarter.config.correlation_matrix import CorrelationMatrix
 class PlannedContribution(BaseModel):
     """Represents a planned, single-year, contribution."""
 
-    amount: float = Field(..., description="Real (today's money) amount of the contribution.")
-    year: int = Field(..., ge=0, description="Year index (0-indexed) when the contribution occurs.")
+    amount: float = Field(
+        ..., description="Real (today's money) amount of the contribution."
+    )
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when the contribution occurs."
+    )
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class PlannedExtraExpense(BaseModel):
     """Represents a planned, single-year, extra expense."""
 
-    amount: float = Field(..., description="Real (today's money) amount of the expense.")
-    year: int = Field(..., ge=0, description="Year index (0-indexed) when the expense occurs.")
+    amount: float = Field(
+        ..., description="Real (today's money) amount of the expense."
+    )
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when the expense occurs."
+    )
     description: str | None = Field(
         default=None, description="Optional description of the expense."
     )
@@ -55,7 +63,9 @@ class PlannedExtraExpense(BaseModel):
 
 
 class IncomeStep(BaseModel):
-    year: int = Field(..., ge=0, description="Year index (0-indexed) when this income step starts.")
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when this income step starts."
+    )
     monthly_amount: float = Field(
         ..., ge=0.0, description="Monthly income amount (today's money) for this step."
     )
@@ -69,7 +79,9 @@ class DeterministicInputs(BaseModel):
     These parameters are loaded from the 'deterministic_inputs' section of config.toml.
     """
 
-    initial_bank_balance: float = Field(..., description="Initial bank account balance.")
+    initial_bank_balance: float = Field(
+        ..., description="Initial bank account balance."
+    )
 
     bank_lower_bound: float = Field(
         ...,
@@ -108,7 +120,9 @@ class DeterministicInputs(BaseModel):
         description="Year index (0-indexed) when income income ends (exclusive). Income stops before this year begins.",
     )
 
-    monthly_pension: float = Field(..., description="Initial real (today's money) monthly pension.")
+    monthly_pension: float = Field(
+        ..., description="Initial real (today's money) monthly pension."
+    )
     pension_inflation_factor: float = Field(
         ...,
         description=(
@@ -122,7 +136,9 @@ class DeterministicInputs(BaseModel):
 
     planned_contributions: list[PlannedContribution] = Field(
         default_factory=list,
-        description=("List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"),
+        description=(
+            "List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"
+        ),
     )
 
     annual_fund_fee: float = Field(
@@ -137,21 +153,6 @@ class DeterministicInputs(BaseModel):
         default_factory=list,
         description=(
             "List of planned extra expenses. e.g. [{amount = 15000, year = 3, description = 'Car'}, ...]"
-        ),
-    )
-
-    planned_house_purchase_cost: float = Field(
-        ...,
-        description=(
-            "Initial real (today's money) cost of a house "
-            "to be purchased at house_purchase_year (or rebalancing_year if not set)."
-        ),
-    )
-    house_purchase_year: int | None = Field(
-        default=None,
-        description=(
-            "Year index (0-based) when the house is purchased. "
-            "If None, defaults to rebalancing_year."
         ),
     )
 
@@ -174,16 +175,22 @@ class DeterministicInputs(BaseModel):
         if len(set(years)) != len(years):
             raise ValueError("Years in monthly_income_steps must be unique.")
         if sorted(years) != years:
-            raise ValueError("Years in monthly_income_steps must be sorted in ascending order.")
+            raise ValueError(
+                "Years in monthly_income_steps must be sorted in ascending order."
+            )
         last_step_year = years[-1]
         if self.income_end_year < last_step_year:
-            raise ValueError("income_end_year must be >= the last year in monthly_income_steps.")
+            raise ValueError(
+                "income_end_year must be >= the last year in monthly_income_steps."
+            )
         return self
 
     @model_validator(mode="after")
     def validate_bank_bounds(self) -> "DeterministicInputs":
         if self.bank_lower_bound > self.bank_upper_bound:
-            raise ValueError("bank_lower_bound must be less than or equal to bank_upper_bound")
+            raise ValueError(
+                "bank_lower_bound must be less than or equal to bank_upper_bound"
+            )
         if self.initial_bank_balance < self.bank_lower_bound:
             raise ValueError(
                 "initial_bank_balance must be greater than or equal to bank_lower_bound"
@@ -195,7 +202,9 @@ class Asset(BaseModel):
     """Represents a single financial asset class."""
 
     mu: float = Field(..., description="Expected annual arithmetic mean return.")
-    sigma: float = Field(..., description="Expected annual standard deviation of returns.")
+    sigma: float = Field(
+        ..., description="Expected annual standard deviation of returns."
+    )
     is_liquid: bool = Field(
         ...,
         description="True if the asset is part of the liquid, rebalanceable portfolio.",
@@ -259,7 +268,9 @@ class PortfolioRebalance(BaseModel):
 
 
 class SimulationParameters(BaseModel):
-    num_simulations: int = Field(..., gt=0, description="Number of Monte Carlo simulations to run.")
+    num_simulations: int = Field(
+        ..., gt=0, description="Number of Monte Carlo simulations to run."
+    )
     random_seed: int | None = Field(
         default=None,
         description="Optional random seed for deterministic runs. If None, uses entropy.",
@@ -332,7 +343,9 @@ class Config(BaseModel):
         # 1. Establish the definitive set of asset names from the top-level assets
         defined_assets = set(self.assets.keys())
         if "inflation" not in defined_assets:
-            raise ValueError("An asset named 'inflation' must be defined in the assets section.")
+            raise ValueError(
+                "An asset named 'inflation' must be defined in the assets section."
+            )
 
         # 1. Validate that withdrawal_priority values for liquid assets are unique
         priorities = [
