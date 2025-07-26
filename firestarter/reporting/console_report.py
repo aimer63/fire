@@ -41,7 +41,6 @@ def print_console_summary(
     Accepts the raw simulation results (list of dicts from Simulation.build_result()) and config.
     Only formats and presents data, does not compute except for CAGR.
     """
-    # dump_config_parameters(config)
 
     print("\n--- FIRE Plan Simulation Summary ---")
     num_simulations = len(simulation_results)
@@ -104,6 +103,9 @@ def print_console_summary(
         print(f"{label} Successful Case:")
         print(f"  Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} ")
         print(f"  Final Wealth (Real): {case['final_real_wealth']:,.2f} ")
+        print(
+            f"  Cumulative Inflation Factor: {case['final_cumulative_inflation_factor']:.4f}"
+        )
         initial_wealth = case["initial_total_wealth"]
         final_wealth = case["final_nominal_wealth"]
         months_lasted = case["months_lasted"]
@@ -117,16 +119,19 @@ def print_console_summary(
         total_nominal = case["final_nominal_wealth"]
         bank = case["final_bank_balance"]
         if allocations:
-            total_assets = sum(allocations.values())
+            total_assets = sum(v for k, v in allocations.items() if k != "inflation")
             alloc_percent = ", ".join(
                 f"{k}: {v / total_assets * 100:.1f}%" if total_assets else f"{k}: 0.0%"
                 for k, v in allocations.items()
+                if k != "inflation"
             )
             print(f"  Final Allocations (percent): {alloc_percent}")
         if allocations:
-            asset_str = ", ".join(f"{k}: {v:,.2f} " for k, v in allocations.items())
+            asset_str = ", ".join(
+                f"{k}: {v:,.2f} " for k, v in allocations.items() if k != "inflation"
+            )
             print(f"  Nominal Asset Values: {asset_str}, Bank: {bank:,.2f} ")
-            summed = sum(allocations.values()) + bank
+            summed = sum(v for k, v in allocations.items() if k != "inflation") + bank
             if abs(summed - total_nominal) > 1e-2:
                 print("  WARNING: Sum does not match final total wealth!")
 
@@ -148,6 +153,9 @@ def print_console_summary(
         print(f"{label} Successful Case:")
         print(f"  Final Wealth (Real): {case['final_real_wealth']:,.2f} ")
         print(f"  Final Wealth (Nominal): {case['final_nominal_wealth']:,.2f} ")
+        print(
+            f"  Cumulative Inflation Factor: {case['final_cumulative_inflation_factor']:.4f}"
+        )
         initial_wealth = case["initial_total_wealth"]
         final_wealth = case["final_real_wealth"]
         months_lasted = case["months_lasted"]
@@ -161,16 +169,19 @@ def print_console_summary(
         total_nominal = case["final_nominal_wealth"]
         bank = case["final_bank_balance"]
         if allocations:
-            total_assets = sum(allocations.values())
+            total_assets = sum(v for k, v in allocations.items() if k != "inflation")
             alloc_percent = ", ".join(
                 f"{k}: {v / total_assets * 100:.1f}%" if total_assets else f"{k}: 0.0%"
                 for k, v in allocations.items()
+                if k != "inflation"
             )
             print(f"  Final Allocations (percent): {alloc_percent}")
         if allocations:
-            asset_str = ", ".join(f"{k}: {v:,.2f} " for k, v in allocations.items())
+            asset_str = ", ".join(
+                f"{k}: {v:,.2f} " for k, v in allocations.items() if k != "inflation"
+            )
             print(f"  Nominal Asset Values: {asset_str}, Bank: {bank:,.2f} ")
-            summed = sum(allocations.values()) + bank
+            summed = sum(v for k, v in allocations.items() if k != "inflation") + bank
             if abs(summed - total_nominal) > 1e-2:
                 print("  WARNING: Sum does not match final total wealth!")
 

@@ -1,10 +1,14 @@
 # Firestarter Configuration Guide
 
-This guide explains how to configure the Firestarter simulation engine for modeling financial independence and early retirement (FIRE) scenarios.
+This guide explains how to configure the Firestarter simulation engine for modeling
+financial independence and early retirement (FIRE) scenarios.
 
 ## 1. Overview
 
-Firestarter uses a TOML configuration file to define all simulation parameters, including deterministic inputs, asset definitions, correlation matrix, portfolio rebalancing schedule, and planned shocks. The initial asset allocation is set by a planned contribution at year 0 and the weights in the year 0 rebalance event.
+Firestarter uses a TOML configuration file to define all simulation parameters,
+including deterministic inputs, asset definitions, correlation matrix, portfolio
+rebalancing schedule, and planned shocks. The initial asset allocation is set by
+a planned contribution at year 0 and the weights in the year 0 rebalance event.
 
 ---
 
@@ -16,12 +20,22 @@ They include:
 ```toml
 [deterministic_inputs]
 years_to_simulate = 40
-initial_bank_balance = 10000.0
-monthly_expenses = 2000.0
+initial_bank_balance = 8000.0
 planned_contributions = [{ year = 0, amount = 100000.0 }]
+bank_lower_bound = 5000.0
+bank_upper_bound = 10_000.0
+monthly_income_steps = [
+  { year = 0, monthly_amount = 3000.0 },
+  { year = 30, monthly_amount = 1500.0 }
+]
+monthly_expenses_steps = [
+  { year = 0, monthly_amount = 2000.0 },
+  { year = 15, monthly_amount = 2500.0 }
 ```
 
-- `planned_contributions`: List of one-time contributions. To set your initial portfolio, specify a contribution at `year = 0`.
+- `planned_contributions`: List of one-time contributions. To set your initial
+  portfolio, specify a contribution at `year = 0`.
+- To define initial asset allocation specify a rebalance `year = 0`.
 - `initial_bank_balance`: Starting cash in your bank account.
 
 ---
@@ -73,7 +87,7 @@ weights = { stocks = 0.7, bonds = 0.3 }
 
 [[portfolio_rebalances]]
 year = 20
-weights = { stocks = 0.5, bonds = 0.5 }
+weights = { stocks = 0.6, bonds = 0.4 }
 ```
 
 - **Important:** There must always be a rebalance event for year 0. The weights in
@@ -103,7 +117,7 @@ You can further configure:
 
 - Shocks (unexpected events)
 - Correlation matrix (for assets/inflation correlation modeling)
-- Fund fees, pension, income, and more
+- Fund fees, pension, extra expenses, and more
 
 ---
 

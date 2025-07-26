@@ -72,6 +72,9 @@ def format_case_for_markdown(
             f"- **Final Wealth (Nominal):** {final_wealth_display:,.2f} \n"
         )
         md_case_lines.append(f"- **Final Wealth (Real):** {final_wealth_other:,.2f} \n")
+        md_case_lines.append(
+            f"- **Cumulative Inflation Factor:** {case['final_cumulative_inflation_factor']:.4f}\n"
+        )
         cagr_label = "Nominal"
     else:  # Real
         final_wealth_display = final_real_wealth
@@ -84,6 +87,9 @@ def format_case_for_markdown(
         md_case_lines.append(
             f"- **Final Wealth (Nominal):** {final_wealth_other:,.2f} \n"
         )
+        md_case_lines.append(
+            f"- **Cumulative Inflation Factor:** {case['final_cumulative_inflation_factor']:.4f}\n"
+        )
         cagr_label = "Real"
 
     cagr = calculate_cagr(initial_wealth, cagr_wealth_for_calc_val, years)
@@ -92,10 +98,12 @@ def format_case_for_markdown(
     allocations = case["final_allocations_nominal"]
     bank = case["final_bank_balance"]
 
-    total_assets = sum(allocations.values())
+    total_assets = sum(v for k, v in allocations.items() if k != "inflation")
 
     alloc_percent_parts = []
     for k, v_asset in allocations.items():
+        if k == "inflation":
+            continue
         percent = v_asset / total_assets * 100
         alloc_percent_parts.append(f"{k}: {percent:.1f}%")
     md_case_lines.append(
@@ -104,6 +112,8 @@ def format_case_for_markdown(
 
     asset_value_parts = []
     for k, v_asset in allocations.items():
+        if k == "inflation":
+            continue
         asset_value_parts.append(f"{k}: {v_asset:,.2f} ")
     md_case_lines.append(
         f"- **Nominal Asset Values:** {', '.join(asset_value_parts)}, Bank: {bank:,.2f} \n"
