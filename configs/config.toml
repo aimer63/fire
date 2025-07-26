@@ -62,19 +62,6 @@ monthly_income_steps = [
 income_inflation_factor = 0.6
 income_end_year = 20          # Slary stops, you are 50, you retire.
 
-# Expenses.
-monthly_expenses_steps = [
-  { year = 0, monthly_amount = 3500.0 },
-  { year = 20, monthly_amount = 3000.0 },
-  { year = 37, monthly_amount = 2500.0 },
-  { year = 50, monthly_amount = 1500.0 },
-]
-
-# One-time extra expenses (in today's money, will be inflation-adjusted).
-planned_extra_expenses = [
-  { amount = 30_000.0, year = 20, description = "Buy a car" },
-]
-
 # Monthly pension.
 # The pension starts at the nominal velue `monthly_pension` the year `pension_start_year`.
 # After that this value is adjusted with inflation scaled by `pension_inflation_factor`.
@@ -93,7 +80,18 @@ planned_contributions = [
   # { year = 10, amount = 20_000 },
   # { year = 15, amount = 10_000 },
 ]
+# Expenses.
+monthly_expenses_steps = [
+  { year = 0, monthly_amount = 3500.0 },
+  { year = 20, monthly_amount = 3000.0 },
+  { year = 37, monthly_amount = 2500.0 },
+  { year = 50, monthly_amount = 1500.0 },
+]
 
+# One-time extra expenses (in today's money, will be inflation-adjusted).
+planned_extra_expenses = [
+  { amount = 30_000.0, year = 20, description = "Buy a car" },
+]
 # Annual fee on all liquid investments (e.g., 0.0015 for 0.15%).
 annual_fund_fee = 0.0015
 
