@@ -158,6 +158,7 @@ class DeterministicInputs(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    @model_validator(mode="after")
     def validate_income_steps(self) -> "DeterministicInputs":
         # If income steps are not provided or empty, skip further checks
         if not self.monthly_income_steps:
@@ -179,10 +180,12 @@ class DeterministicInputs(BaseModel):
                 "Years in monthly_income_steps must be sorted in ascending order."
             )
         last_step_year = years[-1]
-        if self.income_end_year < last_step_year:
+        if self.income_end_year <= last_step_year:
             raise ValueError(
-                "income_end_year must be >= the last year in monthly_income_steps."
+                "income_end_year must be > the year of the last IncomeStep."
             )
+        if self.pension_start_year < self.income_end_year:
+            raise ValueError("pension_start_year must be >= the year income_end_year.")
         return self
 
     @model_validator(mode="after")
@@ -224,7 +227,7 @@ class Asset(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def check_withdrawal_priority(self) -> "Asset":
+    def validate_withdrawal_priority(self) -> "Asset":
         """Ensure withdrawal_priority is set correctly based on liquidity."""
         is_liquid = self.is_liquid
         priority = self.withdrawal_priority
