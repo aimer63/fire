@@ -88,6 +88,7 @@ This document explains all parameters available in the main TOML configuration f
 
   - **income_end_year** _(int)_  
     Year index when income ends (exclusive).
+    It must be > the year of the last income step.
 
   - **monthly_pension** _(float)_  
     Real (inflation-adjusted) monthly pension amount.
@@ -97,6 +98,7 @@ This document explains all parameters available in the main TOML configuration f
 
   - **pension_start_year** _(int)_  
     Year index when pension starts.
+    It must be >= `income_end_year`.
 
   - **planned_contributions** _(list of dicts)_  
     List of one-time contributions (as a fixed nominal amount).
