@@ -38,45 +38,19 @@ asset allocation.
 
   **Example**:
 
-  ```toml
-  # Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025
-  # MU: Arithmetic Mean
-  # SIGMA: Arithmetic Standard Deviation
-  # mu = 0.1017
-  # sigma = 0.1478
-  #
-  # The 2016-2025 period was exceptionally strong for global equities
-  # For a long-term simulation (30+ years), it's advisable to temper expectations
-  # based on very long-term historical averages and current market valuations
+  ```toml  
   [assets.stocks]
   mu = 0.07
   sigma = 0.15
   is_liquid = true
   withdrawal_priority = 2
 
-  # European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR)
-  # annual total returns from 2004-2023.
-  # MU: Arithmetic Mean
-  # SIGMA: Arithmetic Standard Deviation
-  # mu = 0.0193
-  # sigma = 0.0535
-  #
-  # The 2004-2023 period includes many years of historically very low and even
-  # negative interest rates in Europe. The environment has shifted, and current
-  # yields are significantly higher.
   [assets.bonds]
   mu = 0.03
   sigma = 0.055
   is_liquid = true
   withdrawal_priority = 1
 
-  # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
-  # MU: Arithmetic Mean of inflation
-  # SIGMA: Arithmetic Standard Deviation of inflation
-  # mu = 0.0220
-  # sigma = 0.0229
-  #
-  # More conservative for the future
   [assets.inflation]
   mu = 0.025
   sigma = 0.025
@@ -130,7 +104,7 @@ asset allocation.
   ![Bank account balance trajectories](docs/pics/bank_account_trajectories_nominal.png)
 
   Duration distribution of failed cases
-  ![Duration distribution of failed cases](docs/pics/retirement_duration_distribution.png)
+  ![Duration distribution of failed cases](docs/pics/failed_duration_distribution.png)
 
   Distribution of final wealth for successful outcomes
   ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
@@ -291,6 +265,7 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 - [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a
   GitHub release.
+- [Configuration Example](configs/config.toml): Configuration example with all parameters.
 - [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
 - [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
 - [Results](docs/output.md): Detailed explanation of all outputs of the simulation.
