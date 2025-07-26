@@ -32,8 +32,5 @@ update_copyright.sh
 # Ignore exercises
 learn.py
 
-# Output from the console
-console.txt
-
 # Temporary folder
 tmp/
