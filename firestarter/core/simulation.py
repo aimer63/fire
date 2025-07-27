@@ -586,9 +586,7 @@ class Simulation:
         """
         weights = self.state.current_target_portfolio_weights
         for asset, weight in weights.items():
-            self.state.portfolio[asset] = (
-                self.state.portfolio.get(asset, 0.0) + amount * weight
-            )
+            self.state.portfolio[asset] += amount * weight
 
     def _withdraw_from_assets(self, amount: float) -> None:
         """

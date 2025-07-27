@@ -7,8 +7,10 @@ financial independence and early retirement (FIRE) scenarios.
 
 Firestarter uses a TOML configuration file to define all simulation parameters,
 including deterministic inputs, asset definitions, correlation matrix, portfolio
-rebalancing schedule, and planned shocks. The initial asset allocation is set by
-a planned contribution at year 0 and the weights in the year 0 rebalance event.
+rebalancing schedule, and planned shocks.
+
+The initial asset allocation is set by a planned contribution at year 0 and the
+weights in the year 0 rebalance event.
 
 ---
 
@@ -31,12 +33,21 @@ monthly_income_steps = [
 monthly_expenses_steps = [
   { year = 0, monthly_amount = 2000.0 },
   { year = 15, monthly_amount = 2500.0 }
+
+[[portfolio_rebalances]]
+year = 0
+weights = { stocks = 0.7, bonds = 0.3 }
 ```
 
 - `planned_contributions`: List of one-time contributions. To set your initial
   portfolio, specify a contribution at `year = 0`.
 - To define initial asset allocation specify a rebalance `year = 0`.
 - `initial_bank_balance`: Starting cash in your bank account.
+- All the cash in the bank account above `bank_upper_bound` is automatically
+  invested in the portfolio accordingly to the current target weights.
+- If the bank account goes below `bank_lower_bound`, the simulation will
+  withdraw from the portfolio to cover expenses and top the bank account up to
+  `bank_lower_bound`.
 
 ---
 

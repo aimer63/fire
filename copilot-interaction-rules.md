@@ -17,10 +17,10 @@ guess or provide a bogus fix or implementation.**
 
 ## Type Safety & Explicitness
 
-- Strict type safety is preferred.
-- Copilot must always use explicit type annotations and strict, clear method signatures wherever
+- Static type safety is preferred.
+- Copilot must always use explicit type annotations and clear method signatures wherever
   possible.
-- Favor static, type-safe code throughout all code and suggestions.
+- Favor static type-safe code throughout all code and suggestions.
 
 ## Development Workflow
 

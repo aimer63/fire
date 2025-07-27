@@ -19,22 +19,12 @@ from firestarter.config.config import (
     PlannedExtraExpense,
 )
 from firestarter.config.correlation_matrix import CorrelationMatrix
-from firestarter.core.constants import ASSET_KEYS
 
 
 @pytest.fixture
 def basic_sim_params() -> SimulationParameters:
     """Minimal SimulationParameters for testing."""
     return SimulationParameters(num_simulations=1, random_seed=123)
-
-
-# @pytest.fixture
-# def basic_initial_assets() -> Dict[str, float]:
-#     """Minimal initial_assets for testing."""
-#     assets = {key: 0.0 for key in ASSET_KEYS}
-#     assets["stocks"] = 100000.0
-#     assets["ag"] = 0.0
-#     return assets
 
 
 @pytest.fixture

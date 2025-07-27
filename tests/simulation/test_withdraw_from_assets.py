@@ -45,14 +45,12 @@ def test_withdraw_from_assets_success_single_asset(
                     "bonds": bonds / total,
                     "str": str_ / total,
                     "fun": fun / total,
-                    "real_estate": 0.0,
                 }
             }
         )
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
-    sim.state.current_bank_balance = 0.0
 
     amount_to_withdraw = 10_000.0
     sim._withdraw_from_assets(amount_to_withdraw)
@@ -95,14 +93,12 @@ def test_withdraw_from_assets_success_multiple_assets(
                     "bonds": bonds / total,
                     "str": str_ / total,
                     "fun": fun / total,
-                    "real_estate": 0.0,
                 }
             }
         )
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
-    sim.state.current_bank_balance = 0.0
 
     amount_to_withdraw = 25_000.0  # More than is in 'str'
     sim._withdraw_from_assets(amount_to_withdraw)
@@ -145,16 +141,15 @@ def test_withdraw_from_assets_failure_insufficient_funds(
                     "bonds": bonds / total,
                     "str": str_ / total,
                     "fun": fun / total,
-                    "real_estate": 0.0,
                 }
             }
         )
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
-    sim.state.current_bank_balance = 0.0
+
     total_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "real_estate"
+        v for k, v in sim.state.portfolio.items() if k != "inflation"
     )
 
     amount_to_withdraw = 50_000.0  # More than the 40k available
@@ -163,7 +158,7 @@ def test_withdraw_from_assets_failure_insufficient_funds(
     assert sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(total_liquid_assets)
     assert sum(
-        v for k, v in sim.state.portfolio.items() if k != "real_estate"
+        v for k, v in sim.state.portfolio.items() if k != "inflation"
     ) == pytest.approx(0.0)
 
 
@@ -197,14 +192,12 @@ def test_withdraw_from_assets_success_all_assets(
                     "bonds": bonds / total,
                     "str": str_ / total,
                     "fun": fun / total,
-                    "real_estate": 0.0,
                 }
             }
         )
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
-    sim.state.current_bank_balance = 0.0
 
     # This will deplete str, bonds, stocks, and take 5k from fun
     amount_to_withdraw = 35_000.0
