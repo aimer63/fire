@@ -38,23 +38,20 @@ asset allocation.
 
   **Example**:
 
-  ```toml  
+  ```toml
   [assets.stocks]
   mu = 0.07
   sigma = 0.15
-  is_liquid = true
   withdrawal_priority = 2
 
   [assets.bonds]
   mu = 0.03
   sigma = 0.055
-  is_liquid = true
   withdrawal_priority = 1
 
   [assets.inflation]
   mu = 0.025
   sigma = 0.025
-  is_liquid = false
   ```
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
@@ -174,20 +171,17 @@ years_to_simulate = 40
 [assets.stocks]
 mu = 0.07
 sigma = 0.15
-is_liquid = true
 withdrawal_priority = 2
 
 [assets.bonds]
 mu = 0.03
 sigma = 0.055
-is_liquid = true
 withdrawal_priority = 1
 
 # Asset inflation must exist.
 [assets.inflation]
 mu = 0.025
 sigma = 0.025
-is_liquid = false
 
 [correlation_matrix]
 assets_order = ["stocks", "bonds", "inflation"]

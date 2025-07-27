@@ -146,16 +146,8 @@ This document explains all parameters available in the main TOML configuration f
     The sample annual standard deviation (volatility) of returns, as a float.
     _Example_: `0.15` means a 15% standard deviation per year.
 
-  - **is_liquid**:
-    Boolean value (`true` or `false`).
-    Indicates whether the asset is liquid (can be bought/sold to cover expenses and
-    included in rebalancing).
-    Set to `false` for illiquid assets, which are not rebalanced
-    or sold for cash flow. Illiquid assets are only tracked, if they start at zero
-    there will they remain.
-
   - **withdrawal_priority**:
-    _(Required for liquid assets only)_
+    _(Required for all assets but inflation)_
     Integer indicating the order in which assets are sold to cover cash shortfalls.
     Lower numbers are sold first.
     This value must be unique among liquid assets.
@@ -179,24 +171,16 @@ _Example_:
 [assets.stocks]
 mu = 0.07
 sigma = 0.15
-is_liquid = true
 withdrawal_priority = 2
 
 [assets.bonds]
 mu = 0.02
 sigma = 0.06
-is_liquid = true
 withdrawal_priority = 1
-
-[assets.real_estate]
-mu = -0.0054
-sigma = 0.0416
-is_liquid = false
 
 [assets.inflation]
 mu = 0.02
 sigma = 0.01
-is_liquid = false
 ```
 
 ---
@@ -217,7 +201,7 @@ See [Correlation](correlation.md)
 
 ```toml
 [correlation_matrix]
-assets_order = ["stocks", "bonds", "real_estate", "inflation"]
+assets_order = ["stocks", "bonds", "gold", "inflation"]
 matrix = [
   [1.0, 0.3, 0.2, -0.1],
   [0.3, 1.0, 0.1, 0.0],
@@ -275,16 +259,15 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
     _Type:_ table (dictionary)  
     _Description:_
 
-    - Maps liquid asset names to their target weights (as floats).
+    - Maps asset names to their target weights (as floats).
     - Must sum to 1.0.
-    - Only include assets where `is_liquid = true`.
+    - Obviously `inflation` cannot be included.
 
   - Each rebalance year must be unique.
   - There must always be a rebalance event for year 0. This sets the initial allocation
     and the weights for all the subsequent investments until the next rebalance event.
     The initial allocation of assets is determined by the planned contribution at year 0
     and the weights specified in the rebalance event for year 0.
-  - Weights must sum to exactly 1.0 and only reference liquid assets.
 
 ### Example: Setting the initial portfolio
 
