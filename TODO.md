@@ -16,28 +16,6 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 ## 🟦 Future Features / Ideas
 
 - [ ] Add scenario comparison (multiple configs in one run).
-- [ ] Change income management using steps like:
-
-```toml
-  # Nominal values, after the last step it will grow with inflation
-  # and income_inflation_factor
-  income_steps = [
-    { year = 0, monthly_amount =  3000 },
-    { year = 2, monthly_amount =  3200 },
-    { year = 5, monthly_amount =  3500 },
-  ]
-```
-
-- [ ] Change monthly expenses management using steps like:
-
-```toml
-  # Real values, in between steps and after the last step it will grow with inflation
-  monthly_expenses_steps = [
-    { year = 0, monthly_amount =  2000 },
-    { year = 2, monthly_amount =  2200 },
-    { year = 5, monthly_amount =  2500 },
-  ]
-```
 
 - [ ] Study inflation persistence/stickiness and find a better model than lognormal
       The problem is inflation is not a random walk, it has a trend and it is persistent,
