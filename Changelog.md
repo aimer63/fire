@@ -1,12 +1,19 @@
 # Changelog
 
-## [unreleased]
+## unreleased
 
-- Removed house purchase
-- Income now is managed with income steps
+### Changed
+
+- Monthly expenses are now managed with expense steps
+- Monthly income now is managed with income steps
 - Renamed salary to income
 
-## [v0.1.0b4] - 2025-07
+### Removed
+
+- Removed illiquid assets
+- Removed house purchase
+
+## v0.1.0b4 - 2025-07
 
 ### Changed
 
@@ -15,7 +22,7 @@
   makes the sequences generation cleaner, so an `inflation` asset has to exist in the configuration.
   Now Simulation supports arbitrary assets with no code changes.
 
-## [v0.1.0b3] - 2025-06
+## v0.1.0b3 - 2025-06
 
 ### Added
 
