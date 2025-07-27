@@ -81,7 +81,8 @@ planned_contributions = [
   # { year = 10, amount = 20_000 },
   # { year = 15, amount = 10_000 },
 ]
-# Expenses.
+
+# --- Expenditures ---
 monthly_expenses_steps = [
   { year = 0, monthly_amount = 3500.0 },
   { year = 20, monthly_amount = 3000.0 },
@@ -97,16 +98,13 @@ planned_extra_expenses = [
 annual_fund_fee = 0.0015
 
 
-# ==============================================================================
+#==============================================================================
 # 4. ASSET DEFINITIONS
 # ==============================================================================
 # Defines all financial assets available in the simulation using a table for each asset.
 # The key of the table (e.g., "stocks") is the unique identifier for the asset.
 # - `mu`: Annual sample mean of return rates.
 # - `sigma`: Annual sample standard deviation of return rates.
-# - `is_liquid`: Boolean indicating if the asset is part of the liquid portfolio.
-#    liquid portfolio can be rebalanced and sold to cover expenses.
-#    Illiquid assets are only tracked.
 # - `withdrawal_priority`: (For liquid assets only) Order in which assets are
 #    sold to cover cash shortfalls (lower number = sold first).
 #
@@ -144,7 +142,7 @@ withdrawal_priority = 0
 # Ethereum: from 2016 to 2025
 # mu = 2.3755
 # sigma = 1.3320
-
+#
 # Ethereum: Conservative values
 [assets.eth]
 mu = 0.25
@@ -154,7 +152,7 @@ withdrawal_priority = 3
 # Silver: from 2016 to 2025
 # mu = 0.1120
 # sigma = 0.2794
-
+#
 # Silver: Conservative values
 [assets.ag]
 mu = 0.07
@@ -209,11 +207,46 @@ matrix = [
 # given year.
 # `asset` must match a key from the [assets] table.
 #
-# Black Friday Crash (October 1929 equivalent) 
-# [[shocks]]
+# Great Depression (1929)
+# [[shocks]] #1927
 # year = 10
-# description = "October 1929"
-# impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
+# description = "1927 buble pre crisis"
+# impact = { stocks = 0.3749, bonds = 0.078, str = 0.038, real_estate = 0.0294, inflation = -0.0170 }
+#
+# [[shocks]] #1928
+# year = 11
+# description = "1928 buble pre crisis"
+# impact = { stocks = 0.4341, bonds = 0.0090, str = 0.0450, eth = 0.30, ag = 0.0909, real_estate = 0.0286, inflation = -0.0170 }
+#
+# [[shocks]] #1929
+# year = 12
+# description = "1929, it kicks in"
+# impact = { stocks = -0.0830, bonds = 0.0340, str = 0.0585, eth = -0.10, ag = -0.0833, real_estate = 0.0, inflation = 0.0 }
+#
+# [[shocks]] #1930
+# year = 13
+# description = "1930, recession/depression"
+# impact = { stocks = -0.2512, bonds = 0.0450, str = 0.0225, eth = -0.20, ag = -0.2830, real_estate = -0.0286, inflation = -0.0230 }
+#
+# [[shocks]] #1931
+# year = 14
+# description = "1931, recession/depression"
+# impact = { stocks = -0.4384, bonds = -0.0260, str = 0.0150, eth = -0.30, ag = -0.2368, real_estate = -0.0882, inflation = -0.0890 }
+#
+# [[shocks]] #1932
+# year = 15
+# description = "1932, recession/depression"
+# impact = { stocks = -0.0864, bonds = 0.1680, str = 0.0150, eth = -0.20, ag = -0.1379, real_estate = -0.0968, inflation = -0.0990 }
+#
+# [[shocks]] #1933
+# year = 16
+# description = "1933, boom"
+# impact = { stocks = 0.4998, bonds = 0.0200, str = 0.0100, eth = 0.40, ag = 0.40, real_estate = -0.0357, inflation = -0.0510 }
+#
+# [[shocks]] #1934
+# year = 17
+# description = "1934, end"
+# impact = { stocks = -0.0190, bonds = 0.1000, str = 0.0075, eth = 0.50, ag = 0.4286, real_estate = 0.0185, inflation = -0.0310 }
 
 
 # ==============================================================================
