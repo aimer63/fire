@@ -5,10 +5,8 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 
-from firestarter.core.constants import ASSET_KEYS
+# from firestarter.core.constants import ASSET_KEYS
 from firestarter.core.simulation import Simulation
-
-# Fixtures are now in conftest.py
 
 
 def test_simulation_months(initialized_simulation: Simulation) -> None:
@@ -68,8 +66,9 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
         )
 
     assert hasattr(state, "monthly_return_rates_sequences")
-    # ASSET_KEYS + inflation
-    assert len(state.monthly_return_rates_sequences) == len(ASSET_KEYS) + 1
+    assert len(state.monthly_return_rates_sequences) == len(
+        initialized_simulation.assets
+    )
     for asset_key in state.monthly_return_rates_sequences:
         assert len(state.monthly_return_rates_sequences[asset_key]) == total_months
 
