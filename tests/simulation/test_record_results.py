@@ -19,21 +19,20 @@ def test_record_results_initialization_and_first_month(
     sim = initialized_simulation
     total_months = sim.simulation_months
 
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={
+            "initial_bank_balance": 25_000.0,
+        }
+    )
     # Set a mock state for month 0 with more realistic values
-    initial_portfolio = {
+    sim.state.portfolio = {
         "stocks": 500_000.0,
         "bonds": 250_000.0,
         "str": 100_000.0,
         "fun": 50_000.0,
-        "real_estate": 0.0,
+        "ag": 10_000.0,
     }
-    sim.det_inputs = sim.det_inputs.model_copy(
-        update={
-            "initial_bank_balance": 25_000.0,
-            "initial_portfolio": initial_portfolio,
-        }
-    )
-    sim.init()  # Re-initialize to reflect the new inputs
+    sim.init()  # Re-initialize state with the new portfolio
 
     # Manually initialize results structure as run() would
     sim.results = {
@@ -43,7 +42,7 @@ def test_record_results_initialization_and_first_month(
         "bonds_history": [None] * total_months,
         "str_history": [None] * total_months,
         "fun_history": [None] * total_months,
-        "real_estate_history": [None] * total_months,
+        "ag_history": [None] * total_months,
         "inflation_history": [None] * total_months,
     }
 
@@ -68,9 +67,7 @@ def test_record_results_initialization_and_first_month(
     )
     assert sim.results["str_history"][0] == pytest.approx(sim.state.portfolio["str"])
     assert sim.results["fun_history"][0] == pytest.approx(sim.state.portfolio["fun"])
-    assert sim.results["real_estate_history"][0] == pytest.approx(
-        sim.state.portfolio["real_estate"]
-    )
+    assert sim.results["ag_history"][0] == pytest.approx(sim.state.portfolio["ag"])
 
 
 def test_record_results_subsequent_month(initialized_simulation: Simulation):
@@ -81,6 +78,17 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
     sim = initialized_simulation
     total_months = sim.simulation_months
 
+    # Record for month 0 with realistic values
+    sim.state.current_bank_balance = 20_000.0
+    sim.state.portfolio = {
+        "stocks": 500_000.0,
+        "bonds": 250_000.0,
+        "str": 100_000.0,
+        "fun": 50_000.0,
+        "ag": 300_000.0,
+    }
+    sim.init()  # Re-initialize state with the new portfolio
+
     # Manually initialize results structure as run() would
     sim.results = {
         "wealth_history": [None] * total_months,
@@ -89,18 +97,10 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
         "bonds_history": [None] * total_months,
         "str_history": [None] * total_months,
         "fun_history": [None] * total_months,
-        "real_estate_history": [None] * total_months,
+        "ag_history": [None] * total_months,
         "inflation_history": [None] * total_months,
     }
-    # Record for month 0 with realistic values, assuming a house is owned
-    sim.state.current_bank_balance = 20_000.0
-    sim.state.portfolio = {
-        "stocks": 500_000.0,
-        "bonds": 250_000.0,
-        "str": 100_000.0,
-        "fun": 50_000.0,
-        "real_estate": 300_000.0,
-    }
+
     sim._record_results(month=0)
     month_0_bank = sim.results["bank_balance_history"][0]
 
@@ -111,8 +111,9 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
         "bonds": 255_000.0,
         "str": 100_000.0,
         "fun": 51_000.0,
-        "real_estate": 301_000.0,
+        "ag": 301_000.0,
     }
+    sim.init()  # Re-initialize state with the new portfolio
     sim._record_results(month=1)
 
     # Check values for month 1

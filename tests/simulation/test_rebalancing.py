@@ -34,12 +34,12 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
         "bonds": 0.0,
         "str": 0.0,
         "fun": 0.0,
-        "real_estate": 500_000.0,  # Non-liquid, should be ignored
+        "ag": 10_000.0,  # Non-liquid, should be ignored
     }
-    sim.init()
+    sim.init()  # Re-initialize state with new portfolio and rebalances
 
     total_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if sim.assets[k].is_liquid
+        v for k, v in sim.state.portfolio.items() if k != "inflation"
     )
 
     # Execute the rebalance logic for the correct month
@@ -48,9 +48,14 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
 
     # --- Assertions ---
     # 1. Target weights should be updated in the state
-    assert sim.state.current_target_portfolio_weights == new_weights
+    for k, v in new_weights.items():
+        assert sim.state.current_target_portfolio_weights[k] == v
+    # Check that all other assets have weight 0.0
+    for k in sim.state.current_target_portfolio_weights:
+        if k not in new_weights:
+            assert sim.state.current_target_portfolio_weights[k] == 0.0
 
-    # 2. Liquid assets should be redistributed according to the new weights
+    # 2. Assets should be redistributed according to the new weights
     for asset, weight in new_weights.items():
         expected_value = total_liquid_assets * weight
         assert sim.state.portfolio[asset] == pytest.approx(expected_value)
@@ -73,7 +78,7 @@ def test_rebalance_no_event_scheduled_for_year(
         weights={"stocks": 1.0, "bonds": 0.0, "str": 0.0, "fun": 0.0},
     )
     sim.portfolio_rebalances = [initial_rebalance, rebalance_event]
-    sim.init()
+    sim.init()  # Re-initialize state with new rebalances
 
     # Store initial state for comparison
     initial_weights = sim.state.current_target_portfolio_weights.copy()
@@ -104,7 +109,7 @@ def test_rebalance_not_first_month_of_year(
     new_weights = {"stocks": 0.6, "bonds": 0.4, "str": 0.0, "fun": 0.0}
     rebalance_event = PortfolioRebalance(year=rebalance_year, weights=new_weights)
     sim.portfolio_rebalances = [initial_rebalance, rebalance_event]
-    sim.init()
+    sim.init()  # Re-initialize state with new rebalances
 
     # Store initial state for comparison
     initial_weights = sim.state.current_target_portfolio_weights.copy()

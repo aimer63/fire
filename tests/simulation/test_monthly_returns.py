@@ -17,16 +17,13 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
     sim = initialized_simulation
 
     # Define initial portfolio
-    initial_portfolio = {
+    sim.state.portfolio = {
         "stocks": 100_000.0,
         "bonds": 50_000.0,
         "str": 20_000.0,
         "fun": 10_000.0,
-        "real_estate": 500_000.0,
+        "ag": 10_000.0,
     }
-
-    # Override det_inputs to set the specific portfolio for this test
-    sim.det_inputs = sim.det_inputs.model_copy(update={"initial_portfolio": initial_portfolio})
     sim.init()  # Re-initialize state with the new portfolio
 
     # Store initial values to compare against
@@ -40,7 +37,7 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
         "bonds": -0.005,  # -0.5%
         "str": 0.001,  # +0.1%
         "fun": 0.0,  # 0%
-        "real_estate": 0.005,  # +0.5%
+        "ag": 0.005,  # +0.5%
     }
 
     # Manually inject these returns into the precomputed sequences in the state
@@ -64,10 +61,8 @@ def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:
     assert sim.state.portfolio["fun"] == pytest.approx(
         initial_portfolio_values["fun"] * (1 + mock_returns["fun"])
     )
-
-    # Check that real estate was also updated correctly
-    assert sim.state.portfolio["real_estate"] == pytest.approx(
-        initial_portfolio_values["real_estate"] * (1 + mock_returns["real_estate"])
+    assert sim.state.portfolio["ag"] == pytest.approx(
+        initial_portfolio_values["ag"] * (1 + mock_returns["ag"])
     )
 
     # Check that bank balance is untouched

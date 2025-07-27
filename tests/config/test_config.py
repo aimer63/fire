@@ -27,8 +27,8 @@ def basic_deterministic_inputs():
         bank_lower_bound=2000.0,
         bank_upper_bound=10000.0,
         years_to_simulate=5,
-        monthly_income_steps=[IncomeStep(year=0, monthly_amount=2000.0)],
-        monthly_expenses_steps=[ExpenseStep(year=0, monthly_amount=1000.0)],
+        monthly_income_steps=[IncomeStep(year=0, monthly_amount=0.0)],
+        monthly_expenses_steps=[ExpenseStep(year=0, monthly_amount=0.0)],
         planned_contributions=[],
         annual_fund_fee=0.001,
         planned_extra_expenses=[],
@@ -73,12 +73,12 @@ def test_assets_validation_unique_withdrawal_priority(
     duplicate withdrawal_priority values.
     """
     invalid_assets_data = {
-        "stocks": Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1),
-        "bonds": Asset(mu=0.02, sigma=0.05, is_liquid=True, withdrawal_priority=1),
-        "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
+        "stocks": Asset(mu=0.07, sigma=0.15, withdrawal_priority=1),
+        "bonds": Asset(mu=0.02, sigma=0.05, withdrawal_priority=1),
+        "inflation": Asset(mu=0.02, sigma=0.01),
     }
     with pytest.raises(
-        ValidationError, match="Withdrawal priorities for liquid assets must be unique"
+        ValidationError, match="withdrawal_priority values for assets must be unique"
     ):
         Config(
             assets=invalid_assets_data,
@@ -90,25 +90,28 @@ def test_assets_validation_unique_withdrawal_priority(
         )
 
 
-def test_assets_validation_liquid_asset_requires_priority():
+def test_assets_validation_asset_requires_priority(
+    basic_deterministic_inputs,
+):
     """
     Tests that a liquid asset must have a withdrawal_priority.
     """
-
     with pytest.raises(
-        ValidationError, match="withdrawal_priority is required for liquid assets"
+        ValidationError, match="withdrawal_priority must be set for asset 'stocks'."
     ):
-        Asset(mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=None)
-
-
-def test_asset_validation_illiquid_asset_cannot_have_priority():
-    """
-    Tests that an illiquid asset cannot have a withdrawal_priority.
-    """
-    with pytest.raises(
-        ValidationError, match="withdrawal_priority must not be set for illiquid assets"
-    ):
-        Asset(mu=0.07, sigma=0.15, is_liquid=False, withdrawal_priority=1)
+        Config(
+            assets={
+                "stocks": Asset(mu=0.07, sigma=0.15, withdrawal_priority=None),
+                "inflation": Asset(mu=0.02, sigma=0.01, withdrawal_priority=None),
+            },
+            deterministic_inputs=basic_deterministic_inputs,
+            portfolio_rebalances=[PortfolioRebalance(year=0, weights={"stocks": 1.0})],
+            simulation_parameters=SimulationParameters(
+                num_simulations=1, random_seed=123
+            ),
+            paths=None,
+            shocks=[],
+        )
 
 
 def test_portfolio_rebalance_successful():
@@ -159,10 +162,8 @@ def test_portfolio_rebalances_unique_years(basic_deterministic_inputs):
     with pytest.raises(ValidationError, match="Rebalance years must be unique."):
         Config(
             assets={
-                "stocks": Asset(
-                    mu=0.07, sigma=0.15, is_liquid=True, withdrawal_priority=1
-                ),
-                "inflation": Asset(mu=0.02, sigma=0.01, is_liquid=False),
+                "stocks": Asset(mu=0.07, sigma=0.15, withdrawal_priority=1),
+                "inflation": Asset(mu=0.02, sigma=0.01),
             },
             deterministic_inputs=basic_deterministic_inputs,
             portfolio_rebalances=rebalances,
