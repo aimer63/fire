@@ -39,8 +39,8 @@ year = 0
 weights = { stocks = 0.7, bonds = 0.3 }
 ```
 
-- `planned_contributions`: List of one-time contributions. To set your initial
-  portfolio, specify a contribution at `year = 0`.
+- `planned_contributions`: List of one-time contributions.
+  To set your initial portfolio, specify a contribution at `year = 0`.
 - To define initial asset allocation specify a rebalance `year = 0`.
 - `initial_bank_balance`: Starting cash in your bank account.
 - All the cash in the bank account above `bank_upper_bound` is automatically
@@ -122,14 +122,6 @@ You can further configure:
 - Shocks (unexpected events)
 - Correlation matrix (for assets/inflation correlation modeling)
 - Fund fees, pension, extra expenses, and more
-
----
-
-## 7. Tips
-
-- Always include a rebalance for year 0.
-- Only liquid assets can be rebalanced or withdrawn to cover expenses.
-- Real estate being defined as illiquid is not included in rebalancing or liquid withdrawals.
 
 ---
 

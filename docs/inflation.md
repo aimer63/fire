@@ -12,13 +12,13 @@ and provides tools for converting between nominal (future) and real (today's) va
 ## Key Concepts and Sequences
 
 Inflation is randomly drawn together the others assets because it can have
-a correlation with them, so you find inflation sequences in `state.monthly_return_reates_sequences["inflation"]`.
+a correlation with them, so you find inflation sequences in `state.monthly_return_rates_sequences["inflation"]`.
 `inflation` is the only "asset" that must exist and who have a mandatory key.
 The simulation manages inflation using two primary sequences from monthly data:
 
 ### 1. **Monthly Inflation Rate Sequence**
 
-- **Variable (in simulation state):** `state.monthly_return_reates_sequences["inflation"]`
+- **Variable (in simulation state):** `state.monthly_return_rates_sequences["inflation"]`
 - **Type:** `np.ndarray` (length = number of months)
 - **Description:** For each simulation run, a random inflation rate is drawn **for each month**.
   These rates are sampled from a monthly lognormal distribution correlated with the others assets.
@@ -29,10 +29,10 @@ The simulation manages inflation using two primary sequences from monthly data:
 - **Variable (in simulation state):** `state.monthly_cumulative_inflation_factors`
 - **Type:** `list[float]` (length = number of months + 1)
 - **Description:** This list holds the compounded effect of inflation up to each month, using the
-  directly sampled `state.monthly_return_reates_sequences["inflation"]`.
+  directly sampled `state.monthly_return_rates_sequences["inflation"]`.
   - `state.monthly_cumulative_inflation_factors[0]` is always 1.0 (start of simulation).
   - For month `m`, it is the product of `(1 + monthly_rate)` for all months up to `m` from the
-    `state.monthly_return_reates_sequences[inflation]`.
+    `state.monthly_return_rates_sequences[inflation]`.
 - **Usage:** This is the **primary tool** for converting any real (today's money) value to its
   nominal (future money) equivalent at any specific month. It is used for:
   - Adjusting extra expenses, income, pension
@@ -57,16 +57,16 @@ The simulation manages inflation using two primary sequences from monthly data:
 
 ## Summary Table of Stored Inflation Sequences
 
-| Sequence Name                        | Variable Name                                      | Type         | Purpose                                                         |
-| ------------------------------------ | -------------------------------------------------- | ------------ | --------------------------------------------------------------- |
-| Monthly inflation rates              | `state.monthly_return_reates_sequences[inflation]` | `np.ndarray` | Stochastic monthly inflation path; primary source of randomness |
-| Monthly cumulative inflation factors | `state.monthly_cumulative_inflation_factors`       | `np.ndarray` | Convert real to nominal for any month; used for all adjustments |
+| Sequence Name                        | Variable Name                                     | Type         | Purpose                                                         |
+| ------------------------------------ | ------------------------------------------------- | ------------ | --------------------------------------------------------------- |
+| Monthly inflation rates              | `state.monthly_return_rates_sequences[inflation]` | `np.ndarray` | Stochastic monthly inflation path; primary source of randomness |
+| Monthly cumulative inflation factors | `state.monthly_cumulative_inflation_factors`      | `np.ndarray` | Convert real to nominal for any month; used for all adjustments |
 
 ---
 
 ## Notes
 
-- The simulation **does** store the `state.monthly_return_reates_sequences[inflation]`
+- The simulation **does** store the `state.monthly_return_rates_sequences[inflation]`
   as it's the basis for all inflation calculations.
 - An `annual_inflations_sequence` can be reconstructed from the monthly sequence for analysis, but
   it is not a state variable used in the simulation's core adjustment logic.

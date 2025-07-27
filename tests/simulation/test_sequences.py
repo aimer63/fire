@@ -8,7 +8,7 @@
 import pytest
 import numpy as np
 
-from firestarter.core.sequence_generator import SequenceGenerator
+from firestarter.core.sequences_generator import SequencesGenerator
 
 
 def test_correlated_sequence_generation(basic_assets, basic_correlation_matrix):
@@ -21,7 +21,7 @@ def test_correlated_sequence_generation(basic_assets, basic_correlation_matrix):
     num_sequences = 10_000
     num_years = 30
 
-    generator = SequenceGenerator(
+    generator = SequencesGenerator(
         assets=basic_assets,
         correlation_matrix=basic_correlation_matrix,
         num_sequences=num_sequences,
@@ -52,7 +52,7 @@ def test_indipendent_sequence_generation(basic_assets, identity_correlation_matr
     num_sequences = 10_000
     num_years = 30
 
-    generator = SequenceGenerator(
+    generator = SequencesGenerator(
         assets=basic_assets,
         correlation_matrix=identity_correlation_matrix,
         num_sequences=num_sequences,
@@ -75,9 +75,7 @@ def test_indipendent_sequence_generation(basic_assets, identity_correlation_matr
     )
 
 
-def test_sequence_mean_and_std_match_asset_params(
-    basic_assets, identity_correlation_matrix
-):
+def test_sequence_mean_and_std_match_asset_params(basic_assets, identity_correlation_matrix):
     """
     Verifies that the sample mean and standard deviation of generated sequences
     are close to the configured asset parameters (mu, sigma).
@@ -85,7 +83,7 @@ def test_sequence_mean_and_std_match_asset_params(
     num_sequences = 10_000
     num_years = 30
 
-    generator = SequenceGenerator(
+    generator = SequencesGenerator(
         assets=basic_assets,
         correlation_matrix=identity_correlation_matrix,
         num_sequences=num_sequences,
