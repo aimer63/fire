@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 # A known valid correlation matrix (identity matrix)
-VALID_ASSETS = ["stocks", "bonds", "str", "fun", "real_estate", "inflation"]
+VALID_ASSETS = ["stocks", "bonds", "str", "fun", "ag", "inflation"]
 VALID_MATRIX = [
     [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],

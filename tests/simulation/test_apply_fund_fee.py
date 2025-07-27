@@ -30,14 +30,13 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
         "bonds": 50_000.0,
         "str": 20_000.0,
         "fun": 10_000.0,
-        "real_estate": 500_000.0,
+        "ag": 10_000.0,
     }
 
     # Store initial values to compare against
     initial_liquid_assets = {
-        k: v for k, v in sim.state.portfolio.items() if sim.assets[k].is_liquid
+        k: v for k, v in sim.state.portfolio.items() if k != "inflation"
     }
-    initial_real_estate_value = sim.state.portfolio["real_estate"]
     initial_bank_balance = sim.state.current_bank_balance
 
     # Execute the method under test for an arbitrary month
@@ -51,8 +50,4 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
         expected_value = initial_value * (1 - monthly_fee_percentage)
         assert sim.state.portfolio[asset] == pytest.approx(expected_value)
 
-    # Check that non-liquid assets and bank balance are untouched
-    assert sim.state.portfolio["real_estate"] == pytest.approx(
-        initial_real_estate_value
-    )
     assert sim.state.current_bank_balance == pytest.approx(initial_bank_balance)

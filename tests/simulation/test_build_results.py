@@ -19,7 +19,7 @@ def _get_expected_allocations_from_history(
         "bonds": sim.results["bonds_history"][month_index],
         "str": sim.results["str_history"][month_index],
         "fun": sim.results["fun_history"][month_index],
-        "real_estate": sim.results["real_estate_history"][month_index],
+        "ag": sim.results["ag_history"][month_index],
         "inflation": 0.0,  # or the appropriate value if tracked in results
     }
 
@@ -140,7 +140,7 @@ def test_build_result_failed_simulation_immediately(
         "bonds": sim.state.portfolio["bonds"],
         "str": sim.state.portfolio["str"],
         "fun": sim.state.portfolio["fun"],
-        "real_estate": sim.state.portfolio["real_estate"],
+        "ag": sim.state.portfolio["ag"],
         "inflation": 0.0,
     }
     assert result["final_allocations_nominal"] == expected_allocations
