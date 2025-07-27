@@ -237,10 +237,6 @@ class Asset(BaseModel):
     sigma: float = Field(
         ..., description="Expected annual standard deviation of returns."
     )
-    is_liquid: bool = Field(
-        ...,
-        description="True if the asset is part of the liquid, rebalanceable portfolio.",
-    )
     withdrawal_priority: int | None = Field(
         default=None,
         description="Order for selling to cover cash shortfalls (lower is sold first). Required for liquid assets.",
@@ -248,23 +244,11 @@ class Asset(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     @model_validator(mode="after")
-    def check_mu_and_sigma(self) -> "Asset":
+    def validate_mu_and_sigma(self) -> "Asset":
         if self.mu <= -1.0:
             raise ValueError("mu must be greater than -1.0")
         if self.sigma < 0:
             raise ValueError("sigma must be non-negative")
-        return self
-
-    @model_validator(mode="after")
-    def validate_withdrawal_priority(self) -> "Asset":
-        """Ensure withdrawal_priority is set correctly based on liquidity."""
-        is_liquid = self.is_liquid
-        priority = self.withdrawal_priority
-
-        if is_liquid and priority is None:
-            raise ValueError("withdrawal_priority is required for liquid assets")
-        if not is_liquid and priority is not None:
-            raise ValueError("withdrawal_priority must not be set for illiquid assets")
         return self
 
 
@@ -379,16 +363,33 @@ class Config(BaseModel):
                 "An asset named 'inflation' must be defined in the assets section."
             )
 
-        # 1. Validate that withdrawal_priority values for liquid assets are unique
-        priorities = [
-            asset.withdrawal_priority
-            for asset in self.assets.values()
-            if asset.is_liquid and asset.withdrawal_priority is not None
-        ]
-        if len(priorities) != len(set(priorities)):
-            raise ValueError("Withdrawal priorities for liquid assets must be unique")
+        # 1. Validate that 'inflation' is not referenced in portfolio weights
+        for rebalance in self.portfolio_rebalances:
+            if "inflation" in rebalance.weights:
+                raise ValueError(
+                    "The 'inflation' asset must not appear in any rebalance weights."
+                )
 
-        # 2. Validate the correlation matrix asset list
+        # 2. Validate withdrawal_priority for all assets and check uniqueness (excluding inflation)
+        priorities = []
+        for name, asset in self.assets.items():
+            if name == "inflation":
+                if asset.withdrawal_priority is not None:
+                    raise ValueError(
+                        "withdrawal_priority must be None for the 'inflation' asset."
+                    )
+            else:
+                if asset.withdrawal_priority is None:
+                    raise ValueError(
+                        f"withdrawal_priority must be set for asset '{name}'."
+                    )
+                priorities.append(asset.withdrawal_priority)
+        if len(priorities) != len(set(priorities)):
+            raise ValueError(
+                "withdrawal_priority values for assets must be unique (excluding 'inflation')."
+            )
+
+        # 3. Validate the correlation matrix asset list
         if self.correlation_matrix:
             matrix_assets = set(self.correlation_matrix.assets_order)
             if defined_assets != matrix_assets:
@@ -401,7 +402,7 @@ class Config(BaseModel):
                     error_msg += f" Extra: {sorted(list(extra))}."
                 raise ValueError(error_msg)
 
-        # 3. Validate that all shock events target defined assets
+        # 4. Validate that all shock events target defined assets
         if self.shocks:
             for shock in self.shocks:
                 for asset_name in shock.impact:
@@ -411,12 +412,12 @@ class Config(BaseModel):
                             f"'{asset_name}'. Valid assets are: {sorted(list(defined_assets))}"
                         )
 
-        # 4. Validate that rebalance years are unique
+        # 5. Validate that rebalance years are unique
         rebalance_years = [r.year for r in self.portfolio_rebalances]
         if len(rebalance_years) != len(set(rebalance_years)):
             raise ValueError("Rebalance years must be unique.")
 
-        # 5. Enforce presence of a rebalance at year 0
+        # 6. Enforce presence of a rebalance at year 0
         if 0 not in rebalance_years:
             raise ValueError(
                 "A portfolio rebalance at year 0 is required to set initial target weights."
