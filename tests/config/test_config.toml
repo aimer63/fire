@@ -44,8 +44,9 @@ bank_upper_bound = 10000.0
 years_to_simulate = 70
 
 # --- Income Streams ---
-# The monthly income expressed in today's money paid from this year onward until 
-# the next step. In between steps the amount is not adjusted for inflation.
+# In a step, the `monthly_amount` is expressed in today's money and paid from
+# `year` onward until the next step.
+# In between steps the amount is not adjusted for inflation.
 # From the beginning of the last defined step, income grows with inflation
 # scaled by `income_inflation_factor`.
 # Income is set to zero before the first step and after `income_end_year`.
@@ -57,13 +58,13 @@ monthly_income_steps = [
   { year = 15, monthly_amount = 10000.0 },
 ]
 # Income inflation factor is used to adjust the income after the last step.
-# 1.0 means grows exactly with inflation, >1.0 means grows faster than inflation,
+# 1.0 means grows exactly with inflation, > 1.0 means grows faster than inflation,
 # < 1.0 grows slower than inflation, 0.0 means no infllation adjustment.
 income_inflation_factor = 0.6
 income_end_year = 20          # Slary stops, you are 50, you retire.
 
 # Monthly pension.
-# The pension starts at the nominal velue `monthly_pension` the year `pension_start_year`.
+# The pension starts at the nominal value `monthly_pension` the year `pension_start_year`.
 # After that this value is adjusted with inflation scaled by `pension_inflation_factor`.
 # Pay attention on how your pension fund estimate your pension at the year of retirement
 # and if and how the value is inflation adjusted after retirement.
@@ -71,7 +72,7 @@ monthly_pension = 4000.0
 pension_inflation_factor = 0.75 # Pension grows 75% of inflation.
 pension_start_year = 37         # Pension starts at 67, you are 37 years into the simulation.
 
-# --- Contributions ---
+# Contributions
 # One-time contributions (fixed nominal amounts, not inflation-adjusted).
 # The contribution at year 0 sets the initial investment, 0 otherwise.
 planned_contributions = [
@@ -101,16 +102,15 @@ annual_fund_fee = 0.0015
 # ==============================================================================
 # Defines all financial assets available in the simulation using a table for each asset.
 # The key of the table (e.g., "stocks") is the unique identifier for the asset.
-# - `mu`: Expected annual sample mean return.
-# - `sigma`: Expected annual sample standard deviation of returns.
-# - `is_liquid`: Boolean indicating if the asset is part of the liquid portfolio
-#                that can be rebalanced and sold to cover expenses.
+# - `mu`: Annual sample mean of return rates.
+# - `sigma`: Annual sample standard deviation of return rates.
+# - `is_liquid`: Boolean indicating if the asset is part of the liquid portfolio.
+#    liquid portfolio can be rebalanced and sold to cover expenses.
+#    Illiquid assets are only tracked.
 # - `withdrawal_priority`: (For liquid assets only) Order in which assets are
-#                          sold to cover cash shortfalls (lower number = sold first).
+#    sold to cover cash shortfalls (lower number = sold first).
 #
-# Stock parameters based on MSCI World (EUR) annual total returns from 2016-2025.
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
+# Stock parameters based on MSCI World (EUR) from 2016-2025.
 # mu = 0.1017
 # sigma = 0.1478
 #
@@ -120,32 +120,25 @@ annual_fund_fee = 0.0015
 [assets.stocks]
 mu = 0.07
 sigma = 0.15
-is_liquid = true
 withdrawal_priority = 2
 
-# European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR)
-# annual total returns from 2004-2023.
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
+# European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR) 2004-2023.
 # mu = 0.0193
 # sigma = 0.0535
-
+#
 # The 2004-2023 period includes many years of historically very low and even
 # negative interest rates in Europe. The environment has shifted, and current
 # yields are significantly higher.
 [assets.bonds]
 mu = 0.03
 sigma = 0.055
-is_liquid = true
 withdrawal_priority = 1
 
 # Statistical parameters for Euro Short-Term Rate (STR), derived from
-# historical EONIA (1999-Sep 2019) and ESTR (Oct 2019-May 2025) annual average rates.
-# These are annual arithmetic mean and standard deviation.
+# historical EONIA (1999-Sep 2019) and ESTR (Oct 2019-May 2025).
 [assets.str]
 mu = 0.0152
 sigma = 0.0181
-is_liquid = true
 withdrawal_priority = 0
 
 # Ethereum: from 2016 to 2025
@@ -156,7 +149,6 @@ withdrawal_priority = 0
 [assets.eth]
 mu = 0.25
 sigma = 0.90
-is_liquid = true
 withdrawal_priority = 3
 
 # Silver: from 2016 to 2025
@@ -167,33 +159,17 @@ withdrawal_priority = 3
 [assets.ag]
 mu = 0.07
 sigma = 0.32
-is_liquid = true
 withdrawal_priority = 4
-
-# Illiquid assets are handled separately and are not part of portfolio rebalancing.
-# They do not require a withdrawal_priority.
-#
-# Real Estate (Italy) parameters based on annual capital gains from 2004-2023, net of 1.5% annual maintenance.
-# Note: Excludes rental income. Maintenance cost is an assumed average.
-# MU: Arithmetic Mean
-# SIGMA: Arithmetic Standard Deviation
-[assets.real_estate]
-mu = -0.0054
-sigma = 0.0416
-is_liquid = false
 
 # Inflation although not an assate is mandatory to keep trak of the real values.
 # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
-# MU_PI: Arithmetic Mean of inflation
-# SIGMA_PI: Arithmetic Standard Deviation of inflation
 # mu = 0.0220
 # sigma = 0.0229
 #
-# More relistics for the future
+# More relistic for the future
 [assets.inflation]
 mu = 0.025
 sigma = 0.025
-is_liquid = false
 
 
 # ==============================================================================
@@ -203,38 +179,28 @@ is_liquid = false
 # The `assets` list must match keys from the [assets] tables, plus "inflation".
 # The `matrix` must be square and correspond to the `assets` list order.
 [correlation_matrix]
-assets_order = [
-  "stocks",
-  "bonds",
-  "str",
-  "eth",
-  "ag",
-  "real_estate",
-  "inflation",
-]
+assets_order = ["stocks", "bonds", "str", "eth", "ag", "inflation"]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
 # matrix = [
-#   # stk,  bnd,  str,  eth,  ag,   re,   pi
-#   [1.00, -0.05, 0.02, 0.15, 0.29, 0.67, 0.02],   # Stocks
-#   [-0.05, 1.00, 0.50, 0.03, -0.10, -0.10, 0.31], # Bonds
-#   [0.02, 0.50, 1.00, 0.02, 0.03, 0.15, 0.38],    # STR
-#   [0.15, 0.03, 0.02, 1.00, 0.09, 0.10, 0.04],    # Eth
-#   [0.29, -0.10, 0.03, 0.09, 1.00, 0.08, -0.02],  # Ag
-#   [0.67, -0.10, 0.15, 0.10, 0.08, 1.00, -0.09],  # Real Estate
-#   [0.02, 0.31, 0.38, 0.04, -0.02, -0.09, 1.00],  # Inflation
+#   # stk,  bnd,  str,  eth,  ag,     pi
+#   [1.00, -0.05, 0.02, 0.15, 0.29, 0.02],  # Stocks
+#   [-0.05, 1.00, 0.50, 0.03, -0.10, 0.31], # Bonds
+#   [0.02, 0.50, 1.00, 0.02, 0.03, 0.38],   # STR
+#   [0.15, 0.03, 0.02, 1.00, 0.09, 0.04],   # Eth
+#   [0.29, -0.10, 0.03, 0.09, 1.00, -0.02], # Ag
+#   [0.02, 0.31, 0.38, 0.04, -0.02, 1.00],  # Inflation
 # ]
 
 # Identity matrix. Indipendent variables, no correlation.
 matrix = [
-  #stk, bnd, str, eth, ag,  re,  pi
-  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
-  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Bonds
-  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # STR
-  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # Eth
-  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Ag
-  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Real Estate
-  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
+  #stk, bnd, str, eth, ag,  pi
+  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
+  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # Bonds
+  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # STR
+  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Eth
+  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Ag
+  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
 ]
 # ==============================================================================
 # 6. SHOCKS

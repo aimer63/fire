@@ -162,8 +162,8 @@ This document explains all parameters available in the main TOML configuration f
     Omit this parameter for illiquid assets.
 
 Inflation, although not an asset, must be defined in this section because it is correlated
-with assets through a [correlation matrix](correlation.md), and the mechanism for generating random
-values for assets return and inflation from `mu` and `sigma` is the same.
+with assets through a [correlation matrix](correlation.md), and the mechanism for
+generating random values for assets return and inflation from `mu` and `sigma` is the same.
 The inflation asset is mandatory because it's used to track all the real values, wealth,
 expenses...
 The name must be `inflation`.
