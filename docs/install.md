@@ -1,18 +1,10 @@
 # firestarter Installation Guide
 
-This guide explains how to install the `firestarter` package from a GitHub release on **Linux**,
-**macOS**, and **Windows**.
+This guide explains how to install the `firestarter` package by cloning the repository or from a GitHub release on **Linux**, **macOS**, and **Windows**.
 
 ---
 
-## 1. Download the Release
-
-1. Go to the [GitHub Releases page](https://github.com/aimer63/fire/releases).
-2. Download the latest `.whl` file (e.g., `firestarter-0.1.0b1-py3-none-any.whl`) to your computer.
-
----
-
-## 2. Install Python (if needed)
+## 1 Install Python (if needed)
 
 - **Linux:**  
   Most distributions come with Python 3.10+ pre-installed. If not, install it using your package
@@ -36,7 +28,50 @@ This guide explains how to install the `firestarter` package from a GitHub relea
 
 ---
 
-## 3. Install firestarter
+## 2. Install from Source
+
+1. Clone the repository:
+
+   ```sh
+   git clone https://github.com/aimer63/fire.git
+   cd fire
+   ```
+
+2. (Optional but recommended) Create and activate a virtual environment:
+
+   ```sh
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. Install the required dependencies:
+
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+4. Install the package in editable/development mode:
+
+   ```sh
+   pip install -e .
+   ```
+
+5. Verify the installation:
+
+   ```sh
+   python -c "import firestarter; print(firestarter.__version__)"
+   ```
+
+---
+
+## 3. Install from GitHub Release
+
+1. Go to the [GitHub Releases page](https://github.com/aimer63/fire/releases).
+2. Download the latest `.whl` file (e.g., `firestarter-0.1.0b1-py3-none-any.whl`) to your computer.
+
+---
+
+### 3.1 Install firestarter
 
 Open a terminal (Linux/macOS) or Command Prompt (Windows), navigate to the folder where you
 downloaded the `.whl` file, and run:
@@ -80,7 +115,35 @@ See usage [Usage](../docs/usage.md) for details.
 
 ## 5. Upgrading firestarter
 
-To upgrade to a newer version (e.g., from `v0.1.0b1` to `v0.1.0b2`):
+### If installed from source (git)
+
+1. Pull the latest changes:
+
+   ```sh
+   git pull
+   ```
+
+2. (Recommended) Update dependencies:
+
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+3. Reinstall in editable mode:
+
+   ```sh
+   pip install -e .
+   ```
+
+4. Verify the installation:
+
+   ```sh
+   python -c "import firestarter; print(firestarter.__version__)"
+   ```
+
+---
+
+### If installed from a GitHub release
 
 1. Download the new `.whl` file from the [GitHub Releases page](https://github.com/aimer63/fire/releases).
 2. (Optional but recommended) Uninstall the old version:

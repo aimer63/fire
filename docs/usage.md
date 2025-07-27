@@ -20,11 +20,7 @@ the probability of financial success over time.
 
 - Python 3.10 or newer
 
-**Install dependencies:**
-
-```sh
-pip install -r requirements.txt
-```
+See [Install Guide](install.md) for more details on how to run the simulation.
 
 ---
 

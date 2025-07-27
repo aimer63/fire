@@ -1,6 +1,6 @@
 # FIRE Simulation Engine
 
-This document explains the structure and workflow of the new simulation engine implemented in
+This document explains the structure and workflow of the simulation engine implemented in
 `simulation.py`. The engine is designed to model financial independence and early retirement
 (FIRE) scenarios.
 
@@ -33,7 +33,7 @@ Encapsulates all simulation logic and state.
 Key responsibilities:
 
 - Precomputes all necessary sequences (returns, inflation, contributions, etc.).
-  See `generate_sequences.py`.
+  See `sequences_generator.py`.
 - Runs the main simulation loop, handling all monthly flows and events
 - Applies returns, rebalancing, shocks, and records results
 - Handles withdrawals and marks the simulation as failed if assets are insufficient

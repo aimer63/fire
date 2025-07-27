@@ -36,7 +36,7 @@ from firestarter.config.config import Asset
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 
-class SequenceGenerator:
+class SequencesGenerator:
     """
     Generates and holds all stochastic sequences for a simulation set.
     """
@@ -80,9 +80,7 @@ class SequenceGenerator:
         rng = np.random.default_rng(self.seed)
 
         # --- 1. Extract Annual Arithmetic Parameters ---
-        mu_arith = np.array(
-            [self.assets[asset].mu for asset in self.asset_and_inflation_order]
-        )
+        mu_arith = np.array([self.assets[asset].mu for asset in self.asset_and_inflation_order])
         sigma_arith = np.array(
             [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
         )

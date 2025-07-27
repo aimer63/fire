@@ -17,12 +17,11 @@ This document explains all parameters available in the main TOML configuration f
 
 - **`[simulation_parameters]`** _(Dict)_
 
-  - **num_simulations** _(int)_  
+  - **num_simulations** _(int)_
     Number of Monte Carlo simulation runs to perform.
 
-  - **random_seed** _(int)_  
-    Seed for random number generation.  
-    Use any integer for reproducible results.  
+  - **random_seed** _(int)_
+    Seed for random number generation. Use any integer for reproducible results.  
     If omitted, results will vary each run.
 
 ---
@@ -32,7 +31,7 @@ This document explains all parameters available in the main TOML configuration f
 - **`paths`** _(Dict)_
   Directory paths used by the simulation.
 
-  - **output_root** _(str)_  
+  - **output_root** _(str)_
     Directory where all output (reports, plots, etc.) will be saved. Relative to
     the project root.
 
@@ -43,20 +42,20 @@ This document explains all parameters available in the main TOML configuration f
 - **`[deterministic_inputs]`** _(Dict)_
   All non stochastic inputs that are fixed and do not vary across simulation runs.
 
-  - **initial_bank_balance** _(float)_  
+  - **initial_bank_balance** _(float)_
     Initial cash/bank account balance.
 
-  - **bank_lower_bound** _(float)_  
+  - **bank_lower_bound** _(float)_
     Minimum allowed bank balance (if it drops below, funds are topped up from investments).
 
-  - **bank_upper_bound** _(float)_  
+  - **bank_upper_bound** _(float)_
     Maximum allowed bank balance (excess is invested).
 
-  - **years_to_simulate** _(int)_  
+  - **years_to_simulate** _(int)_
     Number of years to simulate.
 
-  - **monthly_income_steps** _(list of dicts)_  
-    Defines the income schedule as a list of step changes.  
+  - **monthly_income_steps** _(list of dicts)_
+    Defines the income schedule as a list of step changes.
     Each entry is a dictionary with:
 
     - `year` (int): The simulation year (0-indexed) when this income step begins.
@@ -81,36 +80,36 @@ This document explains all parameters available in the main TOML configuration f
     In this example, a income of 3000 is paid from year 0 to 9, then 4000 from
     year 10 onward (growing with inflation after year 10).
 
-  - **income_inflation_factor** _(float)_  
+  - **income_inflation_factor** _(float)_
     How income grows relative to inflation from the last step.
     (e.g. 1.0 = matches inflation, 1.01 = 1% above inflation, 0.6 = inflation adjustment
     accounts only for the 60% of inflation, 0.0 = not inflation adjusted).
 
-  - **income_end_year** _(int)_  
+  - **income_end_year** _(int)_
     Year index when income ends (exclusive).
     It must be > the year of the last income step.
 
-  - **monthly_pension** _(float)_  
+  - **monthly_pension** _(float)_
     The pension starts at the nominal value `monthly_pension` the year `pension_start_year`.
     After that this value is adjusted with inflation scaled by `pension_inflation_factor`.
     Pay attention on how your pension fund estimate your pension at the year of retirement
     and if and how the value is inflation adjusted after retirement.
 
-  - **pension_inflation_factor** _(float)_  
+  - **pension_inflation_factor** _(float)_
     How pension grows relative to inflation.
 
-  - **pension_start_year** _(int)_  
+  - **pension_start_year** _(int)_
     Year index when pension starts.
     It must be >= `income_end_year`.
 
-  - **planned_contributions** _(list of dicts)_  
+  - **planned_contributions** _(list of dicts)_
     List of one-time contributions (as a fixed nominal amount).
     Each dict has `amount` (float) and `year` (int).
     To set your initial portfolio, specify a planned contribution at `year = 0`
     and set the desired allocation using the weights in the year 0 rebalance event.
 
-  - **monthly_expenses_steps** _(list of dicts)_  
-    Defines the monthly expenses as a list of step changes.  
+  - **monthly_expenses_steps** _(list of dicts)_
+    Defines the monthly expenses as a list of step changes.
     Each entry is a dictionary with:
 
     - `year` (int): The simulation year (0-indexed) when this expense step begins.
@@ -247,16 +246,16 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 - **`[[portfolio_rebalances]]`** _(list of dicts)_
   Defines when and how the liquid portfolio is rebalanced to target weights.
 
-  - **year**: _Type:_ integer  
+  - **year**: _Type:_ integer
     _Description:_ The simulation year (0-indexed) when this rebalance occurs.  
     _Required:_ Yes
 
-  - **description**:  
-    _Type:_ string (optional)  
+  - **description**:
+    _Type:_ string (optional)
     _Description:_ Optional human-readable description of the rebalance event.
 
-  - **weights**:  
-    _Type:_ table (dictionary)  
+  - **weights**:
+    _Type:_ table (dictionary)
     _Description:_
 
     - Maps asset names to their target weights (as floats).
