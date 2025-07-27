@@ -48,24 +48,16 @@ Define each asset you want to hold in your portfolio:
 [assets.stocks]
 mu = 0.07
 sigma = 0.15
-is_liquid = true
 withdrawal_priority = 2
 
 [assets.bonds]
 mu = 0.03
 sigma = 0.055
-is_liquid = true
 withdrawal_priority = 1
-
-[assets.real_estate]
-mu = -0.0054
-sigma = 0.0416
-is_liquid = false
 
 [assets.inflation]
 mu = 0.025
 sigma = 0.025
-is_liquid = false
 ```
 
 Inflation, although not an asset, is defined in this section because it is correlated
@@ -91,7 +83,8 @@ weights = { stocks = 0.6, bonds = 0.4 }
 ```
 
 - **Important:** There must always be a rebalance event for year 0. The weights in
-  this event determine the allocation of your planned contribution at year 0.
+  this event determine the allocation of your planned contribution at year 0 and
+  of all subsequent investments until the next rebalance event.
 
 ---
 

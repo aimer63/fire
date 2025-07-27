@@ -11,7 +11,6 @@
     [assets.stocks]
     mu = 0.07
     sigma = 0.15
-    is_liquid = true
     withdrawal_priority = 2
     ```
 

@@ -38,15 +38,15 @@ accidental omissions.
 # The `assets` list must match keys from the [assets] tables, plus "inflation".
 # The `matrix` must be square and correspond to the `assets` list order.
 [correlation_matrix]
-assets_order = ["stocks", "bonds", "str", "real_estate", "inflation"]
+assets_order = ["stocks", "bonds", "str", "gold", "inflation"]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
 # matrix = [
-   # stk,  bnd,  str,  r.est, infl
+   # stk,  bnd,  str,  Au,   infl
    [1.00, -0.30, 0.00, 0.15, -0.20], # stocks
    [-0.30, 1.00, 0.40, 0.05, 0.10],  # bonds
    [0.00,  0.40, 1.00, 0.00, 0.60],  # str (short term rate money market)
-   [0.15,  0.05, 0.00, 1.00, 0.05],  # real_estate
+   [0.15,  0.05, 0.00, 1.00, 0.05],  # Au (gold)
    [-0.20, 0.10, 0.60, 0.05, 1.00],  # inflation
 ]
 ```
