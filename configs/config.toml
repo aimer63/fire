@@ -74,7 +74,8 @@ pension_start_year = 37         # Pension starts at 67, you are 37 years into th
 
 # Contributions
 # One-time contributions (fixed nominal amounts, not inflation-adjusted).
-# The contribution at year 0 sets the initial investment, 0 otherwise.
+# To set your initial portfolio, use a planned contribution at year 0 and specify the
+# allocation with a rebalance at year 0.
 planned_contributions = [
   # { year = 0, amount = 100_000 },
   # { year = 5, amount = 20_000 },
@@ -252,9 +253,13 @@ matrix = [
 # ==============================================================================
 # 7. PORTFOLIO REBALANCES
 # ==============================================================================
-# Defines the target asset allocation for the liquid portfolio at different stages.
-# A rebalance must be defined for year 0 to set the initial allocation.
-# Weights must sum to 1.0 and only include keys for assets where `is_liquid = true`.
+# Defines the target assets allocation for the liquid portfolio at different stages.
+# Weights must sum to 1.0.
+# To set your initial portfolio, use a planned contribution at year 0 and specify
+# the allocation with a rebalance at year 0.
+# There must always be a rebalance event for year 0 even if a planned contribution
+# at year 0 is not specified, the weights are used to allocate all subsequent investments
+# until the next rebalance.
 [[portfolio_rebalances]]
 year = 0
 weights = { stocks = 0.80, bonds = 0.15, eth = 0.025, ag = 0.025 }
