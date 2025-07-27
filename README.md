@@ -185,7 +185,7 @@ sigma = 0.025
 
 [correlation_matrix]
 assets_order = ["stocks", "bonds", "inflation"]
-# Identity matrix. Indipendent variables, no correlation.
+# Identity matrix. Independent variables, no correlation.
 matrix = [
 #  stk, bnd, pi
   [1.0, 0.0, 0.0], # stocks
