@@ -227,11 +227,11 @@ class Simulation:
             if self.state.simulation_failed:
                 break  # Exit if bank top-up failed
 
-            # Returns: Apply monthly returns to all assets.
-            self._apply_monthly_returns(month)
-
             # Apply Fund Fee (monthly)
             self._apply_fund_fee()
+
+            # Returns: Apply monthly returns to all assets.
+            self._apply_monthly_returns(month)
 
             # Rebalancing: If scheduled, rebalance liquid assets.
             self._rebalance_if_needed(month)
