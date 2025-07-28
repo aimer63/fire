@@ -38,8 +38,10 @@ git add .
 git commit -m "Prepare release v0.1.0b2"
 git tag v0.1.0b2
 git push
-git push --tags
+git push origin v0.1.0b2
 ```
+
+If you are using Github and have set a workflow to automatically build and publish releases, you can skip the next steps.
 
 ---
 
