@@ -28,31 +28,35 @@ asset allocation.
   Investment assets are defined in the configuration. For each asset you specify `mu`,
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
-  [Yahoo Finance](https://finance.yahoo.com/), [Investing.com](https://www.investing.com/), [Federal Reserve Economic Data](https://fred.stlouisfed.org/), etc.
+  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url]
 
-  Inflation, although not an asset, is defined in this section because it is correlated
-  with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating random
-  values for assets return and inflation from `mu` and `sigma` is the same.
-  The inflation asset is mandatory because it's used to track all the real values, wealth,
-  expenses...
+[yahoo-fianance-url]: https://finance.yahoo.com/
+[Investing-url]: https://www.investing.com/
+[fred-url]: https://fred.stlouisfed.org/
 
-  **Example**:
+Inflation, although not an asset, is defined in this section because it is correlated
+with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating random
+values for assets return and inflation from `mu` and `sigma` is the same.
+The inflation asset is mandatory because it's used to track all the real values, wealth,
+expenses...
 
-  ```toml
-  [assets.stocks]
-  mu = 0.07
-  sigma = 0.15
-  withdrawal_priority = 2
+**Example**:
 
-  [assets.bonds]
-  mu = 0.03
-  sigma = 0.055
-  withdrawal_priority = 1
+```toml
+[assets.stocks]
+mu = 0.07
+sigma = 0.15
+withdrawal_priority = 2
 
-  [assets.inflation]
-  mu = 0.025
-  sigma = 0.025
-  ```
+[assets.bonds]
+mu = 0.03
+sigma = 0.055
+withdrawal_priority = 1
+
+[assets.inflation]
+mu = 0.025
+sigma = 0.025
+```
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
 
@@ -122,19 +126,19 @@ asset allocation.
 
    From the project root, use the provided shell script or Python command:
 
-```shell
-./firestarter.sh configs/config.toml
-```
+   ```shell
+   ./firestarter.sh configs/config.toml
+   ```
 
-or
+   or
 
-```shell
-export OMP_NUM_THREADS=1
-export OPENBLAS_NUM_THREADS=1
-export MKL_NUM_THREADS=1
-export NUMEXPR_NUM_THREADS=1
-python -m firestarter.main configs/config.toml
-```
+   ```shell
+   export OMP_NUM_THREADS=1
+   export OPENBLAS_NUM_THREADS=1
+   export MKL_NUM_THREADS=1
+   export NUMEXPR_NUM_THREADS=1
+   python -m firestarter.main configs/config.toml
+   ```
 
 3. **Review the results**
    - **Markdown report**: Generated in `<output_root>/reports/`, summarizing success rate, failed

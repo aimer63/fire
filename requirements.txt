@@ -1,6 +1,7 @@
 numpy
 pandas
 pandas-stubs
+PyQt5
 matplotlib
 pydantic
 tomli
