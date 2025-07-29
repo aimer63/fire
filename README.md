@@ -271,6 +271,8 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 - **Books**:
 
+  - _A Random Walk Down Wall Street_ by Burton G. Malkiel: A classic book explaining the
+    basics of investing, efficient markets, index funds, and long-term wealth building.
   - _The Bogleheads’ Guide to Investing_ by Taylor Larimore, Mel Lindauer, and Michael LeBoeuf:
     A practical guide to low-cost investing and financial independence, covering asset
     allocation and risk management.
@@ -294,11 +296,12 @@ For mathematical background, advanced usage, and additional guides, see the [doc
   - _Options, Futures, and Other Derivatives_ by John C. Hull: A foundational text on
     derivatives pricing, volatility modeling, and Monte Carlo simulations, ideal for
     understanding asset return dynamics.
-  - [Investopedia: Asset Return Volatility](https://www.investopedia.com/terms/v/volatility.asp): Explains volatility as the standard deviation
+  - [Investopedia: Asset Return Volatility](https://www.investopedia.com/terms/v/volatility.asp): Explains volatilityas the standard deviation
     of returns, key for configuring your `mu` and `sigma` parameters.
 
 - **Communities**:
   - [r/financialindependence](https://www.reddit.com/r/financialindependence/): A Reddit community discussing FIRE strategies, with real-world
     insights and case studies.
 
-These resources provide a mix of practical, theoretical, and data-driven content to enhance your use of this tool and FIRE planning knowledge.
+These resources provide a mix of practical, theoretical, and data-driven content to Finance
+your use of this tool and FIRE planning knowledge.
