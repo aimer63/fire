@@ -33,7 +33,7 @@ from firestarter.core.helpers import calculate_cagr
 
 def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:
     """Formats configuration parameters into a Markdown block."""
-    md_config_lines = ["### Loaded Configuration Parameters\n"]
+    md_config_lines = ["### Loaded Configuration Parameters\n\n"]
     toml_str = tomli_w.dumps(config)
     # Reformat matrix rows: replace each multi-line row with a single line
     toml_str = re.sub(
@@ -67,7 +67,7 @@ def format_case_for_markdown(
         final_wealth_display = final_nominal_wealth
         final_wealth_other = final_real_wealth
         cagr_wealth_for_calc_val = final_nominal_wealth
-        md_case_lines.append(f"#### {label} Successful Case (Nominal):\n\n")
+        md_case_lines.append(f"### {label} Successful Case (Nominal)\n\n")
         md_case_lines.append(
             f"- **Final Wealth (Nominal):** {final_wealth_display:,.2f} \n"
         )
@@ -80,7 +80,7 @@ def format_case_for_markdown(
         final_wealth_display = final_real_wealth
         final_wealth_other = final_nominal_wealth
         cagr_wealth_for_calc_val = final_real_wealth
-        md_case_lines.append(f"#### {label} Successful Case (Real):\n\n")
+        md_case_lines.append(f"### {label} Successful Case (Real)\n\n")
         md_case_lines.append(
             f"- **Final Wealth (Real):** {final_wealth_display:,.2f} \n"
         )

@@ -1,37 +1,10 @@
-
-> #buffers:
-> #buffers:`visible`
-> #files:`**/*.py`
-> #files:`**/*.md`
-> #files:`configs/*.toml`
-> #files:`firestarter/config/*.py`
-> #files:`firestarter/core/*.py`
-> #file:`firestarter/main.py`
-> #files:`tests/config/*.py`
-> #files:`tests/simulation/*.py`
-
-
-> #buffer:
-> #buffers:`visible`
-> #file:`firestarter/config/config.py`
-> #file:`firestarter/core/simulation_state.py`
-> #file:`firestarter/core/sequence_generator.py`
-> #file:`firestarter/core/simulation.py`
-> #file:`firestarter/core/main.py`
-> #file:`configs/config.toml`
-> #file:`tests/config/*.py`
-> #file:`tests/simulation/*.py`
-> #file:`docs/*.md`
-
-
-> #buffer:
-> #buffers:`visible`
-> #file:`firestarter/config/config.py`
-> #file:`firestarter/core/simulation_state.py`
-> #file:`firestarter/core/sequence_generator.py`
-> #file:`firestarter/core/simulation.py`
-> #file:`firestarter/core/main.py`
-> #file:`configs/config.toml`
-> #file:`tests/config/*.py`
-> #file:`tests/simulation/*.py`
-> #file:`docs/*.md`
+> #buffers:visible
+> #file:firestarter/config/config.py
+> #file:firestarter/core/simulation_state.py
+> #file:firestarter/core/sequences_generator.py
+> #file:firestarter/core/simulation.py
+> #file:firestarter/main.py
+> #file:configs/config.toml
+> #files:tests/config/*.py
+> #files:tests/simulation/*.py
+> #files:docs/*.md
