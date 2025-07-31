@@ -15,6 +15,7 @@ This file tracks the current priorities and next steps for the FIRE Monte Carlo 
 
 ## 🟦 Future Features / Ideas
 
+- [ ] Handle investments in chunks, more realistic.
 - [ ] Add scenario comparison (multiple configs in one run).
 
 - [ ] Study inflation persistence/stickiness and find a better model than lognormal

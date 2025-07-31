@@ -10,7 +10,7 @@ It models a user's retirement plan, simulating investment growth, withdrawals, e
 and market shocks over time to estimate the probability of financial success.
 
 Plan your retirement, estimate success probabilities, and visualize wealth trajectories under
-realistic market conditions.
+realistic conditions.
 
 - 🔥 Flexible configuration (TOML)
 - 📈 Wealth, income, expenses, and asset allocation modeling
@@ -38,16 +38,15 @@ asset allocation.
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url]
+  Inflation, although not an asset, is defined in this section because it is correlated
+  with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating
+  random values for assets return and inflation from `mu` and `sigma` is the same.
+  The inflation asset is mandatory because it's used to track all the real values, wealth,
+  expenses...
 
 [yahoo-fianance-url]: https://finance.yahoo.com/
 [Investing-url]: https://www.investing.com/
 [fred-url]: https://fred.stlouisfed.org/
-
-Inflation, although not an asset, is defined in this section because it is correlated
-with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating random
-values for assets return and inflation from `mu` and `sigma` is the same.
-The inflation asset is mandatory because it's used to track all the real values, wealth,
-expenses...
 
 **Example**:
 
