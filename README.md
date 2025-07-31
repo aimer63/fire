@@ -37,7 +37,8 @@ asset allocation.
   Investment assets are defined in the configuration. For each asset you specify `mu`,
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
-  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url]
+  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url].
+
   Inflation, although not an asset, is defined in this section because it is correlated
   with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating
   random values for assets return and inflation from `mu` and `sigma` is the same.
@@ -118,7 +119,7 @@ sigma = 0.025
   Distribution of final wealth for successful outcomes
   ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
 
-  all the corresponding plots in real terms and others.
+  and all the corresponding plots in real terms and others.
 
 ---
 
