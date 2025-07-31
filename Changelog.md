@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.1.0b6](https://github.com/aimer63/fire/releases/tag/v0.1.0b6) - 2025-07-30
+
+### Added
+
+- Added PyQt5 to requirements for GUI support.
+
+### Changed
+
+- Release Github action is triggered only if the tag is pushed on master.
+
 ## [v0.1.0b5](https://github.com/aimer63/fire/releases/tag/v0.1.0b5) - 2025-07-28
 
 ### Changed

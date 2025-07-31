@@ -33,7 +33,7 @@ This document explains all parameters available in the main TOML configuration f
 
   - **output_root** _(str)_
     Directory where all output (reports, plots, etc.) will be saved. Relative to
-    the project root.
+    the working directory.
 
 ---
 
@@ -41,6 +41,9 @@ This document explains all parameters available in the main TOML configuration f
 
 - **`[deterministic_inputs]`** _(Dict)_
   All non stochastic inputs that are fixed and do not vary across simulation runs.
+
+  - **years_to_simulate** _(int)_
+    Number of years to simulate.
 
   - **initial_bank_balance** _(float)_
     Initial cash/bank account balance.
@@ -51,9 +54,6 @@ This document explains all parameters available in the main TOML configuration f
   - **bank_upper_bound** _(float)_
     Maximum allowed bank balance (excess is invested).
 
-  - **years_to_simulate** _(int)_
-    Number of years to simulate.
-
   - **monthly_income_steps** _(list of dicts)_
     Defines the income schedule as a list of step changes.
     Each entry is a dictionary with:
@@ -62,7 +62,7 @@ This document explains all parameters available in the main TOML configuration f
     - `monthly_amount` (float): The monthly income expressed in today's money
       paid from this year onward until the next step. In between steps the amount is
       not adjusted for inflation.
-      From the beginning of the last defined step, income grows with inflation
+      From the beginning of the last defined step, income start to grow with inflation
       scaled by `income_inflation_factor`.
       Income is set to zero before the first step and after `income_end_year`.
       If this list is omitted or empty, no income is paid at any time.
@@ -103,7 +103,8 @@ This document explains all parameters available in the main TOML configuration f
     It must be >= `income_end_year`.
 
   - **planned_contributions** _(list of dicts)_
-    List of one-time contributions (as a fixed nominal amount).
+    List of one-time contributions (as a fixed nominal amount), like you know you
+    will receive a bonus, a credit payment, or a gift.
     Each dict has `amount` (float) and `year` (int).
     To set your initial portfolio, specify a planned contribution at `year = 0`
     and set the desired allocation using the weights in the year 0 rebalance event.
@@ -132,9 +133,20 @@ This document explains all parameters available in the main TOML configuration f
     ]
     ```
 
+  - **planned_extra_expenses** _(list of dicts)_
+    List of one-time extra expenses (in today's money, inflation-adjusted).
+    Each dict has `amount` (float), `year` (int), and optional `description` (str).
+    Expenses are applied at the start of the specified year.
+
+  - **annual_fund_fee** _(float)_
+    Annual fee (Total Expense Ratio, TER) applied to all investments.
+    Expressed as a decimal (e.g., 0.0015 for 0.15%).
+
 ## Assets
 
 - **`[assets]`** _(dict)_
+  Defines all financial assets available in the simulation using a table for each asset.
+  The key of the table (e.g., "stocks") is the unique identifier for the asset.
   Each asset in the configuration file is defined with the following parameters:
 
   - **mu**:
@@ -244,7 +256,7 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 ## Portfolio Rebalances
 
 - **`[[portfolio_rebalances]]`** _(list of dicts)_
-  Defines when and how the liquid portfolio is rebalanced to target weights.
+  Defines when and how the portfolio is rebalanced to target weights.
 
   - **year**: _Type:_ integer
     _Description:_ The simulation year (0-indexed) when this rebalance occurs.  
