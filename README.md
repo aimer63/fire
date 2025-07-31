@@ -4,9 +4,18 @@
 
 ---
 
-This project is a Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement)
-planning. It models a user's retirement plan, simulating investment growth, withdrawals, expenses,
+**Firestarter** is an open-source Python tool for modeling Financial Independence and Early Retirement (FIRE)
+scenarios using Monte Carlo simulations.
+It models a user's retirement plan, simulating investment growth, withdrawals, expenses,
 and market shocks over time to estimate the probability of financial success.
+
+Plan your retirement, estimate success probabilities, and visualize wealth trajectories under
+realistic market conditions.
+
+- 🔥 Flexible configuration (TOML)
+- 📈 Wealth, income, expenses, and asset allocation modeling
+- 🎲 Correlated asset/inflation returns, market shocks, and portfolio rebalancing
+- 📊 Automatic reporting and plotting
 
 ---
 
@@ -287,11 +296,15 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 - **Online Resources**:
 
-  - [Early Retirement Now](https://earlyretirementnow.com/): A detailed blog on FIRE strategies.
-  - [Bogleheads Wiki](https://www.bogleheads.org/wiki/Main_Page): A comprehensive resource on investing, retirement planning
+  - [Early Retirement Now][ERN-url]: A detailed blog on FIRE strategies.
+  - [Bogleheads Wiki][bogleheads-url]: A comprehensive resource on investing, retirement planning
     and portfolio management, with a focus on low-cost, passive strategies.
-  - [Investopedia: Monte Carlo Simulation](https://www.investopedia.com/terms/m/montecarlosimulation.asp): A clear explanation of Monte Carlo
+  - [Investopedia: Monte Carlo Simulation][invopedia-montecarlo-url]: A clear explanation of Monte Carlo
     methods in financial planning and risk analysis.
+
+[ERN-url]: https://earlyretirementnow.com/
+[bogleheads-url]: https://www.bogleheads.org/wiki/Main_Page
+[invopedia-montecarlo-url]: https://www.investopedia.com/terms/m/montecarlosimulation.asp
 
 - **Academic/Technical**:
 
@@ -300,12 +313,17 @@ For mathematical background, advanced usage, and additional guides, see the [doc
   - _Options, Futures, and Other Derivatives_ by John C. Hull: A foundational text on
     derivatives pricing, volatility modeling, and Monte Carlo simulations, ideal for
     understanding asset return dynamics.
-  - [Investopedia: Asset Return Volatility](https://www.investopedia.com/terms/v/volatility.asp): Explains volatilityas the standard deviation
+  - [Investopedia: Asset Return Volatility][invopedia-vol-url]: Explains volatility as the standard deviation
     of returns, key for configuring your `mu` and `sigma` parameters.
 
+[invopedia-vol-url]: https://www.investopedia.com/terms/v/volatility.asp
+
 - **Communities**:
-  - [r/financialindependence](https://www.reddit.com/r/financialindependence/): A Reddit community discussing FIRE strategies, with real-world
+
+  - [r/financialindependence][reddit-fire-url]: A Reddit community discussing FIRE strategies, with real-world
     insights and case studies.
 
-These resources provide a mix of practical, theoretical, and data-driven content to Finance
-your use of this tool and FIRE planning knowledge.
+[reddit-fire-url]: https://www.reddit.com/r/financialindependence/
+
+    These resources provide a mix of practical, theoretical, and data-driven content to Finance
+    your use of this tool and FIRE planning knowledge.
