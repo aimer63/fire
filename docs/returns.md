@@ -33,5 +33,5 @@
     statistical properties of the annualized input parameters.
   - The conversion from annual to monthly distribution parameters is handled once before sampling.
 
-**Note**: Mathematical background in [Lognormal returns](lognormal-returns.md), [Returns estimator 1](returns-estimators-1.md)
-and [Returns estimator 2](returns-estimators-2.md), [Monthly conversion](returns-monthly.md).
+**Note**: Mathematical background in [Lognormal returns](lognormal-returns.md), [Returns estimator 1](returns-estimators-1.md),
+[Returns estimator 2](returns-estimators-2.md) and [Monthly conversion](returns-monthly.md).

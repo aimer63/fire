@@ -31,7 +31,7 @@ The monthly parameters are computed as:
 
 - **Annual Return**: The annual return factor is the product of 12 monthly return factors:
 
-```month
+```math
   1 + R_t = \prod_{i=1}^{12} (1 + R_{m,i}),
 ```
 
@@ -90,19 +90,11 @@ the accuracy of monthly parameters.
 - **Small Sample Effects**: If $\bar{R}$ and $s_R$ are computed from a small sample size
 $n$, they are noisy, and the nonlinear transformations in the estimators may amplify
 errors, impacting both annual and monthly estimates.
-- **Data Scale**: The formulas assume $\bar{R}$ and $s_R$ are derived from annual return data.
-If the inputs are monthly returns, the conversion to monthly parameters would be incorrect,
-as the parameters would already be on a monthly scale.
-- **Return Type**: The formulas assume geometric (compounded) returns consistent with
-the lognormal model. If $\bar{R}$ represents arithmetic returns, the interpretation
-of $\mu$ and $\sigma$ may differ, though the formulas remain valid for the lognormal framework.
-- **Input Validation**: The calculations require $\bar{R} + 1 > 0$ and $s_R \geq 0$ to ensure
-the logarithms and variance are defined.
 
 ## Conclusion
 
 The calculations correctly compute the annual parameters $\hat{\mu}$ and $\hat{\sigma}$
-for $Y_t = \log(1 + R_t)$ using the exact lognormal moment relationships and accurately
+for $Y_t = \log(1 + R_t)$ using the lognormal moment relationships and accurately
 convert them to monthly parameters $\hat{\mu}_m = \hat{\mu} / 12$ and $\hat{\sigma}_m = \hat{\sigma} / \sqrt{12}$
 under the assumptions of i.i.d. lognormal monthly returns. Users should ensure:
 
