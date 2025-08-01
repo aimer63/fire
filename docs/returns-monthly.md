@@ -95,9 +95,9 @@ errors, impacting both annual and monthly estimates.
 
 ## Conclusion
 
-The calculations correctly compute the annual parameters $\hat{\mu}$ and $\hat{\sigma}$
-for $Y_t = \log(1 + R_t)$ using the lognormal moment relationships and accurately
-convert them to monthly parameters $\hat{\mu}_m = \hat{\mu} / 12$ and $\hat{\sigma}_m = \hat{\sigma} / \sqrt{12}$
+The calculations compute the annual parameters $\hat{\mu}$ and $\hat{\sigma}$
+for $Y_t = \log(1 + R_t)$ using the lognormal moment relationships and convert them
+to monthly parameters $\hat{\mu}_m = \hat{\mu} / 12$ and $\hat{\sigma}_m = \hat{\sigma} / \sqrt{12}$
 under the assumptions of i.i.d. lognormal monthly returns. Users should ensure:
 
 - Inputs $\bar{R}$ and $s_R$ are computed from annual return data.
