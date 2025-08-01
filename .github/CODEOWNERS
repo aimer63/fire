@@ -1,0 +1,20 @@
+# CODEOWNERS
+
+# All Python source files in the firestarter directory
+/firestarter/**/*.py @aimer63
+
+# All test Python files
+/tests/**/*.py @aimer63
+
+# All Markdown documentation files
+/docs/**/*.md @aimer63
+
+# All Markdown files in the root and anywhere else
+*.md @aimer63
+**/*.md @aimer63
+
+# Workflow files
+.github/workflows/* @aimer63
+
+# Protect the CODEOWNERS file itself
+/CODEOWNERS @aimer63
