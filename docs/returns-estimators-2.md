@@ -1,14 +1,20 @@
 
 # Estimation of $\mu$ and $\sigma$ for Normal Distribution of Log Returns Using Sample Mean and Standard Deviation of observed Returns Rates
 
-Given only the sample mean $\bar{R}$ and sample standard deviation $s_R$ of the return rate data points $R_1, R_2, \ldots, R_n$, where $X_t = 1 + R_t$ is lognormally distributed for the theoretical continuous process $R_t$, we know that $Y_t = \log(X_t) = \log(1 + R_t)$ follows a normal distribution $N(\mu, \sigma^2)$. We aim to derive estimators for $\mu$ and $\sigma$ using $\bar{R}$ and $s_R$.
+Given only the sample mean $\bar{R}$ and sample standard deviation $s_R$ of the return rate
+data points $R_1, R_2, \ldots, R_n$, where $X_t = 1 + R_t$ is lognormally distributed for
+the theoretical continuous process $R_t$, we know that $Y_t = \log(X_t) = \log(1 + R_t)$
+follows a normal distribution $N(\mu, \sigma^2)$. We aim to derive estimators for
+$\mu$ and $\sigma$ using $\bar{R}$ and $s_R$.
 
 ## Setup
 
 - **Given Statistics**:
   - Sample mean: $\bar{R} = \frac{1}{n} \sum_{i=1}^n R_i$, estimating $E[R_t]$.
-  - Sample standard deviation: $s_R = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (R_i - \bar{R})^2}$, with sample variance $s_R^2$ estimating $\text{Var}(R_t)$.
-- **Theoretical Process**: $R_t$ is the theoretical continuous return rate process, where $X_t = 1 + R_t$ is lognormally distributed.
+  - Sample standard deviation: $s_R = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (R_i - \bar{R})^2}$,
+  with sample variance $s_R^2$ estimating $\text{Var}(R_t)$.
+- **Theoretical Process**: $R_t$ is the theoretical continuous return rate process,
+where $X_t = 1 + R_t$ is lognormally distributed.
 - **Transformation**: $Y_t = \log(1 + R_t) \sim N(\mu, \sigma^2)$.
 - **Goal**: Derive exact estimators $\hat{\mu}$ and $\hat{\sigma}$ using $\bar{R}$ and $s_R$.
 
@@ -94,15 +100,6 @@ The standard deviation estimator is:
 ```math
 \hat{\sigma} = \sqrt{\hat{\sigma}^2} = \sqrt{\log\left( 1 + \frac{s_R^2}{(\bar{R} + 1)^2} \right)}.
 ```
-
-### Verification
-
-The estimators satisfy:
-
-- $e^{\hat{\mu} + \hat{\sigma}^2/2} = \bar{R} + 1$.
-- $(e^{\hat{\sigma}^2} - 1) e^{2\hat{\mu} + \hat{\sigma}^2} = s_R^2$.
-
-These confirm consistency with the lognormal moments.
 
 ## Final Estimators
 

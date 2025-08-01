@@ -1,7 +1,9 @@
 
-# Verification of Monthly Parameter Conversion for Annual Return Rates
+# Monthly Parameter Conversion for Annual Return Rates
 
-We analyze whether the conversion to monthly parameters in the provided Python code is correct for estimating $\mu$ and $\sigma$ of $Y_t = \log(1 + R_t) \sim N(\mu, \sigma^2)$, where $R_t$ is the annual return rate, using the sample mean $\bar{R}$ and standard deviation $s_R$.
+The provided Python code estimates $\mu$ and $\sigma$ of $Y_t = \log(1 + R_t) \sim N(\mu, \sigma^2)$,
+where $R_t$ is the annual return rate, using the sample mean $\bar{R}$ and standard deviation $s_R$.
+After it converts $\mu$ and $\sigma$ to the corresponding monthly parameters.
 
 ## Code
 
