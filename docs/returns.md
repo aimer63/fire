@@ -15,7 +15,7 @@
     ```
 
   - These annual sample parameters are converted to monthly **lognormal** parameters
-    (`monthly_mu_log`, `monthly_sigma_log`).
+    (`monthly_mu`, `monthly_sigma`).
   - A random value is then drawn **for each month** from these derived monthly distributions.
   - This approach ensures that the statistical properties of the monthly draws are consistent with
     the annualized parameters provided in the config when aggregated over a year.
