@@ -32,3 +32,6 @@
   - It ensures that the simulated monthly returns and inflation, when aggregated, align with the
     statistical properties of the annualized input parameters.
   - The conversion from annual to monthly distribution parameters is handled once before sampling.
+
+**Note**: Mathematical background in [Lognormal returns](lognormal-returns.md), [Returns estimator 1](returns-estimators-1.md)
+and [Returns estimator 2](returns-estimators-2.md).
