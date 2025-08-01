@@ -125,5 +125,5 @@ You can further configure:
 
 ---
 
-For more details, see the [Configuration Reference](config.md) and example configs
+For more details, see the [Configuration Reference](config.md) and [Example](../configs/config.toml)
 in the `config` directory.

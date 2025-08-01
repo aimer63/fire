@@ -20,7 +20,8 @@ monthly_sigma = sigma / np.sqrt(12)
 
 - **Inputs**: Sample mean $\bar{R}$, sample standard deviation $s_R$.
 - **Outputs**: Annual parameters $\hat{\mu}$, $\hat{\sigma}$; monthly parameters $\hat{\mu}_m$, $\hat{\sigma}_m$.
-- **Process**: Compute annual $\hat{\mu}$ and $\hat{\sigma}$ using lognormal moment relationships, then convert to monthly parameters.
+- **Process**: Compute annual $\hat{\mu}$ and $\hat{\sigma}$ using lognormal moment relationships,
+then convert to monthly parameters.
 
 ## Monthly Parameter Conversion
 
@@ -81,8 +82,8 @@ Solving for monthly parameters:
   \sigma_m = \frac{\sigma}{\sqrt{12}}.
 ```
 
-The conversions $\hat{\mu}_m = \hat{\mu} / 12$ and $\hat{\sigma}_m = \hat{\sigma} / \sqrt{12}$ are **correct**
-under the assumptions of i.i.d. lognormal monthly returns.
+The conversions $\hat{\mu}_m = \hat{\mu} / 12$ and $\hat{\sigma}_m = \hat{\sigma} / \sqrt{12}$
+are **correct** under the assumptions of i.i.d. lognormal monthly returns.
 
 ## Potential Issues
 
