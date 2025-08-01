@@ -8,7 +8,7 @@ Given a series of return rate data points $R_1, R_2, \ldots, R_n$, where $X_t = 
 - **Data Points**: We observe return rates $R_1, R_2, \ldots, R_n$, representing the percentage changes in asset value (e.g., $R_i = 0.05$ for a 5% return).
 - **Theoretical Process**: $R_t$ is the theoretical continuous return rate process, where $X_t = 1 + R_t$ is lognormally distributed.
 - **Transformation**: For each observed return rate, compute $Y_i = \log(1 + R_i)$, where $Y_t \sim N(\mu, \sigma^2)$.
-- **Goal**: Estimate $\mu$, $\sigma^2$, and $\sigma$ using the sample $Y_1, Y_2, \ldots, Y_n$.
+- **Goal**: Estimate $\mu$, $\sigma^2$ and $\sigma$ using the sample $Y_1, Y_2, \ldots, Y_n$.
 
 ## Derivation of Estimators
 
@@ -75,5 +75,8 @@ The estimators for the normal distribution $N(\mu, \sigma^2)$ of $Y_t = \log(1 +
 ```
 
 These estimators are computed using the observed return rate data points $R_1, R_2, \ldots, R_n$.
+
+**Note**: See also [Returns Estimators 2](returns-estimators-2.md) for estimators derivation from return rates
+sample mean and standard deviation.
 
 ---

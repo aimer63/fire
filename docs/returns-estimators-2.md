@@ -1,7 +1,7 @@
 
-# Exact Estimation of $\mu$ and $\sigma$ for Normal Distribution of Log Returns Using Sample Mean and Standard Deviation
+# Estimation of $\mu$ and $\sigma$ for Normal Distribution of Log Returns Using Sample Mean and Standard Deviation of observed Returns Rates
 
-Given only the sample mean $\bar{R}$ and sample standard deviation $s_R$ of the return rate data points $R_1, R_2, \ldots, R_n$, where $X_t = 1 + R_t$ is lognormally distributed for the theoretical continuous process $R_t$, we know that $Y_t = \log(X_t) = \log(1 + R_t)$ follows a normal distribution $N(\mu, \sigma^2)$. We aim to derive exact estimators for $\mu$ and $\sigma$ using $\bar{R}$ and $s_R$, without relying on the small-return approximation.
+Given only the sample mean $\bar{R}$ and sample standard deviation $s_R$ of the return rate data points $R_1, R_2, \ldots, R_n$, where $X_t = 1 + R_t$ is lognormally distributed for the theoretical continuous process $R_t$, we know that $Y_t = \log(X_t) = \log(1 + R_t)$ follows a normal distribution $N(\mu, \sigma^2)$. We aim to derive estimators for $\mu$ and $\sigma$ using $\bar{R}$ and $s_R$.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Given only the sample mean $\bar{R}$ and sample standard deviation $s_R$ of the 
 - **Transformation**: $Y_t = \log(1 + R_t) \sim N(\mu, \sigma^2)$.
 - **Goal**: Derive exact estimators $\hat{\mu}$ and $\hat{\sigma}$ using $\bar{R}$ and $s_R$.
 
-## Derivation of Exact Estimators
+## Derivation of Estimators
 
 ### Lognormal Properties
 
@@ -104,7 +104,7 @@ The estimators satisfy:
 
 These confirm consistency with the lognormal moments.
 
-## Final Exact Estimators
+## Final Estimators
 
 The exact estimators for $N(\mu, \sigma^2)$ of $Y_t = \log(1 + R_t)$ are:
 
