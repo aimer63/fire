@@ -3,8 +3,18 @@ name: Tests
 on:
   push:
     branches: [ "master" ]
+    paths:
+      - 'firestarter/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+      - '.github/workflows/test.yml'
   pull_request:
     branches: [ "master" ]
+    paths:
+      - 'firestarter/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+      - '.github/workflows/test.yml'
 
 jobs:
   run-tests:
