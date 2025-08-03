@@ -69,7 +69,7 @@ df["Date"] = pd.to_datetime(df["Date"])
 if FREQUENCY == "daily":
     # First, ensure the daily data has no duplicate dates by taking the last entry per day
     df = df.drop_duplicates(subset=["Date"], keep="last")
-    print("Daily data detected. Resampling to monthly (last day of month).")
+    print("Resampling to monthly (last day of month).")
     # To resample, we need a DatetimeIndex. We set it, resample, then bring it back as a column.
     df = df.set_index("Date").resample("ME").last().reset_index()
 
@@ -147,6 +147,13 @@ std_dev_cols = [f"Std_Dev_{col}" for col in INDEX_COLS]
 mean_returns = results_df[return_rate_cols].mean()
 mean_stds = results_df[std_dev_cols].mean()
 
+# Calculate the percentage of windows with negative returns
+total_windows = len(results_df)
+failed_windows_pct = {
+    index: (results_df[f"Return_Rate_{index}"] < 0).sum() / total_windows
+    for index in INDEX_COLS
+}
+
 # Clean the index of each series *before* creating the DataFrame
 mean_returns.index = mean_returns.index.str.replace("Return_Rate_", "")
 mean_stds.index = mean_stds.index.str.replace("Std_Dev_", "")
@@ -156,6 +163,7 @@ expected_df = pd.DataFrame(
     {
         "Expected Annualized Return Rate": mean_returns,
         "Expected Annualized Std Dev": mean_stds,
+        "Failed Windows (%)": pd.Series(failed_windows_pct),
     }
 )
 
@@ -230,6 +238,7 @@ print(
         formatters={
             "Expected Annualized Return Rate": "{:.2%}".format,
             "Expected Annualized Std Dev": "{:.2%}".format,
+            "Failed Windows (%)": "{:.2%}".format,
         }
     )
 )
