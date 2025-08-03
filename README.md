@@ -84,6 +84,12 @@ sigma = 0.025
   Savings: the simulation invest all fund in bank account exceeding the `bank_upper_bound`
   in _"liquid"_ assets.
 
+  This process runs for the specified number of times, i.e. `num_simulations`, each run
+  simulates `years_to_simulate` years of the user's financial life.
+  The simulation ends holding `num_simulations` different evolutions of the user's wealth.
+  Finally, it aggregates the results to determine the success rate and other statistics.
+  The results are presented in plots and reports.
+
   **Note**:
 
   > _The simulation assumes all assets, incomes, expenses, and flows are denominated
