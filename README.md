@@ -21,7 +21,7 @@ realistic conditions.
 
 ## Purpose
 
-This tool aim to help users understand the likelihood of a retirement plan succeeding under
+This tool aims to help users understand the likelihood of a retirement plan succeeding under
 uncertainty, visualize possible outcomes, and make informed decisions about savings, spending, and
 asset allocation.
 
@@ -34,14 +34,13 @@ asset allocation.
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
 
-  Investment assets are defined in the configuration. For each asset you specify `mu`,
-  the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
+  Investment assets are defined in the configuration. For each asset you specify the following; `mu`, the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url].
 
-  Inflation, although not an asset, is defined in this section because it is correlated
+  Inflation, though not an asset, is defined in this section because it is correlated
   with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating
-  random values for assets return and inflation from `mu` and `sigma` is the same.
+  random from `mu` and `sigma` is the same is the same for assets and inflation.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
 
@@ -72,8 +71,8 @@ sigma = 0.025
   The main simulation logic, for each run it:
 
   - Initializes assets values and bank balance
-  - Simulates monthly/annual investment returns, inflation
-  - Handles withdrawals for expenses and marks the simulation as failed if assets are insufficient
+  - Simulates monthly/annual investment returns and inflation
+  - Handles withdrawals for expenses and marks the simulation as **'failed'** if assets are insufficient
   - Handles income, pension, contributions, and planned extra expenses
   - Manages liquidity (bank account bounds, topping up or investing excess)
   - Manages portfolio rebalances
@@ -81,12 +80,12 @@ sigma = 0.025
   - Applies market shocks if configured
   - Tracks assets allocation
 
-  Savings: the simulation invest all fund in bank account exceeding the `bank_upper_bound`
+  Savings: the simulation invest all fund in bank account exceeding the [bank_upper_bound](/docs/config.md)
   in _"liquid"_ assets.
 
-  This process runs for the specified number of times, i.e. `num_simulations`, each run
-  simulates `years_to_simulate` years of the user's financial life.
-  The simulation ends holding `num_simulations` different evolutions of the user's wealth.
+  This process runs for the specified number of times, i.e. [num_simulations](/docs/config.md), each
+  run simulates [years_to_simulate](/docs/config.md) years of the user's financial life.
+  The simulation ends holding [num_simulations](/docs/config.md) different evolutions of the user's wealth.
   Finally, it aggregates the results to determine the success rate and other statistics.
   The results are presented in plots and reports.
 
@@ -317,8 +316,7 @@ For mathematical background, advanced usage, and additional guides, see the [doc
   - _Monte Carlo Methods in Financial Engineering_ by Paul Glasserman: A rigorous text
     on Monte Carlo techniques for financial modeling, including asset return simulations.
   - _Options, Futures, and Other Derivatives_ by John C. Hull: A foundational text on
-    derivatives pricing, volatility modeling, and Monte Carlo simulations, ideal for
-    understanding asset return dynamics.
+    derivatives pricing, ideal for understanding asset return dynamics.
   - [Investopedia: Asset Return Volatility][invopedia-vol-url]: Explains volatility as the standard deviation
     of returns, key for configuring your `mu` and `sigma` parameters.
 
@@ -331,5 +329,4 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 [reddit-fire-url]: https://www.reddit.com/r/financialindependence/
 
-    These resources provide a mix of practical, theoretical, and data-driven content to Finance
-    your use of this tool and FIRE planning knowledge.
+These resources provide a mix of practical, theoretical, and data-driven content to Finance your use of this tool and FIRE planning knowledge.

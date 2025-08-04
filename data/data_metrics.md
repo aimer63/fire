@@ -13,10 +13,10 @@ a statistical overview of historical performance.
 1. **Python Environment:** You need Python with the `pandas` and `numpy` libraries installed.
 
    ```bash
-   pip install pandas numpy openpyxl
+   pip install pandas numpy openpyxl matplotlib
    ```
 
-2. **Data File:** The script expects an Excel file with historical price data.
+2. **Data File:** The script expects an Excel file with historical price data, default name: `data.xlsx`.
    - The file must have a date column, name: `Date`.
    - The other named columns are considered the values of the of the assets (e.g., indexes prices).
    - The data can be sampled **monthly** or **daily**. The script will automatically

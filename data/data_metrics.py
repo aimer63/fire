@@ -1,25 +1,40 @@
 """
-Historical Market Data Analysis Tool.
+Historical Market Data Analysis and Visualization Tool.
 
 This script performs a historical analysis of market index data from an Excel file.
 Its primary goal is to answer the question: "If I had invested for a fixed
 N-year period at any point in the past, what would my range of outcomes have been?"
 
 It uses a "rolling window" approach to calculate the annualized return and risk
-(standard deviation) for every possible N-year period in the dataset, providing
-a statistical overview of historical performance.
+(standard deviation) for every possible N-year period in the dataset. It then
+provides a statistical overview of historical performance in tabular format and
+generates distribution plots for visual analysis.
 
-The script can be configured via command-line arguments for the investment
-horizon (in years) and the input data file.
+The script can handle both monthly and daily source data and is configured via
+command-line arguments.
+
+Key Features:
+-   Analyzes N-year rolling windows for any given period.
+-   Calculates annualized returns, standard deviation, and failure rates.
+-   Supports both monthly and daily input data (resamples daily to monthly).
+-   Generates and saves distribution plots for returns and risk.
+-   Configurable via command-line arguments.
 
 Usage:
-    python data_metrics.py -n 10 -f my_data.xlsx
+    # Analyze a monthly file with a 10-year window
+    python data_metrics.py -n 10 -f my_monthly_data.xlsx
+
+    # Analyze a daily file with a 5-year window
+    python data_metrics.py -n 5 -f my_daily_data.xlsx --frequency daily
 """
 
 import argparse
 from typing import Dict, Callable
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import ticker
+import os
 
 
 # --- Setup CLI argument parsing ---
@@ -316,3 +331,52 @@ if num_leftover_months > 0:
             }
         )
     )
+
+
+# --- Step 13: Generate and Save Distribution Plots ---
+# Create output directory if it doesn't exist
+output_dir = "output"
+os.makedirs(output_dir, exist_ok=True)
+
+# Set plot style to match firestarter conventions
+plt.style.use("dark_background")
+
+# Generate a plot for each index
+for index in INDEX_COLS:
+    # Sanitize the index name to create a valid filename
+    safe_index_name = index.replace("/", "_")
+
+    # --- Plot 1: Return Rate Distribution ---
+    plt.figure(figsize=(10, 6))
+    plt.hist(
+        results_df[f"Return_Rate_{index}"].dropna(),
+        bins=50,
+        edgecolor="black",
+        alpha=0.8,
+    )
+    plt.title(f"Distribution of {N}-Year Annualized Returns for {index}")
+    plt.xlabel("Annualized Return Rate")
+    plt.ylabel("Number of Windows")
+    plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"return_distribution_{safe_index_name}.png"))
+
+    # --- Plot 2: Standard Deviation Distribution ---
+    plt.figure(figsize=(10, 6))
+    plt.hist(
+        results_df[f"Std_Dev_{index}"].dropna(),
+        bins=50,
+        edgecolor="black",
+        alpha=0.8,
+    )
+    plt.title(f"Distribution of {N}-Year Annualized Std Dev for {index}")
+    plt.xlabel("Annualized Standard Deviation (Risk)")
+    plt.ylabel("Number of Windows")
+    plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"std_dev_distribution_{safe_index_name}.png"))
+
+print(f"\nDistribution plots saved to '{output_dir}/'")
+plt.show()
