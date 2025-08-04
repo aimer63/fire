@@ -72,7 +72,7 @@ sigma = 0.025
 
   - Initializes assets values and bank balance
   - Simulates monthly/annual investment returns and inflation
-  - Handles withdrawals for expenses and marks the simulation as **'failed'** if assets are insufficient
+  - Handles withdrawals for expenses and marks the simulation as **failed** if assets are insufficient
   - Handles income, pension, contributions, and planned extra expenses
   - Manages liquidity (bank account bounds, topping up or investing excess)
   - Manages portfolio rebalances
@@ -80,8 +80,8 @@ sigma = 0.025
   - Applies market shocks if configured
   - Tracks assets allocation
 
-  Savings: the simulation invest all fund in bank account exceeding the [bank_upper_bound](/docs/config.md)
-  in _"liquid"_ assets.
+  Savings: the simulation invest all funds in bank account exceeding the [bank_upper_bound](/docs/config.md)
+  in assets according to the current portfolio allocation.
 
   This process runs for the specified number of times, i.e. [num_simulations](/docs/config.md), each
   run simulates [years_to_simulate](/docs/config.md) years of the user's financial life.
