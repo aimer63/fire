@@ -21,7 +21,7 @@ realistic conditions.
 
 ## Purpose
 
-This tool aims to help users understand the likelihood of a retirement plan succeeding under
+This tool aims to help users figure out the likelihood of a retirement plan succeeding under
 uncertainty, visualize possible outcomes, and make informed decisions about savings, spending, and
 asset allocation.
 
@@ -34,13 +34,14 @@ asset allocation.
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
 
-  Investment assets are defined in the configuration. For each asset you specify the following; `mu`, the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
+  Investment assets are defined in the configuration. For each asset you specify the following; `mu`,
+  the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url].
 
   Inflation, though not an asset, is defined in this section because it is correlated
   with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating
-  random from `mu` and `sigma` is the same is the same for assets and inflation.
+  random values from `mu` and `sigma` is the same for assets and inflation.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
 
