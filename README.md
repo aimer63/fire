@@ -68,26 +68,29 @@ sigma = 0.025
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
 
-  The main simulation logic, for each run it:
+  The core of Firestarter is an engine that models your financial life month by month,
+  year by year. For each of the thousands of simulation runs, it projects a unique
+  potential financial future based on your configuration and randomized market returns.
 
-  - Initializes assets values and bank balance
-  - Simulates monthly/annual investment returns and inflation
-  - Handles withdrawals for expenses and marks the simulation as **failed** if assets are insufficient
-  - Handles income, pension, contributions, and planned extra expenses
-  - Manages liquidity (bank account bounds, topping up or investing excess)
-  - Manages portfolio rebalances
-  - Applies fees on funds
-  - Applies market shocks if configured
-  - Tracks assets allocation
+  Each simulation evolves through a detailed monthly cycle:
 
-  Savings: the simulation invest all funds in bank account exceeding the [bank_upper_bound](/docs/config.md)
-  in assets according to the current portfolio allocation.
+  - **Processes Cash Flow:** Handles all income, pensions, contributions, and both regular
+    and planned extra expenses.
+  - **Simulates Market Growth:** Applies randomized monthly returns to your investment
+    portfolio, growing (or shrinking) your assets according to the statistical model you defined.
+    It also accounts for inflation.
+  - **Manages Liquidity:** Maintains your bank account within the bounds you define
+    in your configuration (`bank_lower_bound`, `bank_upper_bound`), automatically selling
+    assets to cover shortfalls or investing excess cash. If it cannot cover expenses,
+    the simulation is marked as **failed**.
+  - **Handles Events:** Executes scheduled portfolio rebalances, applies market shocks
+    if configured, and deducts recurring fund fees.
 
-  This process runs for the specified number of times, i.e. [num_simulations](/docs/config.md), each
-  run simulates [years_to_simulate](/docs/config.md) years of the user's financial life.
-  The simulation ends holding [num_simulations](/docs/config.md) different evolutions of the user's wealth.
-  Finally, it aggregates the results to determine the success rate and other statistics.
-  The results are presented in plots and reports.
+  This entire lifecycle is repeated for the number of years specified in your
+  configuration (`years_to_simulate`). By aggregating the outcomes of all simulation
+  runs (controlled by `num_simulations` in configuration), Firestarter calculates the
+  probability of your plan's success and provides a statistical picture of your potential
+  financial outcomes presented in reports and plots.
 
   **Note**:
 
@@ -95,7 +98,8 @@ sigma = 0.025
   > in a single currency. There is no currency conversion or multi-currency support;
   > all values must be provided and interpreted in the same currency throughout the simulation._
   >
-  > _The simulation does not consider any fiscal aspects, therefore parameters such as income, pension,
+  > _The simulation does not consider any fiscal aspects, therefore parameters such as
+  > income, pension,
   > contributions, etc. are to be considered net of taxes._
 
 - **[Reporting & Plotting](/docs/output.md)**
