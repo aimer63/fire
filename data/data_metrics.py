@@ -76,8 +76,6 @@ df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
 INDEX_COLS = [col for col in df.columns if col != "Date"]
 print(f"Analyzing indices: {INDEX_COLS}")
 
-# for col in INDEX_COLS:
-#     df[col] = pd.to_numeric(df[col], errors="coerce")
 
 # --- Step 2: Set and format the date column ---
 df["Date"] = pd.to_datetime(df["Date"])
