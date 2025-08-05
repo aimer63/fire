@@ -69,13 +69,15 @@ FREQUENCY = args.frequency
 
 # --- Step 1: Read the Excel file and get column names ---
 df = pd.read_excel(FILENAME)
+# Remove any columns that are unnamed
+df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
 
 # Dynamically get the names of the indices to analyze (all columns except 'Date')
-INDEX_COLS = [
-    col for col in df.columns if col != "Date" and not str(col).startswith("Unnamed")
-]
+INDEX_COLS = [col for col in df.columns if col != "Date"]
 print(f"Analyzing indices: {INDEX_COLS}")
 
+# for col in INDEX_COLS:
+#     df[col] = pd.to_numeric(df[col], errors="coerce")
 
 # --- Step 2: Set and format the date column ---
 df["Date"] = pd.to_datetime(df["Date"])
@@ -111,41 +113,34 @@ else:
 df = df.reindex(full_date_range).ffill()
 
 
-# --- Step 5: Calculate monthly return rates ---
-returns = df[INDEX_COLS].pct_change(fill_method=None).dropna()
+# --- Step 5: This step is no longer needed ---
 
 
 # --- Step 6: User-specified N years for investment horizon ---
 window_size = N * 12  # Convert years to months
 
 # Ensure sufficient data
-if len(returns) < window_size:
+if len(df) <= window_size:
     raise ValueError(
-        f"Insufficient data: need at least {window_size} months for {N}-year windows."
+        f"Insufficient data: need at least {window_size + 1} months for {N}-year windows."
     )
 
 
-# --- Step 7: Calculate metrics for all possible N-year windows using rolling windows ---
-# This is much more efficient than iterating.
+# --- Step 7: Calculate metrics for all possible N-year windows ---
+# This is a highly optimized method that avoids a slow rolling product.
 
-# Calculate rolling cumulative return: (1+r1)*(1+r2)*...*(1+rn)
-# The .apply() with np.prod is necessary for a rolling product.
-rolling_prod = (1 + returns).rolling(window=window_size).apply(np.prod, raw=True)
+# Calculate the total return over the window directly from start and end prices.
+# We select only the relevant columns to avoid errors from other columns.
+# (End Price / Start Price) - 1
+total_return = (df[INDEX_COLS] / df[INDEX_COLS].shift(window_size)) - 1
 
-# Annualize the return rate: (product ^ (12/n)) - 1
-annualized_return_rate = rolling_prod ** (12 / window_size) - 1
+# Annualize the return rate: ((1 + total_return) ^ (12/n)) - 1
+annualized_return_rate = (1 + total_return) ** (12 / window_size) - 1
 
-# Annualize the standard deviation: monthly_std * sqrt(12)
-annualized_std = returns.rolling(window=window_size).std() * np.sqrt(12)
-
-# Combine results into a single DataFrame
-results_df = pd.concat(
-    [annualized_return_rate, annualized_std],
-    axis=1,
-    keys=["Return_Rate", "Std_Dev"],
+# Create the results DataFrame, renaming columns to match downstream expectations
+results_df = annualized_return_rate.rename(
+    columns={col: f"Return_Rate_{col}" for col in INDEX_COLS}
 )
-# Flatten the multi-level column names (e.g., ('Return_Rate', 'MSCI_World') -> 'Return_Rate_MSCI_World')
-results_df.columns = ["_".join(col) for col in results_df.columns]
 results_df.dropna(inplace=True)
 
 # Add a 'Window Start' column for easy reference. The index is the *end* of the window.
@@ -156,11 +151,10 @@ results_df["Window Start"] = pd.to_datetime(
 
 # --- Step 8: Calculate expected values (mean across all windows) ---
 return_rate_cols = [f"Return_Rate_{col}" for col in INDEX_COLS]
-std_dev_cols = [f"Std_Dev_{col}" for col in INDEX_COLS]
 
-# Calculate the mean for each metric series
+# Calculate the mean and standard deviation of the annualized return rates
 mean_returns = results_df[return_rate_cols].mean()
-mean_stds = results_df[std_dev_cols].mean()
+std_dev_of_returns = results_df[return_rate_cols].std()
 
 # Calculate the percentage of windows with negative returns
 total_windows = len(results_df)
@@ -171,16 +165,17 @@ failed_windows_pct = {
 
 # Clean the index of each series *before* creating the DataFrame
 mean_returns.index = mean_returns.index.str.replace("Return_Rate_", "")
-mean_stds.index = mean_stds.index.str.replace("Std_Dev_", "")
+std_dev_of_returns.index = std_dev_of_returns.index.str.replace("Return_Rate_", "")
 
 # Now create the DataFrame. Pandas will align the data correctly.
 expected_df = pd.DataFrame(
     {
-        "Expected Annualized Return Rate": mean_returns,
-        "Expected Annualized Std Dev": mean_stds,
+        "Expected Annualized Return": mean_returns,
+        "Std Dev of Returns": std_dev_of_returns,
         "Failed Windows (%)": pd.Series(failed_windows_pct),
     }
 )
+
 
 # --- Step 9: Identify worst, median, and best windows ---
 extreme_windows = {}
@@ -193,7 +188,7 @@ for index in INDEX_COLS:
     median = sorted_df.iloc[len(sorted_df) // 2]
     best = sorted_df.iloc[-1]
 
-    # Create table for each index
+    # Create table for each index, without Std Dev
     extreme_windows[index] = pd.DataFrame(
         {
             "Case": ["Worst", "Median", "Best"],
@@ -207,19 +202,11 @@ for index in INDEX_COLS:
                 median[f"Return_Rate_{index}"],
                 best[f"Return_Rate_{index}"],
             ],
-            "Std Dev": [
-                worst[f"Std_Dev_{index}"],
-                median[f"Std_Dev_{index}"],
-                best[f"Std_Dev_{index}"],
-            ],
         }
     )
 
 
-# --- Step 10: Calculate percentiles and IQR ---
-# Create separate DataFrames for return and std dev percentiles
-
-# --- Return Rate Percentiles ---
+# --- Step 10: Calculate percentiles and IQR for Return Rates ---
 return_percentiles_data = {
     "25th": results_df[return_rate_cols].quantile(0.25),
     "50th": results_df[return_rate_cols].quantile(0.50),
@@ -232,17 +219,6 @@ return_percentiles_df.index = return_percentiles_df.index.str.replace(
     "Return_Rate_", ""
 )
 
-# --- Standard Deviation Percentiles ---
-std_percentiles_data = {
-    "25th": results_df[std_dev_cols].quantile(0.25),
-    "50th": results_df[std_dev_cols].quantile(0.50),
-    "75th": results_df[std_dev_cols].quantile(0.75),
-    "IQR": results_df[std_dev_cols].quantile(0.75)
-    - results_df[std_dev_cols].quantile(0.25),
-}
-std_percentiles_df = pd.DataFrame(std_percentiles_data)
-std_percentiles_df.index = std_percentiles_df.index.str.replace("Std_Dev_", "")
-
 
 # --- Step 11: Print results ---
 print(
@@ -251,8 +227,8 @@ print(
 print(
     expected_df.to_string(
         formatters={
-            "Expected Annualized Return Rate": "{:.2%}".format,
-            "Expected Annualized Std Dev": "{:.2%}".format,
+            "Expected Annualized Return": "{:.2%}".format,
+            "Std Dev of Returns": "{:.2%}".format,
             "Failed Windows (%)": "{:.2%}".format,
         }
     )
@@ -272,6 +248,8 @@ for index in INDEX_COLS:
         )
     )
 
+print(f"\n(Based on {len(results_df)} unique {N}-year rolling windows)")
+
 # --- Print Percentile Tables ---
 print(f"\n--- Return Rate Percentiles for {N}-Year Investment ---")
 percentile_formatters: Dict[str | int, Callable] = {
@@ -279,58 +257,47 @@ percentile_formatters: Dict[str | int, Callable] = {
 }
 print(return_percentiles_df.to_string(formatters=percentile_formatters))
 
-print(f"\n--- Standard Deviation Percentiles for {N}-Year Investment ---")
-percentile_formatters = {
-    col: (lambda x: f"{x:.2%}") for col in std_percentiles_df.columns
-}
-print(std_percentiles_df.to_string(formatters=percentile_formatters))
-
 
 # --- Step 12: Analyze the final, incomplete "leftover" window ---
 # This is separate from the main analysis and does not affect other calculations.
 
 # Calculate how many months are in the last partial window
-num_leftover_months = len(returns) % window_size
+# The number of return periods is len(df) - 1
+num_leftover_months = (len(df) - 1) % window_size
 
 if num_leftover_months > 0:
-    # Isolate the returns for the leftover period
-    leftover_returns = returns.iloc[-num_leftover_months:]
+    # Isolate the prices for the leftover period. We need the price from the
+    # day before the period started to calculate the return.
+    leftover_prices = df.iloc[-num_leftover_months - 1 :]
 
-    # Calculate metrics for this partial window
-    leftover_prod = (1 + leftover_returns).prod()
+    # Calculate total return directly from start and end prices
+    total_leftover_return = (leftover_prices.iloc[-1] / leftover_prices.iloc[0]) - 1
+
     # Annualize the return, using the actual number of months for accuracy
-    leftover_annualized_return = leftover_prod ** (12 / num_leftover_months) - 1
-    # Annualize the standard deviation
-    leftover_annualized_std = leftover_returns.std() * np.sqrt(12)
+    leftover_annualized_return = (1 + total_leftover_return) ** (
+        12 / num_leftover_months
+    ) - 1
 
-    # Get the start date of this period
-    leftover_start_date = leftover_returns.index.min().strftime("%Y-%m")
+    # Get the start date of this period (the second date in our slice)
+    leftover_start_date = leftover_prices.index[1].strftime("%Y-%m")
 
     print("\n--- Analysis of Final Incomplete Window ---")
     print(
         f"The most recent, incomplete period contains {num_leftover_months} months of data (starting {leftover_start_date})."
     )
     print(
-        "Note: These results are for a shorter period and are not directly comparable to the full 10-year windows."
+        "Note: These results are for a shorter period and are not directly comparable to the full {N}-year windows."
     )
 
     # Create a DataFrame for clean printing
     leftover_df = pd.DataFrame(
         {
             "Annualized Return Rate": leftover_annualized_return,
-            "Annualized Std Dev": leftover_annualized_std,
         }
     )
 
     # Print the results for each index
-    print(
-        leftover_df.to_string(
-            formatters={
-                "Annualized Return Rate": "{:.2%}".format,
-                "Annualized Std Dev": "{:.2%}".format,
-            }
-        )
-    )
+    print(leftover_df.to_string(formatters={"Annualized Return Rate": "{:.2%}".format}))
 
 
 # --- Step 13: Generate and Save Distribution Plots ---
@@ -361,22 +328,6 @@ for index in INDEX_COLS:
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, f"return_distribution_{safe_index_name}.png"))
-
-    # --- Plot 2: Standard Deviation Distribution ---
-    plt.figure(figsize=(10, 6))
-    plt.hist(
-        results_df[f"Std_Dev_{index}"].dropna(),
-        bins=50,
-        edgecolor="black",
-        alpha=0.8,
-    )
-    plt.title(f"Distribution of {N}-Year Annualized Std Dev for {index}")
-    plt.xlabel("Annualized Standard Deviation (Risk)")
-    plt.ylabel("Number of Windows")
-    plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
-    plt.grid(axis="y", linestyle="--", alpha=0.7)
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, f"std_dev_distribution_{safe_index_name}.png"))
 
 print(f"\nDistribution plots saved to '{output_dir}/'")
 plt.show()
