@@ -16,7 +16,7 @@ command-line arguments.
 Key Features:
 -   Analyzes N-year rolling windows for any given period.
 -   Calculates annualized returns, standard deviation, and failure rates.
--   Supports both monthly and daily input data (resamples daily to monthly).
+-   Supports both monthly and daily input data (analyzes daily data directly).
 -   Generates and saves distribution plots for returns and risk.
 -   Configurable via command-line arguments.
 
@@ -60,12 +60,13 @@ parser.add_argument(
     type=str,
     default="monthly",
     choices=["monthly", "daily"],
-    help="The frequency of the input data ('monthly' or 'daily'). If 'daily', data will be resampled to monthly.",
+    help="The frequency of the input data ('monthly' or 'daily').",
 )
 args = parser.parse_args()
 N = args.years
 FILENAME = args.file
 FREQUENCY = args.frequency
+
 
 # --- Step 1: Read the Excel file and get column names ---
 df = pd.read_excel(FILENAME)
@@ -76,51 +77,50 @@ df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
 INDEX_COLS = [col for col in df.columns if col != "Date"]
 print(f"Analyzing indices: {INDEX_COLS}")
 
+# Convert all index columns to a numeric type
+for col in INDEX_COLS:
+    df[col] = pd.to_numeric(df[col], errors="coerce")
 
-# --- Step 2: Set and format the date column ---
+
+# --- Step 2: Prepare the DataFrame based on frequency ---
 df["Date"] = pd.to_datetime(df["Date"])
+# Remove any duplicate dates, keeping the last entry
+df = df.drop_duplicates(subset=["Date"], keep="last")
 
-# If data is daily, resample to month-end prices first
-if FREQUENCY == "daily":
-    # First, ensure the daily data has no duplicate dates by taking the last entry per day
-    df = df.drop_duplicates(subset=["Date"], keep="last")
-    print("Resampling to monthly (last day of month).")
-    # To resample, we need a DatetimeIndex. We set it, resample, then bring it back as a column.
-    df = df.set_index("Date").resample("ME").last().reset_index()
+# --- Define constants based on frequency ---
+TRADING_DAYS_PER_YEAR = 252
+MONTHS_PER_YEAR = 12
 
-# Now, for all cases, normalize the Date column to the start of the month
-df["Date"] = df["Date"].dt.to_period("M").dt.to_timestamp()
-
-# Finally, set the clean, normalized date column as the index
-df.set_index("Date", inplace=True)
-
-
-# --- Step 3: Check for missing months ---
-full_date_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq="MS")
-missing_months = full_date_range[~full_date_range.isin(df.index)]
-
-# Print missing months alert
-if not missing_months.empty:
-    missing_months_list = [month.strftime("%Y-%m") for month in missing_months]
-    print(f"Alert: Missing months detected: {missing_months_list}")
-else:
-    print("No missing months detected.")
+if FREQUENCY == "monthly":
+    periods_per_year = MONTHS_PER_YEAR
+    # --- Step 3 & 4 for Monthly: Normalize, check for missing, and fill ---
+    df["Date"] = df["Date"].dt.to_period("M").dt.to_timestamp()
+    df.set_index("Date", inplace=True)
+    full_date_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq="MS")
+    missing_periods = full_date_range[~full_date_range.isin(df.index)]
+    if not missing_periods.empty:
+        missing_list = [p.strftime("%Y-%m") for p in missing_periods]
+        print(f"Alert: Missing months detected: {missing_list}")
+    else:
+        print("No missing months detected.")
+    df = df.reindex(full_date_range).ffill()
+else:  # Daily frequency
+    periods_per_year = TRADING_DAYS_PER_YEAR
+    df.set_index("Date", inplace=True)
+    print("Daily analysis: Gaps are assumed to be non-trading days.")
 
 
-# --- Step 4: Forward-fill missing months ---
-df = df.reindex(full_date_range).ffill()
-
-
-# --- Step 5: This step is no longer needed ---
+# --- Step 5: This section is no longer needed ---
+# The total return is calculated directly from prices in Step 7.
 
 
 # --- Step 6: User-specified N years for investment horizon ---
-window_size = N * 12  # Convert years to months
+window_size = N * periods_per_year  # Window size in months or trading days
 
 # Ensure sufficient data
 if len(df) <= window_size:
     raise ValueError(
-        f"Insufficient data: need at least {window_size + 1} months for {N}-year windows."
+        f"Insufficient data: need at least {window_size + 1} periods for {N}-year windows."
     )
 
 
@@ -128,23 +128,27 @@ if len(df) <= window_size:
 # This is a highly optimized method that avoids a slow rolling product.
 
 # Calculate the total return over the window directly from start and end prices.
-# We select only the relevant columns to avoid errors from other columns.
 # (End Price / Start Price) - 1
 total_return = (df[INDEX_COLS] / df[INDEX_COLS].shift(window_size)) - 1
 
-# Annualize the return rate: ((1 + total_return) ^ (12/n)) - 1
-annualized_return_rate = (1 + total_return) ** (12 / window_size) - 1
+# Annualize the return rate: ((1 + total_return) ^ (periods_per_year/window_size)) - 1
+annualized_return_rate = (1 + total_return) ** (periods_per_year / window_size) - 1
 
-# Create the results DataFrame, renaming columns to match downstream expectations
+# Create the results DataFrame, which now only contains the return rates
 results_df = annualized_return_rate.rename(
     columns={col: f"Return_Rate_{col}" for col in INDEX_COLS}
 )
 results_df.dropna(inplace=True)
 
 # Add a 'Window Start' column for easy reference. The index is the *end* of the window.
-results_df["Window Start"] = pd.to_datetime(
-    results_df.index - pd.DateOffset(months=window_size - 1)
-).strftime("%Y-%m")
+offset = (
+    pd.DateOffset(months=window_size - 1)
+    if FREQUENCY == "monthly"
+    else pd.DateOffset(days=window_size - 1)
+)
+results_df["Window Start"] = pd.to_datetime(results_df.index - offset).strftime(
+    "%Y-%m-%d"
+)
 
 
 # --- Step 8: Calculate expected values (mean across all windows) ---
@@ -152,7 +156,7 @@ return_rate_cols = [f"Return_Rate_{col}" for col in INDEX_COLS]
 
 # Calculate the mean and standard deviation of the annualized return rates
 mean_returns = results_df[return_rate_cols].mean()
-std_dev_of_returns = results_df[return_rate_cols].std()
+std_of_returns = results_df[return_rate_cols].std()
 
 # Calculate the percentage of windows with negative returns
 total_windows = len(results_df)
@@ -163,13 +167,13 @@ failed_windows_pct = {
 
 # Clean the index of each series *before* creating the DataFrame
 mean_returns.index = mean_returns.index.str.replace("Return_Rate_", "")
-std_dev_of_returns.index = std_dev_of_returns.index.str.replace("Return_Rate_", "")
+std_of_returns.index = std_of_returns.index.str.replace("Return_Rate_", "")
 
 # Now create the DataFrame. Pandas will align the data correctly.
 expected_df = pd.DataFrame(
     {
         "Expected Annualized Return": mean_returns,
-        "Std Dev of Returns": std_dev_of_returns,
+        "Std Dev of Returns": std_of_returns,
         "Failed Windows (%)": pd.Series(failed_windows_pct),
     }
 )
@@ -186,7 +190,7 @@ for index in INDEX_COLS:
     median = sorted_df.iloc[len(sorted_df) // 2]
     best = sorted_df.iloc[-1]
 
-    # Create table for each index, without Std Dev
+    # Create table for each index
     extreme_windows[index] = pd.DataFrame(
         {
             "Case": ["Worst", "Median", "Best"],
@@ -259,32 +263,31 @@ print(return_percentiles_df.to_string(formatters=percentile_formatters))
 # --- Step 12: Analyze the final, incomplete "leftover" window ---
 # This is separate from the main analysis and does not affect other calculations.
 
-# Calculate how many months are in the last partial window
-# The number of return periods is len(df) - 1
-num_leftover_months = (len(df) - 1) % window_size
+# Calculate how many periods are in the last partial window
+num_leftover_periods = (len(df) - 1) % window_size
 
-if num_leftover_months > 0:
+if num_leftover_periods > 0:
     # Isolate the prices for the leftover period. We need the price from the
     # day before the period started to calculate the return.
-    leftover_prices = df.iloc[-num_leftover_months - 1 :]
+    leftover_prices = df.iloc[-num_leftover_periods - 1 :]
 
     # Calculate total return directly from start and end prices
     total_leftover_return = (leftover_prices.iloc[-1] / leftover_prices.iloc[0]) - 1
 
-    # Annualize the return, using the actual number of months for accuracy
+    # Annualize the return, using the actual number of periods for accuracy
     leftover_annualized_return = (1 + total_leftover_return) ** (
-        12 / num_leftover_months
+        periods_per_year / num_leftover_periods
     ) - 1
 
     # Get the start date of this period (the second date in our slice)
-    leftover_start_date = leftover_prices.index[1].strftime("%Y-%m")
+    leftover_start_date = leftover_prices.index[1].strftime("%Y-%m-%d")
 
     print("\n--- Analysis of Final Incomplete Window ---")
     print(
-        f"The most recent, incomplete period contains {num_leftover_months} months of data (starting {leftover_start_date})."
+        f"The most recent, incomplete period contains {num_leftover_periods} {FREQUENCY} periods (starting {leftover_start_date})."
     )
     print(
-        "Note: These results are for a shorter period and are not directly comparable to the full {N}-year windows."
+        f"Note: These results are for a shorter period and are not directly comparable to the full {N}-year windows."
     )
 
     # Create a DataFrame for clean printing
