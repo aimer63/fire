@@ -454,9 +454,23 @@ def main() -> None:
     INDEX_COLS = [col for col in df.columns if col != "Date"]
     print(f"Analyzing indices: {INDEX_COLS}")
 
+    # Convert all index columns to numeric, coercing errors to NaN.
+    # Warn if any missing or non-numeric values are found, and display a summary.
+    # Fill missing values in the index columns by propagating the last valid
+    # observation forward (forward fill).
     for col in INDEX_COLS:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-    df.dropna(subset=INDEX_COLS, how="all", inplace=True)
+    num_missing = df[INDEX_COLS].isna().sum()
+    total_missing = num_missing.sum()
+    if total_missing > 0:
+        print(
+            f"Warning: Detected {total_missing} missing or non-numeric values in your data."
+        )
+        print("Missing values per column:")
+        for col, val in num_missing[num_missing > 0].items():
+            print(f"{col}: {val} (dtype: {df[col].dtype})")
+        print("Filling missing values using forward fill (ffill).")
+    df[INDEX_COLS] = df[INDEX_COLS].ffill()
 
     # --- Step 2: Prepare the DataFrame based on frequency ---
     df["Date"] = pd.to_datetime(df["Date"])
@@ -481,7 +495,6 @@ def main() -> None:
         df = df.reindex(full_date_range).ffill()
     else:  # Daily frequency
         periods_per_year = TRADING_DAYS_PER_YEAR
-        df.ffill(inplace=True)
         print(
             f"Daily analysis ({periods_per_year} days/year): Missing values are forward-filled; gaps in dates are assumed to be non-trading days."
         )
