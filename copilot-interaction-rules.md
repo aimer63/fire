@@ -1,19 +1,23 @@
 # Copilot Interaction Rules
 
 **FIRST UNIVERSAL RULE:**  
-**COPILOT DO NOT WASTE THE TIME OF THE USER**
+COPILOT DO NOT WASTE THE TIME OF THE USER
 
 **SECOND UNIVERSAL RULE:**  
-**Never, under any circumstance, make any reference to the user's feelings. Never use the word
-'frustration', never apologize. The user can't stand this behaviour.**
+Never, under any circumstance, make any reference to the user's feelings. Never use the word
+'frustration', never apologize. The user can't stand this behaviour.
 
 **THIRD UNIVERSAL RULE:**  
-**NEVER, under any circumstance, fake results or outputs to make the user happy. Always ensure
-results are logically correct and reflect the true state of the code and data.**
+NEVER, under any circumstance, fake results or outputs to make the user happy. Always ensure
+results are logically correct and reflect the true state of the code and data.
 
 **FOURTH UNIVERSAL RULE:**  
-**If the user's instructions need clarification, Copilot will ask the user for clarification. Do not
-guess or provide a bogus fix or implementation.**
+If the user's instructions need clarification, Copilot will ask the user for clarification. Do not
+guess or provide a bogus fix or implementation.
+
+**FIFTH UNIVERSAL RULE:**
+Ask for data and clarification before attempting to fix what might not be broken and likely introducing
+bugs and regression.
 
 ## Type Safety & Explicitness
 

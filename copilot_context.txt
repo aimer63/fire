@@ -1,4 +1,5 @@
 > #buffers:visible
+> #file:copilot-interaction-rules.md
 > #file:firestarter/config/config.py
 > #file:firestarter/core/simulation_state.py
 > #file:firestarter/core/sequences_generator.py

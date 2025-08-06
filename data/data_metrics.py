@@ -326,12 +326,14 @@ def run_heatmap_analysis(df, periods_per_year, INDEX_COLS):
         total_return = (df[INDEX_COLS] / df[INDEX_COLS].shift(window_size)) - 1
         annualized_return = (1 + total_return) ** (1 / n) - 1
 
+        # Perform all calculations in a vectorized way.
+        # This returns a pandas Series for each metric, indexed by asset name.
         mean_returns = annualized_return.mean()
         std_of_returns = annualized_return.std()
-        failed_windows_pct = (annualized_return < 0).sum() / len(
-            annualized_return.dropna()
-        )
+        num_windows = annualized_return.count()
+        failed_windows_pct = (annualized_return < 0).sum() / num_windows
         var_5_pct = annualized_return.quantile(0.05)
+        # print(f"DEBUG: N={n}, failed_windows_pct:\n{failed_windows_pct}")
 
         for index in INDEX_COLS:
             results.append(
@@ -342,6 +344,7 @@ def run_heatmap_analysis(df, periods_per_year, INDEX_COLS):
                     "Std Dev of Returns": std_of_returns[index],
                     "Failed Windows (%)": failed_windows_pct[index],
                     "VaR (5th Percentile)": var_5_pct[index],
+                    "Number of Windows": num_windows[index],
                 }
             )
 
@@ -367,19 +370,36 @@ def run_heatmap_analysis(df, periods_per_year, INDEX_COLS):
                 "Std Dev of Returns",
                 "Failed Windows (%)",
                 "VaR (5th Percentile)",
+                "Number of Windows",
             ]
         ].T
 
-        print(f"\n--- Summary Statistics for {index} ---")
-        # Print with percentage formatting for clarity
-        print(
-            heatmap_pivot.to_string(
-                formatters={col: "{:.2%}".format for col in heatmap_pivot.columns}
-            )
-        )
+        # Create a formatted copy for printing
+        formatted_pivot = heatmap_pivot.copy().astype(object)
+        for row_label in formatted_pivot.index:
+            if row_label == "Number of Windows":
+                formatted_pivot.loc[row_label] = (
+                    heatmap_pivot.loc[row_label].astype(int).map("{:}".format)
+                )
+            else:
+                formatted_pivot.loc[row_label] = heatmap_pivot.loc[row_label].map(
+                    "{:.2%}".format
+                )
 
-        # Create a DataFrame for annotations with percentage formatting
-        annot_df = heatmap_pivot.map(lambda x: f"{x:.2%}")
+        print(f"\n--- Summary Statistics for {index} ---")
+        print(formatted_pivot.to_string())
+
+        # Create a new DataFrame for annotations, explicitly with object dtype
+        annot_df = pd.DataFrame(
+            index=heatmap_pivot.index, columns=heatmap_pivot.columns, dtype=object
+        )
+        for row in annot_df.index:
+            if row == "Number of Windows":
+                annot_df.loc[row] = (
+                    heatmap_pivot.loc[row].astype(int).map("{:,}".format)
+                )
+            else:
+                annot_df.loc[row] = heatmap_pivot.loc[row].map("{:.2%}".format)
 
         # --- Create data for coloring: one value per column, driven by VaR ---
         # Extract the risk metric that will drive the color
