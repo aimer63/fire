@@ -185,6 +185,7 @@ def run_single_analysis(df, N, periods_per_year, INDEX_COLS):
 
     # --- Step 10: Calculate percentiles and IQR for Return Rates ---
     return_percentiles_data = {
+        "5th": results_df[return_rate_cols].quantile(0.05),
         "25th": results_df[return_rate_cols].quantile(0.25),
         "50th": results_df[return_rate_cols].quantile(0.50),
         "75th": results_df[return_rate_cols].quantile(0.75),
