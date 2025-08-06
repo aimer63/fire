@@ -134,11 +134,23 @@ def run_single_analysis(df, N, periods_per_year, INDEX_COLS):
     mean_returns.index = mean_returns.index.str.replace("Return_Rate_", "")
     std_of_returns.index = std_of_returns.index.str.replace("Return_Rate_", "")
 
+    # Calculate periodic returns for volatility calculation
+    periodic_returns = df[INDEX_COLS].pct_change()
+
+    # Calculate the average annualized volatility within the windows
+    # 1. Rolling standard deviation of periodic returns
+    rolling_std = periodic_returns.rolling(window=window_size).std()
+    # 2. Annualize the volatility
+    annualized_volatility = rolling_std * np.sqrt(periods_per_year)
+    # 3. Average across all windows
+    avg_annualized_volatility = annualized_volatility.mean()
+
     # Now create the DataFrame. Pandas will align the data correctly.
     expected_df = pd.DataFrame(
         {
             "Expected Annualized Return": mean_returns,
-            "Std Dev of Returns": std_of_returns,
+            "StdDev of Annualized Returns": std_of_returns,
+            "Average Annualized Volatility": avg_annualized_volatility,
             "Failed Windows (%)": pd.Series(failed_windows_pct),
         }
     )
@@ -192,7 +204,8 @@ def run_single_analysis(df, N, periods_per_year, INDEX_COLS):
         expected_df.to_string(
             formatters={
                 "Expected Annualized Return": "{:.2%}".format,
-                "Std Dev of Returns": "{:.2%}".format,
+                "StdDev of Annualized Returns": "{:.2%}".format,
+                "Average Annualized Volatility": "{:.2%}".format,
                 "Failed Windows (%)": "{:.2%}".format,
             }
         )
@@ -316,6 +329,7 @@ def run_heatmap_analysis(df, periods_per_year, INDEX_COLS):
     print(f"Running heatmap analysis for N from 1 to {max_n} years...")
 
     results = []
+    periodic_returns = df[INDEX_COLS].pct_change()
     n_range = range(1, max_n + 1)
 
     for n in n_range:
@@ -333,7 +347,11 @@ def run_heatmap_analysis(df, periods_per_year, INDEX_COLS):
         num_windows = annualized_return.count()
         failed_windows_pct = (annualized_return < 0).sum() / num_windows
         var_5_pct = annualized_return.quantile(0.05)
-        # print(f"DEBUG: N={n}, failed_windows_pct:\n{failed_windows_pct}")
+
+        # Calculate average annualized volatility
+        rolling_std = periodic_returns.rolling(window=window_size).std()
+        annualized_volatility = rolling_std * np.sqrt(periods_per_year)
+        avg_annualized_volatility = annualized_volatility.mean()
 
         for index in INDEX_COLS:
             results.append(
@@ -341,7 +359,8 @@ def run_heatmap_analysis(df, periods_per_year, INDEX_COLS):
                     "N": n,
                     "Index": index,
                     "Expected Annualized Return": mean_returns[index],
-                    "Std Dev of Returns": std_of_returns[index],
+                    "StdDev of Annualized Returns": std_of_returns[index],
+                    "Average Annualized Volatility": avg_annualized_volatility[index],
                     "Failed Windows (%)": failed_windows_pct[index],
                     "VaR (5th Percentile)": var_5_pct[index],
                     "Number of Windows": num_windows[index],
@@ -367,7 +386,8 @@ def run_heatmap_analysis(df, periods_per_year, INDEX_COLS):
         heatmap_pivot = subset_df.set_index("N")[
             [
                 "Expected Annualized Return",
-                "Std Dev of Returns",
+                "StdDev of Annualized Returns",
+                "Average Annualized Volatility",
                 "Failed Windows (%)",
                 "VaR (5th Percentile)",
                 "Number of Windows",
