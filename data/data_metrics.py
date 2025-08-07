@@ -448,19 +448,19 @@ def main() -> None:
     Parses CLI arguments, prepares the data, and calls the appropriate
     analysis function (`run_single_analysis` or `run_heatmap_analysis`).
     """
-    # --- Step 1: Read the Excel file and get column names ---
+    # Read the Excel file and get column names
     df = pd.read_excel(FILENAME)
     df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
-    INDEX_COLS = [col for col in df.columns if col != "Date"]
-    print(f"Analyzing indices: {INDEX_COLS}")
+    DATA_COLS = [col for col in df.columns if col != "Date"]
+    print(f"Analyzing indices: {DATA_COLS}")
 
     # Convert all index columns to numeric, coercing errors to NaN.
     # Warn if any missing or non-numeric values are found, and display a summary.
     # Fill missing values in the index columns by propagating the last valid
     # observation forward (forward fill).
-    for col in INDEX_COLS:
+    for col in DATA_COLS:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-    num_missing = df[INDEX_COLS].isna().sum()
+    num_missing = df[DATA_COLS].isna().sum()
     total_missing = num_missing.sum()
     if total_missing > 0:
         print(
@@ -470,7 +470,7 @@ def main() -> None:
         for col, val in num_missing[num_missing > 0].items():
             print(f"{col}: {val} (dtype: {df[col].dtype})")
         print("Filling missing values using forward fill (ffill).")
-    df[INDEX_COLS] = df[INDEX_COLS].ffill()
+    df[DATA_COLS] = df[DATA_COLS].ffill()
 
     # --- Step 2: Prepare the DataFrame based on frequency ---
     df["Date"] = pd.to_datetime(df["Date"])
@@ -479,6 +479,20 @@ def main() -> None:
 
     assert isinstance(df.index, pd.DatetimeIndex)
 
+    # Prepare the DataFrame based on frequency
+    # Missing value handling:
+    # - All missing values within existing dates are expected to be forward-filled
+    #   (ffill) before this step.
+    # - For monthly analysis (TRADING_DAYS_PER_YEAR is None):
+    #   The DataFrame is reindexed to a complete monthly date range, introducing
+    #   NaNs for any missing months. These NaNs are then forward-filled (ffill),
+    #   ensuring a continuous monthly time series with no missing dates.
+    # - For daily analysis (TRADING_DAYS_PER_YEAR is not None):
+    #   The DataFrame is NOT reindexed, so only the dates present in the original
+    #   data are kept, these are assumed to be actual trading days.
+    #   Dates that are entirely absent from the data (such as weekends or holidays)
+    #   are not added or filled, they are simply ignored and treated as legitimate
+    #   non-trading days.
     MONTHS_PER_YEAR = 12
     if TRADING_DAYS_PER_YEAR is None:  # Monthly analysis
         periods_per_year = MONTHS_PER_YEAR
@@ -500,14 +514,14 @@ def main() -> None:
         )
 
     # Calculate periodic returns once for efficiency
-    single_period_returns = df[INDEX_COLS].pct_change()
+    single_period_returns = df[DATA_COLS].pct_change()
 
     if N_YEARS is not None:
         run_single_analysis(
-            df, N_YEARS, periods_per_year, INDEX_COLS, single_period_returns
+            df, N_YEARS, periods_per_year, DATA_COLS, single_period_returns
         )
     else:
-        run_heatmap_analysis(df, periods_per_year, INDEX_COLS, single_period_returns)
+        run_heatmap_analysis(df, periods_per_year, DATA_COLS, single_period_returns)
 
 
 if __name__ == "__main__":
