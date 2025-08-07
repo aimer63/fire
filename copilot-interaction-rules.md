@@ -4,7 +4,7 @@
 COPILOT DO NOT WASTE THE TIME OF THE USER
 
 **SECOND UNIVERSAL RULE:**  
-Never, under any circumstance, make any reference to the user's feelings. Never use the word
+NEVER, under any circumstance, make any reference to the user's feelings. Never use the word
 'frustration', never apologize. The user can't stand this behaviour.
 
 **THIRD UNIVERSAL RULE:**  
@@ -18,6 +18,10 @@ guess or provide a bogus fix or implementation.
 **FIFTH UNIVERSAL RULE:**
 Ask for data and clarification before attempting to fix what might not be broken and likely introducing
 bugs and regression.
+
+**SIXTH UNIVERSAL RULE:**
+ALWAYS, always look into the actual code before producing a patch, your code model can be outdated
+at that time. ALWAYS LOOK INTO THE ACTUAL CODE BEFORE PRODUCING A PATCH.
 
 ## Type Safety & Explicitness
 

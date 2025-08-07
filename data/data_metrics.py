@@ -5,35 +5,46 @@ This script performs a historical analysis of market index data from an Excel fi
 Its primary goal is to answer the question: "If I had invested for a fixed
 N-year period at any point in the past, what would my range of outcomes have been?"
 
-It has two modes of operation:
-1.  **Single Horizon Analysis:** Analyzes a specific N-year rolling window when
-    the `-n` flag is provided.
-2.  **Heatmap Analysis:** When `-n` is omitted, it analyzes all possible
-    investment horizons and presents a summary heatmap of key risk/return metrics.
+Modes of operation:
+    1. Single Horizon Analysis: Analyzes a specific N-year rolling window when
+       the ``-n`` flag is provided.
+    2. Heatmap Analysis: When ``-n`` is omitted, analyzes all possible
+       investment horizons and presents a summary heatmap of key risk/return metrics.
 
 The script can handle both monthly and daily source data and is configured via
 command-line arguments.
 
-Key Features:
--   Analyzes N-year rolling windows for any given period.
--   Calculates annualized returns, standard deviation, and failure rates.
--   Calculates average annualized volatility (the volatility *during* the investment).
--   Generates summary heatmaps showing how risk metrics change with the investment horizon.
--   Supports both monthly and daily input data (with configurable days per year).
--   Generates and saves distribution plots and heatmaps for visual analysis.
+Key Features
+------------
+- Analyzes N-year rolling windows for any given period.
+- Calculates annualized returns, standard deviation, and failure rates.
+- Calculates average annualized volatility (the volatility *during* the investment).
+- Supports both price and single-period return data as input, controlled by the
+  ``--input-type`` CLI argument.
+- If using ``return`` input type, the input values must be true single-period returns
+  (not annualized rates).
+- Generates summary heatmaps showing how risk metrics change with the investment horizon.
+- Supports both monthly and daily input data (with configurable days per year).
+- Generates and saves distribution plots and heatmaps for visual analysis.
 
-Dependencies:
-    This script requires pandas, matplotlib, and seaborn. Install them with:
+Dependencies
+------------
+This script requires pandas, matplotlib, and seaborn. Install them with::
+
     pip install pandas matplotlib seaborn openpyxl
 
-Usage:
-    # Analyze a monthly file with a 10-year window
+Usage
+-----
+Analyze a monthly file with a 10-year window (price input)::
+
     python data_metrics.py -n 10 -f my_monthly_data.xlsx
 
-    # Analyze a daily crypto file with a 5-year window (specifying 365 days/year)
-    python data_metrics.py -n 5 -f my_crypto_data.xlsx -d 365
+Analyze a daily file with a 5-year window (return input, 252 trading days/year)::
 
-    # Run a full heatmap analysis for all possible investment horizons on a daily file
+    python data_metrics.py -n 5 -f my_returns_data.xlsx -d 252 --input-type return
+
+Run a full heatmap analysis for all possible investment horizons on a daily file::
+
     python data_metrics.py -f my_daily_data.xlsx -d
 """
 
@@ -47,7 +58,7 @@ import seaborn as sns
 import os
 
 
-# --- Setup CLI argument parsing ---
+# Setup CLI argument parsing
 parser = argparse.ArgumentParser(
     description="Analyze historical stock market index data for N-year rolling windows."
 )
@@ -74,7 +85,15 @@ parser.add_argument(
     default=None,
     help="Analyze daily data. Optionally specify the number of trading days per year (default: 252). If omitted, monthly analysis is performed.",
 )
+parser.add_argument(
+    "--input-type",
+    type=str,
+    choices=["price", "return"],
+    default="price",
+    help="Specify whether the input data columns are 'price' (default) or 'return' rates.",
+)
 args = parser.parse_args()
+INPUT_TYPE = args.input_type
 N_YEARS = args.years
 FILENAME = args.file
 TRADING_DAYS_PER_YEAR = args.daily
@@ -85,29 +104,43 @@ def calculate_metrics_for_horizon(
     n_years: int,
     periods_per_year: int,
     single_period_returns: pd.DataFrame,
+    input_type: str,
 ) -> Tuple[Optional[pd.DataFrame], List[Dict[str, Any]]]:
     """
-    Calculates all key summary metrics for a given n-years horizon.
+    Calculates all key summary metrics for a given n_years horizon.
 
-    Args:
-        df: DataFrame with historical price data, indexed by date.
-        n_years: The investment horizon in years.
-        periods_per_year: The number of data points per year (e.g., 12 or 252).
-        single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
-        used for calculating rolling volatility.
+    :param df: DataFrame with historical price data, indexed by date.
+    :param n_years: The investment horizon in years.
+    :param periods_per_year: The number of data points per year (e.g., 12 or 252).
+    :param single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
+        used for calculating rolling volatility or as the actual returns if input_type is 'return'.
+        If input_type is 'return', these must be true single-period returns (not annualized rates).
+    :param input_type: 'price' if df contains prices, 'return' if df contains single-period returns.
 
-    Returns:
-        A tuple containing the DataFrame of raw annualized returns for each
+    :returns: A tuple containing the DataFrame of raw annualized returns for each
         window and a list of dictionaries with summary statistics for each asset.
     """
     window_size = n_years * periods_per_year
     if len(df) <= window_size:
         return None, []  # Not enough data
 
-    total_return = (df / df.shift(window_size)) - 1
-    annualized_return = (1 + total_return) ** (1 / n_years) - 1
+    if input_type == "price":
+        total_return = (df / df.shift(window_size)) - 1
+        annualized_return = (1 + total_return) ** (1 / n_years) - 1
+    elif input_type == "return":
+        # Compound returns over the window: product(1 + r_i) - 1
+        rolling_prod = (
+            (1 + single_period_returns)
+            .rolling(window=window_size)
+            .apply(np.prod, raw=True)
+        )
+        total_return = rolling_prod - 1
+        # Annualize: (1 + total_return) ** (periods_per_year / window_size) - 1
+        annualized_return = (1 + total_return) ** (periods_per_year / window_size) - 1
+    else:
+        raise ValueError(f"Unknown input_type: {input_type}")
 
-    # --- Calculate Summary Stats ---
+    # Calculate Summary Stats
     mean_returns = annualized_return.mean()
     std_of_returns = annualized_return.std()
     num_windows = annualized_return.count()
@@ -119,7 +152,7 @@ def calculate_metrics_for_horizon(
     annualized_volatility = rolling_std * np.sqrt(periods_per_year)
     avg_annualized_volatility = annualized_volatility.mean()
 
-    # --- Assemble Results ---
+    # Assemble Results
     summary_results = []
     for index in df.columns:
         if num_windows[index] > 0:
@@ -143,23 +176,24 @@ def run_single_analysis(
     df: pd.DataFrame,
     n_years: int,
     periods_per_year: int,
-    INDEX_COLS: List[str],
+    DATA_COLS: List[str],
     single_period_returns: pd.DataFrame,
+    input_type: str,
 ) -> None:
     """
-    Analyzes and prints results for a single n-years window.
+    Analyzes and prints results for a single n_years window.
 
-    Args:
-        df: DataFrame with historical price data.
-        n_years: The investment horizon in years.
-        periods_per_year: The number of data points per year.
-        INDEX_COLS: A list of the column names for the assets being analyzed.
-        single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
-        used for calculating rolling volatility.
+    :param df: DataFrame with historical price data.
+    :param n_years: The investment horizon in years.
+    :param periods_per_year: The number of data points per year.
+    :param DATA_COLS: A list of the column names for the assets being analyzed.
+    :param single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
+        used for calculating rolling volatility or as the actual returns if input_type is 'return'.
+    :param input_type: 'price' if df contains prices, 'return' if df contains single-period returns.
     """
-    # --- Step 1: Calculate all metrics using the helper function ---
+    # Calculate all metrics using the helper function
     annualized_return_df, summary_results = calculate_metrics_for_horizon(
-        df, n_years, periods_per_year, single_period_returns
+        df, n_years, periods_per_year, single_period_returns, input_type
     )
 
     if annualized_return_df is None:
@@ -167,7 +201,7 @@ def run_single_analysis(
             f"Insufficient data: need at least {n_years * periods_per_year + 1} periods for {n_years}-year windows."
         )
 
-    # --- Step 2: Prepare data for presentation ---
+    # Prepare data for presentation
     # Create the main summary DataFrame
     expected_df = pd.DataFrame(summary_results).set_index("Index")
     expected_df = expected_df.drop(
@@ -176,7 +210,7 @@ def run_single_analysis(
 
     # Rename columns for the raw results DataFrame for further analysis
     results_df = annualized_return_df.rename(
-        columns={col: f"Return_Rate_{col}" for col in INDEX_COLS}
+        columns={col: f"Return_Rate_{col}" for col in DATA_COLS}
     )
     results_df.dropna(how="all", inplace=True)
 
@@ -191,9 +225,9 @@ def run_single_analysis(
         "%Y-%m-%d"
     )
 
-    # --- Step 3: Calculate presentation-specific tables (Worst/Best, Percentiles) ---
+    # Calculate presentation-specific tables (Worst/Best, Percentiles)
     extreme_windows = {}
-    for index in INDEX_COLS:
+    for index in DATA_COLS:
         sorted_df = results_df.sort_values(f"Return_Rate_{index}")
         worst = sorted_df.iloc[0]
         median = sorted_df.iloc[len(sorted_df) // 2]
@@ -214,7 +248,7 @@ def run_single_analysis(
             }
         )
 
-    return_rate_cols = [f"Return_Rate_{col}" for col in INDEX_COLS]
+    return_rate_cols = [f"Return_Rate_{col}" for col in DATA_COLS]
     return_percentiles_data = {
         "5th": results_df[return_rate_cols].quantile(0.05),
         "25th": results_df[return_rate_cols].quantile(0.25),
@@ -228,7 +262,7 @@ def run_single_analysis(
         "Return_Rate_", ""
     )
 
-    # --- Step 4: Print all results ---
+    # Print all results
     print(
         f"\n--- Expected Metrics for a {n_years}-Year Investment / {len(results_df)} rolling windows ---"
     )
@@ -250,7 +284,7 @@ def run_single_analysis(
         )
     )
 
-    for index in INDEX_COLS:
+    for index in DATA_COLS:
         print(
             f"\n--- Worst, Median, and Best Windows for {n_years}-Year Investment ({index}) ---"
         )
@@ -268,7 +302,7 @@ def run_single_analysis(
     }
     print(return_percentiles_df.to_string(formatters=percentile_formatters))
 
-    # --- Step 5: Analyze and print leftover window ---
+    # Analyze and print leftover window
     num_leftover_periods = (len(df) - 1) % window_size
     if num_leftover_periods > 0:
         leftover_prices = df.iloc[-num_leftover_periods - 1 :]
@@ -294,11 +328,11 @@ def run_single_analysis(
             )
         )
 
-    # --- Step 6: Generate and Save Distribution Plots ---
+    # Generate and Save Distribution Plots
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
     plt.style.use("dark_background")
-    for index in INDEX_COLS:
+    for index in DATA_COLS:
         safe_index_name = index.replace("/", "_")
         plt.figure(figsize=(10, 6))
         plt.hist(
@@ -325,8 +359,9 @@ def run_single_analysis(
 def run_heatmap_analysis(
     df: pd.DataFrame,
     periods_per_year: int,
-    INDEX_COLS: List[str],
+    DATA_COLS: List[str],
     single_period_returns: pd.DataFrame,
+    input_type: str,
 ) -> None:
     """
     Analyzes metrics over a range of investment horizons and generates heatmaps.
@@ -335,12 +370,12 @@ def run_heatmap_analysis(
     (max_n) based on the length of the dataset. It then iterates from n=1
     to max_n, calculating key risk and return statistics for each horizon.
 
-    Args:
-        df: DataFrame with historical price data.
-        periods_per_year: The number of data points per year.
-        INDEX_COLS: A list of the column names for the assets being analyzed.
-        single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
-        used for calculating rolling volatility.
+    :param df: DataFrame with historical price data.
+    :param periods_per_year: The number of data points per year.
+    :param DATA_COLS: A list of the column names for the assets being analyzed.
+    :param single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
+        used for calculating rolling volatility or as the actual returns if input_type is 'return'.
+    :param input_type: 'price' if df contains prices, 'return' if df contains single-period returns.
     """
     max_n = len(df) // periods_per_year
     if max_n < 1:
@@ -351,9 +386,9 @@ def run_heatmap_analysis(
     all_results = []
     n_range = range(1, max_n + 1)
 
-    for n in n_range:
+    for n_years in n_range:
         _, summary_results = calculate_metrics_for_horizon(
-            df, n, periods_per_year, single_period_returns
+            df, n_years, periods_per_year, single_period_returns, input_type
         )
         if summary_results:
             all_results.extend(summary_results)
@@ -369,7 +404,7 @@ def run_heatmap_analysis(
     os.makedirs(output_dir, exist_ok=True)
     plt.style.use("dark_background")
 
-    for index in INDEX_COLS:
+    for index in DATA_COLS:
         safe_index_name = index.replace("/", "_")
         subset_df = results_df[results_df["Index"] == index]
 
@@ -409,7 +444,7 @@ def run_heatmap_analysis(
             else:
                 annot_df.loc[row] = heatmap_pivot.loc[row].map("{:.2%}".format)
 
-        # --- Create data for coloring: one value per column, driven by VaR ---
+        # Create data for coloring: one value per column, driven by VaR
         # Extract the risk metric that will drive the color
         risk_driver = heatmap_pivot.loc["VaR (5th Percentile)"]
         # Create a new DataFrame where each column's color is set by the risk driver
@@ -446,7 +481,7 @@ def main() -> None:
     Main function to run the analysis.
 
     Parses CLI arguments, prepares the data, and calls the appropriate
-    analysis function (`run_single_analysis` or `run_heatmap_analysis`).
+    analysis function (``run_single_analysis`` or ``run_heatmap_analysis``).
     """
     # Read the Excel file and get column names
     df = pd.read_excel(FILENAME)
@@ -472,7 +507,7 @@ def main() -> None:
         print("Filling missing values using forward fill (ffill).")
     df[DATA_COLS] = df[DATA_COLS].ffill()
 
-    # --- Step 2: Prepare the DataFrame based on frequency ---
+    # Prepare the DataFrame based on frequency
     df["Date"] = pd.to_datetime(df["Date"])
     df.set_index("Date", inplace=True)
     df = df[~df.index.duplicated(keep="last")]
@@ -513,15 +548,25 @@ def main() -> None:
             f"Daily analysis ({periods_per_year} days/year): Missing values are forward-filled; gaps in dates are assumed to be non-trading days."
         )
 
-    # Calculate periodic returns once for efficiency
-    single_period_returns = df[DATA_COLS].pct_change()
+    # Calculate single-period returns or use input as returns, based on input type
+    # If using 'return', input values must be true single-period returns (not annualized rates).
+    if INPUT_TYPE == "price":
+        single_period_returns = df[DATA_COLS].pct_change()
+        print("Input type: price. Calculating returns from price columns.")
+    elif INPUT_TYPE == "return":
+        single_period_returns = df[DATA_COLS]
+        print("Input type: return. Using provided values as single-period returns.")
+    else:
+        raise ValueError(f"Unknown input type: {INPUT_TYPE}")
 
     if N_YEARS is not None:
         run_single_analysis(
-            df, N_YEARS, periods_per_year, DATA_COLS, single_period_returns
+            df, N_YEARS, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
         )
     else:
-        run_heatmap_analysis(df, periods_per_year, DATA_COLS, single_period_returns)
+        run_heatmap_analysis(
+            df, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
+        )
 
 
 if __name__ == "__main__":
