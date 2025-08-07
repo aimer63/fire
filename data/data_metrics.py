@@ -60,14 +60,14 @@ import os
 
 # Setup CLI argument parsing
 parser = argparse.ArgumentParser(
-    description="Analyze historical stock market index data for N-year rolling windows."
+    description="Analyze historical stock market index data for n-years rolling windows."
 )
 parser.add_argument(
     "-n",
     "--years",
     type=int,
     default=None,
-    help="The investment horizon in years. If omitted, runs heatmap analysis for all possible N.",
+    help="The investment horizon in years. If omitted, runs heatmap analysis for all possible n-years windows.",
 )
 parser.add_argument(
     "-f",
@@ -507,7 +507,7 @@ def main() -> None:
         print("Filling missing values using forward fill (ffill).")
     df[DATA_COLS] = df[DATA_COLS].ffill()
 
-    # Prepare the DataFrame based on frequency
+    # Prepare the DataFrame based on frequency ---
     df["Date"] = pd.to_datetime(df["Date"])
     df.set_index("Date", inplace=True)
     df = df[~df.index.duplicated(keep="last")]
