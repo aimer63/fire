@@ -30,28 +30,28 @@ every possible n years period in the dataset, providing a statistical overview o
 The script is run from the command line. You can specify the investment horizon, input
 filename, data frequency, input type, and the name of the date column.
 
-**Run with a default monthly file (price input):**
+**Run with a monthly file (price input):**
 
 ```bash
-python data_metrics.py
+python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx
 ```
 
 **Run with a custom 15 years window and a monthly file (price input):**
 
 ```bash
-python data_metrics.py --years 15
+python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx --years 15
 ```
 
 **Run with a daily file, custom 5 years windows and a custom trading days per year (price input):**
 
 ```bash
-python data_metrics.py -n 5 -f path/to/daily_data.xlsx --daily 365
+python data_metrics.py -n 5 -f CB_BTCUSD-daily.xlsx -d 365
 ```
 
 **Run with a daily file containing single-period returns:**
 
 ```bash
-python data_metrics.py -n 5 -f path/to/daily_returns.xlsx --daily 252 --input-type return
+python data_metrics.py -n 5 -f EONIAPLUSESTR-daily.xlsx -d 252 --input-type return
 ```
 
 ## Data Cleaning and Missing Values
