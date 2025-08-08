@@ -292,6 +292,14 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 **For more details, see the docstrings in each module.**
 
+---
+
+## Contributing
+
+Feel free to open issues or submit pull requests if you have suggestions or improvements.
+
+---
+
 ## 📚 Further Readings
 
 - **Books**:
