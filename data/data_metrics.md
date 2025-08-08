@@ -1,6 +1,6 @@
 # Historical Market Data Analysis (`data_metrics.py`)
 
-This script performs a historical analysis of market index data from an Excel file.
+This script performs a historical analysis of market data from an Excel file.
 Its primary goal is to answer the question: **"If I had invested for a fixed
 n-years period at any point in the past, what would my range of outcomes have been?"**
 
@@ -70,11 +70,13 @@ python data_metrics.py -n 5 -f path/to/daily_returns.xlsx --daily 252 --input-ty
 
 If you specify an investment horizon (`-n`/`--years`), the script:
 
-- Calculates rolling window metrics for every possible N-year period in the dataset.
+- Calculates rolling window metrics for every possible `n` years period in the dataset.
 - For each asset, computes and reports:
-  - **Expected Annualized Return:** Mean of annualized returns across all windows.
+  - **Expected Annualized Return:** Average of annualized returns across all windows.
   - **StdDev of Annualized Returns:** Standard deviation of annualized returns across windows.
-  - **Average Annualized Volatility:** Mean of annualized standard deviation within each window.
+  - **Average Annualized Volatility:** Average across all windows of annualized standard deviation
+    of returns within
+    each window.
   - **Failed Windows (%):** Percentage of windows with negative return.
   - **Number of Windows:** Count of rolling windows analyzed.
 - Identifies and prints the worst, median, and best windows for each asset.
