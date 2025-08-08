@@ -328,12 +328,13 @@ def run_single_analysis(
         leftover_annualized_return = (1 + total_leftover_return) ** (
             periods_per_year / num_leftover_periods
         ) - 1
+        # Format the output for the incomplete window to match summary tables
         leftover_df = pd.DataFrame(
-            {"Annualized Return Rate": [leftover_annualized_return]}
+            {"Annualized Return Rate": leftover_annualized_return}
         )
         print(
             leftover_df.to_string(
-                formatters={"Annualized Return Rate": "{:.2%}".format}
+                formatters={"Annualized Return Rate": "{:.2%}".format}, index=True
             )
         )
 
@@ -514,7 +515,12 @@ def main() -> None:
         for col, val in num_missing[num_missing > 0].items():
             print(f"{col}: {val} (dtype: {df[col].dtype})")
         print("Filling missing values using forward fill (ffill).")
-    df[DATA_COLS] = df[DATA_COLS].ffill()
+    # Fill missing values in the index columns by propagating the last valid
+    # observation forward (forward fill) for price input, or with zero for return input.
+    if INPUT_TYPE == "price":
+        df[DATA_COLS] = df[DATA_COLS].ffill()
+    elif INPUT_TYPE == "return":
+        df[DATA_COLS] = df[DATA_COLS].fillna(0)
 
     # Prepare the DataFrame based on frequency ---
     df["Date"] = pd.to_datetime(df["Date"])
@@ -550,7 +556,10 @@ def main() -> None:
             print(f"Alert: Missing months detected: {missing_list}")
         else:
             print("No missing months detected.")
-        df = df.reindex(full_date_range).ffill()
+        if INPUT_TYPE == "price":
+            df = df.reindex(full_date_range).ffill()
+        elif INPUT_TYPE == "return":
+            df = df.reindex(full_date_range).fillna(0)
     else:  # Daily frequency
         periods_per_year = TRADING_DAYS_PER_YEAR
         print(
