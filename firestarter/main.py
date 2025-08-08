@@ -14,6 +14,7 @@ Main entry point for running FIRE Monte Carlo simulations.
 
 import sys
 import os
+import traceback
 from typing import Any
 import time
 import shutil
@@ -108,7 +109,9 @@ def main() -> None:
     # Extract validated data from the config model for simulation
     det_inputs = config.deterministic_inputs
     assets = config.assets
-    correlation_matrix = config.correlation_matrix or CorrelationMatrix(assets_order=[], matrix=[])
+    correlation_matrix = config.correlation_matrix or CorrelationMatrix(
+        assets_order=[], matrix=[]
+    )
     portfolio_rebalances = config.portfolio_rebalances
     sim_params = config.simulation_parameters
     shocks = config.shocks or []
@@ -218,4 +221,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except ValueError as e:
+        print(f"\nError: {e}")
+        exit(1)
+    except Exception as e:
+        print(f"\nUnexpected error occurred: {e}")
+        traceback.print_exc()
+        exit(1)

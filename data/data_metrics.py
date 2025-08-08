@@ -50,6 +50,7 @@ Run a full heatmap analysis for all possible investment horizons on a daily file
 
 import argparse
 from typing import Any, Callable, Dict, List, Optional, Tuple
+import traceback
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -620,4 +621,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except ValueError as e:
+        print(f"\nError: {e}")
+        exit(1)
+    except Exception as e:
+        print(f"\nUnexpected error occurred: {e}")
+        traceback.print_exc()
+        exit(1)
