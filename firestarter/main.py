@@ -221,12 +221,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except ValueError as e:
-        print(f"\nError: {e}")
-        exit(1)
-    except Exception as e:
-        print(f"\nUnexpected error occurred: {e}")
-        traceback.print_exc()
-        exit(1)
+    main()
