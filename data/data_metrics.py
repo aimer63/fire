@@ -336,14 +336,17 @@ def run_single_analysis(
             periods_per_year / num_leftover_periods
         ) - 1
         # Format the output for the incomplete window to match summary tables
-        leftover_df = pd.DataFrame(
-            {"Annualized Return Rate": leftover_annualized_return}
-        )
-        print(
-            leftover_df.to_string(
-                formatters={"Annualized Return Rate": "{:.2%}".format}, index=True
+        if isinstance(leftover_annualized_return, (float, int)):
+            print(f"Annualized Return Rate: {leftover_annualized_return:.2%}")
+        else:
+            leftover_df = pd.DataFrame(
+                {"Annualized Return Rate": leftover_annualized_return}
             )
-        )
+            print(
+                leftover_df.to_string(
+                    formatters={"Annualized Return Rate": "{:.2%}".format}, index=True
+                )
+            )
 
     # Generate and Save Distribution Plots
     output_dir = "output"
@@ -621,12 +624,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except ValueError as e:
-        print(f"\nError: {e}")
-        exit(1)
-    except Exception as e:
-        print(f"\nUnexpected error occurred: {e}")
-        traceback.print_exc()
-        exit(1)
+    main()
