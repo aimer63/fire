@@ -154,10 +154,17 @@ def calculate_metrics_for_horizon(
     failed_windows_pct = (annualized_return < 0).sum() / num_windows
     var_5_pct = annualized_return.quantile(0.05)
 
+    # 95% confidence interval for the mean
+    sem = std_of_returns / np.sqrt(num_windows)
+    ci_95 = 1.96 * sem
+
     # Calculate average annualized volatility
     rolling_std = single_period_returns.rolling(window=window_size).std()
     annualized_volatility = rolling_std * np.sqrt(periods_per_year)
     avg_annualized_volatility = annualized_volatility.mean()
+
+    sem_vol = annualized_volatility.std() / np.sqrt(num_windows)
+    ci_95_vol = 1.96 * sem_vol
 
     # Assemble Results
     summary_results = []
@@ -168,8 +175,10 @@ def calculate_metrics_for_horizon(
                     "N": n_years,
                     "Index": index,
                     "Expected Annualized Return": mean_returns[index],
+                    "95% CI": ci_95[index],
                     "StdDev of Annualized Returns": std_of_returns[index],
                     "Average Annualized Volatility": avg_annualized_volatility[index],
+                    "95% CI Volatility": ci_95_vol[index],
                     "Failed Windows (%)": failed_windows_pct[index],
                     "VaR (5th Percentile)": var_5_pct[index],
                     "Number of Windows": int(num_windows[index]),
@@ -279,12 +288,18 @@ def run_single_analysis(
     print_df.columns = [
         f"| {col}" if i > 0 else col for i, col in enumerate(expected_df.columns)
     ]
+    print_df.columns = [
+        col.replace("95% CI Volatility", "95% CI") for col in print_df.columns
+    ]
     print(
         print_df.to_string(
             formatters={
                 "Expected Annualized Return": "{:.2%}".format,
+                "| 95% CI": lambda x: f"±{x:.2%}",
                 "| StdDev of Annualized Returns": "{:.2%}".format,
                 "| Average Annualized Volatility": "{:.2%}".format,
+                # TODO: Get rid of the annoyng F601 warning
+                "| 95% CI": lambda x: f"±{x:.2%}",  # noqa: F601
                 "| Failed Windows (%)": "{:.2%}".format,
                 "| Number of Windows": "{:,}".format,
             }
