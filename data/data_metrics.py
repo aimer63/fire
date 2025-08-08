@@ -92,6 +92,12 @@ parser.add_argument(
     default="price",
     help="Specify whether the input data columns are 'price' (default) or 'return' rates.",
 )
+parser.add_argument(
+    "--tail",
+    type=int,
+    default=None,
+    help="Analyze only the most recent N years window. Not compatible with --years or heatmap mode.",
+)
 args = parser.parse_args()
 INPUT_TYPE = args.input_type
 N_YEARS = args.years
@@ -514,7 +520,10 @@ def main() -> None:
         print("Missing values per column:")
         for col, val in num_missing[num_missing > 0].items():
             print(f"{col}: {val} (dtype: {df[col].dtype})")
-        print("Filling missing values using forward fill (ffill).")
+        if INPUT_TYPE == "price":
+            print("Filling missing values using forward fill (ffill).")
+        elif INPUT_TYPE == "return":
+            print("Filling missing values with zero.")
     # Fill missing values in the index columns by propagating the last valid
     # observation forward (forward fill) for price input, or with zero for return input.
     if INPUT_TYPE == "price":
@@ -556,10 +565,7 @@ def main() -> None:
             print(f"Alert: Missing months detected: {missing_list}")
         else:
             print("No missing months detected.")
-        if INPUT_TYPE == "price":
-            df = df.reindex(full_date_range).ffill()
-        elif INPUT_TYPE == "return":
-            df = df.reindex(full_date_range).fillna(0)
+        df = df.reindex(full_date_range).ffill()
     else:  # Daily frequency
         periods_per_year = TRADING_DAYS_PER_YEAR
         print(
@@ -583,7 +589,27 @@ def main() -> None:
     else:
         raise ValueError(f"Unknown input type: {INPUT_TYPE}")
 
-    if N_YEARS is not None:
+    if args.tail is not None:
+        if N_YEARS is not None:
+            raise ValueError("--tail is not compatible with --years.")
+        tail_periods = args.tail * periods_per_year
+        tail_df = df.iloc[-tail_periods:]
+        if INPUT_TYPE == "price":
+            tail_returns = tail_df[DATA_COLS].pct_change().dropna()
+        elif INPUT_TYPE == "return":
+            tail_returns = tail_df[DATA_COLS]
+        else:
+            raise ValueError(f"Unknown input type: {INPUT_TYPE}")
+        mean_return = (1 + tail_returns).prod() ** (
+            periods_per_year / tail_returns.shape[0]
+        ) - 1
+        std_return = tail_returns.std() * np.sqrt(periods_per_year)
+        print(f"\n--- Most Recent {args.tail}-Year Window ---")
+        for col in DATA_COLS:
+            print(
+                f"{col}: Expected Annualized Return: {mean_return[col]:.2%}, StdDev: {std_return[col]:.2%}"
+            )
+    elif N_YEARS is not None:
         run_single_analysis(
             df, N_YEARS, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
         )
