@@ -305,12 +305,8 @@ def run_single_analysis(
     # Analyze and print leftover window
     num_leftover_periods = (len(df) - 1) % window_size
     if num_leftover_periods > 0:
-        leftover_prices = df.iloc[-num_leftover_periods - 1 :]
-        total_leftover_return = (leftover_prices.iloc[-1] / leftover_prices.iloc[0]) - 1
-        leftover_annualized_return = (1 + total_leftover_return) ** (
-            periods_per_year / num_leftover_periods
-        ) - 1
-        leftover_start_date = leftover_prices.index[1].strftime("%Y-%m-%d")
+        leftover_start_idx = -num_leftover_periods - 1
+        leftover_start_date = df.index[leftover_start_idx + 1].strftime("%Y-%m-%d")
         period_unit = "days" if TRADING_DAYS_PER_YEAR is not None else "months"
         print("\n--- Analysis of Final Incomplete Window ---")
         print(
@@ -319,8 +315,21 @@ def run_single_analysis(
         print(
             f"Note: These results are for a shorter period and are not directly comparable to the full {n_years}-year windows."
         )
+        if input_type == "price":
+            leftover_prices = df.iloc[leftover_start_idx:]
+            total_leftover_return = (
+                leftover_prices.iloc[-1] / leftover_prices.iloc[0]
+            ) - 1
+        elif input_type == "return":
+            leftover_returns = single_period_returns.iloc[leftover_start_idx:]
+            total_leftover_return = np.prod(1 + leftover_returns.values) - 1
+        else:
+            raise ValueError(f"Unknown input type: {input_type}")
+        leftover_annualized_return = (1 + total_leftover_return) ** (
+            periods_per_year / num_leftover_periods
+        ) - 1
         leftover_df = pd.DataFrame(
-            {"Annualized Return Rate": leftover_annualized_return}
+            {"Annualized Return Rate": [leftover_annualized_return]}
         )
         print(
             leftover_df.to_string(
@@ -556,6 +565,12 @@ def main() -> None:
     elif INPUT_TYPE == "return":
         single_period_returns = df[DATA_COLS]
         print("Input type: return. Using provided values as single-period returns.")
+        # Validate: returns cannot be less than -1
+        if (single_period_returns < -1).any().any():
+            invalid = single_period_returns[single_period_returns < -1]
+            print("Error: Detected return values less than -1 (impossible):")
+            print(invalid[invalid.notna()])
+            raise ValueError("Input contains invalid return values (< -1).")
     else:
         raise ValueError(f"Unknown input type: {INPUT_TYPE}")
 
