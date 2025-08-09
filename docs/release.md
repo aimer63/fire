@@ -47,7 +47,7 @@ If you are using Github and have set a workflow to automatically build and publi
 
 ## 4. Build the Distribution
 
-(Inside your conda environment)
+(Inside your environment)
 
 ```sh
 pip install build twine

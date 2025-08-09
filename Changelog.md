@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.1.0b7] - 2025-08-09
+
+### Added
+
+- Added a script to analyze historical data in the `data/` directory.
+
 ## [v0.1.0b6](https://github.com/aimer63/fire/releases/tag/v0.1.0b6) - 2025-07-30
 
 ### Added
