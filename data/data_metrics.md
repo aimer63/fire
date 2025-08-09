@@ -5,7 +5,19 @@ Its primary goal is to answer the question: **"If I had invested for a fixed
 n-years period at any point in the past, what would my range of outcomes have been?"**
 
 It uses a "rolling window" approach to calculate the annualized return and risk for
-every possible n years period in the dataset, providing a statistical overview of historical performance.
+every possible n years period in the dataset, providing a statistical overview of
+historical performance.
+
+## Key Metrics Explained
+
+- **Expected Annualized Return:** Mean of annualized return rates across all rolling windows.
+- **StdDev of Annualized Returns:** Standard deviation of annualized returns across windows
+  (measures the dispersion of outcomes for different starting dates).
+- **Average Annualized Volatility:** Mean annualized volatility experienced within each window
+  (reflects typical fluctuations during the investment period).
+- **95% Confidence Interval (CI):** Statistical precision of the mean for both expected return and volatility.
+- **Failure Rate:** Percentage of windows with negative return.
+- **Percentiles Table:** Distribution of annualized returns (5th, 25th, 50th, 75th, IQR).
 
 ## Prerequisites
 
@@ -28,7 +40,7 @@ every possible n years period in the dataset, providing a statistical overview o
 ## Usage
 
 The script is run from the command line. You can specify the investment horizon, input
-filename, data frequency, input type, and the name of the date column.
+filename, data frequency, input type, the name of the date column, or use `--tail N` to analyze only the most recent N-year window.
 
 **Run with a monthly file (price input):**
 
@@ -54,6 +66,12 @@ python data_metrics.py -n 5 -f CB_BTCUSD-daily.xlsx -d 365
 python data_metrics.py -n 5 -f EONIAPLUSESTR-daily.xlsx -d 252 --input-type return
 ```
 
+**Run with --tail to analyze only the most recent N-year window:**
+
+```bash
+python data_metrics.py --tail 5 -f EONIAPLUSESTR-daily.xlsx -d 252 --input-type return
+```
+
 ## Data Cleaning and Missing Values
 
 - All asset columns are converted to numeric; non-numeric or missing values are set to NaN.
@@ -72,14 +90,16 @@ If you specify an investment horizon (`-n`/`--years`), the script:
 
 - Calculates rolling window metrics for every possible `n` years period in the dataset.
 - For each asset, computes and reports:
-  - **Expected Annualized Return:** Average of annualized returns across all windows.
-  - **StdDev of Annualized Returns:** Standard deviation of annualized returns across windows.
-  - **Average Annualized Volatility:** Average across all windows of annualized standard deviation
-    of returns within
-    each window.
+  - **Expected Annualized Return:** Mean of annualized returns across all windows.
+  - **95% CI:** Confidence interval for the mean expected annualized return.
+  - **StdDev of Annualized Returns:** Standard deviation of annualized returns across windows
+    (dispersion of outcomes for different starting dates).
+  - **Average Annualized Volatility:** Mean annualized volatility within each window
+    (typical fluctuations experienced during the investment period).
+  - **95% CI (Volatility):** Confidence interval for the mean annualized volatility.
   - **Failed Windows (%):** Percentage of windows with negative return.
   - **Number of Windows:** Count of rolling windows analyzed.
-- Identifies and prints the worst, median, and best windows for each asset.
+- Identifies and prints the worst, median, and best window for each asset.
 - Reports percentiles (5th, 25th, 50th, 75th) of annualized returns.
 - Analyzes the most recent incomplete window (if present).
 

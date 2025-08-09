@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.1.0b7] - 2025-08-09
+## [v0.1.0b7](https://github.com/aimer63/fire/releases/tag/v0.1.0b7) - 2025-08-09
 
 ### Added
 

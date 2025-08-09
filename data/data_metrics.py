@@ -6,19 +6,25 @@ Its primary goal is to answer the question: "If I had invested for a fixed
 N-year period at any point in the past, what would my range of outcomes have been?"
 
 Modes of operation:
-    1. Single Horizon Analysis: Analyzes a specific N-year rolling window when
+    1. Single Horizon Analysis: Analyzes a specific n-years rolling window when
        the ``-n`` flag is provided.
     2. Heatmap Analysis: When ``-n`` is omitted, analyzes all possible
        investment horizons and presents a summary heatmap of key risk/return metrics.
+    3. Tail Analysis: When ``--tail N`` is provided, analyzes only the most recent N-years window,
+       printing expected annualized return and standard deviation for that window.
 
 The script can handle both monthly and daily source data and is configured via
 command-line arguments.
 
 Key Features
 ------------
-- Analyzes N-year rolling windows for any given period.
-- Calculates annualized returns, standard deviation, and failure rates.
-- Calculates average annualized volatility (the volatility *during* the investment).
+- Analyzes n-years rolling windows for any given period.
+- Calculates annualized returns and the standard deviation of annualized returns
+  (measuring the variability of outcomes across all possible rolling windows).
+- Calculates average annualized volatility (the mean of the volatilities within each window,
+  reflecting typical fluctuations experienced during the investment period).
+- Calculates failure rates (percentage of windows with negative returns).
+- Reports 95% confidence intervals for expected annualized return and volatility.
 - Supports both price and single-period return data as input, controlled by the
   ``--input-type`` CLI argument.
 - If using ``return`` input type, the input values must be true single-period returns
@@ -46,6 +52,10 @@ Analyze a daily file with a 5-year window (return input, 252 trading days/year):
 Run a full heatmap analysis for all possible investment horizons on a daily file::
 
     python data_metrics.py -f my_daily_data.xlsx -d
+
+Analyze only the most recent N-year window::
+
+    python data_metrics.py --tail N -f my_data.xlsx
 """
 
 import argparse
@@ -118,14 +128,18 @@ def calculate_metrics_for_horizon(
 
     :param df: DataFrame with historical price data, indexed by date.
     :param n_years: The investment horizon in years.
-    :param periods_per_year: The number of data points per year (e.g., 12 or 252).
+    :param periods_per_year: The number of data points per year,
+        e.g. 12 (mothly) or 252 (daily trading days) or 365 (daily all days of the year).
     :param single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
-        used for calculating rolling volatility or as the actual returns if input_type is 'return'.
-        If input_type is 'return', these must be true single-period returns (not annualized rates).
+        used for rolling volatility and compounding calculations.
+        If input_type is 'return', these must be true single-period return rates (not annualized rates).
     :param input_type: 'price' if df contains prices, 'return' if df contains single-period returns.
 
     :returns: A tuple containing the DataFrame of raw annualized returns for each
         window and a list of dictionaries with summary statistics for each asset.
+        Each summary includes expected annualized return, 95% confidence interval,
+        standard deviation, average annualized volatility, 95% CI for volatility,
+        failure rate, VaR (5th percentile), and number of windows.
     """
     window_size = n_years * periods_per_year
     if len(df) <= window_size:
@@ -204,8 +218,17 @@ def run_single_analysis(
     :param periods_per_year: The number of data points per year.
     :param DATA_COLS: A list of the column names for the assets being analyzed.
     :param single_period_returns: DataFrame of single-period returns (e.g., daily or monthly),
-        used for calculating rolling volatility or as the actual returns if input_type is 'return'.
+        used for rolling volatility and compounding calculations.
     :param input_type: 'price' if df contains prices, 'return' if df contains single-period returns.
+
+    Prints:
+      - Summary table including expected annualized return, 95% confidence interval,
+        standard deviation of annualized returns (dispersion of outcomes across all windows),
+        average annualized volatility (mean volatility experienced within each window),
+        95% CI for volatility, failure rate, and number of windows.
+      - Table of worst, median, and best window for each asset.
+      - Percentile table (5th, 25th, 50th, 75th, IQR) for annualized returns.
+      - Analysis of the final incomplete window, if present.
     """
     # Calculate all metrics using the helper function
     annualized_return_df, summary_results = calculate_metrics_for_horizon(
@@ -516,7 +539,7 @@ def main() -> None:
     Main function to run the analysis.
 
     Parses CLI arguments, prepares the data, and calls the appropriate
-    analysis function (``run_single_analysis`` or ``run_heatmap_analysis``).
+    analysis function (``run_single_analysis``, ``run_heatmap_analysis``, or tail analysis).
     """
     # Read the Excel file and get column names
     df = pd.read_excel(FILENAME)
