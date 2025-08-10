@@ -117,7 +117,7 @@ class SequencesGenerator:
         """
         rng = np.random.default_rng(self.seed)
 
-        # --- 1. Extract Annual Arithmetic Parameters ---
+        # Extract Sample Parameters (they are in annual values)
         mu_sample = np.array(
             [self.assets[asset].mu for asset in self.asset_and_inflation_order]
         )
@@ -126,75 +126,65 @@ class SequencesGenerator:
         )
         corr_matrix = np.array(self.correlation_matrix.matrix)
 
-        # --- 2. Convert to Monthly Normal Parameters ---
+        # Convert mu and sigma to log-return equivalents
         ex = 1.0 + mu_sample
         vx = sigma_sample**2
         mu = np.log(ex) - 0.5 * np.log(1 + vx / ex**2)
         sigma = np.sqrt(np.log(1 + vx / ex**2))
+
+        # Scale to monthly log returns
         monthly_mu = mu / 12
         monthly_sigma = sigma / np.sqrt(12)
 
-        # --- 3. Construct Monthly Normal Covariance Matrix ---
+        # Construct Monthly Normal Covariance Matrix
         D = np.diag(monthly_sigma)
         monthly_cov = D @ corr_matrix @ D
 
-        # --- 4. Generate Correlated Log-Normal Returns ---
+        # Generate Correlated Log-Normal Returns (i.e log(1 + rates))
         log_of_return_factors = rng.multivariate_normal(
             mean=monthly_mu,
             cov=monthly_cov,
             size=(self.num_sequences, self.num_steps),
         )
 
-        # --- 5. Convert to return rates where (1 + return_rate) is log-normal ---
+        # Convert to return rates where (1 + return_rate) is log-normal
         return_rates = np.exp(log_of_return_factors) - 1.0
         return return_rates
 
     def _generate_sequences_ou(self) -> np.ndarray:
         """
         Generates Ornstein-Uhlenbeck paths for all assets and all sequences
-        in monthly log-return space, using lognormal parameter conversion.
+        in annual return rate space, using config parameters.
         Returns:
             np.ndarray: shape (num_sequences, num_steps, num_assets)
         """
         num_assets = len(self.asset_and_inflation_order)
-        mu_sample = np.array(
+        mu = np.array(
             [self.assets[asset].mu for asset in self.asset_and_inflation_order]
         )
-        sigma_sample = np.array(
+        sigma = np.array(
             [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
         )
+        r0 = mu
 
-        # Convert arithmetic mean and std to log-return equivalents
-        ex = 1.0 + mu_sample
-        vx = sigma_sample**2
-        mu_log = np.log(ex) - 0.5 * np.log(1 + vx / ex**2)
-        sigma_log = np.sqrt(np.log(1 + vx / ex**2))
-
-        # Scale to monthly log returns
-        monthly_mu_log = mu_log / 12
-        monthly_sigma_log = sigma_log / np.sqrt(12)
-
-        # Use monthly log-return parameters for OU process
-        mu = monthly_mu_log
-        sigma = monthly_sigma_log
-        r0 = monthly_mu_log
-
-        dt = 1.0  # Monthly step
+        dt = 1.0 / 12.0  # Monthly step in years
         rng = np.random.default_rng(self.seed)
         Z = rng.standard_normal((self.num_sequences, self.num_steps, num_assets))
 
-        log_of_return_factors = np.zeros(
+        return_rates = np.zeros(
             (self.num_sequences, self.num_steps, num_assets), dtype=np.float64
         )
-        log_of_return_factors[:, 0, :] = r0
+        return_rates[:, 0, :] = r0
 
         for t in range(1, self.num_steps):
-            log_of_return_factors[:, t, :] = (
-                log_of_return_factors[:, t - 1, :]
-                + THETA * (mu - log_of_return_factors[:, t - 1, :]) * dt
+            return_rates[:, t, :] = (
+                return_rates[:, t - 1, :]
+                + THETA * (mu - return_rates[:, t - 1, :]) * dt
                 + sigma * np.sqrt(dt) * Z[:, t, :]
             )
 
-        # Transform monthly log returns to monthly simple returns
-        return_rates = np.exp(log_of_return_factors) - 1.0
-        return return_rates
+        # Clamp rates to avoid invalid values (e.g., below -1)
+        return_rates = np.clip(return_rates, -0.99, None)
+        # Convert annual return rates to monthly rates
+        monthly_return_rates = (1.0 + return_rates) ** (1.0 / 12.0) - 1.0
+        return monthly_return_rates
