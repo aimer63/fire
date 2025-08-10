@@ -57,6 +57,7 @@ class SimulationBuilder:
         self.portfolio_rebalances: Optional[list[PortfolioRebalance]] = None
         self.shock_events: Optional[list[Shock]] = None
         self.sim_params: Optional[SimulationParameters] = None
+        self.model: str = "lognormal"
 
     @classmethod
     def new(cls):
@@ -86,6 +87,10 @@ class SimulationBuilder:
         self.sim_params = sim_params
         return self
 
+    def set_model(self, model: str):
+        self.model = model
+        return self
+
     def build(self):
         # Validate all required fields are set
         if self.det_inputs is None:
@@ -103,9 +108,7 @@ class SimulationBuilder:
                 "portfolio_rebalances must be set before building the simulation."
             )
         if self.shock_events is None:
-            raise ValueError(
-                "shock_events must be set before building the simulation."  # Corrected message
-            )
+            raise ValueError("shock_events must be set before building the simulation.")
         if self.sim_params is None:
             raise ValueError(
                 "sim_params (SimulationParameters) must be set before building the simulation."
@@ -118,6 +121,7 @@ class SimulationBuilder:
             self.portfolio_rebalances,
             self.shock_events,
             self.sim_params,
+            self.model,
         )
 
 
@@ -130,6 +134,7 @@ class Simulation:
         portfolio_rebalances: list[PortfolioRebalance],
         shock_events: list[Shock],
         sim_params: SimulationParameters,
+        model: str = "lognormal",
     ):
         self.det_inputs: DeterministicInputs = det_inputs
         self.assets: dict[str, Asset] = assets
@@ -137,13 +142,14 @@ class Simulation:
         self.portfolio_rebalances: list[PortfolioRebalance] = portfolio_rebalances
         self.shock_events: list[Shock] = shock_events
         self.sim_params: SimulationParameters = sim_params
+        self.model: str = model
         self.state: SimulationState = SimulationState(
             current_bank_balance=0.0,
             portfolio={},
             current_target_portfolio_weights={},
             initial_total_wealth=0.0,
             simulation_failed=False,
-        )  # I t will be properly initialized in self.initialize_state()
+        )
         self.results: Dict[str, Any] = {}
 
     @property
@@ -252,13 +258,14 @@ class Simulation:
         total_years = det_inputs.years_to_simulate
         total_months = total_years * 12
 
-        # --- Generate Correlated Sequences using the Generator ---
+        # Generate Correlated Sequences using the Generator and specified model
         generator = SequencesGenerator(
             assets=self.assets,
             correlation_matrix=self.correlation_matrix,
             num_sequences=1,  # A single simulation run is one sequence
             simulation_years=total_years,
             seed=self.sim_params.random_seed,
+            model=self.model,
         )
         # Squeeze to remove the num_sequences dimension
         # (shape: [1, months, assets] -> [months, assets])

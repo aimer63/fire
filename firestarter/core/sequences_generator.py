@@ -35,10 +35,19 @@ import numpy as np
 from firestarter.config.config import Asset
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
+# OU model parameters (fixed for all assets)
+THETA = 0.5  # Mean reversion speed
+MU = 0.08  # Long-term mean
+SIGMA = 0.15  # Volatility
+INFLATION = 0.02  # Constant monthly inflation rate
+
 
 class SequencesGenerator:
     """
     Generates and holds all stochastic sequences for a simulation set.
+
+    Args:
+        model (str): Model for sequence generation ("lognormal" or "OU").
     """
 
     def __init__(
@@ -48,12 +57,14 @@ class SequencesGenerator:
         num_sequences: int,
         simulation_years: int,
         seed: int | None = None,
+        model: str = "lognormal",
     ):
         self.assets = assets
         self.correlation_matrix = correlation_matrix
         self.num_sequences = num_sequences
         self.num_steps = simulation_years * 12
         self.seed = seed
+        self.model = model
 
         if self.correlation_matrix:
             self.asset_and_inflation_order = self.correlation_matrix.assets_order
@@ -67,9 +78,14 @@ class SequencesGenerator:
             )
             self.asset_and_inflation_order = asset_names
 
-        self.monthly_return_rates = self._generate_sequences()
+        if self.model == "lognormal":
+            self.monthly_return_rates: np.ndarray = self._generate_sequences_lognormal()
+        elif self.model == "OU":
+            self.monthly_return_rates: np.ndarray = self._generate_sequences_ou()
+        else:
+            raise ValueError(f"Unknown model: {self.model}")
 
-    def _generate_sequences(self) -> np.ndarray:
+    def _generate_sequences_lognormal(self) -> np.ndarray:
         """Generates correlated monthly return rates for assets and inflation.
 
         This method implements a standard financial modeling technique to generate
@@ -132,3 +148,39 @@ class SequencesGenerator:
         # --- 5. Convert to return rates where (1 + return_rate) is log-normal ---
         return_rates = np.exp(log_of_return_factors) - 1.0
         return return_rates
+
+    def _generate_sequences_ou(self) -> np.ndarray:
+        """
+        Generates Ornstein-Uhlenbeck paths for all assets and all sequences.
+        Returns:
+            np.ndarray: shape (num_sequences, num_steps, num_assets)
+        """
+        num_assets = len(self.asset_and_inflation_order)
+        rates = np.zeros(
+            (self.num_sequences, self.num_steps, num_assets), dtype=np.float64
+        )
+        mu = np.array(
+            [self.assets[asset].mu for asset in self.asset_and_inflation_order]
+        )  # Commented out
+        sigma = np.array(
+            [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
+        )  # Commented out
+        r0 = mu  # Start at long-term mean for each asset
+
+        dt = 1.0 / 12.0
+        rng = np.random.default_rng(self.seed)
+        Z = rng.standard_normal((self.num_sequences, self.num_steps, num_assets))
+
+        rates[:, 0, :] = r0  # Initial value for all sequences/assets
+
+        for t in range(1, self.num_steps):
+            rates[:, t, :] = (
+                rates[:, t - 1, :]
+                + THETA * (mu - rates[:, t - 1, :]) * dt
+                + sigma * np.sqrt(dt) * Z[:, t, :]
+            )
+        inflation_idx = self.asset_and_inflation_order.index("inflation")
+        rates[:, :, inflation_idx] = INFLATION
+        rates = np.clip(rates, -0.99, None)
+        monthly_rates = (1.0 + rates) ** (1.0 / 12.0) - 1.0
+        return monthly_rates

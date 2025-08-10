@@ -14,7 +14,7 @@ Main entry point for running FIRE Monte Carlo simulations.
 
 import sys
 import os
-import traceback
+import argparse
 from typing import Any
 import time
 import shutil
@@ -43,6 +43,18 @@ from firestarter.reporting.graph_report import generate_all_plots
 
 from firestarter.core.simulation import SimulationBuilder
 
+parser = argparse.ArgumentParser(description="FIRE Monte Carlo simulation")
+parser.add_argument(
+    "-f", "--config", required=True, help="Path to configuration TOML file"
+)
+parser.add_argument(
+    "--model",
+    choices=["lognormal", "OU"],
+    default="lognormal",
+    help="Return rate model to use",
+)
+args = parser.parse_args()
+
 
 def run_single_simulation(
     det_inputs: DeterministicInputs,
@@ -51,6 +63,7 @@ def run_single_simulation(
     portfolio_rebalances: list[PortfolioRebalance],
     shock_events: list[Shock],
     sim_params: SimulationParameters,
+    model: str,
 ) -> dict[str, Any]:
     builder = SimulationBuilder.new()
     simulation = (
@@ -60,6 +73,7 @@ def run_single_simulation(
         .set_portfolio_rebalances(portfolio_rebalances)
         .set_shock_events(shock_events)
         .set_sim_params(sim_params)
+        .set_model(model)
         .build()
     )
     simulation.init()
@@ -77,9 +91,7 @@ def main() -> None:
     import multiprocessing
 
     # Config loading and parameter assignment
-    config_file_path: str = "config.toml"
-    if len(sys.argv) > 1:
-        config_file_path = sys.argv[1]
+    config_file_path: str = args.config
 
     if not os.path.exists(config_file_path):
         print(f"Error: Configuration file not found at '{config_file_path}'")
@@ -138,6 +150,7 @@ def main() -> None:
                 portfolio_rebalances,
                 shocks,
                 sim_params,
+                args.model,
             )
             for _ in range(num_simulations)
         ]
