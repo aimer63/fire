@@ -152,7 +152,7 @@ class SequencesGenerator:
     def _generate_sequences_ou(self) -> np.ndarray:
         """
         Generates Ornstein-Uhlenbeck paths for all assets and all sequences
-        in log-return space, using lognormal parameter conversion.
+        in monthly log-return space, using lognormal parameter conversion.
         Returns:
             np.ndarray: shape (num_sequences, num_steps, num_assets)
         """
@@ -170,27 +170,31 @@ class SequencesGenerator:
         mu_log = np.log(ex) - 0.5 * np.log(1 + vx / ex**2)
         sigma_log = np.sqrt(np.log(1 + vx / ex**2))
 
-        # Use log-return parameters for OU process
-        mu = mu_log
-        sigma = sigma_log
-        r0 = mu_log
+        # Scale to monthly log returns
+        monthly_mu_log = mu_log / 12
+        monthly_sigma_log = sigma_log / np.sqrt(12)
 
-        dt = 1.0 / 12.0
+        # Use monthly log-return parameters for OU process
+        mu = monthly_mu_log
+        sigma = monthly_sigma_log
+        r0 = monthly_mu_log
+
+        dt = 1.0  # Monthly step
         rng = np.random.default_rng(self.seed)
         Z = rng.standard_normal((self.num_sequences, self.num_steps, num_assets))
 
-        rates = np.zeros(
+        log_of_return_factors = np.zeros(
             (self.num_sequences, self.num_steps, num_assets), dtype=np.float64
         )
-        rates[:, 0, :] = r0
+        log_of_return_factors[:, 0, :] = r0
 
         for t in range(1, self.num_steps):
-            rates[:, t, :] = (
-                rates[:, t - 1, :]
-                + THETA * (mu - rates[:, t - 1, :]) * dt
+            log_of_return_factors[:, t, :] = (
+                log_of_return_factors[:, t - 1, :]
+                + THETA * (mu - log_of_return_factors[:, t - 1, :]) * dt
                 + sigma * np.sqrt(dt) * Z[:, t, :]
             )
 
-        # Convert annual simple returns to monthly simple returns at the end
-        monthly_rates = (1.0 + (np.exp(rates) - 1.0)) ** (1.0 / 12.0) - 1.0
-        return monthly_rates
+        # Transform monthly log returns to monthly simple returns
+        return_rates = np.exp(log_of_return_factors) - 1.0
+        return return_rates
