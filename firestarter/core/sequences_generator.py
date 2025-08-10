@@ -151,27 +151,38 @@ class SequencesGenerator:
 
     def _generate_sequences_ou(self) -> np.ndarray:
         """
-        Generates Ornstein-Uhlenbeck paths for all assets and all sequences.
+        Generates Ornstein-Uhlenbeck paths for all assets and all sequences
+        in log-return space, using lognormal parameter conversion.
         Returns:
             np.ndarray: shape (num_sequences, num_steps, num_assets)
         """
         num_assets = len(self.asset_and_inflation_order)
-        rates = np.zeros(
-            (self.num_sequences, self.num_steps, num_assets), dtype=np.float64
-        )
-        mu = np.array(
+        mu_sample = np.array(
             [self.assets[asset].mu for asset in self.asset_and_inflation_order]
-        )  # Commented out
-        sigma = np.array(
+        )
+        sigma_sample = np.array(
             [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
-        )  # Commented out
-        r0 = mu  # Start at long-term mean for each asset
+        )
+
+        # Convert arithmetic mean and std to log-return equivalents
+        ex = 1.0 + mu_sample
+        vx = sigma_sample**2
+        mu_log = np.log(ex) - 0.5 * np.log(1 + vx / ex**2)
+        sigma_log = np.sqrt(np.log(1 + vx / ex**2))
+
+        # Use log-return parameters for OU process
+        mu = mu_log
+        sigma = sigma_log
+        r0 = mu_log
 
         dt = 1.0 / 12.0
         rng = np.random.default_rng(self.seed)
         Z = rng.standard_normal((self.num_sequences, self.num_steps, num_assets))
 
-        rates[:, 0, :] = r0  # Initial value for all sequences/assets
+        rates = np.zeros(
+            (self.num_sequences, self.num_steps, num_assets), dtype=np.float64
+        )
+        rates[:, 0, :] = r0
 
         for t in range(1, self.num_steps):
             rates[:, t, :] = (
@@ -179,8 +190,7 @@ class SequencesGenerator:
                 + THETA * (mu - rates[:, t - 1, :]) * dt
                 + sigma * np.sqrt(dt) * Z[:, t, :]
             )
-        inflation_idx = self.asset_and_inflation_order.index("inflation")
-        rates[:, :, inflation_idx] = INFLATION
-        rates = np.clip(rates, -0.99, None)
-        monthly_rates = (1.0 + rates) ** (1.0 / 12.0) - 1.0
+
+        # Convert annual simple returns to monthly simple returns at the end
+        monthly_rates = (1.0 + (np.exp(rates) - 1.0)) ** (1.0 / 12.0) - 1.0
         return monthly_rates
