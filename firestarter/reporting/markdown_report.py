@@ -28,7 +28,7 @@ import tomli_w
 import os
 from datetime import datetime
 import re
-from firestarter.core.helpers import calculate_cagr
+from firestarter.utils.helpers import calculate_cagr
 
 
 def format_config_for_markdown(config: Dict[str, Any]) -> List[str]:

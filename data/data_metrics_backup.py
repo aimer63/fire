@@ -60,16 +60,15 @@ Analyze only the most recent N-year window::
 
 import argparse
 from typing import Any, Callable, Dict, List, Optional, Tuple
-import os
-
+import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
+import os
 
-from firestarter.utils.colors import get_color, get_random_color
 
 # Setup CLI argument parsing
 parser = argparse.ArgumentParser(
