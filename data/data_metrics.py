@@ -411,6 +411,36 @@ def run_single_analysis(
             os.path.join(output_dir, f"return_distribution_{safe_index_name}.png")
         )
     print(f"\nDistribution plots saved to '{output_dir}/'")
+    # plt.show()
+
+    # Plot: Annualized Return vs. Window Start Date for each asset
+    plt.figure(figsize=(12, 6))
+    for index in DATA_COLS:
+        plt.plot(
+            results_df["Window Start"],
+            results_df[f"Return_Rate_{index}"],
+            label=index,
+            linewidth=2,
+        )
+    plt.xlabel("Window Start Year")
+    plt.ylabel("Annualized Return Rate (%)")
+    plt.gca().yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1, decimals=0))
+    plt.title(f"Annualized Return vs. Window Start Date ({n_years}-Year Windows)")
+    plt.legend()
+    plt.xticks(
+        ticks=results_df["Window Start"][::periods_per_year],
+        labels=[
+            str(pd.to_datetime(dt).year)
+            for dt in results_df["Window Start"][::periods_per_year]
+        ],
+        rotation=45,
+    )
+    plt.tight_layout()
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.savefig(os.path.join(output_dir, "annualized_return_vs_window_start.png"))
+    print(
+        f"Annualized return vs. window start plot saved to '{output_dir}/annualized_return_vs_window_start.png'"
+    )
     plt.show()
 
 
