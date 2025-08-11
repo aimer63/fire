@@ -36,10 +36,7 @@ from firestarter.config.config import Asset
 from firestarter.config.correlation_matrix import CorrelationMatrix
 
 # OU model parameters (fixed for all assets)
-THETA = 0.5  # Mean reversion speed
-MU = 0.08  # Long-term mean
-SIGMA = 0.15  # Volatility
-INFLATION = 0.02  # Constant monthly inflation rate
+THETA = 0.8  # Mean reversion speed
 
 
 class SequencesGenerator:
@@ -165,6 +162,7 @@ class SequencesGenerator:
         sigma = np.array(
             [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
         )
+        theta = THETA
         r0 = mu
 
         dt = 1.0 / 12.0  # Monthly step in years
@@ -179,7 +177,7 @@ class SequencesGenerator:
         for t in range(1, self.num_steps):
             return_rates[:, t, :] = (
                 return_rates[:, t - 1, :]
-                + THETA * (mu - return_rates[:, t - 1, :]) * dt
+                + theta * (mu - return_rates[:, t - 1, :]) * dt
                 + sigma * np.sqrt(dt) * Z[:, t, :]
             )
 
