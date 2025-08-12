@@ -172,7 +172,9 @@ def prepare_data(
     num_missing = df[DATA_COLS].isna().sum()
     total_missing = num_missing.sum()
     if total_missing > 0:
-        print(f"Warning: Detected {total_missing} missing or non-numeric values in your data.")
+        print(
+            f"Warning: Detected {total_missing} missing or non-numeric values in your data."
+        )
         print("Missing values per column:")
         for col, val in num_missing[num_missing > 0].items():
             print(f"{col}: {val} (dtype: {df[col].dtype})")
@@ -219,17 +221,26 @@ def prepare_data(
         periods_per_year = MONTHS_PER_YEAR
         # Aggregate by month: take the last available value in each month
         df = df.groupby(pd.Grouper(freq="ME")).last()
-        full_date_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq="ME")
+        full_date_range = pd.date_range(
+            start=df.index.min(), end=df.index.max(), freq="ME"
+        )
         missing_periods = full_date_range[~full_date_range.isin(df.index)]
         if not missing_periods.empty:
             missing_list = [p.strftime("%Y-%m") for p in missing_periods]
             print(f"Alert: Missing months detected: {missing_list}")
         else:
             print("No missing months detected.")
-        df = df.reindex(full_date_range).ffill()
+        df = df.reindex(full_date_range)
+        for col in DATA_COLS:
+            first_valid = df[col].first_valid_index()
+            last_valid = df[col].last_valid_index()
+            mask = (df.index >= first_valid) & (df.index <= last_valid)
+            df.loc[mask, col] = df.loc[mask, col].ffill()
     elif frequency == "daily":
         if trading_days_per_year is None:
-            raise ValueError("trading_days_per_year must be provided for daily frequency.")
+            raise ValueError(
+                "trading_days_per_year must be provided for daily frequency."
+            )
         periods_per_year = trading_days_per_year
         print(
             f"Daily analysis ({periods_per_year} days/year): Missing values are forward-filled; gaps in dates are assumed to be non-trading days."
@@ -293,7 +304,9 @@ def calculate_metrics_for_horizon(
     elif input_type == "return":
         # Compound returns over the window: product(1 + r_i) - 1
         rolling_prod = (
-            (1 + single_period_returns).rolling(window=window_size).apply(np.prod, raw=True)
+            (1 + single_period_returns)
+            .rolling(window=window_size)
+            .apply(np.prod, raw=True)
         )
         total_return = rolling_prod - 1
         # Annualize: (1 + total_return) ** (periods_per_year / window_size) - 1
@@ -365,7 +378,9 @@ def run_tail_analysis(
         tail_returns = tail_df[DATA_COLS]
     else:
         raise ValueError(f"Unknown input type: {input_type}")
-    mean_return = (1 + tail_returns).prod() ** (periods_per_year / tail_returns.shape[0]) - 1
+    mean_return = (1 + tail_returns).prod() ** (
+        periods_per_year / tail_returns.shape[0]
+    ) - 1
     std_return = tail_returns.std() * np.sqrt(periods_per_year)
     actual_years = tail_periods / periods_per_year
     print(f"\n--- Most Recent Window (using {actual_years:.2f} years of data) ---")
@@ -404,7 +419,9 @@ def run_tail_analysis(
         plt.title("Correlation Matrix (Tail Window)")
         plt.tight_layout()
         plt.savefig(os.path.join(output_dir, "tail_window_correlation_heatmap.png"))
-        print("Correlation heatmap saved to 'output/tail_window_correlation_heatmap.png'")
+        print(
+            "Correlation heatmap saved to 'output/tail_window_correlation_heatmap.png'"
+        )
         plt.show()
 
 
@@ -467,7 +484,10 @@ def run_single_horizon_analysis(
     # Calculate presentation-specific tables (Worst/Best, Percentiles)
     extreme_windows = {}
     for index in DATA_COLS:
-        sorted_df = results_df.sort_values(f"Return_Rate_{index}")
+        valid_df = results_df.dropna(subset=[f"Return_Rate_{index}"])
+        if len(valid_df) == 0:
+            continue  # Or handle/report no valid data for this index
+        sorted_df = valid_df.sort_values(f"Return_Rate_{index}")
         worst = sorted_df.iloc[0]
         median = sorted_df.iloc[len(sorted_df) // 2]
         best = sorted_df.iloc[-1]
@@ -497,7 +517,9 @@ def run_single_horizon_analysis(
         - results_df[return_rate_cols].quantile(0.25),
     }
     return_percentiles_df = pd.DataFrame(return_percentiles_data)
-    return_percentiles_df.index = return_percentiles_df.index.str.replace("Return_Rate_", "")
+    return_percentiles_df.index = return_percentiles_df.index.str.replace(
+        "Return_Rate_", ""
+    )
 
     # Print all results
     print(
@@ -506,8 +528,12 @@ def run_single_horizon_analysis(
 
     # Create a copy for printing with modified headers for readability
     print_df = expected_df.copy()
-    print_df.columns = [f"| {col}" if i > 0 else col for i, col in enumerate(expected_df.columns)]
-    print_df.columns = [col.replace("95% CI Volatility", "95% CI") for col in print_df.columns]
+    print_df.columns = [
+        f"| {col}" if i > 0 else col for i, col in enumerate(expected_df.columns)
+    ]
+    print_df.columns = [
+        col.replace("95% CI Volatility", "95% CI") for col in print_df.columns
+    ]
     print(
         print_df.to_string(
             formatters={
@@ -524,7 +550,9 @@ def run_single_horizon_analysis(
     )
 
     for index in DATA_COLS:
-        print(f"\n--- Worst, Median, and Best Windows for {n_years}-Year Investment ({index}) ---")
+        print(
+            f"\n--- Worst, Median, and Best Windows for {n_years}-Year Investment ({index}) ---"
+        )
         print(
             extreme_windows[index].to_string(
                 index=False, formatters={"Return Rate": "{:.2%}".format}
@@ -540,40 +568,50 @@ def run_single_horizon_analysis(
     print(return_percentiles_df.to_string(formatters=percentile_formatters))
 
     # Analyze and print leftover window
-    num_leftover_periods = (len(df) - 1) % window_size
-    if num_leftover_periods > 0:
-        leftover_start_idx = -num_leftover_periods - 1
-        leftover_start_date = df.index[leftover_start_idx + 1].strftime("%Y-%m-%d")
-        period_unit = "days" if TRADING_DAYS_PER_YEAR is not None else "months"
-        print("\n--- Analysis of Final Incomplete Window ---")
-        print(
-            f"The most recent, incomplete period contains {num_leftover_periods} {period_unit} (starting {leftover_start_date})."
-        )
-        print(
-            f"Note: These results are for a shorter period and are not directly comparable to the full {n_years}-year windows."
-        )
-        if input_type == "price":
-            leftover_prices = df.iloc[leftover_start_idx:]
-            total_leftover_return = (leftover_prices.iloc[-1] / leftover_prices.iloc[0]) - 1
-        elif input_type == "return":
-            leftover_returns = single_period_returns.iloc[leftover_start_idx:]
-            total_leftover_return = np.prod(1 + leftover_returns.values) - 1
-        else:
-            raise ValueError(f"Unknown input type: {input_type}")
-        leftover_annualized_return = (1 + total_leftover_return) ** (
-            periods_per_year / num_leftover_periods
-        ) - 1
-        # Format the output for the incomplete window to match summary tables
-        if isinstance(leftover_annualized_return, (float, int)):
-            print(f"Annualized Return Rate: {leftover_annualized_return:.2%}")
-        else:
-            leftover_df = pd.DataFrame({"Annualized Return Rate": leftover_annualized_return})
+    # Calculate leftover periods and window independently for each column
+    leftover_results = {}
+    for index in DATA_COLS:
+        # Count total valid periods for this column
+        n_valid = df[index].count()
+        leftover_periods = n_valid % window_size
+        if leftover_periods < 2:
             print(
-                leftover_df.to_string(
-                    formatters={"Annualized Return Rate": "{:.2%}".format}, index=True
-                )
+                f"{index}: Not enough valid data for incomplete window (need at least 2 points)."
             )
-
+            leftover_results[index] = {
+                "Annualized Return Rate": np.nan,
+                "Leftover Start Date": "",
+                "Leftover Periods": 0,
+            }
+            continue
+        # Get the last (leftover_periods + 1) valid entries for this column
+        valid_prices = df[index].dropna()
+        window_prices = valid_prices.iloc[-(leftover_periods + 1) :]
+        assert isinstance(window_prices.index, pd.DatetimeIndex), (
+            "window_prices.index must be a DatetimeIndex"
+        )
+        leftover_start_date = window_prices.index[0].strftime("%Y-%m-%d")
+        total_leftover_return = (window_prices.iloc[-1] / window_prices.iloc[0]) - 1
+        annualized_return = (1 + total_leftover_return) ** (
+            periods_per_year / leftover_periods
+        ) - 1
+        leftover_results[index] = {
+            "Annualized Return Rate": annualized_return,
+            "Leftover Start Date": leftover_start_date,
+            "Leftover Periods": leftover_periods,
+        }
+    leftover_df = pd.DataFrame.from_dict(leftover_results, orient="index")
+    print("\n--- Analysis of the last incomplete window ---")
+    print(
+        leftover_df.to_string(
+            formatters={
+                "Annualized Return Rate": "{:.2%}".format,
+                "Leftover Start Date": str,
+                "Leftover Periods": "{:d}".format,
+            },
+            index=True,
+        )
+    )
     # Generate and Save Distribution Plots
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
@@ -593,10 +631,14 @@ def run_single_horizon_analysis(
         plt.title(f"Distribution of {n_years}-Year Annualized Returns for {index}")
         plt.xlabel("Annualized Return Rate")
         plt.ylabel("Number of Windows")
-        plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
+        plt.gca().xaxis.set_major_formatter(
+            ticker.FuncFormatter(lambda x, _: f"{x:.0%}")
+        )
         plt.grid(axis="y", linestyle="--", alpha=0.7)
         plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, f"return_distribution_{safe_index_name}.png"))
+        plt.savefig(
+            os.path.join(output_dir, f"return_distribution_{safe_index_name}.png")
+        )
     print(f"\nDistribution plots saved to '{output_dir}/'")
 
     # Plot: Annualized Return vs. Window Start Date for each asset
@@ -618,7 +660,9 @@ def run_single_horizon_analysis(
     last_year = pd.to_datetime(results_df.index).year.max()
 
     # Generate a list of YYYY-01-01 for each year in the range
-    year_ticks = pd.to_datetime([f"{year}-01-01" for year in range(first_year, last_year + 1)])
+    year_ticks = pd.to_datetime(
+        [f"{year}-01-01" for year in range(first_year, last_year + 1)]
+    )
     year_labels = [str(year) for year in range(first_year, last_year + 1)]
 
     plt.xlabel("Window Start Year")
@@ -707,7 +751,9 @@ def run_heatmap_analysis(
                     heatmap_pivot.loc[row_label].astype(int).map("{:}".format)
                 )
             else:
-                formatted_pivot.loc[row_label] = heatmap_pivot.loc[row_label].map("{:.2%}".format)
+                formatted_pivot.loc[row_label] = heatmap_pivot.loc[row_label].map(
+                    "{:.2%}".format
+                )
 
         print(f"\n--- Summary Statistics for {index} ---")
         print(formatted_pivot.to_string())
@@ -717,7 +763,9 @@ def run_heatmap_analysis(
         )
         for row in annot_df.index:
             if row == "Number of Windows":
-                annot_df.loc[row] = heatmap_pivot.loc[row].astype(int).map("{:,}".format)
+                annot_df.loc[row] = (
+                    heatmap_pivot.loc[row].astype(int).map("{:,}".format)
+                )
             else:
                 annot_df.loc[row] = heatmap_pivot.loc[row].map("{:.2%}".format)
 
@@ -756,7 +804,9 @@ def run_heatmap_analysis(
         plt.xlabel("Investment Horizon (N Years)")
         plt.ylabel("Metric")
         plt.tight_layout()
-        heatmap_path = os.path.join(output_dir, f"metrics_heatmap_{safe_index_name}.png")
+        heatmap_path = os.path.join(
+            output_dir, f"metrics_heatmap_{safe_index_name}.png"
+        )
         plt.savefig(heatmap_path)
         print(f"Heatmap saved to '{heatmap_path}'")
 
@@ -793,7 +843,9 @@ def main() -> None:
             df, N_YEARS, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
         )
     else:
-        run_heatmap_analysis(df, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE)
+        run_heatmap_analysis(
+            df, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
+        )
 
 
 if __name__ == "__main__":
