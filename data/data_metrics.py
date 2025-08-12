@@ -166,7 +166,7 @@ def prepare_data(
     # Convert all index columns to numeric, coercing errors to NaN.
     # Warn if any missing or non-numeric values are found, and display a summary.
     # Fill missing values in the index columns by propagating the last valid
-    # observation forward (forward fill).
+    # observation forward (forward fill) ONLY for internal gaps (not at head/tail).
     for col in DATA_COLS:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     num_missing = df[DATA_COLS].isna().sum()
@@ -178,14 +178,21 @@ def prepare_data(
             print(f"{col}: {val} (dtype: {df[col].dtype})")
         # Fill missing values in the index columns by propagating the last valid
         # observation forward (forward fill) for price input, or with zero for return input.
-        if input_type == "price":
-            print(
-                "Filling missing values using forward fill (ffill); NaNs at the beginning of the series remain NaN."
-            )
-            df[DATA_COLS] = df[DATA_COLS].ffill()
-        elif input_type == "return":
-            print("Filling missing values with zero.")
-            df[DATA_COLS] = df[DATA_COLS].fillna(0)
+        # Only fill internal gaps, not leading/trailing NaNs, per column.
+        for col in DATA_COLS:
+            first_valid = df[col].first_valid_index()
+            last_valid = df[col].last_valid_index()
+            mask = (df.index >= first_valid) & (df.index <= last_valid)
+            if input_type == "price":
+                print(
+                    f"Filling missing values for {col} using forward fill (ffill) only between {first_valid} and {last_valid}; NaNs at the beginning/end remain NaN."
+                )
+                df.loc[mask, col] = df.loc[mask, col].ffill()
+            elif input_type == "return":
+                print(
+                    f"Filling missing values for {col} with zero only between {first_valid} and {last_valid}; NaNs at the beginning/end remain NaN."
+                )
+                df.loc[mask, col] = df.loc[mask, col].fillna(0)
 
     # Prepare the DataFrame based on frequency ---
     df["Date"] = pd.to_datetime(df["Date"])
@@ -233,7 +240,7 @@ def prepare_data(
     # Calculate single-period returns or use input as returns, based on input type
     # If using 'return', input values must be true single-period returns (not annualized rates).
     if input_type == "price":
-        single_period_returns = df[DATA_COLS].pct_change()
+        single_period_returns = df[DATA_COLS].pct_change(fill_method=None)
         single_period_returns = single_period_returns.iloc[1:]  # Drop initial NaN only
         print("Input type: price. Calculating returns from price columns.")
     elif input_type == "return":
@@ -452,9 +459,10 @@ def run_single_horizon_analysis(
     )
     results_df.dropna(how="all", inplace=True)
 
-    # Add a 'Window Start' column for easy reference
     window_size = n_years * periods_per_year
-    results_df["Window Start"] = pd.to_datetime(results_df.index.strftime("%Y-%m-%d"))
+
+    # Add a 'Window Start' column for easy reference
+    results_df["Window Start"] = results_df.index
 
     # Calculate presentation-specific tables (Worst/Best, Percentiles)
     extreme_windows = {}
@@ -580,7 +588,7 @@ def run_single_horizon_analysis(
             bins=50,
             edgecolor="black",
             alpha=0.8,
-            color=get_color("latte", "blue"),
+            color=get_color("mocha", "blue"),
         )
         plt.title(f"Distribution of {n_years}-Year Annualized Returns for {index}")
         plt.xlabel("Annualized Return Rate")
@@ -597,7 +605,6 @@ def run_single_horizon_analysis(
     for index in DATA_COLS:
         color, _ = get_random_color("latte", used_labels)
         plt.plot(
-            # pd.to_datetime(results_df.index[valid_mask]),
             results_df["Window Start"],
             results_df[f"Return_Rate_{index}"],
             label=index,
