@@ -93,10 +93,14 @@ parser.add_argument(
     "-d",
     "--daily",
     type=int,
-    nargs="?",
-    const=252,
-    default=None,
-    help="Analyze daily data. Optionally specify the number of trading days per year (default: 252). If omitted, monthly analysis is performed.",
+    required=False,
+    help="Analyze daily data. Specify the number of trading days per year (e.g., 252). Required for daily analysis.",
+)
+parser.add_argument(
+    "-m",
+    "--monthly",
+    action="store_true",
+    help="Analyze monthly data. No trading days parameter needed.",
 )
 parser.add_argument(
     "--input-type",
@@ -106,6 +110,7 @@ parser.add_argument(
     help="Specify whether the input data columns are 'price' (default) or 'return' rates.",
 )
 parser.add_argument(
+    "-t",
     "--tail",
     type=int,
     default=None,
@@ -115,12 +120,23 @@ args = parser.parse_args()
 INPUT_TYPE = args.input_type
 N_YEARS = args.years
 FILENAME = args.file
-TRADING_DAYS_PER_YEAR = args.daily
+
+if args.daily is not None and args.monthly:
+    raise ValueError("Specify only one of --daily or --monthly, not both.")
+if args.daily is not None:
+    TRADING_DAYS_PER_YEAR = args.daily
+    FREQUENCY = "daily"
+elif args.monthly:
+    TRADING_DAYS_PER_YEAR = None
+    FREQUENCY = "monthly"
+else:
+    raise ValueError("You must specify either --daily N or --monthly.")
 
 
 def prepare_data(
     filename: str,
     input_type: str,
+    frequency: str,
     trading_days_per_year: int | None,
 ) -> tuple[pd.DataFrame, list[str], int, pd.DataFrame]:
     """
@@ -194,7 +210,7 @@ def prepare_data(
     #   are not added or filled, they are simply ignored and treated as legitimate
     #   non-trading days.
     MONTHS_PER_YEAR = 12
-    if trading_days_per_year is None:  # Monthly analysis
+    if frequency == "monthly":
         periods_per_year = MONTHS_PER_YEAR
         df.index = df.index.to_period("M").to_timestamp()
         full_date_range = pd.date_range(
@@ -207,11 +223,17 @@ def prepare_data(
         else:
             print("No missing months detected.")
         df = df.reindex(full_date_range).ffill()
-    else:  # Daily frequency
+    elif frequency == "daily":
+        if trading_days_per_year is None:
+            raise ValueError(
+                "trading_days_per_year must be provided for daily frequency."
+            )
         periods_per_year = trading_days_per_year
         print(
             f"Daily analysis ({periods_per_year} days/year): Missing values are forward-filled; gaps in dates are assumed to be non-trading days."
         )
+    else:
+        raise ValueError(f"Unknown frequency: {frequency}")
 
     # Calculate single-period returns or use input as returns, based on input type
     # If using 'return', input values must be true single-period returns (not annualized rates).
@@ -781,7 +803,7 @@ def main() -> None:
     """
     # Read and prepare the data
     df, DATA_COLS, periods_per_year, single_period_returns = prepare_data(
-        FILENAME, INPUT_TYPE, TRADING_DAYS_PER_YEAR
+        FILENAME, INPUT_TYPE, FREQUENCY, TRADING_DAYS_PER_YEAR
     )
 
     if args.tail is not None:
