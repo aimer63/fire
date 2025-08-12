@@ -118,6 +118,121 @@ FILENAME = args.file
 TRADING_DAYS_PER_YEAR = args.daily
 
 
+def prepare_data(
+    filename: str,
+    input_type: str,
+    trading_days_per_year: int | None,
+) -> tuple[pd.DataFrame, list[str], int, pd.DataFrame]:
+    """
+    Loads, cleans, and preprocesses historical market data from an Excel file.
+
+    - Removes unnamed columns and ensures numeric types for all index columns.
+    - Handles missing values (forward fill for price, zero for return).
+    - Sets the index to datetime and manages frequency (monthly/daily).
+    - Reindexes monthly data to a complete date range and fills gaps.
+    - For daily data, keeps only present trading days.
+    - Calculates single-period returns or uses provided returns.
+    - Validates return values for correctness.
+
+    Returns:
+        df: Cleaned DataFrame indexed by date.
+        DATA_COLS: List of asset/index column names.
+        periods_per_year: Number of periods per year (monthly/daily).
+        single_period_returns: DataFrame of single-period returns.
+    """
+
+    # Read the Excel file and get column names
+    df = pd.read_excel(filename)
+    df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
+    DATA_COLS = [col for col in df.columns if col != "Date"]
+    print(f"Analyzing indices: {DATA_COLS}")
+
+    # Convert all index columns to numeric, coercing errors to NaN.
+    # Warn if any missing or non-numeric values are found, and display a summary.
+    # Fill missing values in the index columns by propagating the last valid
+    # observation forward (forward fill).
+    for col in DATA_COLS:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    num_missing = df[DATA_COLS].isna().sum()
+    total_missing = num_missing.sum()
+    if total_missing > 0:
+        print(
+            f"Warning: Detected {total_missing} missing or non-numeric values in your data."
+        )
+        print("Missing values per column:")
+        for col, val in num_missing[num_missing > 0].items():
+            print(f"{col}: {val} (dtype: {df[col].dtype})")
+        if input_type == "price":
+            print("Filling missing values using forward fill (ffill).")
+        elif input_type == "return":
+            print("Filling missing values with zero.")
+    # Fill missing values in the index columns by propagating the last valid
+    # observation forward (forward fill) for price input, or with zero for return input.
+    if input_type == "price":
+        df[DATA_COLS] = df[DATA_COLS].ffill()
+    elif input_type == "return":
+        df[DATA_COLS] = df[DATA_COLS].fillna(0)
+
+    # Prepare the DataFrame based on frequency ---
+    df["Date"] = pd.to_datetime(df["Date"])
+    df.set_index("Date", inplace=True)
+    df = df[~df.index.duplicated(keep="last")]
+    assert isinstance(df.index, pd.DatetimeIndex)
+
+    # Prepare the DataFrame based on frequency
+    # Missing value handling:
+    # - All missing values within existing dates are expected to be forward-filled
+    #   (ffill) before this step.
+    # - For monthly analysis (TRADING_DAYS_PER_YEAR is None):
+    #   The DataFrame is reindexed to a complete monthly date range, introducing
+    #   NaNs for any missing months. These NaNs are then forward-filled (ffill),
+    #   ensuring a continuous monthly time series with no missing dates.
+    # - For daily analysis (TRADING_DAYS_PER_YEAR is not None):
+    #   The DataFrame is NOT reindexed, so only the dates present in the original
+    #   data are kept, these are assumed to be actual trading days.
+    #   Dates that are entirely absent from the data (such as weekends or holidays)
+    #   are not added or filled, they are simply ignored and treated as legitimate
+    #   non-trading days.
+    MONTHS_PER_YEAR = 12
+    if trading_days_per_year is None:  # Monthly analysis
+        periods_per_year = MONTHS_PER_YEAR
+        df.index = df.index.to_period("M").to_timestamp()
+        full_date_range = pd.date_range(
+            start=df.index.min(), end=df.index.max(), freq="MS"
+        )
+        missing_periods = full_date_range[~full_date_range.isin(df.index)]
+        if not missing_periods.empty:
+            missing_list = [p.strftime("%Y-%m") for p in missing_periods]
+            print(f"Alert: Missing months detected: {missing_list}")
+        else:
+            print("No missing months detected.")
+        df = df.reindex(full_date_range).ffill()
+    else:  # Daily frequency
+        periods_per_year = trading_days_per_year
+        print(
+            f"Daily analysis ({periods_per_year} days/year): Missing values are forward-filled; gaps in dates are assumed to be non-trading days."
+        )
+
+    # Calculate single-period returns or use input as returns, based on input type
+    # If using 'return', input values must be true single-period returns (not annualized rates).
+    if input_type == "price":
+        single_period_returns = df[DATA_COLS].pct_change()
+        print("Input type: price. Calculating returns from price columns.")
+    elif input_type == "return":
+        single_period_returns = df[DATA_COLS]
+        print("Input type: return. Using provided values as single-period returns.")
+        # Validate: returns cannot be less than -1
+        if (single_period_returns < -1).any().any():
+            invalid = single_period_returns[single_period_returns < -1]
+            print("Error: Detected return values less than -1 (impossible):")
+            print(invalid[invalid.notna()])
+            raise ValueError("Input contains invalid return values (< -1).")
+    else:
+        raise ValueError(f"Unknown input type: {input_type}")
+
+    return df, DATA_COLS, periods_per_year, single_period_returns
+
+
 def calculate_metrics_for_horizon(
     df: pd.DataFrame,
     n_years: int,
@@ -656,100 +771,18 @@ def run_heatmap_analysis(
 
 def main() -> None:
     """
-    Main function to run the analysis.
+    Main function to run the historical market data analysis.
 
-    Parses CLI arguments, prepares the data, and calls the appropriate
-    analysis function (``run_single_analysis``, ``run_heatmap_analysis``, or tail analysis).
+    - Loads and preprocesses historical data from Excel.
+    - Cleans, fills, and prepares the DataFrame for analysis.
+    - Calculates single-period returns.
+    - Runs tail, single-horizon, or heatmap analysis based on CLI options.
+    - Prints results and generates plots.
     """
-    # Read the Excel file and get column names
-    df = pd.read_excel(FILENAME)
-    df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
-    DATA_COLS = [col for col in df.columns if col != "Date"]
-    print(f"Analyzing indices: {DATA_COLS}")
-
-    # Convert all index columns to numeric, coercing errors to NaN.
-    # Warn if any missing or non-numeric values are found, and display a summary.
-    # Fill missing values in the index columns by propagating the last valid
-    # observation forward (forward fill).
-    for col in DATA_COLS:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-    num_missing = df[DATA_COLS].isna().sum()
-    total_missing = num_missing.sum()
-    if total_missing > 0:
-        print(
-            f"Warning: Detected {total_missing} missing or non-numeric values in your data."
-        )
-        print("Missing values per column:")
-        for col, val in num_missing[num_missing > 0].items():
-            print(f"{col}: {val} (dtype: {df[col].dtype})")
-        if INPUT_TYPE == "price":
-            print("Filling missing values using forward fill (ffill).")
-        elif INPUT_TYPE == "return":
-            print("Filling missing values with zero.")
-    # Fill missing values in the index columns by propagating the last valid
-    # observation forward (forward fill) for price input, or with zero for return input.
-    if INPUT_TYPE == "price":
-        df[DATA_COLS] = df[DATA_COLS].ffill()
-    elif INPUT_TYPE == "return":
-        df[DATA_COLS] = df[DATA_COLS].fillna(0)
-
-    # Prepare the DataFrame based on frequency ---
-    df["Date"] = pd.to_datetime(df["Date"])
-    df.set_index("Date", inplace=True)
-    df = df[~df.index.duplicated(keep="last")]
-
-    assert isinstance(df.index, pd.DatetimeIndex)
-
-    # Prepare the DataFrame based on frequency
-    # Missing value handling:
-    # - All missing values within existing dates are expected to be forward-filled
-    #   (ffill) before this step.
-    # - For monthly analysis (TRADING_DAYS_PER_YEAR is None):
-    #   The DataFrame is reindexed to a complete monthly date range, introducing
-    #   NaNs for any missing months. These NaNs are then forward-filled (ffill),
-    #   ensuring a continuous monthly time series with no missing dates.
-    # - For daily analysis (TRADING_DAYS_PER_YEAR is not None):
-    #   The DataFrame is NOT reindexed, so only the dates present in the original
-    #   data are kept, these are assumed to be actual trading days.
-    #   Dates that are entirely absent from the data (such as weekends or holidays)
-    #   are not added or filled, they are simply ignored and treated as legitimate
-    #   non-trading days.
-    MONTHS_PER_YEAR = 12
-    if TRADING_DAYS_PER_YEAR is None:  # Monthly analysis
-        periods_per_year = MONTHS_PER_YEAR
-        df.index = df.index.to_period("M").to_timestamp()
-        full_date_range = pd.date_range(
-            start=df.index.min(), end=df.index.max(), freq="MS"
-        )
-        missing_periods = full_date_range[~full_date_range.isin(df.index)]
-        if not missing_periods.empty:
-            missing_list = [p.strftime("%Y-%m") for p in missing_periods]
-            print(f"Alert: Missing months detected: {missing_list}")
-        else:
-            print("No missing months detected.")
-        df = df.reindex(full_date_range).ffill()
-    else:  # Daily frequency
-        periods_per_year = TRADING_DAYS_PER_YEAR
-        print(
-            f"Daily analysis ({periods_per_year} days/year): Missing values are forward-filled; gaps in dates are assumed to be non-trading days."
-        )
-
-    # Calculate single-period returns or use input as returns, based on input type
-    # If using 'return', input values must be true single-period returns (not annualized rates).
-    if INPUT_TYPE == "price":
-        single_period_returns = df[DATA_COLS].pct_change()
-        print("Input type: price. Calculating returns from price columns.")
-    elif INPUT_TYPE == "return":
-        single_period_returns = df[DATA_COLS]
-        print("Input type: return. Using provided values as single-period returns.")
-        # Validate: returns cannot be less than -1
-        if (single_period_returns < -1).any().any():
-            invalid = single_period_returns[single_period_returns < -1]
-            print("Error: Detected return values less than -1 (impossible):")
-            print(invalid[invalid.notna()])
-            raise ValueError("Input contains invalid return values (< -1).")
-    else:
-        raise ValueError(f"Unknown input type: {INPUT_TYPE}")
+    # Read and prepare the data
+    df, DATA_COLS, periods_per_year, single_period_returns = prepare_data(
+        FILENAME, INPUT_TYPE, TRADING_DAYS_PER_YEAR
+    )
 
     if args.tail is not None:
         if N_YEARS is not None:
