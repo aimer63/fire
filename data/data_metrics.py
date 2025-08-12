@@ -204,7 +204,77 @@ def calculate_metrics_for_horizon(
     return annualized_return, summary_results
 
 
-def run_single_analysis(
+def run_tail_analysis(
+    df: pd.DataFrame,
+    DATA_COLS: list[str],
+    periods_per_year: int,
+    input_type: str,
+    tail_years: int,
+) -> None:
+    tail_periods = tail_years * periods_per_year
+    if tail_periods > len(df):
+        actual_years = len(df) / periods_per_year
+        print(
+            f"Warning: Requested tail window ({tail_years} years, {tail_periods} periods) "
+            f"is longer than available data ({len(df)} periods, {actual_years:.2f} years). "
+            f"Calculating metrics using the most recent {actual_years:.2f} years of data."
+        )
+        tail_periods = len(df)
+    tail_df = df.iloc[-tail_periods:]
+    if input_type == "price":
+        tail_returns = tail_df[DATA_COLS].pct_change().dropna()
+    elif input_type == "return":
+        tail_returns = tail_df[DATA_COLS]
+    else:
+        raise ValueError(f"Unknown input type: {input_type}")
+    mean_return = (1 + tail_returns).prod() ** (
+        periods_per_year / tail_returns.shape[0]
+    ) - 1
+    std_return = tail_returns.std() * np.sqrt(periods_per_year)
+    actual_years = tail_periods / periods_per_year
+    print(f"\n--- Most Recent Window (using {actual_years:.2f} years of data) ---")
+    for col in DATA_COLS:
+        print(
+            f"{col}: Expected Annualized Return: {mean_return[col]:.2%}, StdDev: {std_return[col]:.2%}"
+        )
+
+    if len(DATA_COLS) > 1:
+        corr_matrix = tail_returns.corr()
+        print("\n--- Correlation Matrix (Tail Window) ---")
+        print(corr_matrix.to_string(float_format=lambda x: f"{x:6.2f}"))
+        output_dir = "output"
+        os.makedirs(output_dir, exist_ok=True)
+        plt.style.use("dark_background")
+        plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
+        plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
+        gradient = LinearSegmentedColormap.from_list(
+            "gradient",
+            [
+                get_color("mocha", "text"),
+                get_color("latte", "mauve"),
+            ],
+        )
+        plt.figure(figsize=(6, 5))
+        sns.heatmap(
+            corr_matrix,
+            annot=True,
+            vmin=-1,
+            vmax=1,
+            cmap=gradient,
+            fmt=".2f",
+            linewidths=0.5,
+            cbar_kws={"label": "Correlation"},
+        )
+        plt.title("Correlation Matrix (Tail Window)")
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, "tail_window_correlation_heatmap.png"))
+        print(
+            "Correlation heatmap saved to 'output/tail_window_correlation_heatmap.png'"
+        )
+        plt.show()
+
+
+def run_single_horizon_analysis(
     df: pd.DataFrame,
     n_years: int,
     periods_per_year: int,
@@ -549,9 +619,11 @@ def run_heatmap_analysis(
             index=heatmap_pivot.index,
             columns=heatmap_pivot.columns,
         )
+        # Format colorbar label as percentage
+        cbar_label = "VaR (5th Percentile, %)"
 
-        catppuccin_gradient = LinearSegmentedColormap.from_list(
-            "catppuccin_gradient",
+        gradient = LinearSegmentedColormap.from_list(
+            "gradient",
             [
                 get_color("latte", "mauve"),
                 get_color("mocha", "text"),
@@ -562,9 +634,12 @@ def run_heatmap_analysis(
             color_data,
             annot=annot_df,
             fmt="",
-            cmap=catppuccin_gradient,
+            cmap=gradient,
             linewidths=0.5,
-            cbar_kws={"label": "Color driven by VaR (5th Percentile)"},
+            cbar_kws={
+                "label": cbar_label,
+                "format": ticker.PercentFormatter(xmax=1, decimals=0),
+            },
         )
         plt.title(f"Historical Investment Metrics vs. Horizon (N) for {index}")
         plt.xlabel("Investment Horizon (N Years)")
@@ -679,25 +754,15 @@ def main() -> None:
     if args.tail is not None:
         if N_YEARS is not None:
             raise ValueError("--tail is not compatible with --years.")
-        tail_periods = args.tail * periods_per_year
-        tail_df = df.iloc[-tail_periods:]
-        if INPUT_TYPE == "price":
-            tail_returns = tail_df[DATA_COLS].pct_change().dropna()
-        elif INPUT_TYPE == "return":
-            tail_returns = tail_df[DATA_COLS]
-        else:
-            raise ValueError(f"Unknown input type: {INPUT_TYPE}")
-        mean_return = (1 + tail_returns).prod() ** (
-            periods_per_year / tail_returns.shape[0]
-        ) - 1
-        std_return = tail_returns.std() * np.sqrt(periods_per_year)
-        print(f"\n--- Most Recent {args.tail}-Year Window ---")
-        for col in DATA_COLS:
-            print(
-                f"{col}: Expected Annualized Return: {mean_return[col]:.2%}, StdDev: {std_return[col]:.2%}"
-            )
+        run_tail_analysis(
+            df=df,
+            DATA_COLS=DATA_COLS,
+            periods_per_year=periods_per_year,
+            input_type=INPUT_TYPE,
+            tail_years=args.tail,
+        )
     elif N_YEARS is not None:
-        run_single_analysis(
+        run_single_horizon_analysis(
             df, N_YEARS, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
         )
     else:
