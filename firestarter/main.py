@@ -14,9 +14,9 @@ Main entry point for running FIRE Monte Carlo simulations.
 
 import sys
 import os
-import traceback
 from typing import Any
 import time
+import argparse
 import shutil
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
@@ -42,6 +42,21 @@ from firestarter.reporting.console_report import print_console_summary
 from firestarter.reporting.graph_report import generate_all_plots
 
 from firestarter.core.simulation import SimulationBuilder
+
+
+# Setup CLI argument parsing
+parser = argparse.ArgumentParser(
+    description="Analyze historical stock market index data for n-years rolling windows."
+)
+parser.add_argument(
+    "-f",
+    "--config",
+    type=str,
+    default="config.toml",
+    help="Path to the configuration file.",
+)
+args = parser.parse_args()
+CONFIG_FILE_PATH = args.config
 
 
 def run_single_simulation(
@@ -76,24 +91,19 @@ def main() -> None:
     """
     import multiprocessing
 
-    # Config loading and parameter assignment
-    config_file_path: str = "config.toml"
-    if len(sys.argv) > 1:
-        config_file_path = sys.argv[1]
-
-    if not os.path.exists(config_file_path):
-        print(f"Error: Configuration file not found at '{config_file_path}'")
+    if not os.path.exists(CONFIG_FILE_PATH):
+        print(f"Error: Configuration file not found at '{CONFIG_FILE_PATH}'")
         sys.exit(1)
 
     config_data: dict[str, Any]
     try:
-        with open(config_file_path, "rb") as f:
+        with open(CONFIG_FILE_PATH, "rb") as f:
             config_data = tomllib.load(f)
 
         config = Config(**config_data)
 
     except (OSError, tomllib.TOMLDecodeError) as e:
-        print(f"Error reading or parsing config file '{config_file_path}': {e}")
+        print(f"Error reading or parsing config file '{CONFIG_FILE_PATH}': {e}")
         sys.exit(1)
     except Exception as e:  # Catches Pydantic's ValidationError
         print(f"Error validating configuration: {e}")
@@ -200,7 +210,7 @@ def main() -> None:
     generate_markdown_report(
         simulation_results=simulation_results,
         config=config.model_dump(exclude_none=True),
-        config_path=config_file_path,
+        config_path=CONFIG_FILE_PATH,
         output_dir=os.path.join(output_root, "reports"),
         plot_paths=plots,
     )

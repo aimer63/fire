@@ -28,8 +28,11 @@ from typing import List, Dict, Any
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from firestarter.utils.colors import get_color
 
 plt.style.use("dark_background")
+plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
+plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
 
 
 def plot_retirement_duration_distribution(
@@ -43,6 +46,8 @@ def plot_retirement_duration_distribution(
         failed_sims["months_lasted"] / 12.0,
         bins=np.arange(0, total_retirement_years + 1, 1.0).tolist(),
         edgecolor="black",
+        alpha=0.8,
+        color=get_color("latte", "blue"),
     )
     plt.title("Distribution of duration for Failed Simulations")
     plt.xlabel("Years Lasted")
@@ -103,7 +108,8 @@ def plot_final_wealth_distribution(
             [center_val],
             [len(data)],
             width=bar_width,
-            color="dodgerblue",
+            color=get_color("latte", "blue"),
+            alpha=0.8,
             edgecolor="black",
         )
         plt.xscale("log")
@@ -118,8 +124,12 @@ def plot_final_wealth_distribution(
         # Use 50 bins for the histogram (51 edges)
         bins = np.logspace(np.log10(data.min()), np.log10(data.max()), 51)
         plt.hist(
-            data, bins=bins.tolist(), edgecolor="black"
-        )  # Matplotlib default color is fine
+            data,
+            bins=bins.tolist(),
+            alpha=0.8,
+            color=get_color("latte", "blue"),
+            edgecolor="black",
+        )
         plt.xscale("log")
         plt.title(title)
         plt.xlabel(xlabel)
@@ -148,12 +158,12 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
     # Percentile boundaries
     percentiles = [0, 20, 40, 60, 80, 100]
     colors = [
-        "orange",
-        "gold",
-        "limegreen",
-        "dodgerblue",
-        "magenta",
-    ]  # Changed "navy" to "magenta" for 80-100th percentile
+        get_color("latte", "peach"),
+        get_color("latte", "yellow"),
+        get_color("latte", "teal"),
+        get_color("latte", "sky"),
+        get_color("latte", "blue"),
+    ]
 
     lw = 1.2
 
@@ -229,14 +239,14 @@ def plot_wealth_evolution_samples(results_df: pd.DataFrame, real: bool, filename
         (
             worst_row,
             f"Worst Successful (Final {'Real' if real else 'Nominal'}: {worst_row[key]:,.0f}€)",
-            "red",
-            2.5,
+            get_color("latte", "red"),
+            2.0,
         ),
         (
             best_row,
             f"Best Successful (Final {'Real' if real else 'Nominal'}: {best_row[key]:,.0f}€)",
-            "green",
-            2.5,
+            get_color("latte", "green"),
+            2.0,
         ),
     ]:
         wealth = np.array(row["wealth_history"], dtype=np.float64)
@@ -285,6 +295,25 @@ def plot_failed_wealth_evolution_samples(
         else failed
     )
 
+    # Sort sample by duration before fail
+    sample_df = sample_df.sort_values("months_lasted")
+
+    # Create a gradient colormap from two Catppuccin colors (shortest to longest duration)
+    from matplotlib.colors import LinearSegmentedColormap
+
+    gradient_colors = [
+        get_color("latte", "red"),  # shortest duration
+        get_color("latte", "mauve"),  # longest duration
+    ]
+    cmap = LinearSegmentedColormap.from_list("fail_gradient", gradient_colors)
+
+    # Normalize duration for color mapping
+    durations = sample_df["months_lasted"].to_numpy()
+    min_dur, max_dur = durations.min(), durations.max()
+
+    def norm(d):
+        return (d - min_dur) / (max_dur - min_dur) if max_dur > min_dur else 0.5
+
     for _, row in sample_df.iterrows():
         wealth = np.array(row["wealth_history"], dtype=np.float64)
         if real:
@@ -292,13 +321,14 @@ def plot_failed_wealth_evolution_samples(
                 row["monthly_cumulative_inflation_factors"], dtype=np.float64
             )
             wealth = wealth / inflation[: len(wealth)]
-
+        # Map duration to color in gradient
+        color = cmap(norm(row["months_lasted"]))
         plt.plot(
             np.arange(0, len(wealth)) / 12.0,
             wealth,
-            color="crimson",
+            color=color,
             linewidth=1.0,
-            alpha=0.5,
+            alpha=0.7,
         )
 
     plt.title(
@@ -337,7 +367,13 @@ def plot_bank_account_trajectories(
 
     # Percentile boundaries and colors (same as wealth plot)
     percentiles = [0, 20, 40, 60, 80, 100]
-    colors = ["orange", "gold", "limegreen", "dodgerblue", "magenta"]
+    colors = [
+        get_color("latte", "peach"),
+        get_color("latte", "yellow"),
+        get_color("latte", "teal"),
+        get_color("latte", "sky"),
+        get_color("latte", "blue"),
+    ]
     lw = 1.2
 
     # Plot 5 trajectories for each percentile range, only first in legend
@@ -378,8 +414,8 @@ def plot_bank_account_trajectories(
     worst_row = sorted_successful.iloc[0]
     best_row = sorted_successful.iloc[-1]
     for row, color, width, case in [
-        (worst_row, "red", 2.5, "Worst Successful"),
-        (best_row, "green", 2.5, "Best Successful"),
+        (worst_row, get_color("latte", "red"), 2.0, "Worst Successful"),
+        (best_row, get_color("latte", "green"), 2.0, "Best Successful"),
     ]:
         bank = np.array(row["bank_balance_history"], dtype=np.float64)
         if real:
@@ -401,16 +437,16 @@ def plot_bank_account_trajectories(
     # Plot lower and upper bounds (real value in both plots)
     plt.axhline(
         y=bank_lower_bound,
-        color="yellow",  # Changed from "black" to "yellow" for visibility on dark background
+        color=get_color("mocha", "yellow"),
         linestyle="--",
-        linewidth=1.5,
+        linewidth=2.0,
         label=f"Bank Lower Bound ({bank_lower_bound:,.0f}€, real value)",
     )
     plt.axhline(
         y=bank_upper_bound,
-        color="purple",
+        color=get_color("latte", "mauve"),
         linestyle="--",
-        linewidth=1.5,
+        linewidth=2.0,
         label=f"Bank Upper Bound ({bank_upper_bound:,.0f}€, real value)",
     )
 

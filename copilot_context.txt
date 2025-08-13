@@ -5,6 +5,7 @@
 > #file:firestarter/core/sequences_generator.py
 > #file:firestarter/core/simulation.py
 > #file:firestarter/main.py
+> #file:data/data_metrics.py
 > #file:configs/config.toml
 > #files:tests/config/*.py
 > #files:tests/simulation/*.py

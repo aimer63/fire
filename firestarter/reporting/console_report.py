@@ -22,7 +22,7 @@ characteristics of their FIRE plan simulations.
 from typing import Any, List, Dict
 import numpy as np
 import json
-from firestarter.core.helpers import calculate_cagr
+from firestarter.utils.helpers import calculate_cagr
 
 
 def dump_config_parameters(config: Dict[str, Any]) -> None:
