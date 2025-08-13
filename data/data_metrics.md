@@ -45,13 +45,13 @@ filename, data frequency, input type, the name of the date column, or use `--tai
 **Run with a monthly file (price input):**
 
 ```bash
-python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx
+python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx --monthly
 ```
 
 **Run with a custom 15 years window and a monthly file (price input):**
 
 ```bash
-python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx --years 15
+python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx --years 15 --monthly
 ```
 
 **Run with a daily file, custom 5 years windows and a custom trading days per year (price input):**
@@ -255,10 +255,8 @@ If no horizon is specified, the script:
 
 Tail analysis allows you to focus on the most recent N-year window in your dataset,
 regardless of the total available history. When you use the `--tail N` option, the
-script calculates all metrics annualized return and volatility for just the last
-N years of valid data for each asset. This is especially useful for understanding
-recent performance or for comparing the latest period across different indices,
-even if their histories do not fully overlap.
+script calculates annualized return and volatility for just the last N years of valid data for each asset. This is especially useful for understanding recent performance or
+for comparing the latest period across different indices, even if their histories do not fully overlap.
 
 For correlation analysis, the matrix is computed only for the overlapping period where
 all selected assets have valid data in the tail window. The start and end dates of this
