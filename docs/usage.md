@@ -45,17 +45,15 @@ or a PowerShell script (Windows). Anyhow these two scripts are in the project ro
 
    ```sh
    #!/bin/bash
-   # Runs the firestarter simulation.
-   # If no config file is provided, defaults to configs/config.toml
+   # Usage: ./firestarter.sh --config [config_file]
+   # If no config file is provided, defaults to config.toml
 
    export OMP_NUM_THREADS=1
    export OPENBLAS_NUM_THREADS=1
    export MKL_NUM_THREADS=1
    export NUMEXPR_NUM_THREADS=1
 
-   CONFIG_FILE=${1:-configs/config.toml}
-
-   python -m firestarter.main "$CONFIG_FILE"
+   python -m firestarter.main "$@"
 
    ```
 
@@ -68,7 +66,7 @@ or a PowerShell script (Windows). Anyhow these two scripts are in the project ro
 3. Run the script (optionally specify a config file):
 
    ```sh
-   ./firestarter.sh [config.toml]
+   ./firestarter.sh --config config.toml
    ```
 
 ### Option 2: PowerShell script (Windows)
@@ -77,11 +75,11 @@ or a PowerShell script (Windows). Anyhow these two scripts are in the project ro
    provided in the root of the project, i.e. [firestarter.ps1](../firestarter.ps1):
 
    ```powershell
-   # Runs the firestarter simulation.
-   # If no config file is provided, defaults to configs/config.toml
+   # Usage: .\firestarter.ps1 [config_file]
+   # If no config file is provided, defaults to config.toml
 
    param(
-       [string]$ConfigFile = "configs/config.toml"
+      [string[]]$Args
    )
 
    $env:OMP_NUM_THREADS = "1"
@@ -89,13 +87,13 @@ or a PowerShell script (Windows). Anyhow these two scripts are in the project ro
    $env:MKL_NUM_THREADS = "1"
    $env:NUMEXPR_NUM_THREADS = "1"
 
-   python -m firestarter.main $ConfigFile
+   python -m firestarter.main $Args
    ```
 
 2. Run the script in PowerShell (optionally specify a config file):
 
    ```powershell
-   .\firestarter.ps1 [config.toml]
+   .\firestarter.ps1 -f config.toml
    ```
 
 Alternatively, you can run firestarter directly (make sure to set the environment variables first):
@@ -105,7 +103,7 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
-python -m firestarter.main config.toml
+python -m firestarter.main -f config.toml
 ```
 
 For Windows (PowerShell), set the environment variables before running:
@@ -115,7 +113,7 @@ $env:OMP_NUM_THREADS = "1"
 $env:OPENBLAS_NUM_THREADS = "1"
 $env:MKL_NUM_THREADS = "1"
 $env:NUMEXPR_NUM_THREADS = "1"
-python -m firestarter.main config.toml
+python -m firestarter.main -f config.toml
 ```
 
 ---

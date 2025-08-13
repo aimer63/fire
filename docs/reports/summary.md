@@ -1,80 +1,80 @@
 # FIRE Plan Simulation Report
 
-Report generated on: 2025-07-27 18:09:33
+Report generated on: 2025-08-13 13:21:44
 Using configuration: `config.toml`
 
 ## FIRE Plan Simulation Summary
 
-- **FIRE Plan Success Rate:** 99.20%
-- **Number of failed simulations:** 80
-- **Average months lasted in failed simulations:** 236.8
+- **FIRE Plan Success Rate:** 99.19%
+- **Number of failed simulations:** 81
+- **Average months lasted in failed simulations:** 218.4
 
 ## Final Wealth Distribution Statistics (Successful Simulations)
 
 | Statistic                     | Nominal Final Wealth          | Real Final Wealth (Today's Money) |
 |-------------------------------|-------------------------------|-----------------------------------|
-| Median (P50)                  | 14,031,299.90  | 2,555,931.35         |
-| 25th Percentile (P25)         | 7,903,829.27     | 1,407,895.30            |
-| 75th Percentile (P75)         | 27,231,545.06     | 4,920,135.26            |
-| Interquartile Range (P75-P25) | 19,327,715.79     | 3,512,239.95            |
+| Median (P50)                  | 14,116,200.96  | 2,586,190.49         |
+| 25th Percentile (P25)         | 7,661,270.52     | 1,385,182.95            |
+| 75th Percentile (P75)         | 27,328,971.65     | 5,013,385.44            |
+| Interquartile Range (P75-P25) | 19,667,701.13     | 3,628,202.48            |
 
 ## Nominal Results (cases selected by nominal final wealth)
 
-#### Worst Successful Case (Nominal)
+### Worst Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 1,275,288.08
-- **Final Wealth (Real):** 261,026.72
-- **Cumulative Inflation Factor:** 4.8857
-- **Your life CAGR (Nominal):** 7.51%
-- **Final Allocations (percent):** stocks: 36.9%, bonds: 63.1%, str: 0.0%, eth: 0.0%, ag: 0.0%
-- **Nominal Asset Values:** stocks: 452,387.19 , bonds: 774,044.28 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 48,856.61
+- **Final Wealth (Nominal):** 1,395,709.53
+- **Final Wealth (Real):** 263,714.38
+- **Cumulative Inflation Factor:** 5.2925
+- **Your life CAGR (Nominal):** 7.65%
+- **Final Allocations (percent):** stocks: 57.1%, bonds: 42.9%, str: 0.0%, eth: 0.0%, ag: 0.0%
+- **Nominal Asset Values:** stocks: 766,453.38 , bonds: 576,331.10 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 52,925.04
 
-#### Median Successful Case (Nominal)
+### Median Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 14,032,653.45
-- **Final Wealth (Real):** 3,354,982.66
-- **Cumulative Inflation Factor:** 4.1826
-- **Your life CAGR (Nominal):** 11.26%
-- **Final Allocations (percent):** stocks: 93.7%, bonds: 6.3%, str: 0.0%, eth: 0.0%, ag: 0.0%
-- **Nominal Asset Values:** stocks: 13,103,569.65 , bonds: 887,257.50 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 41,826.31
+- **Final Wealth (Nominal):** 14,116,200.96
+- **Final Wealth (Real):** 2,700,326.24
+- **Cumulative Inflation Factor:** 5.2276
+- **Your life CAGR (Nominal):** 11.27%
+- **Final Allocations (percent):** stocks: 95.3%, bonds: 4.7%, str: 0.0%, eth: 0.0%, ag: 0.0%
+- **Nominal Asset Values:** stocks: 13,404,799.64 , bonds: 659,125.42 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 52,275.91
 
-#### Best Successful Case (Nominal)
+### Best Successful Case (Nominal)
 
-- **Final Wealth (Nominal):** 8,399,596,448.99
-- **Final Wealth (Real):** 1,295,454,961.33
-- **Cumulative Inflation Factor:** 6.4839
-- **Your life CAGR (Nominal):** 21.90%
-- **Final Allocations (percent):** stocks: 99.2%, bonds: 0.8%, str: 0.0%, eth: 0.0%, ag: 0.0%
-- **Nominal Asset Values:** stocks: 8,333,598,936.40 , bonds: 65,932,673.63 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 64,838.97
+- **Final Wealth (Nominal):** 1,369,511,002.18
+- **Final Wealth (Real):** 205,082,146.73
+- **Cumulative Inflation Factor:** 6.6779
+- **Your life CAGR (Nominal):** 18.79%
+- **Final Allocations (percent):** stocks: 89.0%, bonds: 11.0%, str: 0.0%, eth: 0.0%, ag: 0.0%
+- **Nominal Asset Values:** stocks: 1,219,075,319.23 , bonds: 150,368,904.29 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 66,778.66
 
 ## Real Results (cases selected by real final wealth)
 
-#### Worst Successful Case (Real)
+### Worst Successful Case (Real)
 
-- **Final Wealth (Real):** 229,507.34
-- **Final Wealth (Nominal):** 1,785,548.69
-- **Cumulative Inflation Factor:** 7.7799
-- **Your life CAGR (Real):** 4.91%
-- **Final Allocations (percent):** stocks: 67.0%, bonds: 33.0%, str: 0.0%, eth: 0.0%, ag: 0.0%
-- **Nominal Asset Values:** stocks: 1,144,120.41 , bonds: 563,629.09 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 77,799.20
+- **Final Wealth (Real):** 218,759.13
+- **Final Wealth (Nominal):** 1,574,487.99
+- **Cumulative Inflation Factor:** 7.1974
+- **Your life CAGR (Real):** 4.84%
+- **Final Allocations (percent):** stocks: 54.8%, bonds: 45.2%, str: 0.0%, eth: 0.0%, ag: 0.0%
+- **Nominal Asset Values:** stocks: 823,774.24 , bonds: 678,740.16 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 71,973.59
 
-#### Median Successful Case (Real)
+### Median Successful Case (Real)
 
-- **Final Wealth (Real):** 2,556,027.70
-- **Final Wealth (Nominal):** 16,418,585.67
-- **Cumulative Inflation Factor:** 6.4235
-- **Your life CAGR (Real):** 8.59%
-- **Final Allocations (percent):** stocks: 94.5%, bonds: 5.5%, str: 0.0%, eth: 0.0%, ag: 0.0%
-- **Nominal Asset Values:** stocks: 15,452,943.70 , bonds: 901,407.19 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 64,234.77
+- **Final Wealth (Real):** 2,586,190.49
+- **Final Wealth (Nominal):** 11,834,409.18
+- **Cumulative Inflation Factor:** 4.5760
+- **Your life CAGR (Real):** 8.61%
+- **Final Allocations (percent):** stocks: 94.9%, bonds: 5.1%, str: 0.0%, eth: 0.0%, ag: 0.0%
+- **Nominal Asset Values:** stocks: 11,190,637.25 , bonds: 598,011.92 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 45,760.01
 
-#### Best Successful Case (Real)
+### Best Successful Case (Real)
 
-- **Final Wealth (Real):** 1,295,454,961.33
-- **Final Wealth (Nominal):** 8,399,596,448.99
-- **Cumulative Inflation Factor:** 6.4839
-- **Your life CAGR (Real):** 18.69%
-- **Final Allocations (percent):** stocks: 99.2%, bonds: 0.8%, str: 0.0%, eth: 0.0%, ag: 0.0%
-- **Nominal Asset Values:** stocks: 8,333,598,936.40 , bonds: 65,932,673.63 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 64,838.97
+- **Final Wealth (Real):** 205,082,146.73
+- **Final Wealth (Nominal):** 1,369,511,002.18
+- **Cumulative Inflation Factor:** 6.6779
+- **Your life CAGR (Real):** 15.61%
+- **Final Allocations (percent):** stocks: 89.0%, bonds: 11.0%, str: 0.0%, eth: 0.0%, ag: 0.0%
+- **Nominal Asset Values:** stocks: 1,219,075,319.23 , bonds: 150,368,904.29 , str: 0.00 , eth: 0.00 , ag: 0.00 , Bank: 66,778.66
 
 ## Visualizations
 

@@ -98,7 +98,7 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
-python -m firestarter.main config.toml
+python -m firestarter.main -f config.toml
 ```
 
 For Windows (PowerShell):
@@ -108,7 +108,7 @@ $env:OMP_NUM_THREADS = "1"
 $env:OPENBLAS_NUM_THREADS = "1"
 $env:MKL_NUM_THREADS = "1"
 $env:NUMEXPR_NUM_THREADS = "1"
-python -m firestarter.main config.toml
+python -m firestarter.main -f config.toml
 ```
 
 See usage [Usage](../docs/usage.md) for details.

@@ -38,7 +38,8 @@ asset allocation.
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url].
-  You can use the script [data_metrics.py](data/data_metrics.py) to estimate these parameters from historical data.
+  You can use the script [data_metrics.py](data/data_metrics.py) to estimate these parameters from historical
+  data.
   See [Data metrics usage](data/data_metrics.md) for details.
 
   Inflation, though not an asset, is defined in this section because it is correlated
@@ -148,7 +149,7 @@ sigma = 0.025
    From the project root, use the provided shell script or Python command:
 
    ```shell
-   ./firestarter.sh configs/config.toml
+   ./firestarter.sh --config configs/config.toml
    ```
 
    or
@@ -158,7 +159,7 @@ sigma = 0.025
    export OPENBLAS_NUM_THREADS=1
    export MKL_NUM_THREADS=1
    export NUMEXPR_NUM_THREADS=1
-   python -m firestarter.main configs/config.toml
+   python -m firestarter.main -f configs/config.toml
    ```
 
 3. **Review the results**
@@ -344,4 +345,5 @@ Feel free to open issues or submit pull requests if you have suggestions or impr
 
 [reddit-fire-url]: https://www.reddit.com/r/financialindependence/
 
-These resources provide a mix of practical, theoretical, and data-driven content to Finance your use of this tool and FIRE planning knowledge.
+These resources provide a mix of practical, theoretical, and data-driven content to Finance
+your use of this tool and FIRE planning knowledge.
