@@ -362,67 +362,142 @@ def run_tail_analysis(
     input_type: str,
     tail_years: int,
 ) -> None:
+    tail_results = {}
+    tail_returns_df = pd.DataFrame()
     tail_periods = tail_years * periods_per_year
-    if tail_periods > len(df):
-        actual_years = len(df) / periods_per_year
-        print(
-            f"Warning: Requested tail window ({tail_years} years, {tail_periods} periods) "
-            f"is longer than available data ({len(df)} periods, {actual_years:.2f} years). "
-            f"Calculating metrics using the most recent {actual_years:.2f} years of data."
-        )
-        tail_periods = len(df)
-    tail_df = df.iloc[-tail_periods:]
-    if input_type == "price":
-        tail_returns = tail_df[DATA_COLS].pct_change().dropna()
-    elif input_type == "return":
-        tail_returns = tail_df[DATA_COLS]
-    else:
-        raise ValueError(f"Unknown input type: {input_type}")
-    mean_return = (1 + tail_returns).prod() ** (
-        periods_per_year / tail_returns.shape[0]
-    ) - 1
-    std_return = tail_returns.std() * np.sqrt(periods_per_year)
-    actual_years = tail_periods / periods_per_year
-    print(f"\n--- Most Recent Window (using {actual_years:.2f} years of data) ---")
     for col in DATA_COLS:
+        if input_type == "price":
+            valid_prices = df[col].dropna()
+            window_prices = valid_prices.iloc[-(tail_periods + 1) :]
+            actual_periods = len(window_prices) - 1
+            if actual_periods < 1:
+                print(
+                    f"{col}: Not enough valid price data in tail window (need at least 2 points)."
+                )
+                tail_results[col] = {
+                    "Annualized Return Rate": np.nan,
+                    "Tail Start Date": "",
+                    "Tail End Date": "",
+                    "Tail Periods": 0,
+                    "StdDev": np.nan,
+                }
+                continue
+            assert isinstance(window_prices, pd.Series), (
+                "window_prices must be a pandas Series"
+            )
+            assert isinstance(window_prices.index, pd.DatetimeIndex), (
+                "window_prices.index must be a DatetimeIndex"
+            )
+            tail_start_date = window_prices.index[0].strftime("%Y-%m-%d")
+            tail_end_date = window_prices.index[-1].strftime("%Y-%m-%d")
+            total_return = (window_prices.iloc[-1] / window_prices.iloc[0]) - 1
+            annualized_return = (1 + total_return) ** (
+                periods_per_year / actual_periods
+            ) - 1
+            tail_returns = window_prices.pct_change().dropna()
+            std_return = tail_returns.std() * np.sqrt(periods_per_year)
+            tail_returns_df[col] = tail_returns
+        elif input_type == "return":
+            valid_returns = df[col].dropna()
+            window_returns = valid_returns.iloc[-tail_periods:]
+            actual_periods = len(window_returns)
+            if actual_periods < 1:
+                print(
+                    f"{col}: Not enough valid return data in tail window (need at least 1 point)."
+                )
+                tail_results[col] = {
+                    "Annualized Return Rate": np.nan,
+                    "Tail Start Date": "",
+                    "Tail End Date": "",
+                    "Tail Periods": 0,
+                    "StdDev": np.nan,
+                }
+                continue
+            assert isinstance(window_returns, pd.Series), (
+                "window_returns must be a pandas Series"
+            )
+            assert isinstance(window_returns.index, pd.DatetimeIndex), (
+                "window_returns.index must be a DatetimeIndex"
+            )
+            tail_start_date = window_returns.index[0].strftime("%Y-%m-%d")
+            tail_end_date = window_returns.index[-1].strftime("%Y-%m-%d")
+            total_return = np.prod(1 + np.array(window_returns.values, dtype=float)) - 1
+            annualized_return = (1 + total_return) ** (
+                periods_per_year / actual_periods
+            ) - 1
+            std_return = window_returns.std() * np.sqrt(periods_per_year)
+            tail_returns_df[col] = window_returns
+        else:
+            raise ValueError(f"Unknown input type: {input_type}")
+        tail_results[col] = {
+            "Annualized Return Rate": annualized_return,
+            "Tail Start Date": tail_start_date,
+            "Tail End Date": tail_end_date,
+            "Tail Periods": actual_periods,
+            "StdDev": std_return,
+        }
         print(
-            f"{col}: Expected Annualized Return: {mean_return[col]:.2%}, StdDev: {std_return[col]:.2%}"
+            f"{col}: Tail window starts {tail_start_date}, ends {tail_end_date}, with {actual_periods} periods."
         )
+    tail_df = pd.DataFrame.from_dict(tail_results, orient="index")
+    print("\n--- Most Recent Window (Tail Analysis) ---")
+    print(
+        tail_df.to_string(
+            formatters={
+                "Annualized Return Rate": "{:.2%}".format,
+                "Tail Start Date": str,
+                "Tail End Date": str,
+                "Tail Periods": "{:d}".format,
+                "StdDev": "{:.2%}".format,
+            },
+            index=True,
+        )
+    )
 
-    if len(DATA_COLS) > 1:
-        corr_matrix = tail_returns.corr()
-        print("\n--- Correlation Matrix (Tail Window) ---")
-        print(corr_matrix.to_string(float_format=lambda x: f"{x:6.2f}"))
-        output_dir = "output"
-        os.makedirs(output_dir, exist_ok=True)
-        plt.style.use("dark_background")
-        plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
-        plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
-        gradient = LinearSegmentedColormap.from_list(
-            "gradient",
-            [
-                get_color("mocha", "text"),
-                get_color("latte", "mauve"),
-            ],
-        )
-        plt.figure(figsize=(6, 5))
-        sns.heatmap(
-            corr_matrix,
-            annot=True,
-            vmin=-1,
-            vmax=1,
-            cmap=gradient,
-            fmt=".2f",
-            linewidths=0.5,
-            cbar_kws={"label": "Correlation"},
-        )
-        plt.title("Correlation Matrix (Tail Window)")
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, "tail_window_correlation_heatmap.png"))
-        print(
-            "Correlation heatmap saved to 'output/tail_window_correlation_heatmap.png'"
-        )
-        plt.show()
+    # Only use overlapping periods with valid data for all columns
+    if len(DATA_COLS) > 1 and not tail_returns_df.empty:
+        overlapping_df = tail_returns_df.dropna(how="any")
+        if not overlapping_df.empty:
+            corr_matrix = overlapping_df.corr()
+            overlap_start = overlapping_df.index[0].strftime("%Y-%m-%d")
+            overlap_end = overlapping_df.index[-1].strftime("%Y-%m-%d")
+            print(
+                f"\n--- Correlation Matrix (Tail Window, Overlapping Period: {overlap_start} / {overlap_end}) ---"
+            )
+            print(corr_matrix.to_string(float_format=lambda x: f"{x:6.2f}"))
+            output_dir = "output"
+            os.makedirs(output_dir, exist_ok=True)
+            plt.style.use("dark_background")
+            plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
+            plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
+            gradient = LinearSegmentedColormap.from_list(
+                "gradient",
+                [
+                    get_color("mocha", "text"),
+                    get_color("latte", "mauve"),
+                ],
+            )
+            plt.figure(figsize=(6, 5))
+            sns.heatmap(
+                corr_matrix,
+                annot=True,
+                vmin=-1,
+                vmax=1,
+                cmap=gradient,
+                fmt=".2f",
+                linewidths=0.5,
+                cbar_kws={"label": "Correlation"},
+            )
+            plt.title("Correlation Matrix (Tail Window, Overlapping Period)")
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, "tail_window_correlation_heatmap.png"))
+            print(
+                "Correlation heatmap saved to 'output/tail_window_correlation_heatmap.png'"
+            )
+            plt.show()
+        else:
+            print("\n--- Correlation Matrix (Tail Window) ---")
+            print("No overlapping periods with valid data for all columns.")
 
 
 def run_single_horizon_analysis(
