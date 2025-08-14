@@ -41,7 +41,7 @@ accidental omissions.
 assets_order = ["stocks", "bonds", "str", "gold", "inflation"]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
-# matrix = [
+matrix = [
    # stk,  bnd,  str,  Au,   infl
    [1.00, -0.30, 0.00, 0.15, -0.20], # stocks
    [-0.30, 1.00, 0.40, 0.05, 0.10],  # bonds

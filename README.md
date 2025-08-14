@@ -55,7 +55,6 @@ asset allocation.
 
 **Example**:
 
-````toml
 ```toml
 [assets.stocks]
 mu = 0.07
@@ -70,7 +69,7 @@ withdrawal_priority = 1
 [assets.inflation]
 mu = 0.025
 sigma = 0.025
-````
+```
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
 
