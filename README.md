@@ -37,7 +37,7 @@ asset allocation.
   Investment assets are defined in the configuration. For each asset you specify the following; `mu`,
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
-  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url].
+  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url], [ECB Data portal][ecb-url].
   You can use the script [data_metrics.py](data/data_metrics.py) to estimate these parameters from historical
   data.
   See [Data metrics usage](data/data_metrics.md) for details.
@@ -51,9 +51,11 @@ asset allocation.
 [yahoo-fianance-url]: https://finance.yahoo.com/
 [Investing-url]: https://www.investing.com/
 [fred-url]: https://fred.stlouisfed.org/
+[ecb-url]: https://data.ecb.europa.eu/
 
 **Example**:
 
+````toml
 ```toml
 [assets.stocks]
 mu = 0.07
@@ -68,7 +70,7 @@ withdrawal_priority = 1
 [assets.inflation]
 mu = 0.025
 sigma = 0.025
-```
+````
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
 
@@ -103,8 +105,7 @@ sigma = 0.025
   > all values must be provided and interpreted in the same currency throughout the simulation._
   >
   > _The simulation does not consider any fiscal aspects, therefore parameters such as
-  > income, pension,
-  > contributions, etc. are to be considered net of taxes._
+  > income, pension, contributions, etc. are to be considered after taxes._
 
 - **[Reporting & Plotting](/docs/output.md)**
 

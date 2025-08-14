@@ -29,6 +29,8 @@ Key Features
   ``--input-type`` CLI argument.
 - If using ``return`` input type, the input values must be true single-period returns
   (not annualized rates).
+- The ``--input-type simple`` mode allows analysis of raw values without any return or
+  compounding calculation, only basics statistics of the raw values are computed.
 - Generates summary heatmaps showing how risk metrics change with the investment horizon.
 - Supports both monthly and daily input data (with configurable days per year).
 - Generates and saves distribution plots and heatmaps for visual analysis.
@@ -56,6 +58,10 @@ Run a full heatmap analysis for all possible investment horizons on a daily file
 Analyze only the most recent 10-year window::
 
     python data_metrics.py --tail 10 -f my_data.xlsx -d
+
+Calculate metrics for a 3-year window using simple raw values::
+
+    python data_metrics.py -n 3 -f my_data.xlsx -d 252 --input-type simple
 """
 
 import argparse
@@ -105,9 +111,9 @@ parser.add_argument(
 parser.add_argument(
     "--input-type",
     type=str,
-    choices=["price", "return"],
+    choices=["price", "return", "simple"],
     default="price",
-    help="Specify whether the input data columns are 'price' (default) or 'return' rates.",
+    help="Specify whether the input data columns are 'price', 'return', or 'simple' (raw values).",
 )
 parser.add_argument(
     "-t",
@@ -147,7 +153,7 @@ def prepare_data(
     input_type: str,
     frequency: str,
     trading_days_per_year: int | None,
-) -> tuple[pd.DataFrame, list[str], int, pd.DataFrame]:
+) -> tuple[pd.DataFrame, list[str], int, pd.DataFrame | None]:
     """
     Loads, cleans, and preprocesses historical market data from an Excel file.
 
@@ -195,7 +201,7 @@ def prepare_data(
             last_valid = df[col].last_valid_index()
             mask = (df.index >= first_valid) & (df.index <= last_valid)
             if num_missing[col] > 0:
-                if input_type == "price":
+                if input_type == "price" or input_type == "simple":
                     print(
                         f"Filling missing values for {col} using forward fill (ffill) only between {first_valid} and {last_valid}; NaNs at the beginning/end remain NaN."
                     )
@@ -275,10 +281,58 @@ def prepare_data(
             print("Error: Detected return values less than -1 (impossible):")
             print(invalid[invalid.notna()])
             raise ValueError("Input contains invalid return values (< -1).")
+    elif input_type == "simple":
+        single_period_returns = None  # Not used in simple mode
+        print(
+            "Input type: simple. Using raw values for analysis (forward-filled like price)."
+        )
     else:
         raise ValueError(f"Unknown input type: {input_type}")
 
     return df, DATA_COLS, periods_per_year, single_period_returns
+
+
+def calculate_metrics_for_horizon_simple(
+    df: pd.DataFrame,
+    n_years: int,
+    periods_per_year: int,
+    DATA_COLS: list[str],
+) -> tuple[pd.DataFrame, list[dict]]:
+    """
+    Calculates basic statistics for a given n_years window using raw values.
+    Returns:
+        - DataFrame of mean values for each window
+        - List of summary statistics for each asset
+    """
+    window_size = n_years * periods_per_year
+    means_df = df[DATA_COLS].rolling(window=window_size).mean().dropna()
+    vol_df = df[DATA_COLS].rolling(window=window_size).std().dropna()
+    summary_results = []
+    for col in DATA_COLS:
+        mean_series = means_df[col]
+        avg_mean = mean_series.mean()
+        std_mean = mean_series.std()
+        avg_vol = vol_df[col].mean()
+        num_windows = len(mean_series)
+        percentile_5 = mean_series.quantile(0.05)
+        sem = std_mean / np.sqrt(num_windows)
+        ci_95 = 1.96 * sem
+        sem_vol = vol_df[col].std() / np.sqrt(num_windows)
+        ci_95_vol = 1.96 * sem_vol
+        summary_results.append(
+            {
+                "N": n_years,
+                "Asset": col,
+                "Expected Value": avg_mean,
+                "95% CI": ci_95,
+                "StdDev of Expected Value": std_mean,
+                "Average Volatility": avg_vol,
+                "95% CI Volatility": ci_95_vol,
+                "5th Percentile": percentile_5,
+                "Number of Windows": num_windows,
+            }
+        )
+    return means_df, summary_results
 
 
 def calculate_metrics_for_horizon(
@@ -367,6 +421,80 @@ def calculate_metrics_for_horizon(
     return annualized_return, summary_results
 
 
+def run_tail_analysis_simple(
+    df: pd.DataFrame,
+    DATA_COLS: list[str],
+    periods_per_year: int,
+    tail_years: int,
+) -> None:
+    """
+    Analyze and print statistics for the most recent N-year window using raw values.
+
+    :param df: DataFrame containing cleaned raw values indexed by date.
+    :param DATA_COLS: List of asset/index column names.
+    :param periods_per_year: Number of periods per year (e.g., 12 for monthly, 252 for daily).
+    :param tail_years: Number of years for the tail window.
+
+    For each asset, computes:
+      - Expected Value (mean of the tail window)
+      - Standard deviation of the tail window
+      - Start and end date of the tail window
+      - Number of periods in the tail window
+
+    Prints a summary table for the tail window for each asset.
+    """
+    tail_results = {}
+    tail_periods = tail_years * periods_per_year
+    for col in DATA_COLS:
+        valid_vals = df[col].dropna()
+        window_vals = valid_vals.iloc[-tail_periods:]
+        actual_periods = len(window_vals)
+        if actual_periods < 2:
+            print(
+                f"{col}: Not enough valid data in tail window (need at least 2 points)."
+            )
+            tail_results[col] = {
+                "Expected Value": np.nan,
+                "Tail Start Date": "",
+                "Tail End Date": "",
+                "Tail Periods": 0,
+                "StdDev": np.nan,
+            }
+            continue
+        assert isinstance(window_vals, pd.Series), "window_vals must be a pandas Series"
+        assert isinstance(window_vals.index, pd.DatetimeIndex), (
+            "window_vals.index must be a DatetimeIndex"
+        )
+        tail_start_date = window_vals.index[0].strftime("%Y-%m-%d")
+        tail_end_date = window_vals.index[-1].strftime("%Y-%m-%d")
+        expected_value = window_vals.mean()
+        std_val = window_vals.std()
+        tail_results[col] = {
+            "Expected Value": expected_value,
+            "Tail Start Date": tail_start_date,
+            "Tail End Date": tail_end_date,
+            "Tail Periods": actual_periods,
+            "StdDev": std_val,
+        }
+        print(
+            f"{col}: Tail window starts {tail_start_date}, ends {tail_end_date}, with {actual_periods} periods."
+        )
+    tail_df = pd.DataFrame.from_dict(tail_results, orient="index")
+    print("\n--- Most Recent Window (Tail Analysis, Simple) ---")
+    print(
+        tail_df.to_string(
+            formatters={
+                "Expected Value": "{:.2f}".format,
+                "Tail Start Date": str,
+                "Tail End Date": str,
+                "Tail Periods": "{:d}".format,
+                "StdDev": "{:.2f}".format,
+            },
+            index=True,
+        )
+    )
+
+
 def run_tail_analysis(
     df: pd.DataFrame,
     DATA_COLS: list[str],
@@ -374,6 +502,24 @@ def run_tail_analysis(
     input_type: str,
     tail_years: int,
 ) -> None:
+    """
+    Analyze and print statistics for the most recent N-year window using price or return data.
+
+    :param df: DataFrame containing cleaned price or return values indexed by date.
+    :param DATA_COLS: List of asset/index column names.
+    :param periods_per_year: Number of periods per year (e.g., 12 for monthly, 252 for daily).
+    :param input_type: 'price' if df contains prices, 'return' if df contains single-period returns.
+    :param tail_years: Number of years for the tail window.
+
+    For each asset, computes:
+      - Annualized Return Rate for the tail window
+      - Start and end date of the tail window
+      - Number of periods in the tail window
+      - Standard deviation of returns (annualized volatility)
+
+    Prints a summary table for the tail window for each asset and, if possible,
+    the correlation matrix for the overlapping period.
+    """
     tail_results = {}
     tail_returns_df = pd.DataFrame()
     tail_periods = tail_years * periods_per_year
@@ -505,6 +651,184 @@ def run_tail_analysis(
         else:
             print("\n--- Correlation Matrix (Tail Window) ---")
             print("No overlapping periods with valid data for all columns.")
+
+
+def run_single_horizon_analysis_simple(
+    df: pd.DataFrame,
+    n_years: int,
+    periods_per_year: int,
+    DATA_COLS: list[str],
+) -> None:
+    """
+    Analyze and print results for a single fixed window size using raw values.
+
+    :param df: DataFrame containing cleaned raw values indexed by date.
+    :param n_years: The window size in years.
+    :param periods_per_year: Number of periods per year (e.g., 12 for monthly, 252 for daily).
+    :param DATA_COLS: List of asset/index column names.
+
+    For each asset, computes:
+      - Expected Value (mean across all windows)
+      - 95% confidence interval for Expected Value
+      - Standard deviation of Expected Value across all windows
+      - Average Volatility (mean of window standard deviations)
+      - 95% confidence interval for Volatility
+      - Number of windows
+      - Worst, median, and best window
+      - Percentiles (5th, 25th, 50th, 75th, IQR)
+      - Analysis of the last incomplete window
+
+    Also generates and saves distribution and time series plots for Expected Value.
+    """
+    means_df, summary_results = calculate_metrics_for_horizon_simple(
+        df, n_years, periods_per_year, DATA_COLS
+    )
+    print(f"\n--- Metrics for {n_years}-Year / {len(means_df)} rolling windows ---")
+    expected_df = pd.DataFrame(summary_results).set_index("Asset")
+    expected_df = expected_df.drop(columns=["N"])
+    print(
+        expected_df.to_string(
+            formatters={
+                "Expected Value": "{:.2f}".format,
+                "95% CI": lambda x: f"±{x:.2f}",
+                "StdDev of Expected Value": "{:.2f}".format,
+                "Average Volatility": "{:.2f}".format,
+                "95% CI Volatility": lambda x: f"±{x:.2f}",
+                "Number of Windows": "{:,}".format,
+            }
+        )
+    )
+    # Worst, Median, Best windows
+    extreme_windows = {}
+    for index in DATA_COLS:
+        valid_df = means_df.dropna(subset=[index])
+        if len(valid_df) == 0:
+            continue
+        sorted_df = valid_df.sort_values(index)
+        worst = sorted_df.iloc[0]
+        median = sorted_df.iloc[len(sorted_df) // 2]
+        best = sorted_df.iloc[-1]
+        extreme_windows[index] = pd.DataFrame(
+            {
+                "Case": ["Worst", "Median", "Best"],
+                "Window Start": [
+                    worst.name,
+                    median.name,
+                    best.name,
+                ],
+                "Expected Value": [
+                    worst[index],
+                    median[index],
+                    best[index],
+                ],
+            }
+        )
+    for index in DATA_COLS:
+        print(f"\n--- Worst, Median, and Best Windows for {n_years}-Year ({index}) ---")
+        print(
+            extreme_windows[index].to_string(
+                index=False, formatters={"Expected Value": "{:.2f}".format}
+            )
+        )
+    print(f"\n(Based on {len(means_df)} unique {n_years}-year rolling windows)")
+    # Percentiles
+    percentiles_data = {
+        "5th": means_df[DATA_COLS].quantile(0.05),
+        "25th": means_df[DATA_COLS].quantile(0.25),
+        "50th": means_df[DATA_COLS].quantile(0.50),
+        "75th": means_df[DATA_COLS].quantile(0.75),
+        "IQR": means_df[DATA_COLS].quantile(0.75) - means_df[DATA_COLS].quantile(0.25),
+    }
+    percentiles_df = pd.DataFrame(percentiles_data)
+    print(f"\n--- Expected Value Percentiles for {n_years}-Year ---")
+    print(
+        percentiles_df.to_string(
+            formatters={col: (lambda x: f"{x:.2f}") for col in percentiles_df.columns}
+        )
+    )
+    # Incomplete window
+    leftover_results = {}
+    window_size = n_years * periods_per_year
+    for index in DATA_COLS:
+        n_valid = df[index].count()
+        leftover_periods = n_valid % window_size
+        if leftover_periods < 2:
+            leftover_results[index] = {
+                "Expected Value": np.nan,
+                "Leftover Start Date": "",
+                "Leftover Periods": 0,
+            }
+            continue
+        valid_vals = df[index].dropna()
+        window_vals = valid_vals.iloc[-leftover_periods:]
+        assert isinstance(window_vals.index, pd.DatetimeIndex), (
+            "window_vals.index must be a DatetimeIndex"
+        )
+        leftover_start_date = window_vals.index[0].strftime("%Y-%m-%d")
+        expected_value = window_vals.mean()
+        leftover_results[index] = {
+            "Expected Value": expected_value,
+            "Leftover Start Date": leftover_start_date,
+            "Leftover Periods": leftover_periods,
+        }
+    leftover_df = pd.DataFrame.from_dict(leftover_results, orient="index")
+    print("\n--- Analysis of the last incomplete window ---")
+    print(
+        leftover_df.to_string(
+            formatters={
+                "Expected Value": "{:.2f}".format,
+                "Leftover Start Date": str,
+                "Leftover Periods": "{:d}".format,
+            },
+            index=True,
+        )
+    )
+
+    # Generate and Save Distribution Plots
+    for index in DATA_COLS:
+        safe_index_name = index.replace("/", "_")
+        plt.figure(figsize=(10, 6))
+        plt.hist(
+            means_df[index].dropna(),
+            bins=50,
+            edgecolor="black",
+            alpha=0.8,
+            color=get_color("mocha", "blue"),
+        )
+        plt.title(f"Distribution of {n_years}-Year Expected Values for {index}")
+        plt.xlabel("Expected Value")
+        plt.ylabel("Number of Windows")
+        plt.tight_layout()
+        plt.savefig(
+            os.path.join(
+                OUTPUT_DIR, f"expected_value_distribution_{safe_index_name}.png"
+            )
+        )
+    print(f"\nDistribution plots saved to '{OUTPUT_DIR}/'")
+
+    # Plot: Expected Value vs. Window Start Date for each asset
+    plt.figure(figsize=(12, 6))
+    used_labels = []
+    for index in DATA_COLS:
+        color, _ = get_random_color("latte", used_labels)
+        plt.plot(
+            means_df.index,
+            means_df[index],
+            label=index,
+            linewidth=1,
+            color=color,
+        )
+    plt.xlabel("Window Start Year")
+    plt.ylabel("Expected Value")
+    plt.title(f"Expected Value vs. Window Start Date ({n_years}-Year Windows)")
+    plt.legend()
+    plt.tight_layout()
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.savefig(os.path.join(OUTPUT_DIR, "expected_value_vs_window_start.png"))
+    print(
+        f"Expected value vs. window start plot saved to '{OUTPUT_DIR}/expected_value_vs_window_start.png'"
+    )
+    plt.show()
 
 
 def run_single_horizon_analysis(
@@ -757,6 +1081,109 @@ def run_single_horizon_analysis(
     plt.show()
 
 
+def run_heatmap_analysis_simple(
+    df: pd.DataFrame,
+    periods_per_year: int,
+    DATA_COLS: list[str],
+) -> None:
+    """
+    Analyze and print summary statistics for all possible window sizes using raw values.
+
+    :param df: DataFrame containing cleaned raw values indexed by date.
+    :param periods_per_year: Number of periods per year (e.g., 12 for monthly, 252 for daily).
+    :param DATA_COLS: List of asset/index column names.
+
+    For each asset and window size, computes:
+      - Expected Value (mean across all windows)
+      - Standard deviation of Expected Value across all windows
+      - Average Volatility (mean of window standard deviations)
+      - 5th Percentile of Expected Value
+      - Number of windows
+
+    Prints a summary table and generates a heatmap plot for each asset,
+    with heatmap color driven by the 5th Percentile.
+    """
+    max_n = len(df) // periods_per_year
+    all_results = []
+    n_range = range(1, max_n + 1)
+    for n_years in n_range:
+        _, summary_results = calculate_metrics_for_horizon_simple(
+            df, n_years, periods_per_year, DATA_COLS
+        )
+        if summary_results:
+            all_results.extend(summary_results)
+    results_df = pd.DataFrame(all_results)
+    for asset in DATA_COLS:
+        safe_asset_name = asset.replace("/", "_")
+        subset_df = results_df[results_df["Asset"] == asset]
+        heatmap_pivot = subset_df.set_index("N")[
+            [
+                "Expected Value",
+                "StdDev of Expected Value",
+                "Average Volatility",
+                "5th Percentile",
+                "Number of Windows",
+            ]
+        ].T
+
+        formatted_pivot = heatmap_pivot.copy().astype(object)
+        for row_label in formatted_pivot.index:
+            if row_label == "Number of Windows":
+                formatted_pivot.loc[row_label] = (
+                    heatmap_pivot.loc[row_label].astype(int).map("{:}".format)
+                )
+            else:
+                formatted_pivot.loc[row_label] = heatmap_pivot.loc[row_label].map(
+                    "{:.2f}".format
+                )
+
+        print(f"\n--- Summary Statistics for {safe_asset_name} ---")
+        print(formatted_pivot.to_string())
+
+        annot_df = heatmap_pivot.copy().astype(object)
+        for row in annot_df.index:
+            if row == "Number of Windows":
+                annot_df.loc[row] = (
+                    heatmap_pivot.loc[row].astype(int).map("{:,}".format)
+                )
+            else:
+                annot_df.loc[row] = heatmap_pivot.loc[row].map("{:.2f}".format)
+
+        # Use a gradient for the heatmap color driven by 5th Percentile
+        risk_driver = heatmap_pivot.loc["5th Percentile"]
+        color_data = pd.DataFrame(
+            np.tile(risk_driver.to_numpy(), (len(heatmap_pivot.index), 1)),
+            index=heatmap_pivot.index,
+            columns=heatmap_pivot.columns,
+        )
+        gradient = LinearSegmentedColormap.from_list(
+            "gradient",
+            [
+                get_color("latte", "mauve"),
+                get_color("mocha", "text"),
+            ],
+        )
+        plt.figure(figsize=(max(8, len(heatmap_pivot.columns) * 0.8), 4))
+        sns.heatmap(
+            color_data,
+            annot=annot_df,
+            fmt="",
+            cmap=gradient,
+            linewidths=0.5,
+            cbar_kws={"label": "5th Percentile"},
+        )
+        plt.title(f"Metrics Heatmap vs. Horizon (N) for {safe_asset_name}")
+        plt.xlabel("Horizon (N Years)")
+        plt.ylabel("Metric")
+        plt.tight_layout()
+        heatmap_path = os.path.join(
+            OUTPUT_DIR, f"metrics_heatmap_{safe_asset_name}.png"
+        )
+        plt.savefig(heatmap_path)
+        print(f"Heatmap saved to '{heatmap_path}'")
+    plt.show()
+
+
 def run_heatmap_analysis(
     df: pd.DataFrame,
     periods_per_year: int,
@@ -886,15 +1313,6 @@ def run_heatmap_analysis(
 
 
 def main() -> None:
-    """
-    Main function to run the historical market data analysis.
-
-    - Loads and preprocesses historical data from Excel.
-    - Cleans, fills, and prepares the DataFrame for analysis.
-    - Calculates single-period returns.
-    - Runs tail, single-horizon, or heatmap analysis based on CLI options.
-    - Prints results and generates plots.
-    """
     # Read and prepare the data
     df, DATA_COLS, periods_per_year, single_period_returns = prepare_data(
         FILENAME, INPUT_TYPE, FREQUENCY, TRADING_DAYS_PER_YEAR
@@ -903,21 +1321,46 @@ def main() -> None:
     if args.tail is not None:
         if N_YEARS is not None:
             raise ValueError("--tail is not compatible with --years.")
-        run_tail_analysis(
-            df=df,
-            DATA_COLS=DATA_COLS,
-            periods_per_year=periods_per_year,
-            input_type=INPUT_TYPE,
-            tail_years=args.tail,
-        )
+        if INPUT_TYPE == "simple":
+            run_tail_analysis_simple(
+                df=df,
+                DATA_COLS=DATA_COLS,
+                periods_per_year=periods_per_year,
+                tail_years=args.tail,
+            )
+        else:
+            run_tail_analysis(
+                df=df,
+                DATA_COLS=DATA_COLS,
+                periods_per_year=periods_per_year,
+                input_type=INPUT_TYPE,
+                tail_years=args.tail,
+            )
     elif N_YEARS is not None:
-        run_single_horizon_analysis(
-            df, N_YEARS, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
-        )
+        if INPUT_TYPE == "simple":
+            run_single_horizon_analysis_simple(df, N_YEARS, periods_per_year, DATA_COLS)
+        else:
+            assert single_period_returns is not None, (
+                "single_period_returns must not be None for single horizon analysis"
+            )
+            run_single_horizon_analysis(
+                df,
+                N_YEARS,
+                periods_per_year,
+                DATA_COLS,
+                single_period_returns,
+                INPUT_TYPE,
+            )
     else:
-        run_heatmap_analysis(
-            df, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
-        )
+        if INPUT_TYPE == "simple":
+            run_heatmap_analysis_simple(df, periods_per_year, DATA_COLS)
+        else:
+            assert single_period_returns is not None, (
+                "single_period_returns must not be None for heatmap analysis"
+            )
+            run_heatmap_analysis(
+                df, periods_per_year, DATA_COLS, single_period_returns, INPUT_TYPE
+            )
 
 
 if __name__ == "__main__":

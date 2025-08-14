@@ -134,16 +134,13 @@ annual_fund_fee = 0.0015
 # - `withdrawal_priority`: Order in which assets are
 #    sold to cover cash shortfalls (lower number = sold first).
 #
-# Stock parameters based on MSCI World (EUR) from 2016-2025.
-# mu = 0.1017
-# sigma = 0.1478
+# Stock parameters based on MSCI World (EUR) from 1999-2005, 20 years window average.
+# mu = 0.0722
+# sigma = 0.1609
 #
-# The 2016-2025 period was exceptionally strong for global equities.
-# For a long-term simulation (30+ years), it's advisable to temper expectations
-# based on very long-term historical averages and current market valuations.
 [assets.stocks]
-mu = 0.07
-sigma = 0.15
+mu = 0.0722
+sigma = 0.1609
 withdrawal_priority = 2
 
 # European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR) 2004-2023.

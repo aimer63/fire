@@ -30,17 +30,20 @@ historical performance.
 
 2. **Data File:** The script expects an Excel file with historical data, default name: `data.xlsx`.
    - The file must have a date column named `Date`.
-   - The other columns are considered the values of the assets (e.g., index prices or returns).
+   - The other columns are considered the values of the assets (e.g., asset prices or returns).
    - The data can be sampled **monthly** or **daily**.
    - The script supports both price and single-period return data as input, controlled by
      the `--input-type` argument.
    - If using `--input-type return`, the input values must be true single-period returns
      (not annualized rates).
+   - Using `--input-type simple` only simple statistics is calculated for the raw values
+     in the columns. No returns calculation or compounding.
 
 ## Usage
 
 The script is run from the command line. You can specify the investment horizon, input
-filename, data frequency, input type, the name of the date column, or use `--tail N` to analyze only the most recent N-year window.
+filename, data frequency, input type, the name of the date column, or use `--tail N` to
+analyze only the most recent N-year window.
 
 **Run with a monthly file (price input):**
 
