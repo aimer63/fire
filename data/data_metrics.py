@@ -43,7 +43,7 @@ Usage
 -----
 Analyze a monthly file with a 10-year window (price input)::
 
-    python data_metrics.py -n 10 -f my_monthly_data.xlsx
+    python data_metrics.py -n 10 -f my_monthly_data.xlsx --monthly
 
 Analyze a daily file with a 5-year window (return input, 252 trading days/year)::
 
@@ -53,9 +53,9 @@ Run a full heatmap analysis for all possible investment horizons on a daily file
 
     python data_metrics.py -f my_daily_data.xlsx -d
 
-Analyze only the most recent N-year window::
+Analyze only the most recent 10-year window::
 
-    python data_metrics.py --tail N -f my_data.xlsx
+    python data_metrics.py --tail 10 -f my_data.xlsx -d
 """
 
 import argparse
@@ -116,6 +116,8 @@ parser.add_argument(
     default=None,
     help="Analyze only the most recent N years window. Not compatible with --years or heatmap mode.",
 )
+
+# Gets the cli arguments and sets up the analysis parameters
 args = parser.parse_args()
 INPUT_TYPE = args.input_type
 N_YEARS = args.years
@@ -131,6 +133,13 @@ elif args.monthly:
     FREQUENCY = "monthly"
 else:
     raise ValueError("You must specify either --daily N or --monthly.")
+
+# Sets the parameters for plotting and output
+OUTPUT_DIR = "output"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+plt.style.use("dark_background")
+plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
+plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
 
 
 def prepare_data(
@@ -185,17 +194,20 @@ def prepare_data(
             first_valid = df[col].first_valid_index()
             last_valid = df[col].last_valid_index()
             mask = (df.index >= first_valid) & (df.index <= last_valid)
-            if input_type == "price":
-                print(
-                    f"Filling missing values for {col} using forward fill (ffill) only between {first_valid} and {last_valid}; NaNs at the beginning/end remain NaN."
-                )
-                df.loc[mask, col] = df.loc[mask, col].ffill()
-            elif input_type == "return":
-                print(
-                    f"Filling missing values for {col} with zero only between {first_valid} and {last_valid}; NaNs at the beginning/end remain NaN."
-                )
-                df.loc[mask, col] = df.loc[mask, col].fillna(0)
-
+            if num_missing[col] > 0:
+                if input_type == "price":
+                    print(
+                        f"Filling missing values for {col} using forward fill (ffill) only between {first_valid} and {last_valid}; NaNs at the beginning/end remain NaN."
+                    )
+                    df.loc[mask, col] = df.loc[mask, col].ffill()
+                elif input_type == "return":
+                    print(
+                        f"Filling missing values for {col} with zero only between {first_valid} and {last_valid}; NaNs at the beginning/end remain NaN."
+                    )
+                    df.loc[mask, col] = df.loc[mask, col].fillna(0)
+            else:
+                # No missing values, just ensure type conversion
+                df.loc[mask, col] = df.loc[mask, col]
     # Prepare the DataFrame based on frequency ---
     df["Date"] = pd.to_datetime(df["Date"])
     df.set_index("Date", inplace=True)
@@ -335,20 +347,20 @@ def calculate_metrics_for_horizon(
 
     # Assemble Results
     summary_results = []
-    for index in df.columns:
-        if num_windows[index] > 0:
+    for asset in df.columns:
+        if num_windows[asset] > 0:
             summary_results.append(
                 {
                     "N": n_years,
-                    "Index": index,
-                    "Expected Annualized Return": mean_returns[index],
-                    "95% CI": ci_95[index],
-                    "StdDev of Annualized Returns": std_of_returns[index],
-                    "Average Annualized Volatility": avg_annualized_volatility[index],
-                    "95% CI Volatility": ci_95_vol[index],
-                    "Failed Windows (%)": failed_windows_pct[index],
-                    "VaR (5th Percentile)": var_5_pct[index],
-                    "Number of Windows": int(num_windows[index]),
+                    "Asset": asset,
+                    "Expected Annualized Return": mean_returns[asset],
+                    "95% CI": ci_95[asset],
+                    "StdDev of Annualized Returns": std_of_returns[asset],
+                    "Average Annualized Volatility": avg_annualized_volatility[asset],
+                    "95% CI Volatility": ci_95_vol[asset],
+                    "Failed Windows (%)": failed_windows_pct[asset],
+                    "VaR (5th Percentile)": var_5_pct[asset],
+                    "Number of Windows": int(num_windows[asset]),
                 }
             )
 
@@ -465,11 +477,6 @@ def run_tail_analysis(
                 f"\n--- Correlation Matrix (Tail Window, Overlapping Period: {overlap_start} / {overlap_end}) ---"
             )
             print(corr_matrix.to_string(float_format=lambda x: f"{x:6.2f}"))
-            output_dir = "output"
-            os.makedirs(output_dir, exist_ok=True)
-            plt.style.use("dark_background")
-            plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
-            plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
             gradient = LinearSegmentedColormap.from_list(
                 "gradient",
                 [
@@ -490,7 +497,7 @@ def run_tail_analysis(
             )
             plt.title("Correlation Matrix (Tail Window, Overlapping Period)")
             plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, "tail_window_correlation_heatmap.png"))
+            plt.savefig(os.path.join(OUTPUT_DIR, "tail_window_correlation_heatmap.png"))
             print(
                 "Correlation heatmap saved to 'output/tail_window_correlation_heatmap.png'"
             )
@@ -540,7 +547,7 @@ def run_single_horizon_analysis(
 
     # Prepare data for presentation
     # Create the main summary DataFrame
-    expected_df = pd.DataFrame(summary_results).set_index("Index")
+    expected_df = pd.DataFrame(summary_results).set_index("Asset")
     expected_df = expected_df.drop(
         columns=["N", "VaR (5th Percentile)"]
     )  # Not needed for this table
@@ -688,11 +695,6 @@ def run_single_horizon_analysis(
         )
     )
     # Generate and Save Distribution Plots
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
-    plt.style.use("dark_background")
-    plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
-    plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
     for index in DATA_COLS:
         safe_index_name = index.replace("/", "_")
         plt.figure(figsize=(10, 6))
@@ -712,9 +714,9 @@ def run_single_horizon_analysis(
         plt.grid(axis="y", linestyle="--", alpha=0.7)
         plt.tight_layout()
         plt.savefig(
-            os.path.join(output_dir, f"return_distribution_{safe_index_name}.png")
+            os.path.join(OUTPUT_DIR, f"return_distribution_{safe_index_name}.png")
         )
-    print(f"\nDistribution plots saved to '{output_dir}/'")
+    print(f"\nDistribution plots saved to '{OUTPUT_DIR}/'")
 
     # Plot: Annualized Return vs. Window Start Date for each asset
     plt.figure(figsize=(12, 6))
@@ -748,9 +750,9 @@ def run_single_horizon_analysis(
     plt.xticks(ticks=year_ticks, labels=year_labels, rotation=45)
     plt.tight_layout()
     plt.grid(axis="y", linestyle="--", alpha=0.7)
-    plt.savefig(os.path.join(output_dir, "annualized_return_vs_window_start.png"))
+    plt.savefig(os.path.join(OUTPUT_DIR, "annualized_return_vs_window_start.png"))
     print(
-        f"Annualized return vs. window start plot saved to '{output_dir}/annualized_return_vs_window_start.png'"
+        f"Annualized return vs. window start plot saved to '{OUTPUT_DIR}/annualized_return_vs_window_start.png'"
     )
     plt.show()
 
@@ -799,14 +801,9 @@ def run_heatmap_analysis(
     results_df = pd.DataFrame(all_results)
 
     # Create a heatmap for each index
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
-    plt.style.use("dark_background")
-    plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
-    plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
-    for index in DATA_COLS:
-        safe_index_name = index.replace("/", "_")
-        subset_df = results_df[results_df["Index"] == index]
+    for asset in DATA_COLS:
+        safe_asset_name = asset.replace("/", "_")
+        subset_df = results_df[results_df["Asset"] == asset]
 
         heatmap_pivot = subset_df.set_index("N")[
             [
@@ -830,7 +827,7 @@ def run_heatmap_analysis(
                     "{:.2%}".format
                 )
 
-        print(f"\n--- Summary Statistics for {index} ---")
+        print(f"\n--- Summary Statistics for {asset} ---")
         print(formatted_pivot.to_string())
 
         annot_df = pd.DataFrame(
@@ -875,12 +872,12 @@ def run_heatmap_analysis(
                 "format": ticker.PercentFormatter(xmax=1, decimals=0),
             },
         )
-        plt.title(f"Historical Investment Metrics vs. Horizon (N) for {index}")
+        plt.title(f"Historical Investment Metrics vs. Horizon (N) for {asset}")
         plt.xlabel("Investment Horizon (N Years)")
         plt.ylabel("Metric")
         plt.tight_layout()
         heatmap_path = os.path.join(
-            output_dir, f"metrics_heatmap_{safe_index_name}.png"
+            OUTPUT_DIR, f"metrics_heatmap_{safe_asset_name}.png"
         )
         plt.savefig(heatmap_path)
         print(f"Heatmap saved to '{heatmap_path}'")
