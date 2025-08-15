@@ -445,6 +445,7 @@ def run_tail_analysis_simple(
     """
     tail_results = {}
     tail_periods = tail_years * periods_per_year
+    tail_vals_df = pd.DataFrame()
     for col in DATA_COLS:
         valid_vals = df[col].dropna()
         window_vals = valid_vals.iloc[-tail_periods:]
@@ -479,6 +480,7 @@ def run_tail_analysis_simple(
         print(
             f"{col}: Tail window starts {tail_start_date}, ends {tail_end_date}, with {actual_periods} periods."
         )
+        tail_vals_df[col] = window_vals
     tail_df = pd.DataFrame.from_dict(tail_results, orient="index")
     print("\n--- Most Recent Window (Tail Analysis, Simple) ---")
     print(
@@ -493,6 +495,48 @@ def run_tail_analysis_simple(
             index=True,
         )
     )
+
+    # Correlation matrix and heatmap for overlapping periods
+    if len(DATA_COLS) > 1 and not tail_vals_df.empty:
+        overlapping_df = tail_vals_df.dropna(how="any")
+        if not overlapping_df.empty:
+            corr_matrix = overlapping_df.corr()
+            overlap_start = overlapping_df.index[0].strftime("%Y-%m-%d")
+            overlap_end = overlapping_df.index[-1].strftime("%Y-%m-%d")
+            print(
+                f"\n--- Correlation Matrix (Tail Window, Overlapping Period: {overlap_start} / {overlap_end}) ---"
+            )
+            print(corr_matrix.to_string(float_format=lambda x: f"{x:6.2f}"))
+            gradient = LinearSegmentedColormap.from_list(
+                "gradient",
+                [
+                    get_color("mocha", "text"),
+                    get_color("latte", "mauve"),
+                ],
+            )
+            plt.figure(figsize=(6, 5))
+            sns.heatmap(
+                corr_matrix,
+                annot=True,
+                vmin=-1,
+                vmax=1,
+                cmap=gradient,
+                fmt=".2f",
+                linewidths=0.5,
+                cbar_kws={"label": "Correlation"},
+            )
+            plt.title("Correlation Matrix (Tail Window, Overlapping Period)")
+            plt.tight_layout()
+            plt.savefig(
+                os.path.join(OUTPUT_DIR, "tail_window_correlation_heatmap_simple.png")
+            )
+            print(
+                "Correlation heatmap saved to 'output/tail_window_correlation_heatmap_simple.png'"
+            )
+            plt.show()
+        else:
+            print("\n--- Correlation Matrix (Tail Window) ---")
+            print("No overlapping periods with valid data for all columns.")
 
 
 def run_tail_analysis(

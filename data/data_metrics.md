@@ -36,7 +36,7 @@ historical performance.
      the `--input-type` argument.
    - If using `--input-type return`, the input values must be true single-period returns
      (not annualized rates).
-   - Using `--input-type simple` only simple statistics is calculated for the raw values
+   - Using `--input-type simple` only simple statistics are calculated for the raw values
      in the columns. No returns calculation or compounding.
 
 ## Usage
@@ -66,13 +66,13 @@ python data_metrics.py -n 5 -f CB_BTCUSD-daily.xlsx -d 365
 **Run with a daily file containing single-period returns:**
 
 ```bash
-python data_metrics.py -n 5 -f EONIAPLUSESTR-daily.xlsx -d 252 --input-type return
+python data_metrics.py -n 5 -f data-daily.xlsx -d 252 --input-type return
 ```
 
 **Run with --tail to analyze only the most recent N-year window:**
 
 ```bash
-python data_metrics.py --tail 5 -f EONIAPLUSESTR-daily.xlsx -d 252 --input-type return
+python data_metrics.py --tail 5 -f EONIAPLUSESTR-daily.xlsx -d 252 --input-type simple
 ```
 
 ## Data Cleaning and Missing Values
