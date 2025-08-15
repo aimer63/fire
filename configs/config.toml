@@ -118,7 +118,7 @@ planned_extra_expenses = [
   { amount = 30_000.0, year = 20, description = "Buy a car" },
 ]
 
-# Annual fee (Total Expense Ratio, TER) applied to all liquid investments.
+# Annual fee (Total Expense Ratio, TER) applied to all investments.
 # E.g., 0.0015 for 0.15%.
 annual_fund_fee = 0.0015
 
@@ -131,10 +131,11 @@ annual_fund_fee = 0.0015
 # Each asset in the configuration file is defined with the following parameters:
 # - `mu`: Annual sample mean of return rates.
 # - `sigma`: Annual sample standard deviation of return rates.
-# - `withdrawal_priority`: Order in which assets are
-#    sold to cover cash shortfalls (lower number = sold first).
+# - `withdrawal_priority`: Order in which assets are sold to cover cash shortfalls
+#                          (lower number = sold first).
 #
-# Stock parameters based on MSCI World (EUR) from 1999-2005, 20 years window average.
+# Stock parameters based on MSCI World (USD) from 1999-2025, 20 years rolling 
+# window average.
 # mu = 0.0722
 # sigma = 0.1609
 #
@@ -143,54 +144,76 @@ mu = 0.0722
 sigma = 0.1609
 withdrawal_priority = 2
 
-# European Bond parameters based on Bloomberg Euro Aggregate Bond Index (EUR) 2004-2023.
-# mu = 0.0193
-# sigma = 0.0535
+# European Bond short term maturity 1-3y, hold to maturity strategy.
+# YTM from 2005-2025.
+# Average annual returns from 2004-2023.
+# mu = 0.014
+# sigma = 0.015
 #
-# The 2004-2023 period includes many years of historically very low and even
-# negative interest rates in Europe. The environment has shifted, and current
-# yields are significantly higher.
+# The 2005-2025 period includes many years of historically very low and even
+# negative interest rates in Europe. The environment has shifted (who knows?), 
+# and current # yields are significantly higher.\
+# Taking average YTM 2022-2025.
 [assets.bonds]
-mu = 0.03
-sigma = 0.055
+mu = 0.026
+sigma = 0.05
 withdrawal_priority = 1
 
-# Statistical parameters for Euro Short-Term Rate (STR), derived from
-# historical EONIA (1999-Sep 2019) and ESTR (Oct 2019-May 2025).
+# Euro Short-Term Rate (STR), derived from historical EONIA (1999-Sep 2019) and
+# ESTR (Oct 2019-May 2025) annual average rates.
+# 20 years rolling window average.
 [assets.str]
-mu = 0.0152
-sigma = 0.0181
+mu = 0.0103
+sigma = 0.0157
 withdrawal_priority = 0
 
-# Ethereum: from 2016 to 2025
-# mu = 2.3755
-# sigma = 1.3320
-#
-# Ethereum: Conservative values
+# Ethereum: let's roll the dice
+# From 2014 to 2025, 10 years rolling window average.
+# mu = 0.8327
+# sigma = 0.9501
+# Ethereum: Putting Conservative values
 [assets.eth]
 mu = 0.25
 sigma = 0.90
-withdrawal_priority = 3
-
-# Silver: from 2016 to 2025
-# mu = 0.1120
-# sigma = 0.2794
-#
-# Silver: Conservative values
-[assets.ag]
-mu = 0.07
-sigma = 0.32
 withdrawal_priority = 4
 
-# Inflation although not an assate is mandatory to keep trak of the real values.
-# Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
-# mu = 0.0220
-# sigma = 0.0229
+# Bitcoin: another dice roll
+# From 2014 to 2025, 10 years window average.
+# mu = 0.81
+# sigma = 0.6994
+# Bitcoin: Putting Conservative values
+# [assets.btc]
+# mu = 0.20
+# sigma = 0.65
+# withdrawal_priority = 5
+
+# Silver: from 1915 to 2025, 20 years rolling window average.
+# mu = 0.0404
+# sigma = 0.2462
 #
-# More relistic for the future
+# last 20 years
+# mu = 0.0903
+# sigma = 0.3152
+#
+# Salomonic
+[assets.ag]
+mu = 0.07
+sigma = 0.3
+withdrawal_priority = 3
+
+# Inflation although not an assate is mandatory to keep trak of the real values.
+#
+# Inflation parameters based on Eurozone HICP annual inflation rates from 1997-2025.
+# 20 years rolling window average.
+# mu = 0.0187
+# sigma = 0.0151
+#
+# last 10 years
+# mu = 0.0219
+# sigma = 0.0308
 [assets.inflation]
-mu = 0.025
-sigma = 0.025
+mu = 0.0219
+sigma = 0.0308
 
 
 # ==============================================================================

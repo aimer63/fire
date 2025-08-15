@@ -174,6 +174,11 @@ def prepare_data(
 
     # Read the Excel file and get column names
     df = pd.read_excel(filename)
+    if "Date" not in df.columns:
+        raise ValueError(
+            "Input file must contain a 'Date' column. "
+            "Please check your data format and column names."
+        )
     df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
     DATA_COLS = [col for col in df.columns if col != "Date"]
     print(f"Analyzing indices: {DATA_COLS}")
