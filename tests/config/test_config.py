@@ -156,9 +156,10 @@ def test_portfolio_rebalances_unique_years(basic_deterministic_inputs):
     """
     Tests that validation fails if rebalance years are not unique.
     """
+    rebalance0 = PortfolioRebalance(year=0, weights={"stocks": 1.0})
     rebalance1 = PortfolioRebalance(year=10, weights={"stocks": 0.5, "bonds": 0.5})
     rebalance2 = PortfolioRebalance(year=10, weights={"stocks": 0.4, "bonds": 0.6})
-    rebalances = [rebalance1, rebalance2]
+    rebalances = [rebalance0, rebalance1, rebalance2]
     with pytest.raises(ValidationError, match="Rebalance years must be unique."):
         Config(
             assets={

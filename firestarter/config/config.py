@@ -257,13 +257,19 @@ class PortfolioRebalance(BaseModel):
     Represents a single portfolio rebalance event.
 
     Attributes:
-        year (int): The year (0-indexed) when this rebalance occurs.
+        year (int): The year (0-indexed) when this rebalance first occurs.
+        period (int): The period in years for periodic rebalancing. If 0, rebalance is applied only once at 'year'.
         weights (dict[str, float]): A dictionary mapping liquid asset names to their
                                     target weights, which must sum to 1.0.
         description (str | None): Optional description of the rebalance event.
     """
 
     year: int
+    period: int = Field(
+        default=0,
+        ge=0,
+        description="Period in years for periodic rebalancing. 0 means rebalance is applied only once at 'year'.",
+    )
     description: str | None = None
     weights: dict[str, float] = {}
 
@@ -356,21 +362,14 @@ class Config(BaseModel):
         """
         Performs validation checks that require access to multiple configuration sections.
         """
-        # 1. Establish the definitive set of asset names from the top-level assets
+        # Establish the definitive set of asset names from the top-level assets
         defined_assets = set(self.assets.keys())
         if "inflation" not in defined_assets:
             raise ValueError(
                 "An asset named 'inflation' must be defined in the assets section."
             )
 
-        # 1. Validate that 'inflation' is not referenced in portfolio weights
-        for rebalance in self.portfolio_rebalances:
-            if "inflation" in rebalance.weights:
-                raise ValueError(
-                    "The 'inflation' asset must not appear in any rebalance weights."
-                )
-
-        # 2. Validate withdrawal_priority for all assets and check uniqueness (excluding inflation)
+        # Validate withdrawal_priority for all assets and check uniqueness (excluding inflation)
         priorities = []
         for name, asset in self.assets.items():
             if name == "inflation":
@@ -389,7 +388,7 @@ class Config(BaseModel):
                 "withdrawal_priority values for assets must be unique (excluding 'inflation')."
             )
 
-        # 3. Validate the correlation matrix asset list
+        # Validate the correlation matrix asset list
         if self.correlation_matrix:
             matrix_assets = set(self.correlation_matrix.assets_order)
             if defined_assets != matrix_assets:
@@ -402,7 +401,7 @@ class Config(BaseModel):
                     error_msg += f" Extra: {sorted(list(extra))}."
                 raise ValueError(error_msg)
 
-        # 4. Validate that all shock events target defined assets
+        # Validate that all shock events target defined assets
         if self.shocks:
             for shock in self.shocks:
                 for asset_name in shock.impact:
@@ -412,14 +411,22 @@ class Config(BaseModel):
                             f"'{asset_name}'. Valid assets are: {sorted(list(defined_assets))}"
                         )
 
-        # 5. Validate that rebalance years are unique
         rebalance_years = [r.year for r in self.portfolio_rebalances]
-        if len(rebalance_years) != len(set(rebalance_years)):
-            raise ValueError("Rebalance years must be unique.")
-
-        # 6. Enforce presence of a rebalance at year 0
+        # Enforce presence of a rebalance at year 0
         if 0 not in rebalance_years:
             raise ValueError(
                 "A portfolio rebalance at year 0 is required to set initial target weights."
             )
+
+        # Validate that rebalance years are unique
+        if len(rebalance_years) != len(set(rebalance_years)):
+            raise ValueError("Rebalance years must be unique.")
+
+        # Validate that 'inflation' is not referenced in portfolio weights
+        for rebalance in self.portfolio_rebalances:
+            if "inflation" in rebalance.weights:
+                raise ValueError(
+                    "The 'inflation' asset must not appear in any rebalance weights."
+                )
+
         return self

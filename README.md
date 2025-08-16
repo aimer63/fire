@@ -226,17 +226,20 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 
 [[portfolio_rebalances]]
 year = 0
+period = 1
 description = "Initial allocation"
 weights = { stocks = 0.80, bonds = 0.20 }
 
-# To set your initial portfolio, use a planned contribution at year 0 and specify
-# the allocation with a rebalance at year 0.
 # There must always be a rebalance event for year 0 even if a planned contribution
 # at year 0 is not specified, the weights are used to allocate all subsequent investments
 # until the next rebalance.
+# The `period` field allows for periodic rebalancing: if `period > 0`, the rebalance is
+# applied every `period` years until the next rebalance event; if `period == 0`, it is
+# applied only once at the specified year.
 [[portfolio_rebalances]]
 year = 20
-description = "De-risking for retirement"
+period = 2
+description = "Retirement"
 weights = { stocks = 0.60, bonds = 0.40 }
 ```
 

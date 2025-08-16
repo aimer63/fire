@@ -309,10 +309,12 @@ matrix = [
 # until the next rebalance.
 [[portfolio_rebalances]]
 year = 0
+period = 1
 weights = { stocks = 0.80, bonds = 0.15, eth = 0.025, ag = 0.025 }
 description = "start allocation"
 
 [[portfolio_rebalances]]
 year = 20
+period = 1
 description = "De-risking for retirement"
 weights = { stocks = 0.60, bonds = 0.40 }

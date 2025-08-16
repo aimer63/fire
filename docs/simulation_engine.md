@@ -73,8 +73,10 @@ For each month:
      the current portfolio weights.
    - If assets are insufficient to cover a shortfall, mark the simulation as failed and exit early.
 5. **Returns:** Apply monthly returns to all assets (including illiquid).
-6. **Rebalancing:** If scheduled, rebalance liquid assets according to the current portfolio
-   weights.
+6. **Rebalancing:** If scheduled, rebalance liquid assets according to the current
+   portfolio weights. Rebalances can be periodic: if a rebalance event specifies a
+   `period`, it is applied every `period` years until the next rebalance event; if
+   `period` is omitted or zero, it is applied only once at the specified year.
 7. **Recording:** Save the current state (wealth, balances, asset values) for this month.
 
 ### 3. **Result Construction**

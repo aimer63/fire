@@ -189,6 +189,34 @@ class Simulation:
     def init(self):
         self.state = self._initialize_state()
         self._precompute_sequences()
+        self._build_rebalance_schedule()
+
+    def _build_rebalance_schedule(self):
+        """
+        Precompute a mapping from year to the rebalance event to apply, based on period logic.
+        """
+        # List of (year, PortfolioRebalance), sorted by year
+        rebalances = sorted(self.portfolio_rebalances, key=lambda r: r.year)
+        schedule: dict[int, PortfolioRebalance] = {}
+
+        for idx, reb in enumerate(rebalances):
+            start_year = reb.year
+            period = reb.period
+            # Determine the end year (exclusive) for this rebalance
+            if idx + 1 < len(rebalances):
+                next_year = rebalances[idx + 1].year
+            else:
+                next_year = self.simulation_months // 12 + 1  # End after simulation
+
+            if period > 0:
+                y = start_year
+                while y < next_year:
+                    schedule[y] = reb
+                    y += period
+            else:
+                schedule[start_year] = reb
+
+        self._rebalance_schedule = schedule  # year -> PortfolioRebalance
 
     def run(self) -> dict:
         """
@@ -529,7 +557,7 @@ class Simulation:
 
     def _rebalance_if_needed(self, month):
         """
-        Rebalance liquid assets (stocks, bonds, str, fun) according to the current
+        Rebalance liquid assets according to the current
         portfolio weights, if a rebalance is scheduled for this year and this is
         the first month of the year.
         Also updates current_target_portfolio_weights if a rebalance occurs.
@@ -537,12 +565,10 @@ class Simulation:
         current_year = month // 12
         month_in_year = month % 12
 
-        # Check if a rebalance is scheduled for this year and this is the first month
+        # Use the precomputed rebalance schedule
         scheduled_rebalance = None
-        for reb in self.portfolio_rebalances:
-            if reb.year == current_year and month_in_year == 0:
-                scheduled_rebalance = reb
-                break
+        if month_in_year == 0:
+            scheduled_rebalance = self._rebalance_schedule.get(current_year, None)
 
         if scheduled_rebalance is not None:
             # Build a complete weights dict: missing keys get 0.0

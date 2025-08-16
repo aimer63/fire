@@ -258,16 +258,23 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 - **`[[portfolio_rebalances]]`** _(list of dicts)_
   Defines when and how the portfolio is rebalanced to target weights.
 
-  - **year**: _Type:_ integer
-    _Description:_ The simulation year (0-indexed) when this rebalance occurs.  
+  - **year**: _Type:_ integer  
+    _Description:_ The simulation year (0-indexed) when this rebalance first occurs.  
     _Required:_ Yes
 
-  - **description**:
-    _Type:_ string (optional)
+  - **period**: _Type:_ integer (optional)  
+    _Description:_ The period in years for periodic rebalancing.  
+    If `period > 0`, the rebalance is applied every `period` years starting from `year`
+    until the next rebalance event.  
+    If `period == 0` or omitted, the rebalance is applied only once at the specified year.  
+    _Required:_ Optional (defaults to 0)
+
+  - **description**:  
+    _Type:_ string (optional)  
     _Description:_ Optional human-readable description of the rebalance event.
 
-  - **weights**:
-    _Type:_ table (dictionary)
+  - **weights**:  
+    _Type:_ table (dictionary)  
     _Description:_
 
     - Maps asset names to their target weights (as floats).
@@ -277,7 +284,7 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
   - Each rebalance year must be unique.
   - There must always be a rebalance event for year 0. This sets the initial allocation
     and the weights for all the subsequent investments until the next rebalance event.
-    The initial allocation of assets is determined by the planned contribution at year 0
+  - The initial allocation of assets is determined by the planned contribution at year 0
     and the weights specified in the rebalance event for year 0.
 
 ### Example: Setting the initial portfolio
@@ -297,6 +304,7 @@ weights = { stocks = 0.80, bonds = 0.20 }
 
 [[portfolio_rebalances]]
 year = 10
+period = 1
 description = "De-risking for retirement"
 weights = { stocks = 0.60, bonds = 0.40 }
 ```

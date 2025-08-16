@@ -224,6 +224,7 @@ matrix = [
 # Weights must sum to 1.0 and only include keys for assets where `is_liquid = true`.
 [[portfolio_rebalances]]
 year = 0
+period = 3
 weights = { stocks = 0.80, bonds = 0.15, eth = 0.025, ag = 0.025 }
 description = "start allocation"
 

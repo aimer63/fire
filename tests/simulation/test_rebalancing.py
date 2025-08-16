@@ -123,3 +123,62 @@ def test_rebalance_not_first_month_of_year(
     # Weights and asset values should be unchanged
     assert sim.state.current_target_portfolio_weights == initial_weights
     assert sim.state.portfolio == initial_portfolio
+
+
+def test_periodic_rebalance_applied_correctly(
+    initialized_simulation: Simulation,
+) -> None:
+    """
+    Tests that a rebalance with period > 0 is applied at every period years until the next rebalance.
+    """
+    sim = initialized_simulation
+    # Setup: year 0 (period 2), year 6 (period 0)
+    weights_0 = {"stocks": 0.7, "bonds": 0.3, "str": 0.0, "fun": 0.0}
+    weights_6 = {"stocks": 0.5, "bonds": 0.5, "str": 0.0, "fun": 0.0}
+    rebalance_0 = PortfolioRebalance(year=0, period=2, weights=weights_0)
+    rebalance_6 = PortfolioRebalance(year=6, period=0, weights=weights_6)
+    sim.portfolio_rebalances = [rebalance_0, rebalance_6]
+    sim.state.portfolio = {
+        "stocks": 100_000.0,
+        "bonds": 0.0,
+        "str": 0.0,
+        "fun": 0.0,
+        "ag": 10_000.0,
+    }
+    sim.init()
+
+    # Should apply rebalance_0 at years 0, 2, 4
+    for year in [0, 2, 4]:
+        month = year * 12
+        sim._rebalance_if_needed(month)
+        for k, v in weights_0.items():
+            assert sim.state.current_target_portfolio_weights[k] == v
+
+    # Should apply rebalance_6 only at year 6
+    month = 6 * 12
+    sim._rebalance_if_needed(month)
+    for k, v in weights_6.items():
+        assert sim.state.current_target_portfolio_weights[k] == v
+
+
+def test_no_rebalance_after_last_event(initialized_simulation: Simulation) -> None:
+    """
+    Tests that after the last rebalance event, no further rebalances are applied.
+    """
+    sim = initialized_simulation
+    weights_0 = {"stocks": 0.8, "bonds": 0.2, "str": 0.0, "fun": 0.0}
+    weights_5 = {"stocks": 0.6, "bonds": 0.4, "str": 0.0, "fun": 0.0}
+    rebalance_0 = PortfolioRebalance(year=0, period=2, weights=weights_0)
+    rebalance_5 = PortfolioRebalance(year=5, period=0, weights=weights_5)
+    sim.portfolio_rebalances = [rebalance_0, rebalance_5]
+    sim.init()
+
+    # Apply last rebalance at year 5
+    sim._rebalance_if_needed(5 * 12)
+    for k, v in weights_5.items():
+        assert sim.state.current_target_portfolio_weights[k] == v
+
+    # After year 5, no further rebalances should occur
+    sim._rebalance_if_needed(6 * 12)
+    for k, v in weights_5.items():
+        assert sim.state.current_target_portfolio_weights[k] == v
