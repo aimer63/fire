@@ -307,6 +307,9 @@ matrix = [
 # There must always be a rebalance event for year 0 even if a planned contribution
 # at year 0 is not specified, the weights are used to allocate all subsequent investments
 # until the next rebalance.
+# The `period` field allows for periodic rebalancing: if `period > 0`, the rebalance
+# is applied every `period` years starting from `year` until the next rebalance event;
+# if `period == 0` or omitted, it is applied only once at the specified year.
 [[portfolio_rebalances]]
 year = 0
 period = 1

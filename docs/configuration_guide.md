@@ -33,6 +33,7 @@ monthly_income_steps = [
 monthly_expenses_steps = [
   { year = 0, monthly_amount = 2000.0 },
   { year = 15, monthly_amount = 2500.0 }
+]
 
 [[portfolio_rebalances]]
 year = 0
@@ -44,15 +45,6 @@ period = 1
 weights = { stocks = 0.6, bonds = 0.4 }
 description = "De-risking for retirement"
 ```
-
-- `portfolio_rebalances`: List of portfolio rebalance events
-
-  - **period** (optional, default 0): If specified and > 0, the rebalance is applied
-    every `period` years starting from `year` until the next rebalance event. If omitted
-    or 0, the rebalance is applied only once at the specified year.
-  - **Important:** There must always be a rebalance event for year 0. The weights in
-    this event determine the allocation of your planned contribution at year 0 and
-    of all subsequent investments until the next rebalance event.
 
 - `planned_contributions`: List of one-time contributions.
   To set your initial portfolio, specify a contribution at `year = 0`.
@@ -105,9 +97,13 @@ weights = { stocks = 0.7, bonds = 0.3 }
 
 [[portfolio_rebalances]]
 year = 20
+period = 1
 weights = { stocks = 0.6, bonds = 0.4 }
 ```
 
+- **period** (optional, default 0): If specified and > 0, the rebalance is applied
+  every `period` years starting from `year` until the next rebalance event. If omitted
+  or 0, the rebalance is applied only once at the specified year.
 - **Important:** There must always be a rebalance event for year 0. The weights in
   this event determine the allocation of your planned contribution at year 0 and
   of all subsequent investments until the next rebalance event.
