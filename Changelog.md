@@ -17,7 +17,7 @@
     Computes windowed mean, volatility, percentiles, generates summary tables
     and plots for basic statistics for the raw data in the columns
 
-- Added argument `--config` to `firestarter` to specify the config files.
+- Added argument `--config` to `firestarter` to specify the config file.
 
 - Added custom colors palette `utils\colors.py` for plots.
 
