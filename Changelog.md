@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.1.0]- 2025-08-17
+## [v0.1.0](https://github.com/aimer63/fire/releases/tag/v0.1.0) - 2025-08-17
 
 ### Added
 
@@ -11,7 +11,7 @@
     until tha next rebalance event; if `period` is omitted or zero,
     rebalance is applied only once at the specified year.
 
-- Added `--input-type simple` to data_metrics.py for raw stats
+- Added `--input-type simple` to `data_metrics.py` for raw stats
 
   - Analyzes raw values without returns or compounding calculation.
     Computes windowed mean, volatility, percentiles, generates summary tables
@@ -21,19 +21,19 @@
 
 - Added custom colors palette `utils\colors.py` for plots.
 
-- data_metrics.py: Added rolling window return vs start date plot for single horizon
+- `data_metrics.py`: Added rolling window return vs start date plot for single horizon
   analysis.
 
 ### Changed
 
-- data_metrics.py: Improved calculation for the incomplete window (leftover)
+- `data_metrics.py`: Improved calculation for the incomplete window (leftover)
 
   - Calculate leftover window size and start date independently for each column
     based on the number of valid periods after the last complete window.
   - Ensure output includes annualized return, starting date, and period count for
     each column. Prevents misleading results when trailing data is missing.
 
-- data_metrics.py: Handling missing data at the beginning and at the end of the series.
+- `data_metrics.py`: Handling missing data at the beginning and at the end of the series.
   - Assure missing data at the beginning and end of the series are replaced with NaNs
     and not ffilled.
 
