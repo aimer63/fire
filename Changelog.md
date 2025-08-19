@@ -4,22 +4,22 @@
 
 ### Added
 
-- Added periodic portfolio rebalancing support
+- Periodic portfolio rebalancing support
 
   - Introduced `period` field to `PortfolioRebalance` config model.
   - Updated simulation logic to apply rebalances every `period` years
     until tha next rebalance event; if `period` is omitted or zero,
     rebalance is applied only once at the specified year.
 
-- Added `--input-type simple` to `data_metrics.py` for raw stats
+- Argument `--config` to `firestarter` to specify the config file.
+
+- Custom colors palette `utils\colors.py` for plots.
+
+- Argument `--input-type simple` to `data_metrics.py` for raw stats
 
   - Analyzes raw values without returns or compounding calculation.
-    Computes windowed mean, volatility, percentiles, generates summary tables
+  - Computes windowed mean, volatility, percentiles, generates summary tables
     and plots for basic statistics for the raw data in the columns
-
-- Added argument `--config` to `firestarter` to specify the config file.
-
-- Added custom colors palette `utils\colors.py` for plots.
 
 - `data_metrics.py`: Added rolling window return vs start date plot for single horizon
   analysis.
