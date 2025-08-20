@@ -39,6 +39,7 @@ initial_bank_balance = 8000.0
 # Bank balance thresholds for automatic investment/divestment.
 bank_lower_bound = 5000.0
 bank_upper_bound = 10000.0
+investment_lot_size = 5000.0
 
 # Total duration of the simulation.
 years_to_simulate = 70

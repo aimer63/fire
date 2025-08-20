@@ -523,8 +523,19 @@ class Simulation:
         # Invest excess if above upper bound
         if self.state.current_bank_balance > upper:
             excess = self.state.current_bank_balance - upper
-            self._invest_in_liquid_assets(float(excess))
-            self.state.current_bank_balance = float(upper)
+            lot_size = self.det_inputs.investment_lot_size
+            if lot_size > 0.0:
+                invest_amount = (excess // lot_size) * lot_size
+            else:
+                invest_amount = excess
+            if invest_amount > 0.0:
+                self._invest_in_liquid_assets(float(invest_amount))
+                self.state.current_bank_balance = float(
+                    self.state.current_bank_balance - invest_amount
+                )
+            # Clamp to upper bound if all excess was invested
+            if self.state.current_bank_balance > upper and lot_size == 0.0:
+                self.state.current_bank_balance = float(upper)
 
     def _apply_monthly_returns(self, month):
         """

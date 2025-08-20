@@ -151,10 +151,18 @@ class DeterministicInputs(BaseModel):
             "List of planned contributions. e.g. [{amount = 10000, year = 2}, ...]"
         ),
     )
-
     annual_fund_fee: float = Field(
         ...,
         description="Total Expense Ratio (TER) as an annual percentage of investment assets.",
+    )
+    investment_lot_size: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Minimum chunk size for investing excess bank balance. "
+            "Only multiples of this amount are invested when bank balance exceeds upper bound. "
+            "If 0.0, all excess is invested immediately."
+        ),
     )
     monthly_expenses_steps: list[ExpenseStep] = Field(
         ...,

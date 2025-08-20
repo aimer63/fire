@@ -159,3 +159,50 @@ def test_handle_bank_account_no_action(initialized_simulation: Simulation) -> No
     assert sum(
         v for k, v in sim.state.portfolio.items() if k != "inflation"
     ) == pytest.approx(initial_liquid_assets)
+
+
+def test_handle_bank_account_invest_lot_size_chunk(
+    initialized_simulation: Simulation,
+) -> None:
+    """
+    Tests that only multiples of investment_lot_size are invested when excess cash exceeds upper bound.
+    """
+    sim = initialized_simulation
+    month_to_test = 12
+    lower_bound = 10_000.0
+    upper_bound = 20_000.0
+    lot_size = 3_000.0
+
+    # Configure bounds and set initial state
+    sim.det_inputs = sim.det_inputs.model_copy(
+        update={
+            "bank_lower_bound": lower_bound,
+            "bank_upper_bound": upper_bound,
+            "investment_lot_size": lot_size,
+            "planned_contributions": [],
+        }
+    )
+    sim.init()
+    sim.state.current_bank_balance = 25_500.0  # Above upper bound
+
+    initial_liquid_assets = sum(
+        v for k, v in sim.state.portfolio.items() if k != "inflation"
+    )
+    inflation_factor = sim.state.monthly_cumulative_inflation_factors[month_to_test]
+    expected_nominal_upper_bound = upper_bound * inflation_factor
+    excess = sim.state.current_bank_balance - expected_nominal_upper_bound
+    invest_amount = (excess // lot_size) * lot_size
+    remainder = excess - invest_amount
+
+    # Execute the method
+    sim._handle_bank_account(month_to_test)
+
+    # --- Assertions ---
+    assert not sim.state.simulation_failed
+    assert sim.state.current_bank_balance == pytest.approx(
+        expected_nominal_upper_bound + remainder
+    )
+    current_liquid_assets = sum(
+        v for k, v in sim.state.portfolio.items() if k != "inflation"
+    )
+    assert current_liquid_assets == pytest.approx(initial_liquid_assets + invest_amount)

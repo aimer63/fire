@@ -54,6 +54,11 @@ This document explains all parameters available in the main TOML configuration f
   - **bank_upper_bound** _(float)_
     Maximum allowed bank balance (excess is invested).
 
+  - **investment_lot_size** _(float)_
+    Minimum chunk size for investing excess bank balance. Only multiples of this amount
+    are invested when the bank balance exceeds the upper bound. If set to 0.0, all excess
+    is invested immediately.
+
   - **monthly_income_steps** _(list of dicts)_
     Defines the income schedule as a list of step changes.
     Each entry is a dictionary with:
