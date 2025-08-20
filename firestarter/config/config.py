@@ -155,6 +155,16 @@ class DeterministicInputs(BaseModel):
         ...,
         description="Total Expense Ratio (TER) as an annual percentage of investment assets.",
     )
+
+    transactions_fee: dict[str, float] | None = Field(
+        default=None,
+        description=(
+            "Optional transaction fee applied to all investments and disinvestments. "
+            "Format: {min: float, rate: float, max: float}. "
+            "Fee is calculated as max(min, amount * rate), capped at max if max > 0. "
+            "If omitted or None, no fee is applied."
+        ),
+    )
     investment_lot_size: float = Field(
         default=0.0,
         ge=0.0,
@@ -235,6 +245,34 @@ class DeterministicInputs(BaseModel):
             raise ValueError(
                 "initial_bank_balance must be greater than or equal to bank_lower_bound"
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_transactions_fee(self) -> "DeterministicInputs":
+        if self.transactions_fee is not None:
+            fee = self.transactions_fee
+            required_keys = {"min", "rate", "max"}
+            missing = required_keys - set(fee.keys())
+            if missing:
+                raise ValueError(
+                    f"transactions_fee must contain keys: {sorted(list(missing))}"
+                )
+            if not isinstance(fee["min"], (int, float)) or fee["min"] < 0:
+                raise ValueError(
+                    "transactions_fee['min'] must be a non-negative number."
+                )
+            if not isinstance(fee["rate"], (int, float)) or fee["rate"] < 0:
+                raise ValueError(
+                    "transactions_fee['rate'] must be a non-negative number."
+                )
+            if not isinstance(fee["max"], (int, float)) or fee["max"] < 0:
+                raise ValueError(
+                    "transactions_fee['max'] must be a non-negative number (0 means no cap)."
+                )
+            if fee["max"] < fee["min"]:
+                raise ValueError(
+                    "transactions_fee['max'] must be greater than or equal to 'min'."
+                )
         return self
 
 

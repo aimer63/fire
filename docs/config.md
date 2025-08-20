@@ -147,6 +147,16 @@ This document explains all parameters available in the main TOML configuration f
     Annual fee (Total Expense Ratio, TER) applied to all investments.
     Expressed as a decimal (e.g., 0.0015 for 0.15%).
 
+  - **transactions_fee** _(dict, optional)_
+    Transaction fee applied to all investments and disinvestments.
+    Format: `{min: float, rate: float, max: float}`.
+    The fee is calculated as `max(min, amount * rate)`, capped at `max` if `max > 0`.
+    If omitted or `None`, no fee is applied.
+    Examples:
+    - Fixed fee only: `{min = 5, rate = 0.0, max = 5}`
+    - Percentage only: `{min = 0, rate = 0.002, max = 0}`
+    - Percentage with min/max: `{min = 7, rate = 0.0019, max = 29}`
+
 ## Assets
 
 - **`[assets]`** _(dict)_

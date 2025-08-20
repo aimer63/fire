@@ -177,6 +177,63 @@ def test_portfolio_rebalances_unique_years(basic_deterministic_inputs):
         )
 
 
+@pytest.mark.parametrize(
+    "fee_cfg,should_raise",
+    [
+        ({"min": 5, "rate": 0.002, "max": 20}, False),
+        ({"min": 0, "rate": 0.0, "max": 0}, False),
+        ({"min": -1, "rate": 0.002, "max": 20}, True),
+        ({"min": 5, "rate": -0.002, "max": 20}, True),
+        ({"min": 5, "rate": 0.002, "max": -1}, True),
+        ({"min": 5, "rate": 0.002, "max": 4}, True),
+        ({"min": 5, "rate": 0.002}, True),  # missing max
+        ({}, True),  # missing all
+    ],
+)
+def test_transactions_fee_validation(fee_cfg, should_raise):
+    from firestarter.config.config import DeterministicInputs, IncomeStep, ExpenseStep
+
+    if should_raise:
+        with pytest.raises(ValueError):
+            DeterministicInputs(
+                initial_bank_balance=5000.0,
+                bank_lower_bound=2000.0,
+                bank_upper_bound=10000.0,
+                years_to_simulate=5,
+                monthly_income_steps=[IncomeStep(year=0, monthly_amount=0.0)],
+                monthly_expenses_steps=[ExpenseStep(year=0, monthly_amount=0.0)],
+                planned_contributions=[],
+                annual_fund_fee=0.001,
+                planned_extra_expenses=[],
+                income_inflation_factor=1.0,
+                income_end_year=5,
+                monthly_pension=0.0,
+                pension_inflation_factor=1.0,
+                pension_start_year=30,
+                transactions_fee=fee_cfg,
+                investment_lot_size=0.0,
+            )
+    else:
+        DeterministicInputs(
+            initial_bank_balance=5000.0,
+            bank_lower_bound=2000.0,
+            bank_upper_bound=10000.0,
+            years_to_simulate=5,
+            monthly_income_steps=[IncomeStep(year=0, monthly_amount=0.0)],
+            monthly_expenses_steps=[ExpenseStep(year=0, monthly_amount=0.0)],
+            planned_contributions=[],
+            annual_fund_fee=0.001,
+            planned_extra_expenses=[],
+            income_inflation_factor=1.0,
+            income_end_year=5,
+            monthly_pension=0.0,
+            pension_inflation_factor=1.0,
+            pension_start_year=30,
+            transactions_fee=fee_cfg,
+            investment_lot_size=0.0,
+        )
+
+
 def test_load_and_validate_full_test_config():
     """
     Tests that the comprehensive `tests/config/test_config.toml` is valid.

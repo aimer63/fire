@@ -49,6 +49,22 @@ from firestarter.core.sequences_generator import SequencesGenerator
 from firestarter.core.simulation_state import SimulationState
 
 
+def calculate_transaction_fee(amount: float, fee_cfg: dict | None) -> float:
+    """
+    Calculates the transaction fee for a given amount using the config dict.
+    Returns 0.0 if fee_cfg is None.
+    """
+    if fee_cfg is None:
+        return 0.0
+    min_fee = float(fee_cfg.get("min", 0.0))
+    rate = float(fee_cfg.get("rate", 0.0))
+    max_fee = float(fee_cfg.get("max", 0.0))
+    fee = max(min_fee, amount * rate)
+    if max_fee > 0.0:
+        fee = min(fee, max_fee)
+    return fee
+
+
 class SimulationBuilder:
     def __init__(self):
         self.det_inputs: Optional[DeterministicInputs] = None
@@ -595,20 +611,38 @@ class Simulation:
     def _rebalance_liquid_assets(self):
         """
         Rebalances all liquid assets according to the current target portfolio weights.
+        Applies transaction fee to each buy/sell operation.
         """
         weights = self.state.current_target_portfolio_weights
-        # Only include liquid assets in rebalancing
         liquid_asset_keys = [k for k in weights.keys() if k != "inflation"]
 
         total_liquid = sum(
             self.state.portfolio.get(asset, 0.0) for asset in liquid_asset_keys
         )
+        fee_cfg = self.det_inputs.transactions_fee
 
         if total_liquid > 0:
-            # Assuming weights sum to 1.0 as validated in config parsing
             for asset in liquid_asset_keys:
-                weight = weights[asset]
-                self.state.portfolio[asset] = total_liquid * weight
+                target_value = total_liquid * weights[asset]
+                current_value = self.state.portfolio.get(asset, 0.0)
+                delta = target_value - current_value
+
+                if abs(delta) < 1e-9:
+                    continue
+
+                if delta > 0:
+                    # Buy: pay fee from bank, invest net amount
+                    fee = calculate_transaction_fee(delta, fee_cfg)
+                    net_invest = delta - fee
+                    self.state.current_bank_balance -= delta
+                    self.state.portfolio[asset] += net_invest
+                else:
+                    # Sell: pay fee from proceeds, add net to bank
+                    gross_sell = -delta
+                    fee = calculate_transaction_fee(gross_sell, fee_cfg)
+                    net_proceeds = gross_sell - fee
+                    self.state.portfolio[asset] -= gross_sell
+                    self.state.current_bank_balance += net_proceeds
         else:
             # If total liquid is zero, zero out all liquid assets
             for asset in liquid_asset_keys:
@@ -618,45 +652,62 @@ class Simulation:
     def _invest_in_liquid_assets(self, amount: float):
         """
         Invests a given amount into liquid assets according to current target weights.
+        Applies transaction fee if configured.
         """
+        fee_cfg = self.det_inputs.transactions_fee
+        fee = calculate_transaction_fee(amount, fee_cfg)
+        net_amount = amount - fee
         weights = self.state.current_target_portfolio_weights
         for asset, weight in weights.items():
-            self.state.portfolio[asset] += amount * weight
+            self.state.portfolio[asset] += net_amount * weight
 
     def _withdraw_from_assets(self, amount: float) -> None:
-        """
-        Withdraws from liquid assets based on their configured withdrawal priority
-        to cover a shortfall. If assets are insufficient, marks the simulation as failed.
-        The withdrawn amount is added to the bank balance.
-        """
         amount_needed = amount
         withdrawn_total = 0.0
 
-        # Dynamically determine withdrawal order from config
         liquid_assets_with_priority = [
             (name, asset.withdrawal_priority)
             for name, asset in self.assets.items()
             if name != "inflation" and asset.withdrawal_priority is not None
         ]
-        # Sort by priority, lowest first
         withdrawal_order = sorted(liquid_assets_with_priority, key=lambda x: x[1])
+        fee_cfg = self.det_inputs.transactions_fee
 
         for asset_name, _ in withdrawal_order:
-            if amount_needed <= 1e-9:  # Effectively zero
+            if amount_needed <= 1e-9:
                 break
 
             asset_value = self.state.portfolio.get(asset_name, 0.0)
-            withdrawal_from_this_asset = min(amount_needed, asset_value)
+            if asset_value <= 1e-9:
+                continue
 
-            self.state.portfolio[asset_name] -= withdrawal_from_this_asset
-            withdrawn_total += withdrawal_from_this_asset
-            amount_needed -= withdrawal_from_this_asset
+            # Binary search for gross_withdrawal so that net = amount_needed
+            left, right = 0.0, asset_value
+            best_gross = 0.0
+            epsilon = 1e-8
+            while right - left > epsilon:
+                mid = (left + right) / 2
+                fee = calculate_transaction_fee(mid, fee_cfg)
+                net = mid - fee
+                if net >= amount_needed:
+                    best_gross = mid
+                    right = mid
+                else:
+                    left = mid
+            # If best_gross was never updated, withdraw all available from the asset
+            if best_gross == 0.0 and amount_needed > 1e-9:
+                gross_withdrawal = asset_value
+            else:
+                gross_withdrawal = min(best_gross, asset_value)
+            fee = calculate_transaction_fee(gross_withdrawal, fee_cfg)
+            net = gross_withdrawal - fee
 
-        # Add the total withdrawn amount to the bank balance
+            self.state.portfolio[asset_name] -= gross_withdrawal
+            withdrawn_total += net
+            amount_needed -= net
+
         self.state.current_bank_balance += withdrawn_total
-
-        # If we couldn't withdraw the full amount, fail the simulation
-        if amount_needed > 1e-9:  # Use a small tolerance for floating point
+        if amount_needed > 1e-9:
             self.state.simulation_failed = True
 
     def _record_results(self, month):

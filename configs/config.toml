@@ -48,6 +48,11 @@ bank_lower_bound = 5000.0
 # Maximum allowed bank balance (excess is invested).
 bank_upper_bound = 10000.0
 
+# investment_lot_size: Minimum chunk size for investing excess bank balance.
+# Only multiples of this amount are invested when bank balance exceeds upper bound.
+# If 0.0, all excess is invested immediately.
+investment_lot_size = 5000.0
+
 # --- Income Streams ---
 # Monthly income
 # Defines the income schedule as a list of step changes.
@@ -122,6 +127,15 @@ planned_extra_expenses = [
 # E.g., 0.0015 for 0.15%.
 annual_fund_fee = 0.0015
 
+# transactions_fee: Transaction fee applied to all investments and disinvestments.
+# Format: {min: float, rate: float, max: float}.
+# Fee is calculated as max(min, amount * rate), capped at max if max > 0.
+# If omitted or None, no fee is applied.
+# Examples:
+#   Fixed fee only: {min = 5, rate = 0.0, max = 5}
+#   Percentage only: {min = 0, rate = 0.002, max = 0}
+#   Percentage with min/max: {min = 3, rate = 0.0019, max = 19}
+transactions_fee = { min = 2.95, rate = 0.0019, max = 19 }
 
 #==============================================================================
 # 4. ASSET DEFINITIONS

@@ -103,6 +103,15 @@ def test_withdraw_from_assets_success_multiple_assets(
     amount_to_withdraw = 25_000.0  # More than is in 'str'
     sim._withdraw_from_assets(amount_to_withdraw)
 
+    print("transactions_fee:", sim.det_inputs.transactions_fee)
+    print(
+        "Portfolio before withdrawal:",
+        {"str": str_, "bonds": bonds, "stocks": stocks, "fun": fun},
+    )
+    print("Portfolio after withdrawal:", sim.state.portfolio)
+    print("Bank balance after withdrawal:", sim.state.current_bank_balance)
+    print("Simulation failed:", sim.state.simulation_failed)
+
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(amount_to_withdraw)
     assert sim.state.portfolio["str"] == pytest.approx(0.0)  # Depleted

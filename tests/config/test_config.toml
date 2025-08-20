@@ -97,6 +97,8 @@ planned_extra_expenses = [
 # Annual fee on all liquid investments (e.g., 0.0015 for 0.15%).
 annual_fund_fee = 0.0015
 
+# Transactions fee
+transactions_fee = { min = 2.95, rate = 0.0019, max = 19 }
 
 # ==============================================================================
 # 4. ASSET DEFINITIONS
