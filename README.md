@@ -4,7 +4,7 @@
 
 ---
 
-**Firestarter** is an open-source Python tool for modeling Financial Independence and Early Retirement (FIRE)
+**Firestarter** is an open-source Python tool for modeling Financial Independence to Retire Early (FIRE)
 scenarios using Monte Carlo simulations.
 It models a user's retirement plan, simulating investment growth, withdrawals, expenses,
 and market shocks over time to estimate the probability of financial success.
@@ -37,7 +37,7 @@ asset allocation.
   Investment assets are defined in the configuration. For each asset you specify the following; `mu`,
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
-  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url], [ECB Data portal][ecb-url].
+  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url], [ECB Data portal][ecb-url]. <!-- markdownlint-disable-line MD013 -->
   You can use the script [data_metrics.py](data/data_metrics.py) to estimate these parameters from historical
   data.
   See [Data metrics usage](data/data_metrics.md) for details.

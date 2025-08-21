@@ -236,8 +236,9 @@ If you specify an investment horizon (`-n`/`--years`), the script:
 - Analyzes the most recent incomplete window (if present).
 
 The script also plots the distribution of expected annualized returns for each asset.
-It generates a graph showing annualized return rates against the window start date. This visualization helps you understand the range and variability of outcomes depending on when
-the investment period began.
+It generates a graph showing annualized return rates against the window start date.
+This visualization helps you understand the range and variability of outcomes depending
+on when the investment period began.
 
 ### Heatmap Analysis (All Horizons)
 
@@ -258,8 +259,10 @@ If no horizon is specified, the script:
 
 Tail analysis allows you to focus on the most recent N-year window in your dataset,
 regardless of the total available history. When you use the `--tail N` option, the
-script calculates annualized return and volatility for just the last N years of valid data for each asset. This is especially useful for understanding recent performance or
-for comparing the latest period across different indices, even if their histories do not fully overlap.
+script calculates annualized return and volatility for just the last N years of valid
+data for each asset. This is especially useful for understanding recent performance or
+for comparing the latest period across different indices, even if their histories do
+not fully overlap.
 
 For correlation analysis, the matrix is computed only for the overlapping period where
 all selected assets have valid data in the tail window. The start and end dates of this

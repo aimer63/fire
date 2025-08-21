@@ -7,7 +7,7 @@
 > interpreted in the same currency throughout the simulation._
 >
 > _The simulation does not consider any fiscal aspects, therefore parameters such as income, pension,
-> contributions, etc. are to be considered net of taxes._
+> contributions, etc. are to be considered after taxes._
 
 This document explains all parameters available in the main TOML configuration file (`config.toml`).
 
@@ -149,13 +149,13 @@ This document explains all parameters available in the main TOML configuration f
 
   - **transactions_fee** _(dict, optional)_
     Transaction fee applied to all investments and disinvestments.
-    Format: `{min: float, rate: float, max: float}`.
+    Format: `{ min: float, rate: float, max: float }`.
     The fee is calculated as `max(min, amount * rate)`, capped at `max` if `max > 0`.
     If omitted or `None`, no fee is applied.
     Examples:
-    - Fixed fee only: `{min = 5, rate = 0.0, max = 5}`
-    - Percentage only: `{min = 0, rate = 0.002, max = 0}`
-    - Percentage with min/max: `{min = 7, rate = 0.0019, max = 29}`
+    - Fixed fee only: `{ min = 5, rate = 0.0, max = 5 }`
+    - Percentage only: `{ min = 0, rate = 0.002, max = 0 }`
+    - Percentage with min/max: `{ min = 3, rate = 0.0019, max = 19 }`
 
 ## Assets
 
