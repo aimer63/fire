@@ -90,30 +90,6 @@ def test_assets_validation_unique_withdrawal_priority(
         )
 
 
-def test_assets_validation_asset_requires_priority(
-    basic_deterministic_inputs,
-):
-    """
-    Tests that a liquid asset must have a withdrawal_priority.
-    """
-    with pytest.raises(
-        ValidationError, match="withdrawal_priority must be set for asset 'stocks'."
-    ):
-        Config(
-            assets={
-                "stocks": Asset(mu=0.07, sigma=0.15, withdrawal_priority=None),
-                "inflation": Asset(mu=0.02, sigma=0.01, withdrawal_priority=None),
-            },
-            deterministic_inputs=basic_deterministic_inputs,
-            portfolio_rebalances=[PortfolioRebalance(year=0, weights={"stocks": 1.0})],
-            simulation_parameters=SimulationParameters(
-                num_simulations=1, random_seed=123
-            ),
-            paths=None,
-            shocks=[],
-        )
-
-
 def test_portfolio_rebalance_successful():
     """
     Tests successful creation of a PortfolioRebalance instance using kwargs.

@@ -424,14 +424,12 @@ class Config(BaseModel):
                         "withdrawal_priority must be None for the 'inflation' asset."
                     )
             else:
-                if asset.withdrawal_priority is None:
-                    raise ValueError(
-                        f"withdrawal_priority must be set for asset '{name}'."
-                    )
-                priorities.append(asset.withdrawal_priority)
+                if asset.withdrawal_priority is not None:
+                    # Allow illiquid assets (withdrawal_priority=None), not just 'inflation'
+                    priorities.append(asset.withdrawal_priority)
         if len(priorities) != len(set(priorities)):
             raise ValueError(
-                "withdrawal_priority values for assets must be unique (excluding 'inflation')."
+                "withdrawal_priority values for assets must be unique (excluding illiquid assets)."
             )
 
         # Validate the correlation matrix asset list
@@ -468,11 +466,15 @@ class Config(BaseModel):
         if len(rebalance_years) != len(set(rebalance_years)):
             raise ValueError("Rebalance years must be unique.")
 
-        # Validate that 'inflation' is not referenced in portfolio weights
+        # Validate that rebalance weights only reference liquid assets and sum to 1.0
+        liquid_assets = {
+            k for k, v in self.assets.items() if v.withdrawal_priority is not None
+        }
         for rebalance in self.portfolio_rebalances:
-            if "inflation" in rebalance.weights:
+            non_liquid = set(rebalance.weights.keys()) - liquid_assets
+            if non_liquid:
                 raise ValueError(
-                    "The 'inflation' asset must not appear in any rebalance weights."
+                    f"Rebalance at year {rebalance.year} weights reference non-liquid assets: {sorted(list(non_liquid))}."
                 )
 
         return self

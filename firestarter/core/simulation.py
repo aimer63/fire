@@ -576,7 +576,7 @@ class Simulation:
             monthly_fee_percentage = annual_fee_percentage / 12.0
 
             for asset_key in self.assets:
-                if asset_key == "inflation":
+                if self.assets[asset_key].withdrawal_priority is None:
                     continue
                 current_value = self.state.portfolio[asset_key]
                 fee_amount = current_value * monthly_fee_percentage
@@ -598,10 +598,15 @@ class Simulation:
             scheduled_rebalance = self._rebalance_schedule.get(current_year, None)
 
         if scheduled_rebalance is not None:
-            # Build a complete weights dict: missing keys get 0.0
-            all_assets = [k for k in self.assets.keys() if k != "inflation"]
+            # Only include assets with withdrawal_priority != None
+            all_liquid_assets = [
+                k
+                for k, asset in self.assets.items()
+                if asset.withdrawal_priority is not None
+            ]
+            # If a liquid asset is not included in the rebalance it gets weight = 0.
             new_weights = {
-                k: scheduled_rebalance.weights.get(k, 0.0) for k in all_assets
+                k: scheduled_rebalance.weights.get(k, 0.0) for k in all_liquid_assets
             }
             self.state.current_target_portfolio_weights = new_weights
 
@@ -614,17 +619,19 @@ class Simulation:
         Applies transaction fee to each buy/sell operation.
         """
         weights = self.state.current_target_portfolio_weights
-        liquid_asset_keys = [k for k in weights.keys() if k != "inflation"]
+        liquid_asset_keys = [
+            k
+            for k, asset in self.assets.items()
+            if asset.withdrawal_priority is not None
+        ]
 
-        total_liquid = sum(
-            self.state.portfolio.get(asset, 0.0) for asset in liquid_asset_keys
-        )
+        total_liquid = sum(self.state.portfolio[k] for k in liquid_asset_keys)
         fee_cfg = self.det_inputs.transactions_fee
 
         if total_liquid > 0:
             for asset in liquid_asset_keys:
-                target_value = total_liquid * weights[asset]
-                current_value = self.state.portfolio.get(asset, 0.0)
+                target_value = total_liquid * weights.get(asset, 0.0)
+                current_value = self.state.portfolio[asset]
                 delta = target_value - current_value
 
                 if abs(delta) < 1e-9:
@@ -646,8 +653,7 @@ class Simulation:
         else:
             # If total liquid is zero, zero out all liquid assets
             for asset in liquid_asset_keys:
-                if asset in self.state.portfolio:
-                    self.state.portfolio[asset] = 0.0
+                self.state.portfolio[asset] = 0.0
 
     def _invest_in_liquid_assets(self, amount: float):
         """
@@ -659,7 +665,8 @@ class Simulation:
         net_amount = amount - fee
         weights = self.state.current_target_portfolio_weights
         for asset, weight in weights.items():
-            self.state.portfolio[asset] += net_amount * weight
+            if self.assets[asset].withdrawal_priority is not None:
+                self.state.portfolio[asset] += net_amount * weight
 
     def _withdraw_from_assets(self, amount: float) -> None:
         amount_needed = amount
@@ -668,7 +675,7 @@ class Simulation:
         liquid_assets_with_priority = [
             (name, asset.withdrawal_priority)
             for name, asset in self.assets.items()
-            if name != "inflation" and asset.withdrawal_priority is not None
+            if asset.withdrawal_priority is not None
         ]
         withdrawal_order = sorted(liquid_assets_with_priority, key=lambda x: x[1])
         fee_cfg = self.det_inputs.transactions_fee
