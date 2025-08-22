@@ -67,7 +67,11 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
 
     assert hasattr(state, "monthly_return_rates_sequences")
     assert len(state.monthly_return_rates_sequences) == len(
-        initialized_simulation.assets
+        [
+            k
+            for k, v in initialized_simulation.assets.items()
+            if v.withdrawal_priority is not None or k == "inflation"
+        ]
     )
     for asset_key in state.monthly_return_rates_sequences:
         assert len(state.monthly_return_rates_sequences[asset_key]) == total_months

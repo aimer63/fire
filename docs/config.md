@@ -121,48 +121,61 @@ This document explains all parameters available in the main TOML configuration f
   To set your initial portfolio, specify planned contributions at `year = 0`
   and set the desired allocation using the weights in the year 0 rebalance event.
 
-  - **monthly_expenses_steps** _(list of dicts)_
-    Defines the monthly expenses as a list of step changes.
-    Each entry is a dictionary with:
+- **planned_illiquid_purchases** _(list of dicts)_
 
-    - `year` (int): The simulation year (0-indexed) when this expense step begins.
-    - `monthly_amount` (float): The monthly expense expressed in today's money
-      paid from this year onward until the next step.
-      Opposite of `monthly_income_steps` in between steps the amount is adjusted
-      for inflation.
-      From the beginning of the last defined step, expenses grow with inflation
-      until the end of the simulation.
-      Monthly expenses are mandatory and there must be an entry at year 0.
-      No `expenses_inflation_factor` in this case, expenses are less rigid than
-      income and pension ;-).
+  List of planned purchases of illiquid assets (e.g., real estate) from liquid assets.
+  Each dict can specify:
 
-      _Example:_
+  - `year` (int): Year index (0-indexed) when the purchase occurs.
+  - `amount` (float): Purchase amount in today's money (inflation-adjusted at simulation time).
+  - `asset` (str): Name of the illiquid asset to receive the purchase.
+  - `description` (str, optional): Optional description of the purchase.
 
-    ```toml
-    monthly_expenses_steps = [
-      { year = 0, monthly_amount = 2000.0 },
-      { year = 15, monthly_amount = 2500.0 }
-    ]
-    ```
+  At the specified year, the inflation-adjusted amount is withdrawn from liquid assets
+  and allocated to the illiquid asset.
 
-  - **planned_extra_expenses** _(list of dicts)_
-    List of one-time extra expenses (in today's money, inflation-adjusted).
-    Each dict has `amount` (float), `year` (int), and optional `description` (str).
-    Expenses are applied at the start of the specified year.
+- **monthly_expenses_steps** _(list of dicts)_
+  Defines the monthly expenses as a list of step changes.
+  Each entry is a dictionary with:
 
-  - **annual_fund_fee** _(float)_
-    Annual fee (Total Expense Ratio, TER) applied to all investments.
-    Expressed as a decimal (e.g., 0.0015 for 0.15%).
+  - `year` (int): The simulation year (0-indexed) when this expense step begins.
+  - `monthly_amount` (float): The monthly expense expressed in today's money
+    paid from this year onward until the next step.
+    Opposite of `monthly_income_steps` in between steps the amount is adjusted
+    for inflation.
+    From the beginning of the last defined step, expenses grow with inflation
+    until the end of the simulation.
+    Monthly expenses are mandatory and there must be an entry at year 0.
+    No `expenses_inflation_factor` in this case, expenses are less rigid than
+    income and pension ;-).
 
-  - **transactions_fee** _(dict, optional)_
-    Transaction fee applied to all investments and disinvestments.
-    Format: `{ min: float, rate: float, max: float }`.
-    The fee is calculated as `max(min, amount * rate)`, capped at `max` if `max > 0`.
-    If omitted or `None`, no fee is applied.
-    Examples:
-    - Fixed fee only: `{ min = 5, rate = 0.0, max = 5 }`
-    - Percentage only: `{ min = 0, rate = 0.002, max = 0 }`
-    - Percentage with min/max: `{ min = 3, rate = 0.0019, max = 19 }`
+    _Example:_
+
+  ```toml
+  monthly_expenses_steps = [
+    { year = 0, monthly_amount = 2000.0 },
+    { year = 15, monthly_amount = 2500.0 }
+  ]
+  ```
+
+- **planned_extra_expenses** _(list of dicts)_
+  List of one-time extra expenses (in today's money, inflation-adjusted).
+  Each dict has `amount` (float), `year` (int), and optional `description` (str).
+  Expenses are applied at the start of the specified year.
+
+- **annual_fund_fee** _(float)_
+  Annual fee (Total Expense Ratio, TER) applied to all investments.
+  Expressed as a decimal (e.g., 0.0015 for 0.15%).
+
+- **transactions_fee** _(dict, optional)_
+  Transaction fee applied to all investments and disinvestments.
+  Format: `{ min: float, rate: float, max: float }`.
+  The fee is calculated as `max(min, amount * rate)`, capped at `max` if `max > 0`.
+  If omitted or `None`, no fee is applied.
+  Examples:
+  - Fixed fee only: `{ min = 5, rate = 0.0, max = 5 }`
+  - Percentage only: `{ min = 0, rate = 0.002, max = 0 }`
+  - Percentage with min/max: `{ min = 3, rate = 0.0019, max = 19 }`
 
 ## Assets
 
@@ -213,6 +226,10 @@ withdrawal_priority = 2
 mu = 0.02
 sigma = 0.06
 withdrawal_priority = 1
+
+[assets.house]
+mu = 0.021
+sigma = 0.04
 
 [assets.inflation]
 mu = 0.02

@@ -78,29 +78,27 @@ weights = { stocks = 0.7, bonds = 0.3 }
 
 Suppose you want to buy a house at year 5 using liquid assets:
 
-1. Add a planned contribution for the house:
+1. Add a planned illiquid purchase for the house:
 
    ```toml
-   { year = 5, amount = 250_000, asset = "house" }
-   ```
-
-2. Add a planned extra expense for the same year and amount:
-
-   ```toml
-   planned_extra_expenses = [
-     { amount = 250_000, year = 5, description = "House purchase" }
+   planned_illiquid_purchases = [
+     { year = 5, amount = 250_000, asset = "house", description = "House purchase" }
    ]
    ```
 
-3. The simulation will:
-   - Deduct the expense from your bank balance.
-   - Withdraw from liquid assets if needed.
+2. The simulation will:
+
+   - Withdraw the inflation-adjusted amount from your liquid assets at year 5.
    - Allocate the value to the illiquid `house` asset, which will be tracked but never sold.
+   - The purchase is reported as a transfer, not as an expense.
+
+This mechanism ensures that the house value is tracked as an illiquid asset and
+liquid assets are reduced accordingly.
 
 ## Asset Flows
 
 - **Liquid assets:** Can receive planned contributions, be rebalanced, and sold to cover
-  expenses.
+  expenses or to buy illiquid assets.
 - **Illiquid assets:** Can receive planned contributions, but are never rebalanced or sold.
   Their value is reported at the end of the simulation.
 

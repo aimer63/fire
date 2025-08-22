@@ -14,14 +14,14 @@ def _get_expected_allocations_from_history(
     sim: Simulation, month_index: int
 ) -> dict[str, float]:
     """Helper to build expected allocations from simulation history for a given month."""
-    return {
-        "stocks": sim.results["stocks_history"][month_index],
-        "bonds": sim.results["bonds_history"][month_index],
-        "str": sim.results["str_history"][month_index],
-        "fun": sim.results["fun_history"][month_index],
-        "ag": sim.results["ag_history"][month_index],
-        "inflation": 0.0,  # or the appropriate value if tracked in results
-    }
+    allocations = {}
+    for asset in sim.assets:
+        history_key = f"{asset}_history"
+        if history_key in sim.results:
+            allocations[asset] = sim.results[history_key][month_index]
+        else:
+            allocations[asset] = 0.0
+    return allocations
 
 
 def test_build_result_successful_simulation(initialized_simulation: Simulation):
@@ -136,11 +136,7 @@ def test_build_result_failed_simulation_immediately(
     assert result["final_cumulative_inflation_factor"] == 1.0
     assert result["initial_total_wealth"] == 0.0
     expected_allocations = {
-        "stocks": sim.state.portfolio["stocks"],
-        "bonds": sim.state.portfolio["bonds"],
-        "str": sim.state.portfolio["str"],
-        "fun": sim.state.portfolio["fun"],
-        "ag": sim.state.portfolio["ag"],
-        "inflation": 0.0,
+        k: sim.state.portfolio[k]
+        for k in result["final_allocations_nominal"].keys()
     }
     assert result["final_allocations_nominal"] == expected_allocations

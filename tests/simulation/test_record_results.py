@@ -19,55 +19,52 @@ def test_record_results_initialization_and_first_month(
     sim = initialized_simulation
     total_months = sim.simulation_months
 
+    # Set a mock state for month 0 with realistic values for all assets
+    mock_portfolio = {k: 0.0 for k in sim.assets.keys()}
+    # Assign some values to liquid assets for testing
+    for asset in mock_portfolio:
+        if sim.assets[asset].withdrawal_priority is not None:
+            mock_portfolio[asset] = 100_000.0
+    sim.state.portfolio = mock_portfolio
+
     sim.det_inputs = sim.det_inputs.model_copy(
-        update={
-            "initial_bank_balance": 25_000.0,
-        }
+        update={"initial_bank_balance": 25_000.0}
     )
-    # Set a mock state for month 0 with more realistic values
-    sim.state.portfolio = {
-        "stocks": 500_000.0,
-        "bonds": 250_000.0,
-        "str": 100_000.0,
-        "fun": 50_000.0,
-        "ag": 10_000.0,
-    }
     sim.init()  # Re-initialize state with the new portfolio
 
-    # Manually initialize results structure as run() would
+    # Initialize results structure for all assets
     sim.results = {
         "wealth_history": [None] * total_months,
         "bank_balance_history": [None] * total_months,
-        "stocks_history": [None] * total_months,
-        "bonds_history": [None] * total_months,
-        "str_history": [None] * total_months,
-        "fun_history": [None] * total_months,
-        "ag_history": [None] * total_months,
-        "inflation_history": [None] * total_months,
     }
+    for asset in sim.assets:
+        sim.results[f"{asset}_history"] = [None] * total_months
 
     # Record state for month 0
     sim._record_results(month=0)
 
-    # Check that results dictionary is now initialized
-    assert "wealth_history" in sim.results
-    assert len(sim.results["wealth_history"]) == total_months
-    # Check that other months are still None
-    assert all(x is None for x in sim.results["wealth_history"][1:])
-    expected_wealth = sim.state.current_bank_balance + sum(sim.state.portfolio.values())
-    assert sim.results["wealth_history"][0] == pytest.approx(expected_wealth)
+    # Check that results dictionary is initialized for all assets
+    for asset in sim.assets:
+        assert f"{asset}_history" in sim.results
+        assert len(sim.results[f"{asset}_history"]) == total_months
+
+    # Check that wealth and bank balance are recorded
+    assert sim.results["wealth_history"][0] == pytest.approx(
+        sim.state.current_bank_balance + sum(sim.state.portfolio.values())
+    )
     assert sim.results["bank_balance_history"][0] == pytest.approx(
         sim.state.current_bank_balance
     )
-    assert sim.results["stocks_history"][0] == pytest.approx(
-        sim.state.portfolio["stocks"]
-    )
-    assert sim.results["bonds_history"][0] == pytest.approx(
-        sim.state.portfolio["bonds"]
-    )
-    assert sim.results["str_history"][0] == pytest.approx(sim.state.portfolio["str"])
-    assert sim.results["fun_history"][0] == pytest.approx(sim.state.portfolio["fun"])
-    assert sim.results["ag_history"][0] == pytest.approx(sim.state.portfolio["ag"])
+
+    # Check that asset histories are recorded correctly for month 0
+    for asset in sim.assets:
+        expected_value = sim.state.portfolio.get(asset, 0.0)
+        assert sim.results[f"{asset}_history"][0] == pytest.approx(expected_value)
+
+    # Check that other months are still None
+    for key in sim.results:
+        if isinstance(sim.results[key], list) and len(sim.results[key]) > 1:
+            assert all(x is None for x in sim.results[key][1:])
 
 
 def test_record_results_subsequent_month(initialized_simulation: Simulation):
@@ -78,42 +75,35 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
     sim = initialized_simulation
     total_months = sim.simulation_months
 
-    # Record for month 0 with realistic values
+    # Set initial state for month 0 with all assets
+    initial_portfolio = {k: 0.0 for k in sim.assets.keys()}
+    for asset in initial_portfolio:
+        if sim.assets[asset].withdrawal_priority is not None:
+            initial_portfolio[asset] = 200_000.0
+    sim.state.portfolio = initial_portfolio
     sim.state.current_bank_balance = 20_000.0
-    sim.state.portfolio = {
-        "stocks": 500_000.0,
-        "bonds": 250_000.0,
-        "str": 100_000.0,
-        "fun": 50_000.0,
-        "ag": 300_000.0,
-    }
-    sim.init()  # Re-initialize state with the new portfolio
+    sim.init()
 
-    # Manually initialize results structure as run() would
+    # Initialize results structure for all assets
     sim.results = {
         "wealth_history": [None] * total_months,
         "bank_balance_history": [None] * total_months,
-        "stocks_history": [None] * total_months,
-        "bonds_history": [None] * total_months,
-        "str_history": [None] * total_months,
-        "fun_history": [None] * total_months,
-        "ag_history": [None] * total_months,
-        "inflation_history": [None] * total_months,
     }
+    for asset in sim.assets:
+        sim.results[f"{asset}_history"] = [None] * total_months
 
     sim._record_results(month=0)
     month_0_bank = sim.results["bank_balance_history"][0]
+    month_0_portfolio_snapshot = dict(sim.state.portfolio)
 
     # Set state for month 1
+    next_portfolio = {k: v for k, v in initial_portfolio.items()}
+    for asset in next_portfolio:
+        if sim.assets[asset].withdrawal_priority is not None:
+            next_portfolio[asset] += 10_000.0
+    sim.state.portfolio = next_portfolio
     sim.state.current_bank_balance = 22_000.0
-    sim.state.portfolio = {
-        "stocks": 510_000.0,
-        "bonds": 255_000.0,
-        "str": 100_000.0,
-        "fun": 51_000.0,
-        "ag": 301_000.0,
-    }
-    sim.init()  # Re-initialize state with the new portfolio
+    sim.init()
     sim._record_results(month=1)
 
     # Check values for month 1
@@ -125,5 +115,12 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
         sim.state.current_bank_balance
     )
 
+    for asset in sim.assets:
+        expected_value = sim.state.portfolio.get(asset, 0.0)
+        assert sim.results[f"{asset}_history"][1] == pytest.approx(expected_value)
+
     # Check month 0 is unchanged
     assert sim.results["bank_balance_history"][0] == pytest.approx(month_0_bank)
+    for asset in sim.assets:
+        expected_value = month_0_portfolio_snapshot.get(asset, 0.0)
+        assert sim.results[f"{asset}_history"][0] == pytest.approx(expected_value)

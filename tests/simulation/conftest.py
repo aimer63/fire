@@ -37,6 +37,7 @@ def basic_assets():
         "str": Asset(mu=0.01, sigma=0.01, withdrawal_priority=0),
         "fun": Asset(mu=0.10, sigma=0.30, withdrawal_priority=3),
         "ag": Asset(mu=0.04, sigma=0.10, withdrawal_priority=4),
+        "real_estate": Asset(mu=0.03, sigma=0.10),  # Added illiquid asset
         "inflation": Asset(mu=0.02, sigma=0.01),
     }
 

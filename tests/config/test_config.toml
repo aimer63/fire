@@ -77,11 +77,23 @@ pension_start_year = 37         # Pension starts at 67, you are 37 years into th
 # One-time contributions (fixed nominal amounts, not inflation-adjusted).
 # The contribution at year 0 sets the initial investment, 0 otherwise.
 planned_contributions = [
-  # { year = 0, amount = 100_000 },
-  # { year = 5, amount = 20_000 },
-  # { year = 10, amount = 20_000 },
-  # { year = 15, amount = 10_000 },
+  { year = 0, amount = 100_000 },
+  { year = 5, amount = 20_000 },
+  { year = 5, amount = 150_000, asset = "real_estate" },
+  { year = 10, amount = 20_000 },
+  { year = 15, amount = 10_000 },
 ]
+
+# --- Purchases ---
+# List of planned purchases where liquid assets are used to buy illiquid assets
+# (e.g., real estate). At the specified year, the inflation-adjusted amount is
+# withdrawn from liquid assets and added to the target illiquid asset. This does
+# not count as an expense, but as a transfer of wealth.
+# Remark: amount is expressed in today's money, will be inflation-adjusted.
+planned_illiquid_purchases = [
+  { year = 8, amount = 150_000, asset = "real_estate", description = "Buy a house" },
+]
+
 # Expenses.
 monthly_expenses_steps = [
   { year = 0, monthly_amount = 3500.0 },
@@ -164,6 +176,10 @@ mu = 0.07
 sigma = 0.32
 withdrawal_priority = 4
 
+[assets.real_estate]
+mu = 0.025
+sigma = 0.04
+
 # Inflation although not an assate is mandatory to keep trak of the real values.
 # Inflation parameters based on Eurozone HICP annual inflation rates from 2004-2023.
 # mu = 0.0220
@@ -182,7 +198,15 @@ sigma = 0.025
 # The `assets` list must match keys from the [assets] tables, plus "inflation".
 # The `matrix` must be square and correspond to the `assets` list order.
 [correlation_matrix]
-assets_order = ["stocks", "bonds", "str", "eth", "ag", "inflation"]
+assets_order = [
+  "stocks",
+  "bonds",
+  "str",
+  "eth",
+  "ag",
+  "real_estate",
+  "inflation",
+]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
 # matrix = [
@@ -197,13 +221,14 @@ assets_order = ["stocks", "bonds", "str", "eth", "ag", "inflation"]
 
 # Identity matrix. Indipendent variables, no correlation.
 matrix = [
-  #stk, bnd, str, eth, ag,  pi
-  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
-  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # Bonds
-  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # STR
-  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Eth
-  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Ag
-  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
+  #stk, bnd, str, eth, ag,  r_e   pi
+  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
+  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Bonds
+  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # STR
+  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # Eth
+  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Ag
+  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Real Estate
+  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
 ]
 # ==============================================================================
 # 6. SHOCKS
@@ -213,10 +238,10 @@ matrix = [
 # `asset` must match a key from the [assets] table.
 #
 # Black Friday Crash (October 1929 equivalent) 
-# [[shocks]]
-# year = 10
-# description = "October 1929"
-# impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
+[[shocks]]
+year = 10
+description = "October 1929"
+impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 
 
 # ==============================================================================
