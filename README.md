@@ -66,10 +66,16 @@ mu = 0.03
 sigma = 0.055
 withdrawal_priority = 1
 
+[assets.real_estate]
+mu = 0.025
+sigma = 0.04
+
 [assets.inflation]
 mu = 0.025
 sigma = 0.025
 ```
+
+See [Assets](/docs/assets.md) for details.
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
 

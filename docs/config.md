@@ -107,12 +107,19 @@ This document explains all parameters available in the main TOML configuration f
     Year index when pension starts.
     It must be >= `income_end_year`.
 
-  - **planned_contributions** _(list of dicts)_
-    List of one-time contributions (as a fixed nominal amount), like you know you
-    will receive a bonus, a credit payment, or a gift.
-    Each dict has `amount` (float) and `year` (int).
-    To set your initial portfolio, specify a planned contribution at `year = 0`
-    and set the desired allocation using the weights in the year 0 rebalance event.
+- **planned_contributions** _(list of dicts)_
+
+  List of one-time contributions (as a fixed nominal amount), like you know you
+  will receive a bonus, a credit payment, or a gift. Each dict can specify:
+
+  - `year` (int): Year index (0-indexed) when the contribution occurs.
+  - `amount` (float): Contribution amount in today's money.
+  - `asset` (str, optional): Name of the asset to receive the contribution. If omitted,
+    the contribution is allocated according to current portfolio weights (liquid assets only).
+  - `description` (str, optional): Optional description of the contribution.
+
+  To set your initial portfolio, specify planned contributions at `year = 0`
+  and set the desired allocation using the weights in the year 0 rebalance event.
 
   - **monthly_expenses_steps** _(list of dicts)_
     Defines the monthly expenses as a list of step changes.
@@ -173,18 +180,21 @@ This document explains all parameters available in the main TOML configuration f
     _Example_: `0.15` means a 15% standard deviation per year.
 
   - **withdrawal_priority**:
-    _(Required for all assets but inflation)_
+    _(Required for all liquid assets; None indicates illiquid asset)_
     Integer indicating the order in which assets are sold to cover cash shortfalls.
     Lower numbers are sold first.
     This value must be unique among liquid assets.
-    Omit this parameter for illiquid assets.
+    Omit this parameter for illiquid assets (e.g., real estate, house, inflation).
 
 Inflation, although not an asset, must be defined in this section because it is correlated
-with assets through a [correlation matrix](correlation.md), and the mechanism for
-generating random values for assets return and inflation from `mu` and `sigma` is the same.
+with assets through a [correlation matrix](correlation.md), and the mechanism for generating
+random values for assets return and inflation from `mu` and `sigma` is the same.
 The inflation asset is mandatory because it's used to track all the real values, wealth,
 expenses...
 The name must be `inflation`.
+
+See [assets.md](assets.md) for detailed information on asset definition, liquid vs illiquid assets,
+portfolio initialization, and practical examples (including real estate purchases).
 
 ---
 
@@ -293,8 +303,10 @@ impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
     _Description:_
 
     - Maps asset names to their target weights (as floats).
-    - Must sum to 1.0.
+    - Must reference only liquid assets (those with a `withdrawal_priority`).
+      Illiquid assets must not be included in rebalance weights.
     - Obviously `inflation` cannot be included.
+    - Must sum to 1.0.
 
   - Each rebalance year must be unique.
   - There must always be a rebalance event for year 0. This sets the initial allocation

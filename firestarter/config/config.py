@@ -36,7 +36,7 @@ from firestarter.config.correlation_matrix import CorrelationMatrix
 
 
 class PlannedContribution(BaseModel):
-    """Represents a planned, single-year, contribution."""
+    """Represents a planned, single-year, contribution to a specific asset."""
 
     amount: float = Field(
         ..., description="Real (today's money) amount of the contribution."
@@ -44,7 +44,23 @@ class PlannedContribution(BaseModel):
     year: int = Field(
         ..., ge=0, description="Year index (0-indexed) when the contribution occurs."
     )
+    asset: str | None = Field(
+        default=None,
+        description="Name of the asset to receive the contribution. If None, "
+        "the contribution is allocated according to current portfolio weights.",
+    )
+    description: str | None = Field(
+        default=None, description="Optional description of the contribution."
+    )
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def validate_asset(self) -> "PlannedContribution":
+        if self.asset == "inflation":
+            raise ValueError(
+                "Planned contribution cannot target the 'inflation' asset."
+            )
+        return self
 
 
 class PlannedExtraExpense(BaseModel):
@@ -69,7 +85,9 @@ class IncomeStep(BaseModel):
     monthly_amount: float = Field(
         ..., ge=0.0, description="Monthly income amount (today's money) for this step."
     )
-
+    description: str | None = Field(
+        default=None, description="Optional description of the income step."
+    )
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
@@ -79,6 +97,9 @@ class ExpenseStep(BaseModel):
     )
     monthly_amount: float = Field(
         ..., ge=0.0, description="Monthly expense amount (today's money) for this step."
+    )
+    description: str | None = Field(
+        default=None, description="Optional description of the expense step."
     )
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -415,7 +436,7 @@ class Config(BaseModel):
                 "An asset named 'inflation' must be defined in the assets section."
             )
 
-        # Validate withdrawal_priority for all assets and check uniqueness (excluding inflation)
+        # Validate withdrawal_priority for all assets and check uniqueness (excluding illiquid assets)
         priorities = []
         for name, asset in self.assets.items():
             if name == "inflation":
@@ -425,12 +446,18 @@ class Config(BaseModel):
                     )
             else:
                 if asset.withdrawal_priority is not None:
-                    # Allow illiquid assets (withdrawal_priority=None), not just 'inflation'
                     priorities.append(asset.withdrawal_priority)
         if len(priorities) != len(set(priorities)):
             raise ValueError(
                 "withdrawal_priority values for assets must be unique (excluding illiquid assets)."
             )
+
+        # Validate planned contributions reference valid assets (if asset is specified)
+        for contrib in self.deterministic_inputs.planned_contributions:
+            if contrib.asset is not None and contrib.asset not in self.assets:
+                raise ValueError(
+                    f"Planned contribution targets unknown asset '{contrib.asset}'."
+                )
 
         # Validate the correlation matrix asset list
         if self.correlation_matrix:

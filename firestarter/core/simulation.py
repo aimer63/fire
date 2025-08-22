@@ -472,8 +472,9 @@ class Simulation:
     def _handle_contributions(self, month):
         """
         Handles planned one-time contributions.
-        Planned contribution are all applied the first month of the year
-        Contributions are allocated according to the current target portfolio weights,
+        Each contribution is allocated directly to the specified asset if given,
+        otherwise according to current portfolio weights.
+        For liquid assets, transaction fee is applied.
         """
         det_inputs = self.det_inputs
 
@@ -481,7 +482,18 @@ class Simulation:
             current_year = month // 12
             for contribution in det_inputs.planned_contributions:
                 if contribution.year == current_year:
-                    self._invest_in_liquid_assets(contribution.amount)
+                    amount = contribution.amount
+                    asset = contribution.asset
+                    if asset is not None:
+                        if self.assets[asset].withdrawal_priority is not None:
+                            fee_cfg = self.det_inputs.transactions_fee
+                            fee = calculate_transaction_fee(amount, fee_cfg)
+                            net_amount = amount - fee
+                            self.state.portfolio[asset] += net_amount
+                        else:
+                            self.state.portfolio[asset] += amount
+                    else:
+                        self._invest_in_liquid_assets(amount)
 
     def _handle_expenses(self, month):
         """
