@@ -63,6 +63,30 @@ class PlannedContribution(BaseModel):
         return self
 
 
+class PlannedIlliquidPurchase(BaseModel):
+    """Represents a planned purchase of an illiquid asset from liquid assets."""
+
+    year: int = Field(
+        ..., ge=0, description="Year index (0-indexed) when the purchase occurs."
+    )
+    amount: float = Field(
+        ..., description="Real (today's money) amount of the purchase."
+    )
+    asset: str = Field(
+        ..., description="Name of the illiquid asset to receive the purchase."
+    )
+    description: str | None = Field(
+        default=None, description="Optional description of the purchase."
+    )
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def validate_asset(self) -> "PlannedIlliquidPurchase":
+        if self.asset == "inflation":
+            raise ValueError("Illiquid purchase cannot target the 'inflation' asset.")
+        return self
+
+
 class PlannedExtraExpense(BaseModel):
     """Represents a planned, single-year, extra expense."""
 
@@ -176,7 +200,6 @@ class DeterministicInputs(BaseModel):
         ...,
         description="Total Expense Ratio (TER) as an annual percentage of investment assets.",
     )
-
     transactions_fee: dict[str, float] | None = Field(
         default=None,
         description=(
@@ -194,6 +217,10 @@ class DeterministicInputs(BaseModel):
             "Only multiples of this amount are invested when bank balance exceeds upper bound. "
             "If 0.0, all excess is invested immediately."
         ),
+    )
+    planned_illiquid_purchases: list[PlannedIlliquidPurchase] = Field(
+        default_factory=list,
+        description="List of planned purchases of illiquid assets from liquid assets.",
     )
     monthly_expenses_steps: list[ExpenseStep] = Field(
         ...,
@@ -457,6 +484,21 @@ class Config(BaseModel):
             if contrib.asset is not None and contrib.asset not in self.assets:
                 raise ValueError(
                     f"Planned contribution targets unknown asset '{contrib.asset}'."
+                )
+
+        # Validate planned illiquid purchases reference valid illiquid assets
+        for purchase in self.deterministic_inputs.planned_illiquid_purchases:
+            if purchase.asset not in self.assets:
+                raise ValueError(
+                    f"Planned illiquid purchase targets unknown asset '{purchase.asset}'."
+                )
+            if self.assets[purchase.asset].withdrawal_priority is not None:
+                raise ValueError(
+                    f"Planned illiquid purchase asset '{purchase.asset}' must be illiquid."
+                )
+            if purchase.asset == "inflation":
+                raise ValueError(
+                    "Planned illiquid purchase cannot target the 'inflation' asset."
                 )
 
         # Validate the correlation matrix asset list
