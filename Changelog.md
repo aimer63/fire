@@ -1,16 +1,18 @@
 # Changelog
 
-## [Ureleased] - YYYY-MM-DD
+## [v0.1.1](https://github.com/aimer63/fire/releases/tag/v0.1.1) - 2025-08-23
 
 ### Added
 
-- `investment_lot_size` parameter to control minimum chunk size for investing
-  excess bank balance above the upper bound.
+- Illiquid asset purchases
 
-- transaction fee support to all investment flows
-  - Implement transaction fee logic for investments, withdrawals, planned contributions,
-    and portfolio rebalancing. Transactions fee are configurable via `transactions_fee`
-    in the config and applied consistently across all asset operations.
+- Asset-specific planned contributions
+
+- Illiquid assets in all flows
+
+- Minimum chunk size for investing excess bank balance above the upper bound.
+
+- Accounting for transactions fee to all investment flows
 
 ### Changed
 
