@@ -2,6 +2,8 @@
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20macos-FF9900)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue?logo=opensourceinitiative&logoColor=white)
 [![CI](https://github.com/aimer63/fire/actions/workflows/test.yml/badge.svg)](https://github.com/aimer63/fire/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/aimer63/fire/branch/master/graph/badge.svg)](https://codecov.io/gh/aimer63/fire)
+
 # Firestarter (FIRE Simulation Tool)
 
 ![Logo](fire-small.png)
