@@ -95,11 +95,21 @@ pension_start_year = 37         # Pension starts at 67, you are 37 years into th
 # To set your initial portfolio, use a planned contribution at year 0 and specify the
 # allocation with a rebalance at year 0.
 planned_contributions = [
-  # { year = 0, amount = 100_000 },
+  { year = 0, amount = 300_000, asset = "real_estate", description = "You own an house" },
   # { year = 5, amount = 20_000 },
   # { year = 10, amount = 20_000 },
   # { year = 15, amount = 10_000 },
 ]
+
+# --- Purchases ---
+# List of planned purchases where liquid assets are used to buy illiquid assets
+# (e.g., real estate). At the specified year, the inflation-adjusted amount is
+# withdrawn from liquid assets and added to the target illiquid asset. This does
+# not count as an expense, but as a transfer of wealth.
+# Remark: amount is expressed in today's money, will be inflation-adjusted.
+# planned_illiquid_purchases = [
+#   { year = 10, amount = 250_000, asset = "real_estate", description = "Buy a second house" },
+# ]
 
 # --- Expenditures ---
 # Monthly expenses estimates expressed in today's money.
@@ -215,6 +225,11 @@ mu = 0.07
 sigma = 0.3
 withdrawal_priority = 3
 
+# --- Illiquid assets ---
+[assets.real_estate]
+mu = 0.025
+sigma = 0.04
+
 # Inflation although not an assate is mandatory to keep trak of the real values.
 #
 # Inflation parameters based on Eurozone HICP annual inflation rates from 1997-2025.
@@ -237,7 +252,15 @@ sigma = 0.0308
 # The matrix must be square, symmetric and positive semi-definite, with 1.0 on 
 # the diagonal and correspond to the `assets` list order.
 [correlation_matrix]
-assets_order = ["stocks", "bonds", "str", "eth", "ag", "inflation"]
+assets_order = [
+  "stocks",
+  "bonds",
+  "str",
+  "eth",
+  "ag",
+  "real_estate",
+  "inflation",
+]
 
 # Matrix provided by Google Gemini 2.5 pro, reliable? Ahahah
 # matrix = [
@@ -252,13 +275,14 @@ assets_order = ["stocks", "bonds", "str", "eth", "ag", "inflation"]
 
 # Identity matrix. Indipendent variables, no correlation.
 matrix = [
-  #stk, bnd, str, eth, ag,  pi
-  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
-  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # Bonds
-  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # STR
-  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Eth
-  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Ag
-  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
+  #stk, bnd, str, eth, ag,  r_e   pi
+  [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Stocks
+  [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Bonds
+  [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0], # STR
+  [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], # Eth
+  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], # Ag
+  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], # Real Estate
+  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], # Inflation
 ]
 # ==============================================================================
 # 6. SHOCKS

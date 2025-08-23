@@ -136,7 +136,6 @@ def test_build_result_failed_simulation_immediately(
     assert result["final_cumulative_inflation_factor"] == 1.0
     assert result["initial_total_wealth"] == 0.0
     expected_allocations = {
-        k: sim.state.portfolio[k]
-        for k in result["final_allocations_nominal"].keys()
+        k: sim.state.portfolio[k] for k in result["final_allocations_nominal"].keys()
     }
     assert result["final_allocations_nominal"] == expected_allocations

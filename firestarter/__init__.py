@@ -5,4 +5,4 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 
-from .version import __version__
+from .version import __version__  # noqa: F401

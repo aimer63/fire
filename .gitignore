@@ -26,8 +26,8 @@ dist/
 build/
 *.egg-info/
 
-# Ignore SPDX update scripts
-update_copyright.sh
+# Ignore copyright update scripts
+update_copyright.py
 
 # Ignore mailmap file
 .mailmap
