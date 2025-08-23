@@ -1,3 +1,7 @@
+![Python Versions](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20macos-FF9900)
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue?logo=opensourceinitiative&logoColor=white)
+[![CI](https://github.com/aimer63/fire/actions/workflows/test.yml/badge.svg)](https://github.com/aimer63/fire/actions/workflows/test.yml)
 # Firestarter (FIRE Simulation Tool)
 
 ![Logo](fire-small.png)
