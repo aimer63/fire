@@ -1,4 +1,4 @@
-# FIRE Simulation Engine
+# FIRE Plan Simulation Engine
 
 This document explains the structure and workflow of the simulation engine implemented in
 `simulation.py`. The engine is designed to model financial independence and early retirement

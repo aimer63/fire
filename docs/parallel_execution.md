@@ -1,4 +1,4 @@
-# Parallel Execution in FIREstarter
+# Parallel Execution in Firestarter
 
 ## Overview
 

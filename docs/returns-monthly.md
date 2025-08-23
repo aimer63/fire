@@ -1,4 +1,3 @@
-
 # Monthly Parameter Conversion for Annual Return Rates
 
 The provided Python code estimates $\mu$ and $\sigma$ of $Y_t = \log(1 + R_t) \sim N(\mu, \sigma^2)$,

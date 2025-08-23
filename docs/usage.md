@@ -1,4 +1,4 @@
-# Usage Guide: FIRE Monte Carlo Simulation Tool
+# Usage Guide: FIRE Plan Simulator
 
 This guide explains how to configure, run, and interpret results from the FIRE Monte Carlo
 simulation tool.
@@ -7,8 +7,8 @@ simulation tool.
 
 ## 1. What is This Tool?
 
-This package simulates financial independence and early retirement (FIRE) scenarios using Monte
-Carlo methods.  
+This package simulates financial independence and early retirement (FIRE) scenarios
+using Monte Carlo methods.  
 It models investment returns, expenses, rebalancing and more, to help you assess
 the probability of financial success over time.
 

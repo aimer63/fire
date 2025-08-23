@@ -4,7 +4,7 @@
 [![CI](https://github.com/aimer63/fire/actions/workflows/test.yml/badge.svg)](https://github.com/aimer63/fire/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/aimer63/fire/branch/master/graph/badge.svg)](https://codecov.io/gh/aimer63/fire)
 
-# Firestarter (FIRE Simulation Tool)
+# Firestarter (FIRE Plan Simulator)
 
 ![Logo](fire-small.png)
 
@@ -188,32 +188,32 @@ See [Assets](/docs/assets.md) for details.
 
 - **[Run the simulation](/docs/usage.md)**
 
-   From the project root, use the provided shell script or Python command:
+  From the project root, use the provided shell script or Python command:
 
-   ```shell
-   ./firestarter.sh --config configs/config.toml
-   ```
+  ```shell
+  ./firestarter.sh --config configs/config.toml
+  ```
 
-   or
+  or
 
-   ```shell
-   export OMP_NUM_THREADS=1
-   export OPENBLAS_NUM_THREADS=1
-   export MKL_NUM_THREADS=1
-   export NUMEXPR_NUM_THREADS=1
-   python -m firestarter.main -f configs/config.toml
-   ```
+  ```shell
+  export OMP_NUM_THREADS=1
+  export OPENBLAS_NUM_THREADS=1
+  export MKL_NUM_THREADS=1
+  export NUMEXPR_NUM_THREADS=1
+  python -m firestarter.main -f configs/config.toml
+  ```
 
 - **Review the results**
 
-   You will see the interactive `matplotlib` plots appearing once the simulation is finished.
-   Once you closed all the `matplotlib` interactive windows, the program will terminate and
-   you can explore the results, i.e. saved plots and markdown report in the output directory.
+  You will see the interactive `matplotlib` plots appearing once the simulation is finished.
+  Once you closed all the `matplotlib` interactive windows, the program will terminate and
+  you can explore the results, i.e. saved plots and markdown report in the output directory.
 
   - **Markdown report**: Generated in `output/reports/` in your working directory, summarizing
-     success rate, failed simulations, best/worst/average cases and links to plots.
+    success rate, failed simulations, best/worst/average cases and links to plots.
   - **Plots**: Generated in `output/plots/` in your working directory, visualizing wealth
-     evolution, bank account trajectories and distributions.
+    evolution, bank account trajectories and distributions.
 
 ---
 

@@ -1,4 +1,4 @@
-# firestarter Release Process
+# Firestarter Release Process
 
 This guide describes the recommended steps to create and publish a new release of `firestarter`
 using GitHub Releases.

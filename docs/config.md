@@ -1,4 +1,4 @@
-# Configuration Reference: FIRE Monte Carlo Simulation Tool
+# Configuration Reference: FIRE Plan Simulator
 
 > **Note:**  
 > _The simulation assumes all assets, liabilities, incomes, expenses, and flows

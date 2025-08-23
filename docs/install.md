@@ -1,4 +1,4 @@
-# firestarter Installation Guide
+# Firestarter Installation Guide
 
 This guide explains how to install the `firestarter` package by cloning the repository or from a GitHub release on **Linux**, **macOS**, and **Windows**.
 

@@ -1,4 +1,3 @@
-
 # Estimation of $\mu$ and $\sigma$ for Normal Distribution of Log Returns Using Sample Mean and Standard Deviation of observed Returns Rates
 
 Given only the sample mean $\bar{R}$ and sample standard deviation $s_R$ of the return rate
