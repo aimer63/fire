@@ -176,7 +176,7 @@ See [Assets](/docs/assets.md) for details.
 
    You will see the interactive `matplotlib` plots appearing once the simulation is finished.
    Once you closed all the `matplotlib` interactive windows, the program will terminate and
-   you can explore the reults, i.e. saved plots and markdown report, in the output directory.
+   you can explore the results, i.e. saved plots and markdown report in the output directory.
 
    - **Markdown report**: Generated in `output/reports/` in your working directory, summarizing
      success rate, failed simulations, best/worst/average cases and links to plots.
