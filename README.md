@@ -150,11 +150,43 @@ See [Assets](/docs/assets.md) for details.
 
 ## Getting Started
 
-1. **Configure your plan**
+- **Clone the repository**:
 
-   Start with the config example provided in `configs/` (e.g., `configs/config.toml`).
+  ```sh
+  git clone https://github.com/aimer63/fire.git
+  cd fire
+  ```
 
-2. **[Run the simulation](/docs/usage.md)**
+- **(Optional but recommended) Create and activate a virtual environment**:
+
+  ```sh
+  python -m venv .venv
+  source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+  ```
+
+- **Install the required dependencies**:
+
+  ```sh
+  pip install -r requirements.txt
+  ```
+
+- **Install the package in editable/development mode**:
+
+  ```sh
+  pip install -e .
+  ```
+
+- **Verify the installation**:
+
+  ```sh
+  python -c "import firestarter; print(firestarter.__version__)"
+  ```
+
+- **Configure your plan**
+
+  Start with the config example provided in `configs/` (e.g., `configs/config.toml`).
+
+- **[Run the simulation](/docs/usage.md)**
 
    From the project root, use the provided shell script or Python command:
 
@@ -172,15 +204,15 @@ See [Assets](/docs/assets.md) for details.
    python -m firestarter.main -f configs/config.toml
    ```
 
-3. **Review the results**
+- **Review the results**
 
    You will see the interactive `matplotlib` plots appearing once the simulation is finished.
    Once you closed all the `matplotlib` interactive windows, the program will terminate and
    you can explore the results, i.e. saved plots and markdown report in the output directory.
 
-   - **Markdown report**: Generated in `output/reports/` in your working directory, summarizing
+  - **Markdown report**: Generated in `output/reports/` in your working directory, summarizing
      success rate, failed simulations, best/worst/average cases and links to plots.
-   - **Plots**: Generated in `output/plots/` in your working directory, visualizing wealth
+  - **Plots**: Generated in `output/plots/` in your working directory, visualizing wealth
      evolution, bank account trajectories and distributions.
 
 ---
