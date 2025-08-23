@@ -148,13 +148,11 @@ See [Assets](/docs/assets.md) for details.
 
 ---
 
-## Typical Workflow
+## Getting Started
 
 1. **Configure your plan**
 
-   Edit a TOML file in `configs/` (e.g., `configs/config.toml`), specifying your starting wealth,
-   income, expenses, investment strategy, simulation parameters, and any market shocks.
-   You can set the output directory root in the `[paths]` section.
+   Start with the config example provided in `configs/` (e.g., `configs/config.toml`).
 
 2. **[Run the simulation](/docs/usage.md)**
 
@@ -175,10 +173,15 @@ See [Assets](/docs/assets.md) for details.
    ```
 
 3. **Review the results**
-   - **Markdown report**: Generated in `<output_root>/reports/`, summarizing success rate, failed
-     simulations, best/worst/average cases, and links to plots.
-   - **Plots**: Generated in `<output_root>/plots/`, visualizing wealth evolution, bank account
-     trajectories, and distributions.
+
+   You will see the interactive `matplotlib` plots appearing once the simulation is finished.
+   Once you closed all the `matplotlib` interactive windows, the program will terminate and
+   you can explore the reults, i.e. saved plots and markdown report, in the output directory.
+
+   - **Markdown report**: Generated in `output/reports/` in your working directory, summarizing
+     success rate, failed simulations, best/worst/average cases and links to plots.
+   - **Plots**: Generated in `output/plots/` in your working directory, visualizing wealth
+     evolution, bank account trajectories and distributions.
 
 ---
 
