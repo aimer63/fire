@@ -1,4 +1,4 @@
-# Changelog
+# CHANGELOG
 
 ## [v0.1.1](https://github.com/aimer63/fire/releases/tag/v0.1.1) - 2025-08-23
 

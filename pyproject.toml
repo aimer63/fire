@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 name = "firestarter"
 version = "0.1.1"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
-authors = [{ name = "aimer63", email = "imeriod@gmail.com" }]
+authors = [{ name = "aimer63", email = "63aimer@gmail.com" }]
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 readme = "README.md"

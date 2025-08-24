@@ -1,0 +1,12 @@
+[tool.commitizen]
+name = "cz_customize"
+
+[tool.commitizen.customize]
+message_template = "{{change_type}}: {{message}}"
+example = "feat: add new simulation feature"
+schema = "<type>: <body>"
+schema_pattern = "(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert):(\\s.*)"
+commit_parser = "^(?P<change_type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\\((?P<scope>[^()\r\n]*)\\))?:\\s(?P<message>.*)?"
+changelog_pattern = "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)?(!)?"
+change_type_map = { "feat" = "Features", "fix" = "Bug Fixes", "docs" = "Documentation", "style" = "Styles", "refactor" = "Code Refactoring", "perf" = "Performance Improvements", "test" = "Tests", "build" = "Builds", "ci" = "Continuous Integrations", "chore" = "Chores", "revert" = "Reverts" }
+change_type_order = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"]
