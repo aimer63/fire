@@ -18,14 +18,14 @@ dependencies = [
   "numpy",
   "pandas",
   "pandas-stubs",
-  "openpyxl"
+  "openpyxl",
   "PyQt5",
   "matplotlib",
   "seaborn",
   "pydantic",
   "tomli",
   "tomli-w",
-  "tqdm",
+  "tqdm"
 ]
 
 [project.optional-dependencies]
@@ -58,7 +58,7 @@ include-package-data = true
  "data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx",
  "data/data_metrics.md",
  "data/data_metrics.py",
- "data/shocks.md",
+ "data/shocks.md"
 ]
 
 [tool.ruff]
