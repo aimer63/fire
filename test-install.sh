@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+INSTALL_METHOD=${1:-release}
+
+# Remove the image if it exists
+docker image rm -f test-install 2>/dev/null || true
+
+# Build the image with the specified install method
+docker build -t test-install --build-arg INSTALL_METHOD="$INSTALL_METHOD" .
+
+# Run and remove the container
+docker run --rm -it test-install /bin/bash
