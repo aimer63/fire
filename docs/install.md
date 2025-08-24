@@ -90,28 +90,16 @@ python -c "import firestarter; print(firestarter.__version__)"
 
 ## 4. Run firestarter
 
-You can run firestarter directly (make sure to set the environment variables first) or
-with a shell script, see [Usage](../docs/usage.md).
+You can run firestarter directly using the installed CLI command:
 
 ```sh
-export OMP_NUM_THREADS=1
-export OPENBLAS_NUM_THREADS=1
-export MKL_NUM_THREADS=1
-export NUMEXPR_NUM_THREADS=1
-python -m firestarter.main -f config.toml
+fire -f config.toml
 ```
 
-For Windows (PowerShell):
+All required environment variables for thread limiting are automatically set by the program on all platforms (Linux, macOS, Windows).  
+No need to set them manually.
 
-```powershell
-$env:OMP_NUM_THREADS = "1"
-$env:OPENBLAS_NUM_THREADS = "1"
-$env:MKL_NUM_THREADS = "1"
-$env:NUMEXPR_NUM_THREADS = "1"
-python -m firestarter.main -f config.toml
-```
-
-See usage [Usage](../docs/usage.md) for details.
+See [Usage](../docs/usage.md) for details.
 
 ## 5. Upgrading firestarter
 

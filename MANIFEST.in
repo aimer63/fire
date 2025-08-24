@@ -1,0 +1,11 @@
+include README.md
+include CHANGELOG.md
+include config/config.toml
+include docs/*
+include docs/pics/*
+include docs/reports/*
+include data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx
+include data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx
+include data/data_metrics.md
+include data/data_metrics.py
+include data/shocks.md

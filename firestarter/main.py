@@ -58,6 +58,12 @@ parser.add_argument(
 args = parser.parse_args()
 CONFIG_FILE_PATH = args.config
 
+# Limit thread usage for numpy/scipy libraries to avoid oversubscription
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 
 def run_single_simulation(
     det_inputs: DeterministicInputs,

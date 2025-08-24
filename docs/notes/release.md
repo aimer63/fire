@@ -75,6 +75,9 @@ pip install dist/firestarter-0.1.0b2-py3-none-any.whl
 5. Attach your `.whl` and `.tar.gz` files from the `dist/` directory.
 6. Publish the release.
 
+<!-- markdownlint-disable-next-line MD013 -->
+Actually it is managed by github action (see [release](../.github/workflows/release.yml)), so you can skip this step.
+
 ---
 
 ## 7. (Optional) Upload to PyPI or TestPyPI

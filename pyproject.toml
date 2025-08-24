@@ -10,7 +10,7 @@ name = "firestarter"
 version = "0.1.1"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
 authors = [{ name = "aimer63", email = "imeriod@gmail.com" }]
-license = "GPL-3.0-or-later"
+license = { file = "LICENSE", text = "AGPL-3.0-or-later" }
 license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -18,6 +18,7 @@ dependencies = [
   "numpy",
   "pandas",
   "pandas-stubs",
+  "PyQt5",
   "matplotlib",
   "pydantic",
   "tomli",
@@ -30,6 +31,24 @@ fire = "firestarter.main:main"
 
 [tool.setuptools.packages.find]
 include = ["firestarter*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"firestarter" = [
+ "README.md",
+ "CHANGELOG.md",
+ "config/config.toml",
+ "docs/*",
+ "docs/pics/*",
+ "docs/reports/*",
+ "data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx",
+ "data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx",
+ "data/data_metrics.md",
+ "data/data_metrics.py",
+ "data/shocks.md",
+]
 
 [tool.ruff]
 ignore = ["E501"]

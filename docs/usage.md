@@ -26,8 +26,8 @@ See [Install Guide](install.md) for more details on how to run the simulation.
 
 ## 3. Configuration
 
-All simulation parameters are set in a TOML config file (e.g., `configs/config.toml`).  
-Key sections include:
+All simulation parameters are set in a config file in TOML format (e.g., `configs/config.toml`).  
+The provided example includes all the parameters with comments explaining their purpose.
 
 See the [Configuration Reference](config.md) for a full list and explanation of all parameters.
 
@@ -35,86 +35,24 @@ See the [Configuration Reference](config.md) for a full list and explanation of 
 
 ## 4. Running the Simulation
 
-You can run firestarter using a config file with either a shell script (Linux/macOS)
-or a PowerShell script (Windows). Anyhow these two scripts are in the project root.
+You can run the FIRE simulation tool directly from the command line using Python.  
+The process is the same for Linux, macOS, and Windows.
 
-### Option 1: Bash script (Linux/macOS)
+### Run the simulation
 
-1. Create a file named `firestarter.sh` with the following content, or use the one
-   provided in the root of the project, i.e. [firestarter.sh](../firestarter.sh):
-
-   ```sh
-   #!/bin/bash
-   # Usage: ./firestarter.sh --config [config_file]
-   # If no config file is provided, defaults to config.toml
-
-   export OMP_NUM_THREADS=1
-   export OPENBLAS_NUM_THREADS=1
-   export MKL_NUM_THREADS=1
-   export NUMEXPR_NUM_THREADS=1
-
-   python -m firestarter.main "$@"
-
-   ```
-
-2. Make it executable:
+1. Execute the following command from your project root, specifying your config file:
 
    ```sh
-   chmod +x firestarter.sh
+   python -m firestarter.main -f config.toml
    ```
 
-3. Run the script (optionally specify a config file):
+   Or, if installed via pip, use the CLI entrypoint:
 
    ```sh
-   ./firestarter.sh --config config.toml
+   fire -f config.toml
    ```
 
-### Option 2: PowerShell script (Windows)
-
-1. Create a file named `firestarter.ps1` with following content, or use the one
-   provided in the root of the project, i.e. [firestarter.ps1](../firestarter.ps1):
-
-   ```powershell
-   # Usage: .\firestarter.ps1 [config_file]
-   # If no config file is provided, defaults to config.toml
-
-   param(
-      [string[]]$Args
-   )
-
-   $env:OMP_NUM_THREADS = "1"
-   $env:OPENBLAS_NUM_THREADS = "1"
-   $env:MKL_NUM_THREADS = "1"
-   $env:NUMEXPR_NUM_THREADS = "1"
-
-   python -m firestarter.main $Args
-   ```
-
-2. Run the script in PowerShell (optionally specify a config file):
-
-   ```powershell
-   .\firestarter.ps1 -f config.toml
-   ```
-
-Alternatively, you can run firestarter directly (make sure to set the environment variables first):
-
-```sh
-export OMP_NUM_THREADS=1
-export OPENBLAS_NUM_THREADS=1
-export MKL_NUM_THREADS=1
-export NUMEXPR_NUM_THREADS=1
-python -m firestarter.main -f config.toml
-```
-
-For Windows (PowerShell), set the environment variables before running:
-
-```powershell
-$env:OMP_NUM_THREADS = "1"
-$env:OPENBLAS_NUM_THREADS = "1"
-$env:MKL_NUM_THREADS = "1"
-$env:NUMEXPR_NUM_THREADS = "1"
-python -m firestarter.main -f config.toml
-```
+   If no config file is specified, it defaults to `config.toml`.
 
 ---
 

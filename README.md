@@ -188,20 +188,10 @@ See [Assets](/docs/assets.md) for details.
 
 - **[Run the simulation](/docs/usage.md)**
 
-  From the project root, use the provided shell script or Python command:
+  From the project root:
 
   ```shell
-  ./firestarter.sh --config configs/config.toml
-  ```
-
-  or
-
-  ```shell
-  export OMP_NUM_THREADS=1
-  export OPENBLAS_NUM_THREADS=1
-  export MKL_NUM_THREADS=1
-  export NUMEXPR_NUM_THREADS=1
-  python -m firestarter.main -f configs/config.toml
+  fire --config configs/config.toml
   ```
 
 - **Review the results**
