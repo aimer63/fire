@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "firecast"
-version = "0.1.2rc3"
+version = "0.1.2rc4"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
 authors = [{ name = "aimer63", email = "63aimer@gmail.com" }]
 license = "AGPL-3.0-or-later"
