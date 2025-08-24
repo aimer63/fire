@@ -18,12 +18,23 @@ dependencies = [
   "numpy",
   "pandas",
   "pandas-stubs",
+  "openpyxl"
   "PyQt5",
   "matplotlib",
+  "seaborn",
   "pydantic",
   "tomli",
   "tomli-w",
   "tqdm",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "coverage",
+  "twine",
+  "build",
+  "commitizen"
 ]
 
 [project.scripts]
