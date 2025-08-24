@@ -44,19 +44,19 @@ This guide explains how to install the `firestarter` package by cloning the repo
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
-3. Install the required dependencies:
-
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-4. Install the package in editable/development mode:
+3. Install the package in editable/development mode:
 
    ```sh
    pip install -e .
    ```
 
-5. Verify the installation:
+   or with development dependencies:
+
+   ```sh
+   pip install -e .[dev]
+   ```
+
+4. Verify the installation:
 
    ```sh
    python -c "import firestarter; print(firestarter.__version__)"
@@ -111,19 +111,13 @@ See [Usage](../docs/usage.md) for details.
    git pull
    ```
 
-2. (Recommended) Update dependencies:
-
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-3. Reinstall in editable mode:
+2. Reinstall in editable mode:
 
    ```sh
    pip install -e .
    ```
 
-4. Verify the installation:
+3. Verify the installation:
 
    ```sh
    python -c "import firestarter; print(firestarter.__version__)"

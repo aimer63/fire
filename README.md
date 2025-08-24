@@ -164,12 +164,6 @@ See [Assets](/docs/assets.md) for details.
   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
   ```
 
-- **Install the required dependencies**:
-
-  ```sh
-  pip install -r requirements.txt
-  ```
-
 - **Install the package in editable/development mode**:
 
   ```sh
@@ -295,25 +289,7 @@ weights = { stocks = 0.60, bonds = 0.40 }
 ## Requirements
 
 - Python 3.10+
-- See `requirements.txt` for dependencies:
-  - numpy, pandas, pandas-stubs, matplotlib, pydantic, tomli, tomli-w, tqdm
-
-Install with:
-
-```sh
-pip install -r requirements.txt
-```
-
----
-
-## Running Tests
-
-Tests are in the `tests/` directory, run them with:
-
-```sh
-cd fire
-pytest
-```
+- See `pyproject.toml` for dependencies:
 
 ---
 
