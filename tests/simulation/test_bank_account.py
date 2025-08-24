@@ -7,8 +7,8 @@
 
 import pytest
 
-from firestarter.core.simulation import Simulation
-from firestarter.config.config import PlannedContribution
+from firecast.core.simulation import Simulation
+from firecast.config.config import PlannedContribution
 
 
 def test_handle_bank_account_successful_top_up(
@@ -34,9 +34,7 @@ def test_handle_bank_account_successful_top_up(
     sim.init()
     sim.state.current_bank_balance = 4_000.0  # Below lower bound
 
-    initial_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    initial_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
     inflation_factor = sim.state.monthly_cumulative_inflation_factors[month_to_test]
     expected_nominal_lower_bound = lower_bound * inflation_factor
     shortfall = expected_nominal_lower_bound - sim.state.current_bank_balance
@@ -47,9 +45,7 @@ def test_handle_bank_account_successful_top_up(
     # --- Assertions ---
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(expected_nominal_lower_bound)
-    current_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    current_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
     assert current_liquid_assets == pytest.approx(initial_liquid_assets - shortfall)
 
 
@@ -106,9 +102,7 @@ def test_handle_bank_account_invest_excess(
     sim.init()
     sim.state.current_bank_balance = 25_000.0  # Above upper bound
 
-    initial_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    initial_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
     inflation_factor = sim.state.monthly_cumulative_inflation_factors[month_to_test]
     expected_nominal_upper_bound = upper_bound * inflation_factor
     excess = sim.state.current_bank_balance - expected_nominal_upper_bound
@@ -119,9 +113,7 @@ def test_handle_bank_account_invest_excess(
     # --- Assertions ---
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(expected_nominal_upper_bound)
-    current_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    current_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
     assert current_liquid_assets == pytest.approx(initial_liquid_assets + excess)
 
 
@@ -146,9 +138,7 @@ def test_handle_bank_account_no_action(initialized_simulation: Simulation) -> No
     sim.state.current_bank_balance = 15_000.0  # Within bounds
 
     initial_bank_balance = sim.state.current_bank_balance
-    initial_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    initial_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
 
     # Execute the method
     sim._handle_bank_account(month_to_test)
@@ -156,9 +146,9 @@ def test_handle_bank_account_no_action(initialized_simulation: Simulation) -> No
     # --- Assertions ---
     assert not sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(initial_bank_balance)
-    assert sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    ) == pytest.approx(initial_liquid_assets)
+    assert sum(v for k, v in sim.state.portfolio.items() if k != "inflation") == pytest.approx(
+        initial_liquid_assets
+    )
 
 
 def test_handle_bank_account_invest_lot_size_chunk(
@@ -185,9 +175,7 @@ def test_handle_bank_account_invest_lot_size_chunk(
     sim.init()
     sim.state.current_bank_balance = 25_500.0  # Above upper bound
 
-    initial_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    initial_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
     inflation_factor = sim.state.monthly_cumulative_inflation_factors[month_to_test]
     expected_nominal_upper_bound = upper_bound * inflation_factor
     excess = sim.state.current_bank_balance - expected_nominal_upper_bound
@@ -199,10 +187,6 @@ def test_handle_bank_account_invest_lot_size_chunk(
 
     # --- Assertions ---
     assert not sim.state.simulation_failed
-    assert sim.state.current_bank_balance == pytest.approx(
-        expected_nominal_upper_bound + remainder
-    )
-    current_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    assert sim.state.current_bank_balance == pytest.approx(expected_nominal_upper_bound + remainder)
+    current_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
     assert current_liquid_assets == pytest.approx(initial_liquid_assets + invest_amount)

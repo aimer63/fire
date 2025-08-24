@@ -28,20 +28,20 @@ except ModuleNotFoundError:
 
 
 # Import the DeterministicInputs Pydantic model
-from firestarter.config.config import (
+from firecast.config.config import (
     Config,
     DeterministicInputs,
     PortfolioRebalance,
     SimulationParameters,
     Shock,
 )
-from firestarter.config.correlation_matrix import CorrelationMatrix
+from firecast.config.correlation_matrix import CorrelationMatrix
 
-from firestarter.reporting.markdown_report import generate_markdown_report
-from firestarter.reporting.console_report import print_console_summary
-from firestarter.reporting.graph_report import generate_all_plots
+from firecast.reporting.markdown_report import generate_markdown_report
+from firecast.reporting.console_report import print_console_summary
+from firecast.reporting.graph_report import generate_all_plots
 
-from firestarter.core.simulation import SimulationBuilder
+from firecast.core.simulation import SimulationBuilder
 
 
 # Setup CLI argument parsing
@@ -125,9 +125,7 @@ def main() -> None:
     # Extract validated data from the config model for simulation
     det_inputs = config.deterministic_inputs
     assets = config.assets
-    correlation_matrix = config.correlation_matrix or CorrelationMatrix(
-        assets_order=[], matrix=[]
-    )
+    correlation_matrix = config.correlation_matrix or CorrelationMatrix(assets_order=[], matrix=[])
     portfolio_rebalances = config.portfolio_rebalances
     sim_params = config.simulation_parameters
     shocks = config.shocks or []

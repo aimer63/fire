@@ -8,7 +8,7 @@
 import pytest
 import numpy as np
 
-from firestarter.core.sequences_generator import SequencesGenerator
+from firecast.core.sequences_generator import SequencesGenerator
 
 
 def test_correlated_sequence_generation(basic_assets, basic_correlation_matrix):

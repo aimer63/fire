@@ -7,7 +7,7 @@ Here is a breakdown of the key implications and how to manage them.
 This is the most critical point. Your code currently determines the number of worker processes like this:
 
 ```python
-# firestarter/main.py
+# firecast/main.py
 max_workers = multiprocessing.cpu_count()
 # ...
 with ProcessPoolExecutor(max_workers=max_workers) as executor:

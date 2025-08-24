@@ -1,6 +1,6 @@
-# Firestarter Release Process
+# firecast Release Process
 
-This guide describes the recommended steps to create and publish a new release of `firestarter`
+This guide describes the recommended steps to create and publish a new release of `firecast`
 using GitHub Releases.
 
 ---
@@ -15,7 +15,7 @@ using GitHub Releases.
     version = "0.1.0b2"
     ```
 
-  - `firestarter/version.py`:
+  - `firecast/version.py`:
 
     ```python
     __version__ = "0.1.0b2"
@@ -61,7 +61,7 @@ python -m build
 ## 5. (Optional) Test the Build Locally
 
 ```sh
-pip install dist/firestarter-0.1.0b2-py3-none-any.whl
+pip install dist/firecast-0.1.0b2-py3-none-any.whl
 ```
 
 ---
@@ -70,7 +70,7 @@ pip install dist/firestarter-0.1.0b2-py3-none-any.whl
 
 1. Go to your repository's **Releases** tab.
 2. Click **"Draft a new release"**.
-3. Set the tag (e.g., `v0.1.0b2`) and title (e.g., `firestarter v0.1.0b2`).
+3. Set the tag (e.g., `v0.1.0b2`) and title (e.g., `firecast v0.1.0b2`).
 4. Write concise release notes (features, fixes, known issues).
 5. Attach your `.whl` and `.tar.gz` files from the `dist/` directory.
 6. Publish the release.

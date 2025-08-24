@@ -7,7 +7,7 @@
 
 import pytest
 from unittest.mock import Mock
-from firestarter.core.simulation import SimulationBuilder, Simulation
+from firecast.core.simulation import SimulationBuilder, Simulation
 
 
 def test_simulation_builder_new_initial_state():
@@ -17,17 +17,11 @@ def test_simulation_builder_new_initial_state():
     """
     builder = SimulationBuilder.new()
 
-    assert isinstance(builder, SimulationBuilder), (
-        "Should be an instance of SimulationBuilder"
-    )
+    assert isinstance(builder, SimulationBuilder), "Should be an instance of SimulationBuilder"
     assert builder.det_inputs is None, "det_inputs should be None initially"
     assert builder.assets is None, "market_assumptions should be None initially"
-    assert builder.correlation_matrix is None, (
-        "correlation_matrix should be None initially"
-    )
-    assert builder.portfolio_rebalances is None, (
-        "portfolio_rebalances should be None initially"
-    )
+    assert builder.correlation_matrix is None, "correlation_matrix should be None initially"
+    assert builder.portfolio_rebalances is None, "portfolio_rebalances should be None initially"
     assert builder.shock_events is None, "shock_events should be None initially"
     assert builder.sim_params is None, "sim_params should be None initially"
 
@@ -53,12 +47,10 @@ def test_simulation_builder_setters(setter_method_name, attribute_name):
     setter_method = getattr(builder, setter_method_name)
     returned_builder = setter_method(mock_value)
 
-    assert getattr(builder, attribute_name) is mock_value, (
-        f"{attribute_name} attribute should be set"
-    )
-    assert returned_builder is builder, (
-        "Setter method should return the builder instance"
-    )
+    assert (
+        getattr(builder, attribute_name) is mock_value
+    ), f"{attribute_name} attribute should be set"
+    assert returned_builder is builder, "Setter method should return the builder instance"
 
 
 def test_simulation_builder_build_success(complete_builder: SimulationBuilder) -> None:

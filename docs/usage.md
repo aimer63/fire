@@ -43,7 +43,7 @@ The process is the same for Linux, macOS, and Windows.
 1. Execute the following command from your project root, specifying your config file:
 
    ```sh
-   python -m firestarter.main -f config.toml
+   python -m firecast.main -f config.toml
    ```
 
    Or, if installed via pip, use the CLI entrypoint:

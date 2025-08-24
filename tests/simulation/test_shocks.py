@@ -7,8 +7,8 @@
 
 import pytest
 import numpy as np
-from firestarter.core.simulation import Simulation
-from firestarter.config.config import Shock
+from firecast.core.simulation import Simulation
+from firecast.config.config import Shock
 
 
 def test_shock_overwrites_return_sequence(initialized_simulation: Simulation) -> None:

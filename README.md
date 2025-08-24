@@ -4,13 +4,13 @@
 [![CI](https://github.com/aimer63/fire/actions/workflows/test.yml/badge.svg)](https://github.com/aimer63/fire/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/aimer63/fire/branch/master/graph/badge.svg)](https://codecov.io/gh/aimer63/fire)
 
-# Firestarter (FIRE Plan Simulator)
+# firecast (FIRE Plan Simulator)
 
 ![Logo](fire-small.png)
 
 ---
 
-**Firestarter** is an open-source Python tool for modeling Financial Independence to Retire Early (FIRE)
+**firecast** is an open-source Python tool for modeling Financial Independence to Retire Early (FIRE)
 scenarios using Monte Carlo simulations.
 It models a user's retirement plan, simulating investment growth, withdrawals, expenses,
 and market shocks over time to estimate the probability of financial success.
@@ -85,7 +85,7 @@ See [Assets](/docs/assets.md) for details.
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
 
-  The core of Firestarter is an engine that models your financial life month by month,
+  The core of firecast is an engine that models your financial life month by month,
   year by year. For each of the thousands of simulation runs, it projects a unique
   potential financial future based on your configuration and randomized market returns.
 
@@ -105,7 +105,7 @@ See [Assets](/docs/assets.md) for details.
 
   This entire lifecycle is repeated for the number of years specified in your
   configuration (`years_to_simulate`). By aggregating the outcomes of all simulation
-  runs (controlled by `num_simulations` in configuration), Firestarter calculates the
+  runs (controlled by `num_simulations` in configuration), firecast calculates the
   probability of your plan's success and provides a statistical picture of your potential
   financial outcomes presented in reports and plots.
 
@@ -173,7 +173,7 @@ See [Assets](/docs/assets.md) for details.
 - **Verify the installation**:
 
   ```sh
-  python -c "import firestarter; print(firestarter.__version__)"
+  python -c "import firecast; print(firecast.__version__)"
   ```
 
 - **Configure your plan**
@@ -299,7 +299,7 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 ### 📃 Documentation Index
 
-- [Installation Guide](docs/install.md): Step-by-step instructions for installing firestarter from a
+- [Installation Guide](docs/install.md): Step-by-step instructions for installing firecast from a
   GitHub release.
 - [Configuration Example](configs/config.toml): Configuration example with all parameters.
 - [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.

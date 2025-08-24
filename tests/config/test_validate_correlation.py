@@ -9,7 +9,7 @@ import pytest
 
 from pydantic import ValidationError
 
-from firestarter.config.correlation_matrix import CorrelationMatrix
+from firecast.config.correlation_matrix import CorrelationMatrix
 
 # A known valid correlation matrix (identity matrix)
 VALID_ASSETS = ["stocks", "bonds", "str", "fun", "ag", "inflation"]
@@ -122,7 +122,5 @@ def test_not_positive_semi_definite_matrix():
         [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
     ]
     not_psd_data = {"assets_order": VALID_ASSETS, "matrix": not_psd_matrix}
-    with pytest.raises(
-        ValidationError, match="Correlation matrix must be positive semi-definite"
-    ):
+    with pytest.raises(ValidationError, match="Correlation matrix must be positive semi-definite"):
         CorrelationMatrix(**not_psd_data)

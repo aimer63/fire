@@ -1,8 +1,8 @@
-# Parallel Execution in Firestarter
+# Parallel Execution in firecast
 
 ## Overview
 
-FIREstarter achieves parallel execution of simulations using Python's
+firecast achieves parallel execution of simulations using Python's
 `concurrent.futures.ProcessPoolExecutor`. This allows multiple independent simulation runs (e.g.,
 for Monte Carlo analysis) to be distributed across all available CPU cores, significantly speeding
 up computation.

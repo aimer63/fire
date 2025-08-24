@@ -27,7 +27,7 @@
     until tha next rebalance event; if `period` is omitted or zero,
     rebalance is applied only once at the specified year.
 
-- Argument `--config` to `firestarter` to specify the config file.
+- Argument `--config` to `firecast` to specify the config file.
 
 - Custom colors palette `utils\colors.py` for plots.
 
@@ -137,7 +137,7 @@
 - Refactored `run_single_fire_simulation` into a `Simulation` and `SimulationBuilder` classes for
   improved readability and maintainability.
 - Centralized all output paths in `config.toml` under a configurable `output_root`.
-- Modularized the project structure into `firestarter/`, `configs/`, `output/`, etc.
+- Modularized the project structure into `firecast/`, `configs/`, `output/`, etc.
 
 ### Fixed
 

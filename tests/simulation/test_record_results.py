@@ -6,7 +6,7 @@
 #
 
 import pytest
-from firestarter.core.simulation import Simulation
+from firecast.core.simulation import Simulation
 
 
 def test_record_results_initialization_and_first_month(
@@ -27,9 +27,7 @@ def test_record_results_initialization_and_first_month(
             mock_portfolio[asset] = 100_000.0
     sim.state.portfolio = mock_portfolio
 
-    sim.det_inputs = sim.det_inputs.model_copy(
-        update={"initial_bank_balance": 25_000.0}
-    )
+    sim.det_inputs = sim.det_inputs.model_copy(update={"initial_bank_balance": 25_000.0})
     sim.init()  # Re-initialize state with the new portfolio
 
     # Initialize results structure for all assets
@@ -52,9 +50,7 @@ def test_record_results_initialization_and_first_month(
     assert sim.results["wealth_history"][0] == pytest.approx(
         sim.state.current_bank_balance + sum(sim.state.portfolio.values())
     )
-    assert sim.results["bank_balance_history"][0] == pytest.approx(
-        sim.state.current_bank_balance
-    )
+    assert sim.results["bank_balance_history"][0] == pytest.approx(sim.state.current_bank_balance)
 
     # Check that asset histories are recorded correctly for month 0
     for asset in sim.assets:
@@ -107,13 +103,9 @@ def test_record_results_subsequent_month(initialized_simulation: Simulation):
     sim._record_results(month=1)
 
     # Check values for month 1
-    expected_wealth_1 = sim.state.current_bank_balance + sum(
-        sim.state.portfolio.values()
-    )
+    expected_wealth_1 = sim.state.current_bank_balance + sum(sim.state.portfolio.values())
     assert sim.results["wealth_history"][1] == pytest.approx(expected_wealth_1)
-    assert sim.results["bank_balance_history"][1] == pytest.approx(
-        sim.state.current_bank_balance
-    )
+    assert sim.results["bank_balance_history"][1] == pytest.approx(sim.state.current_bank_balance)
 
     for asset in sim.assets:
         expected_value = sim.state.portfolio.get(asset, 0.0)

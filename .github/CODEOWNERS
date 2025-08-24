@@ -1,7 +1,7 @@
 # CODEOWNERS
 
-# All Python source files in the firestarter directory
-/firestarter/**/*.py @aimer63
+# All Python source files in the firecast directory
+/firecast/**/*.py @aimer63
 
 # All test Python files
 /tests/**/*.py @aimer63

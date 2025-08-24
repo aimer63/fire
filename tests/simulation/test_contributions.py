@@ -7,8 +7,8 @@
 
 import pytest
 
-from firestarter.core.simulation import Simulation
-from firestarter.config.config import PlannedContribution
+from firecast.core.simulation import Simulation
+from firecast.config.config import PlannedContribution
 
 
 def test_handle_contributions(initialized_simulation: Simulation) -> None:
@@ -34,9 +34,7 @@ def test_handle_contributions(initialized_simulation: Simulation) -> None:
     # Store initial state
     initial_bank_balance = state.current_bank_balance
     initial_liquid_assets = {
-        k: v
-        for k, v in state.portfolio.items()
-        if k in state.current_target_portfolio_weights
+        k: v for k, v in state.portfolio.items() if k in state.current_target_portfolio_weights
     }
 
     # Test a month within the contribution year
@@ -47,18 +45,18 @@ def test_handle_contributions(initialized_simulation: Simulation) -> None:
     expected_nominal_amount = contribution_amount
 
     # Check that bank balance is unchanged
-    assert state.current_bank_balance == initial_bank_balance, (
-        "Bank balance should not change on contribution."
-    )
+    assert (
+        state.current_bank_balance == initial_bank_balance
+    ), "Bank balance should not change on contribution."
 
     # Check that liquid assets are increased according to target weights
     target_weights = state.current_target_portfolio_weights
     for asset_key, weight in target_weights.items():
         expected_increase = expected_nominal_amount * weight
         expected_asset_value = initial_liquid_assets[asset_key] + expected_increase
-        assert state.portfolio[asset_key] == pytest.approx(expected_asset_value), (
-            f"Asset '{asset_key}' should increase according to target weight."
-        )
+        assert state.portfolio[asset_key] == pytest.approx(
+            expected_asset_value
+        ), f"Asset '{asset_key}' should increase according to target weight."
 
 
 def test_handle_contributions_asset_targeted(
@@ -71,9 +69,7 @@ def test_handle_contributions_asset_targeted(
     sim = initialized_simulation
     contribution_year = 2
     contribution_amount = 5000.0
-    target_asset = next(
-        k for k in sim.assets if sim.assets[k].withdrawal_priority is not None
-    )
+    target_asset = next(k for k in sim.assets if sim.assets[k].withdrawal_priority is not None)
     # Set a transaction fee for testing
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
@@ -112,9 +108,7 @@ def test_handle_contributions_asset_targeted_illiquid(
     contribution_amount = 7000.0
     # Find an illiquid asset (no withdrawal_priority)
     target_asset = next(
-        k
-        for k in sim.assets
-        if sim.assets[k].withdrawal_priority is None and k != "inflation"
+        k for k in sim.assets if sim.assets[k].withdrawal_priority is None and k != "inflation"
     )
     sim.det_inputs = sim.det_inputs.model_copy(
         update={

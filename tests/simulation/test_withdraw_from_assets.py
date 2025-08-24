@@ -6,8 +6,8 @@
 #
 
 import pytest
-from firestarter.core.simulation import Simulation
-from firestarter.config.config import PlannedContribution
+from firecast.core.simulation import Simulation
+from firecast.config.config import PlannedContribution
 
 # The withdrawal priority is documented in `_withdraw_from_assets` as:
 # STR, Bonds, Stocks, Fun
@@ -36,17 +36,19 @@ def test_withdraw_from_assets_success_single_asset(
     )
     # Set rebalance weights for year 0
     sim.portfolio_rebalances = [
-        reb
-        if reb.year != 0
-        else reb.model_copy(
-            update={
-                "weights": {
-                    "stocks": stocks / total,
-                    "bonds": bonds / total,
-                    "str": str_ / total,
-                    "fun": fun / total,
+        (
+            reb
+            if reb.year != 0
+            else reb.model_copy(
+                update={
+                    "weights": {
+                        "stocks": stocks / total,
+                        "bonds": bonds / total,
+                        "str": str_ / total,
+                        "fun": fun / total,
+                    }
                 }
-            }
+            )
         )
         for reb in sim.portfolio_rebalances
     ]
@@ -84,17 +86,19 @@ def test_withdraw_from_assets_success_multiple_assets(
     )
     # Set rebalance weights for year 0
     sim.portfolio_rebalances = [
-        reb
-        if reb.year != 0
-        else reb.model_copy(
-            update={
-                "weights": {
-                    "stocks": stocks / total,
-                    "bonds": bonds / total,
-                    "str": str_ / total,
-                    "fun": fun / total,
+        (
+            reb
+            if reb.year != 0
+            else reb.model_copy(
+                update={
+                    "weights": {
+                        "stocks": stocks / total,
+                        "bonds": bonds / total,
+                        "str": str_ / total,
+                        "fun": fun / total,
+                    }
                 }
-            }
+            )
         )
         for reb in sim.portfolio_rebalances
     ]
@@ -141,34 +145,32 @@ def test_withdraw_from_assets_failure_insufficient_funds(
     )
     # Set rebalance weights for year 0
     sim.portfolio_rebalances = [
-        reb
-        if reb.year != 0
-        else reb.model_copy(
-            update={
-                "weights": {
-                    "stocks": stocks / total,
-                    "bonds": bonds / total,
-                    "str": str_ / total,
-                    "fun": fun / total,
+        (
+            reb
+            if reb.year != 0
+            else reb.model_copy(
+                update={
+                    "weights": {
+                        "stocks": stocks / total,
+                        "bonds": bonds / total,
+                        "str": str_ / total,
+                        "fun": fun / total,
+                    }
                 }
-            }
+            )
         )
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
 
-    total_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    total_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
 
     amount_to_withdraw = 50_000.0  # More than the 40k available
     sim._withdraw_from_assets(amount_to_withdraw)
 
     assert sim.state.simulation_failed
     assert sim.state.current_bank_balance == pytest.approx(total_liquid_assets)
-    assert sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    ) == pytest.approx(0.0)
+    assert sum(v for k, v in sim.state.portfolio.items() if k != "inflation") == pytest.approx(0.0)
 
 
 def test_withdraw_from_assets_success_all_assets(
@@ -192,17 +194,19 @@ def test_withdraw_from_assets_success_all_assets(
     )
     # Set rebalance weights for year 0
     sim.portfolio_rebalances = [
-        reb
-        if reb.year != 0
-        else reb.model_copy(
-            update={
-                "weights": {
-                    "stocks": stocks / total,
-                    "bonds": bonds / total,
-                    "str": str_ / total,
-                    "fun": fun / total,
+        (
+            reb
+            if reb.year != 0
+            else reb.model_copy(
+                update={
+                    "weights": {
+                        "stocks": stocks / total,
+                        "bonds": bonds / total,
+                        "str": str_ / total,
+                        "fun": fun / total,
+                    }
                 }
-            }
+            )
         )
         for reb in sim.portfolio_rebalances
     ]

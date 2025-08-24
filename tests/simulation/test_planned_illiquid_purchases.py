@@ -7,8 +7,8 @@
 
 import pytest
 
-from firestarter.core.simulation import Simulation
-from firestarter.config.config import PlannedIlliquidPurchase, PlannedContribution
+from firecast.core.simulation import Simulation
+from firecast.config.config import PlannedIlliquidPurchase, PlannedContribution
 
 
 def test_handle_planned_illiquid_purchase(initialized_simulation: Simulation) -> None:
@@ -20,14 +20,10 @@ def test_handle_planned_illiquid_purchase(initialized_simulation: Simulation) ->
     purchase_year = 2
     purchase_amount = 50000.0
     illiquid_asset = next(
-        k
-        for k in sim.assets
-        if sim.assets[k].withdrawal_priority is None and k != "inflation"
+        k for k in sim.assets if sim.assets[k].withdrawal_priority is None and k != "inflation"
     )
     # Add a planned contribution at year 0 to initialize liquid assets
-    liquid_asset = next(
-        k for k in sim.assets if sim.assets[k].withdrawal_priority is not None
-    )
+    liquid_asset = next(k for k in sim.assets if sim.assets[k].withdrawal_priority is not None)
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "planned_contributions": [
@@ -48,9 +44,7 @@ def test_handle_planned_illiquid_purchase(initialized_simulation: Simulation) ->
 
     # Store initial state
     initial_liquid_assets = {
-        k: v
-        for k, v in state.portfolio.items()
-        if sim.assets[k].withdrawal_priority is not None
+        k: v for k, v in state.portfolio.items() if sim.assets[k].withdrawal_priority is not None
     }
     initial_illiquid_value = state.portfolio[illiquid_asset]
 
@@ -86,6 +80,6 @@ def test_handle_planned_illiquid_purchase(initialized_simulation: Simulation) ->
 
     expected_fee = calc_fee(expected_nominal_amount)
     expected_decrease = expected_nominal_amount + expected_fee
-    assert liquid_sum_before - liquid_sum_after == pytest.approx(expected_decrease), (
-        f"Liquid assets should decrease by {expected_decrease}, got {liquid_sum_before - liquid_sum_after}"
-    )
+    assert liquid_sum_before - liquid_sum_after == pytest.approx(
+        expected_decrease
+    ), f"Liquid assets should decrease by {expected_decrease}, got {liquid_sum_before - liquid_sum_after}"

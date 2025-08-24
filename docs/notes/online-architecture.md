@@ -6,12 +6,12 @@ This architecture is designed for efficiency, scalability, and maintainability b
 
 This is the heart of the application, responsible for all computation and data processing. It is completely "headless" and has no knowledge of the web or any specific user interface.
 
-1. **The Simulation Engine (`firestarter.core`):**
+1. **The Simulation Engine (`firecast.core`):**
 
    - **Role:** The raw number-cruncher.
    - **Function:** Its sole responsibility is to take a configuration object and execute a single simulation run, producing a large, detailed dictionary of raw results (e.g., full monthly histories for wealth, returns, etc.).
 
-2. **The Analyzer / Aggregator (`firestarter.analysis`):**
+2. **The Analyzer / Aggregator (`firecast.analysis`):**
    - **Role:** The data processor and summarizer. This is the key improvement.
    - **Function:** This new, shared module takes the list of raw results from _all_ simulation runs. It performs all the heavy data transformations:
      - Calculates summary statistics (success rate, median final wealth, percentiles).

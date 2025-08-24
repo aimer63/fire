@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 
-from firestarter.config.config import (
+from firecast.config.config import (
     Config,
     Asset,
     IncomeStep,
@@ -48,7 +48,7 @@ def basic_paths():
 
 @pytest.fixture
 def basic_portfolio_rebalances():
-    from firestarter.config.config import PortfolioRebalance
+    from firecast.config.config import PortfolioRebalance
 
     class Rebalances:
         rebalances = [PortfolioRebalance(year=10, weights={"stocks": 1.0})]
@@ -58,7 +58,7 @@ def basic_portfolio_rebalances():
 
 @pytest.fixture
 def basic_simulation_parameters():
-    from firestarter.config.config import SimulationParameters
+    from firecast.config.config import SimulationParameters
 
     return SimulationParameters(num_simulations=1, random_seed=123)
 
@@ -172,14 +172,10 @@ def test_transactions_fee_validation(fee_cfg, should_raise, basic_deterministic_
         with pytest.raises(ValueError):
             # Use the fixture and model_copy to update transactions_fee,
             # then immediately call .model_validate() to force validation.
-            updated = basic_deterministic_inputs.model_copy(
-                update={"transactions_fee": fee_cfg}
-            )
+            updated = basic_deterministic_inputs.model_copy(update={"transactions_fee": fee_cfg})
             DeterministicInputs.model_validate(updated)
     else:
-        updated = basic_deterministic_inputs.model_copy(
-            update={"transactions_fee": fee_cfg}
-        )
+        updated = basic_deterministic_inputs.model_copy(update={"transactions_fee": fee_cfg})
         DeterministicInputs.model_validate(updated)
 
 
@@ -219,11 +215,7 @@ def test_planned_contribution_asset_validation(
     }
     # Valid asset
     valid_inputs = basic_deterministic_inputs.model_copy(
-        update={
-            "planned_contributions": [
-                PlannedContribution(amount=1000, year=1, asset="stocks")
-            ]
-        }
+        update={"planned_contributions": [PlannedContribution(amount=1000, year=1, asset="stocks")]}
     )
     Config(
         assets=assets,
@@ -240,15 +232,9 @@ def test_planned_contribution_asset_validation(
         PlannedContribution(amount=1000, year=1, asset="inflation")
     # Invalid: unknown asset
     invalid_inputs = basic_deterministic_inputs.model_copy(
-        update={
-            "planned_contributions": [
-                PlannedContribution(amount=1000, year=1, asset="gold")
-            ]
-        }
+        update={"planned_contributions": [PlannedContribution(amount=1000, year=1, asset="gold")]}
     )
-    with pytest.raises(
-        ValueError, match="Planned contribution targets unknown asset 'gold'."
-    ):
+    with pytest.raises(ValueError, match="Planned contribution targets unknown asset 'gold'."):
         Config(
             assets=assets,
             deterministic_inputs=invalid_inputs,
@@ -289,9 +275,7 @@ def test_planned_illiquid_purchase_validation(
         shocks=[],
     )
     # Invalid: targets 'inflation'
-    with pytest.raises(
-        ValueError, match="Illiquid purchase cannot target the 'inflation' asset."
-    ):
+    with pytest.raises(ValueError, match="Illiquid purchase cannot target the 'inflation' asset."):
         PlannedIlliquidPurchase(year=2, amount=100000, asset="inflation")
     # Invalid: targets liquid asset
     invalid_inputs_liquid = basic_deterministic_inputs.model_copy(
@@ -320,9 +304,7 @@ def test_planned_illiquid_purchase_validation(
             ]
         }
     )
-    with pytest.raises(
-        ValueError, match="Planned illiquid purchase targets unknown asset 'gold'."
-    ):
+    with pytest.raises(ValueError, match="Planned illiquid purchase targets unknown asset 'gold'."):
         Config(
             assets=assets,
             deterministic_inputs=invalid_inputs_unknown,

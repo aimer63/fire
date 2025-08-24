@@ -6,8 +6,8 @@
 #
 
 import pytest
-from firestarter.core.simulation import Simulation
-from firestarter.config.config import PortfolioRebalance
+from firecast.core.simulation import Simulation
+from firecast.config.config import PortfolioRebalance
 
 
 def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
@@ -38,9 +38,7 @@ def test_rebalance_event_successful(initialized_simulation: Simulation) -> None:
     }
     sim.init()  # Re-initialize state with new portfolio and rebalances
 
-    total_liquid_assets = sum(
-        v for k, v in sim.state.portfolio.items() if k != "inflation"
-    )
+    total_liquid_assets = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
 
     # Execute the rebalance logic for the correct month
     month_to_test = rebalance_year * 12

@@ -6,8 +6,8 @@
 #
 
 import pytest
-from firestarter.core.simulation import Simulation
-from firestarter.config.config import IncomeStep
+from firecast.core.simulation import Simulation
+from firecast.config.config import IncomeStep
 
 
 def test_simulation_process_income_no_income(
@@ -19,9 +19,9 @@ def test_simulation_process_income_no_income(
     month_to_test = 0
     sim._process_income(month_to_test)
 
-    assert sim.state.current_bank_balance == initial_bank_balance, (
-        "Bank balance should not change if no income is scheduled."
-    )
+    assert (
+        sim.state.current_bank_balance == initial_bank_balance
+    ), "Bank balance should not change if no income is scheduled."
 
 
 def test_simulation_process_income_with_income_and_pension(
@@ -48,8 +48,7 @@ def test_simulation_process_income_with_income_and_pension(
 
     expected_income_scenario1 = 1000.0 + 500.0
     assert (
-        sim.state.current_bank_balance
-        == original_fixture_bank_balance + expected_income_scenario1
+        sim.state.current_bank_balance == original_fixture_bank_balance + expected_income_scenario1
     ), "Scenario 1: Bank balance should increase by income and pension."
 
     # --- Scenario 2: Only Pension active (income ended) ---
@@ -63,8 +62,7 @@ def test_simulation_process_income_with_income_and_pension(
 
     expected_income_scenario2 = 500.0  # Only pension
     assert (
-        sim.state.current_bank_balance
-        == original_fixture_bank_balance + expected_income_scenario2
+        sim.state.current_bank_balance == original_fixture_bank_balance + expected_income_scenario2
     ), "Scenario 2: Bank balance should increase by pension only after income period."
 
     # --- Scenario 3: No income (pension not started yet, income off) ---
@@ -81,11 +79,8 @@ def test_simulation_process_income_with_income_and_pension(
 
     expected_income_scenario3 = 0.0
     assert (
-        sim.state.current_bank_balance
-        == original_fixture_bank_balance + expected_income_scenario3
-    ), (
-        "Scenario 3: Bank balance should not change if pension hasn't started and no income."
-    )
+        sim.state.current_bank_balance == original_fixture_bank_balance + expected_income_scenario3
+    ), "Scenario 3: Bank balance should not change if pension hasn't started and no income."
 
 
 def test_pension_real_to_nominal_basic(
@@ -120,9 +115,7 @@ def test_pension_real_to_nominal_basic(
         else:
             expected *= 1.0 + monthly_inflation_sequence[month - 1]
         actual = sim.state.monthly_nominal_pension_sequence[month]
-        assert actual == pytest.approx(expected), (
-            f"Month {month}: {actual} != {expected}"
-        )
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
 
 
 def test_pension_steps_partial__partial_indexation(
@@ -152,9 +145,9 @@ def test_pension_steps_partial__partial_indexation(
             expected = 1000.0
         else:
             expected *= 1.0 + monthly_inflation_sequence[month - 1] * 0.5
-        assert pension_seq[month] == pytest.approx(expected), (
-            f"Month {month}: {pension_seq[month]} != {expected}"
-        )
+        assert pension_seq[month] == pytest.approx(
+            expected
+        ), f"Month {month}: {pension_seq[month]} != {expected}"
 
 
 def test_income_steps_real_to_nominal_basic(initialized_simulation: Simulation) -> None:
@@ -181,9 +174,7 @@ def test_income_steps_real_to_nominal_basic(initialized_simulation: Simulation) 
     for month in range(0, 24):
         actual = sim.state.monthly_nominal_income_sequence[month]
         expected = 1000.0
-        assert actual == pytest.approx(expected), (
-            f"Month {month}: {actual} != {expected}"
-        )
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
 
     # Month 24: start of last step, inflation-adjusted
     inflation_factor_24 = 1.0
@@ -196,9 +187,7 @@ def test_income_steps_real_to_nominal_basic(initialized_simulation: Simulation) 
         if month > 24:
             expected *= 1.0 + monthly_inflation_sequence[month - 1] * 0.5
         actual = sim.state.monthly_nominal_income_sequence[month]
-        assert actual == pytest.approx(expected), (
-            f"Month {month}: {actual} != {expected}"
-        )
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
 
     # Months 48+: income should be 0 (income_end_year = 4)
     for month in range(48, sim.det_inputs.years_to_simulate * 12):
@@ -234,9 +223,7 @@ def test_income_steps_real_to_nominal_multiple_steps(
     for month in range(0, 36):
         actual = sim.state.monthly_nominal_income_sequence[month]
         expected = 1000.0
-        assert actual == pytest.approx(expected), (
-            f"Month {month}: {actual} != {expected}"
-        )
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
 
     # Step 2: years 3-9 (months 36-119): inflation-indexed from 1500.0, but flat
     # during this step
@@ -246,9 +233,7 @@ def test_income_steps_real_to_nominal_multiple_steps(
     expected = 1500.0 * inflation_factor
     for month in range(36, 120):
         actual = sim.state.monthly_nominal_income_sequence[month]
-        assert actual == pytest.approx(expected), (
-            f"Month {month}: {actual} != {expected}"
-        )
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
 
     # Step 3: years 10-14 (months 120-179): inflation-indexed from 2000.0, but flat
     # during this step
@@ -258,9 +243,7 @@ def test_income_steps_real_to_nominal_multiple_steps(
     expected = 2000.0 * inflation_factor
     for month in range(120, 180):
         actual = sim.state.monthly_nominal_income_sequence[month]
-        assert actual == pytest.approx(expected), (
-            f"Month {month}: {actual} != {expected}"
-        )
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
 
     # Step 4: years 15-19 (months 180-239): inflation-indexed from 500.0,
     # grows with inflation and income_inflation_factor
@@ -272,9 +255,7 @@ def test_income_steps_real_to_nominal_multiple_steps(
         if month > 180:
             expected *= 1.0 + monthly_inflation_sequence[month - 1] * 0.7
         actual = sim.state.monthly_nominal_income_sequence[month]
-        assert actual == pytest.approx(expected), (
-            f"Month {month}: {actual} != {expected}"
-        )
+        assert actual == pytest.approx(expected), f"Month {month}: {actual} != {expected}"
 
     # After income_end_year: income should be 0
     for month in range(240, sim.det_inputs.years_to_simulate * 12):

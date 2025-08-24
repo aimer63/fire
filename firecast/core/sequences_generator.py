@@ -32,8 +32,8 @@ Classes:
 """
 
 import numpy as np
-from firestarter.config.config import Asset
-from firestarter.config.correlation_matrix import CorrelationMatrix
+from firecast.config.config import Asset
+from firecast.config.correlation_matrix import CorrelationMatrix
 
 
 class SequencesGenerator:
@@ -102,9 +102,7 @@ class SequencesGenerator:
         rng = np.random.default_rng(self.seed)
 
         # --- 1. Extract Annual Arithmetic Parameters ---
-        mu_sample = np.array(
-            [self.assets[asset].mu for asset in self.asset_and_inflation_order]
-        )
+        mu_sample = np.array([self.assets[asset].mu for asset in self.asset_and_inflation_order])
         sigma_sample = np.array(
             [self.assets[asset].sigma for asset in self.asset_and_inflation_order]
         )

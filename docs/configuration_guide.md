@@ -1,11 +1,11 @@
-# Firestarter Configuration Guide
+# firecast Configuration Guide
 
-This guide explains how to configure the Firestarter simulation engine for modeling
+This guide explains how to configure the firecast simulation engine for modeling
 financial independence and early retirement (FIRE) scenarios.
 
 ## 1. Overview
 
-Firestarter uses a TOML configuration file to define all simulation parameters,
+firecast uses a TOML configuration file to define all simulation parameters,
 including deterministic inputs, asset definitions, correlation matrix, portfolio
 rebalancing schedule, and planned shocks.
 

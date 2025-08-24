@@ -1,6 +1,6 @@
-# Firestarter Installation Guide
+# firecast Installation Guide
 
-This guide explains how to install the `firestarter` package by cloning the repository or from a GitHub release on **Linux**, **macOS**, and **Windows**.
+This guide explains how to install the `firecast` package by cloning the repository or from a GitHub release on **Linux**, **macOS**, and **Windows**.
 
 ---
 
@@ -59,7 +59,7 @@ This guide explains how to install the `firestarter` package by cloning the repo
 4. Verify the installation:
 
    ```sh
-   python -c "import firestarter; print(firestarter.__version__)"
+   python -c "import firecast; print(firecast.__version__)"
    ```
 
 ---
@@ -67,30 +67,30 @@ This guide explains how to install the `firestarter` package by cloning the repo
 ## 3. Install from GitHub Release
 
 1. Go to the [GitHub Releases page](https://github.com/aimer63/fire/releases).
-2. Download the latest `.whl` file (e.g., `firestarter-0.1.0b1-py3-none-any.whl`) to your computer.
+2. Download the latest `.whl` file (e.g., `firecast-0.1.0b1-py3-none-any.whl`) to your computer.
 
 ---
 
-### 3.1 Install firestarter
+### 3.1 Install firecast
 
 Open a terminal (Linux/macOS) or Command Prompt (Windows), navigate to the folder where you
 downloaded the `.whl` file, and run:
 
 ```sh
-pip install firestarter-0.1.0b1-py3-none-any.whl
+pip install firecast-0.1.0b1-py3-none-any.whl
 ```
 
 Verify the installation:
 
 ```sh
-python -c "import firestarter; print(firestarter.__version__)"
+python -c "import firecast; print(firecast.__version__)"
 ```
 
 ---
 
-## 4. Run firestarter
+## 4. Run firecast
 
-You can run firestarter directly using the installed CLI command:
+You can run firecast directly using the installed CLI command:
 
 ```sh
 fire -f config.toml
@@ -101,7 +101,7 @@ No need to set them manually.
 
 See [Usage](../docs/usage.md) for details.
 
-## 5. Upgrading firestarter
+## 5. Upgrading firecast
 
 ### If installed from source (git)
 
@@ -120,7 +120,7 @@ See [Usage](../docs/usage.md) for details.
 3. Verify the installation:
 
    ```sh
-   python -c "import firestarter; print(firestarter.__version__)"
+   python -c "import firecast; print(firecast.__version__)"
    ```
 
 ---
@@ -131,19 +131,19 @@ See [Usage](../docs/usage.md) for details.
 2. (Optional but recommended) Uninstall the old version:
 
    ```sh
-   pip uninstall firestarter
+   pip uninstall firecast
    ```
 
 3. Install the new version:
 
    ```sh
-   pip install firestarter-0.1.0b2-py3-none-any.whl
+   pip install firecast-0.1.0b2-py3-none-any.whl
    ```
 
 4. Verify the installation:
 
    ```sh
-   python -c "import firestarter; print(firestarter.__version__)"
+   python -c "import firecast; print(firecast.__version__)"
    ```
 
 ---

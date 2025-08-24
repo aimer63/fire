@@ -8,8 +8,8 @@
 import pytest
 from typing import Dict
 
-from firestarter.core.simulation import SimulationBuilder
-from firestarter.config.config import (
+from firecast.core.simulation import SimulationBuilder
+from firecast.config.config import (
     IncomeStep,
     ExpenseStep,
     DeterministicInputs,
@@ -18,7 +18,7 @@ from firestarter.config.config import (
     PlannedContribution,
     PlannedExtraExpense,
 )
-from firestarter.config.correlation_matrix import CorrelationMatrix
+from firecast.config.correlation_matrix import CorrelationMatrix
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def basic_sim_params() -> SimulationParameters:
 
 @pytest.fixture
 def basic_assets():
-    from firestarter.config.config import Asset
+    from firecast.config.config import Asset
 
     return {
         "stocks": Asset(mu=0.07, sigma=0.15, withdrawal_priority=2),

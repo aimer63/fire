@@ -1,10 +1,10 @@
 > #buffers:visible
 > #file:copilot-interaction-rules.md
-> #file:firestarter/config/config.py
-> #file:firestarter/core/simulation_state.py
-> #file:firestarter/core/sequences_generator.py
-> #file:firestarter/core/simulation.py
-> #file:firestarter/main.py
+> #file:firecast/config/config.py
+> #file:firecast/core/simulation_state.py
+> #file:firecast/core/sequences_generator.py
+> #file:firecast/core/simulation.py
+> #file:firecast/main.py
 > #file:data/data_metrics.py
 > #file:configs/config.toml
 > #files:tests/config/*.py

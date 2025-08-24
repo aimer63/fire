@@ -6,7 +6,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "firestarter"
+name = "firecast"
 version = "0.1.1"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
 authors = [{ name = "aimer63", email = "63aimer@gmail.com" }]
@@ -38,16 +38,16 @@ dev = [
 ]
 
 [project.scripts]
-fire = "firestarter.main:main"
+fire = "firecast.main:main"
 
 [tool.setuptools.packages.find]
-include = ["firestarter*"]
+include = ["firecast*"]
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.package-data]
-"firestarter" = [
+"firecast" = [
  "README.md",
  "CHANGELOG.md",
  "config/config.toml",

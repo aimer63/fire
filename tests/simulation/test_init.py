@@ -5,8 +5,8 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 
-# from firestarter.core.constants import ASSET_KEYS
-from firestarter.core.simulation import Simulation
+# from firecast.core.constants import ASSET_KEYS
+from firecast.core.simulation import Simulation
 
 
 def test_simulation_months(initialized_simulation: Simulation) -> None:
@@ -41,9 +41,7 @@ def test_simulation_init_initial_state(initialized_simulation: Simulation) -> No
 
     expected_initial_total_wealth = (
         det_inputs.initial_bank_balance
-        + initial_portfolio[
-            "stocks"
-        ]  # Only stocks has a non-zero value in basic_initial_assets
+        + initial_portfolio["stocks"]  # Only stocks has a non-zero value in basic_initial_assets
     )
     assert state.initial_total_wealth == expected_initial_total_wealth
     assert not state.simulation_failed
@@ -61,9 +59,9 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
     ]
     for seq_name in sequences_to_check:
         assert hasattr(state, seq_name), f"'{seq_name}' should be in state."
-        assert len(getattr(state, seq_name)) == total_months, (
-            f"'{seq_name}' should have length {total_months}."
-        )
+        assert (
+            len(getattr(state, seq_name)) == total_months
+        ), f"'{seq_name}' should have length {total_months}."
 
     assert hasattr(state, "monthly_return_rates_sequences")
     assert len(state.monthly_return_rates_sequences) == len(
@@ -77,6 +75,6 @@ def test_simulation_precompute_sequences(initialized_simulation: Simulation) -> 
         assert len(state.monthly_return_rates_sequences[asset_key]) == total_months
 
     assert hasattr(state, "monthly_cumulative_inflation_factors")
-    assert len(state.monthly_cumulative_inflation_factors) == total_months + 1, (
-        "Cumulative inflation factors should have length total_months + 1."
-    )
+    assert (
+        len(state.monthly_cumulative_inflation_factors) == total_months + 1
+    ), "Cumulative inflation factors should have length total_months + 1."

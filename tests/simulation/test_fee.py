@@ -6,9 +6,9 @@
 #
 
 import pytest
-from firestarter.core.simulation import Simulation
+from firecast.core.simulation import Simulation
 
-from firestarter.config.config import PlannedContribution
+from firecast.config.config import PlannedContribution
 
 
 def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
@@ -36,9 +36,7 @@ def test_apply_fund_fee(initialized_simulation: Simulation) -> None:
     }
 
     # Store initial values to compare against
-    initial_liquid_assets = {
-        k: v for k, v in sim.state.portfolio.items() if k != "inflation"
-    }
+    initial_liquid_assets = {k: v for k, v in sim.state.portfolio.items() if k != "inflation"}
     initial_bank_balance = sim.state.current_bank_balance
 
     # Execute the method under test for an arbitrary month
@@ -76,9 +74,7 @@ def test_transaction_fee_on_investment(initialized_simulation: Simulation) -> No
 
     # The invested amount is 5,000, fee is 9.5, net invested is 4,990.5
     invest_amount = 5_000.0
-    expected_fee = max(
-        fee_cfg["min"], min(invest_amount * fee_cfg["rate"], fee_cfg["max"])
-    )
+    expected_fee = max(fee_cfg["min"], min(invest_amount * fee_cfg["rate"], fee_cfg["max"]))
     total_net_invested = invest_amount - expected_fee
 
     invested_sum = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
@@ -100,16 +96,12 @@ def test_transaction_fee_on_planned_contribution(
     sim.det_inputs = sim.det_inputs.model_copy(
         update={
             "transactions_fee": fee_cfg,
-            "planned_contributions": [
-                PlannedContribution(year=0, amount=contribution_amount)
-            ],
+            "planned_contributions": [PlannedContribution(year=0, amount=contribution_amount)],
             "initial_bank_balance": 10_000.0,
         }
     )
     sim.init()
-    expected_fee = max(
-        fee_cfg["min"], min(contribution_amount * fee_cfg["rate"], fee_cfg["max"])
-    )
+    expected_fee = max(fee_cfg["min"], min(contribution_amount * fee_cfg["rate"], fee_cfg["max"]))
     total_net_invested = contribution_amount - expected_fee
 
     invested_sum = sum(v for k, v in sim.state.portfolio.items() if k != "inflation")
@@ -135,9 +127,11 @@ def test_transaction_fee_on_withdrawal_single_asset(
     )
     # Set rebalance weights so all goes to the first asset
     sim.portfolio_rebalances = [
-        reb.model_copy(update={"weights": {list(sim.assets.keys())[0]: 1.0}})
-        if reb.year == 0
-        else reb
+        (
+            reb.model_copy(update={"weights": {list(sim.assets.keys())[0]: 1.0}})
+            if reb.year == 0
+            else reb
+        )
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
@@ -188,17 +182,17 @@ def test_transaction_fee_on_withdrawal_multiple_assets(
     )
     asset_keys = [k for k in sim.assets.keys() if k != "inflation"]
     asset_priority_list = [(k, sim.assets[k].withdrawal_priority) for k in asset_keys]
-    asset_priority_list.sort(
-        key=lambda item: item[1] if item[1] is not None else float("inf")
-    )
+    asset_priority_list.sort(key=lambda item: item[1] if item[1] is not None else float("inf"))
     first_asset = asset_priority_list[0][0]
     second_asset = asset_priority_list[1][0]
 
     # Set rebalance weights so half goes to each of the two lowest-priority assets
     sim.portfolio_rebalances = [
-        reb.model_copy(update={"weights": {first_asset: 0.5, second_asset: 0.5}})
-        if reb.year == 0
-        else reb
+        (
+            reb.model_copy(update={"weights": {first_asset: 0.5, second_asset: 0.5}})
+            if reb.year == 0
+            else reb
+        )
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
@@ -259,9 +253,7 @@ def test_transaction_fee_on_rebalance(initialized_simulation: Simulation) -> Non
     asset_keys = [k for k in sim.assets.keys() if k != "inflation"]
     # Initial weights: all in asset_keys[0]
     sim.portfolio_rebalances = [
-        reb.model_copy(update={"weights": {asset_keys[0]: 1.0}})
-        if reb.year == 0
-        else reb
+        reb.model_copy(update={"weights": {asset_keys[0]: 1.0}}) if reb.year == 0 else reb
         for reb in sim.portfolio_rebalances
     ]
     sim.init()
@@ -305,6 +297,4 @@ def test_transaction_fee_on_rebalance(initialized_simulation: Simulation) -> Non
     # Assert asset values and bank balance
     assert sim.state.portfolio[asset_keys[0]] == pytest.approx(target_0)
     assert sim.state.portfolio[asset_keys[1]] == pytest.approx(initial_1 + net_invest)
-    assert sim.state.current_bank_balance == pytest.approx(
-        initial_bank + net_proceeds - gross_buy
-    )
+    assert sim.state.current_bank_balance == pytest.approx(initial_bank + net_proceeds - gross_buy)

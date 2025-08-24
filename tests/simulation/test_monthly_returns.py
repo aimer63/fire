@@ -6,7 +6,7 @@
 #
 
 import pytest
-from firestarter.core.simulation import Simulation
+from firecast.core.simulation import Simulation
 
 
 def test_apply_monthly_returns(initialized_simulation: Simulation) -> None:

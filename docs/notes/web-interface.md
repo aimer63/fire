@@ -4,7 +4,7 @@ Here is a discussion of the recommended approach using a web framework.
 
 For your project, **FastAPI** is the ideal choice. It's a modern, high-performance Python web framework that is perfectly suited for your needs for three key reasons:
 
-1.  **Native Pydantic Integration:** This is the killer feature for you. Your entire configuration is already defined in Pydantic models (`firestarter/config/config.py`). FastAPI uses Pydantic for data validation. You can use your `Config` model directly in an API endpoint, and FastAPI will automatically handle:
+1.  **Native Pydantic Integration:** This is the killer feature for you. Your entire configuration is already defined in Pydantic models (`firecast/config/config.py`). FastAPI uses Pydantic for data validation. You can use your `Config` model directly in an API endpoint, and FastAPI will automatically handle:
 
     - Parsing the incoming JSON request from the web form.
     - Validating the data against all your existing rules.
@@ -61,8 +61,8 @@ This part is completely separate from the backend. It consists of HTML, CSS, and
 
 This new web interface does not interfere with your existing command-line tool at all.
 
-- Your core logic in `firestarter/core/` remains unchanged.
-- Your CLI entry point, `firestarter/main.py`, remains unchanged.
+- Your core logic in `firecast/core/` remains unchanged.
+- Your CLI entry point, `firecast/main.py`, remains unchanged.
 - You will simply have a new entry point, `web_main.py`, which you run with a web server like `uvicorn` to start the web application.
 
 This approach gives you the best of both worlds: a scriptable, powerful CLI and an interactive, user-friendly web interface.

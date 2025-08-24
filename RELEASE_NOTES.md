@@ -11,11 +11,11 @@
 
 ### Documentation
 
-- **firestarter**: some minor update
-- **firestarter**: another README update
-- **firestarter**: update readme
+- **firecast**: some minor update
+- **firecast**: another README update
+- **firecast**: update readme
 - **all**: add badges to README for project information
 
 ### Features
 
-- **firestarter**: add coverage/codecov integration
+- **firecast**: add coverage/codecov integration
