@@ -10,7 +10,7 @@ name = "firestarter"
 version = "0.1.1"
 description = "Monte Carlo simulation tool for FIRE (Financial Independence / Early Retirement) planning."
 authors = [{ name = "aimer63", email = "imeriod@gmail.com" }]
-license = { file = "LICENSE", text = "AGPL-3.0-or-later" }
+license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10"
