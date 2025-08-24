@@ -1,21 +1,9 @@
-## Unreleased
+### Chores
 
-### Bug Fixes
+- **ci**: add PyPI publishing via OIDC trusted publisher
+- **docker**: add Dockerfile for installation testing
+- **ci**: unify dependency install in workflows
 
-- **pyproject**: use SPDX string for license field
+### Code Refactoring
 
-### Continuous Integrations
-
-- **commitizen**: add commitizen support to generate release notes
-- **release**: improve packaging and workflow setup
-
-### Documentation
-
-- **firecast**: some minor update
-- **firecast**: another README update
-- **firecast**: update readme
-- **all**: add badges to README for project information
-
-### Features
-
-- **firecast**: add coverage/codecov integration
+- **pkg**: rename firestarter to firecast

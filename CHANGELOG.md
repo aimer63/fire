@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [v0.1.2rc1](https://github.com/aimer63/fire/releases/tag/v0.1.2rc1) - 2025-08-24
+
+### Chores
+
+- **ci**: add PyPI publishing via OIDC trusted publisher
+- **docker**: add Dockerfile for installation testing
+- **ci**: unify dependency install in workflows
+
+### Code Refactoring
+
+- **pkg**: rename firestarter to firecast
+
 ## [v0.1.1](https://github.com/aimer63/fire/releases/tag/v0.1.1) - 2025-08-23
 
 ### Added
