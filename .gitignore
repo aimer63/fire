@@ -14,10 +14,6 @@ __pycache__/
 # VS Code
 .vscode/
 
-# Ignore config files you don't want to commit
-configs/imerio*
-configs/carlo*
-
 # Ignore all output files and directories
 output/
 
@@ -35,5 +31,8 @@ update_copyright.py
 # Ignore exercises
 learn.py
 
-# Temporary folder
+# Ignore temporary folder
 tmp/
+
+# Ignore personal data folder
+personal/

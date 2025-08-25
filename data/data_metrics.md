@@ -21,23 +21,45 @@ historical performance.
 
 ## Prerequisites
 
-1. **Python Environment:** You need Python with the
-   `pandas`, `numpy`, `openpyxl`, `matplotlib`, and `seaborn` libraries installed.
+**Data File:** The script expects an Excel file with historical data, default name: `data.xlsx`.
 
-   ```bash
-   pip install pandas numpy openpyxl matplotlib seaborn
-   ```
+- The file must have a date column named `Date`.
+- The other columns are considered the values of the assets (e.g., asset prices or returns).
+- The data can be sampled **monthly** or **daily**.
+- The script supports both price and single-period return data as input, controlled by
+  the `--input-type` argument.
+- If using `--input-type return`, the input values must be true single-period returns
+  (not annualized rates).
+- Using `--input-type simple` only simple statistics are calculated for the raw values
+  in the columns. No returns calculation or compounding.
 
-2. **Data File:** The script expects an Excel file with historical data, default name: `data.xlsx`.
-   - The file must have a date column named `Date`.
-   - The other columns are considered the values of the assets (e.g., asset prices or returns).
-   - The data can be sampled **monthly** or **daily**.
-   - The script supports both price and single-period return data as input, controlled by
-     the `--input-type` argument.
-   - If using `--input-type return`, the input values must be true single-period returns
-     (not annualized rates).
-   - Using `--input-type simple` only simple statistics are calculated for the raw values
-     in the columns. No returns calculation or compounding.
+## Where to find data samples
+
+When you install `firecast`, any bundled data files (such as those in the `data/`
+directory) are placed inside your Python's `site-packages` directory:
+
+```
+.../site-packages/firecast/data/
+```
+
+The exact location depends on your setup:
+
+- **Virtual environment:**  
+  `<venv>/lib/pythonX.Y/site-packages/firecast/data/`
+
+- **System-wide install:**  
+  `/usr/local/lib/pythonX.Y/site-packages/firecast/data/`  
+  or  
+  `/usr/lib/pythonX.Y/site-packages/firecast/data/`
+
+- **User install:**  
+  `~/.local/lib/pythonX.Y/site-packages/firecast/data/`
+
+- **Windows:**  
+  `C:\Users\<user>\AppData\Roaming\Python\PythonXY\site-packages\firecast\data\`
+
+Just look for the `site-packages/firecast/data/` folder inside your Python environment
+to access the data files.
 
 ## Usage
 
