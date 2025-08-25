@@ -25,4 +25,4 @@ Depending on your installation method, you can find them here:
   `C:\Users\<user>\AppData\Roaming\Python\PythonXY\site-packages\firecast\configs\config.toml`
 
 > **Note:**
-> You can also download the latest example configuration files directly from the [GitHub repository](https://github.com/aimer63/firecast/tree/master/configs).
+> You can also download the latest example configuration files directly from the [GitHub repository](https://github.com/aimer63/fire/tree/master/configs).
