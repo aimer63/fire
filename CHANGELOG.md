@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [v0.1.2rc4](https://github.com/aimer63/fire/releases/tag/v0.1.2rc4) - 2025-08-24
+## [v0.1.2rc5](https://github.com/aimer63/fire/releases/tag/v0.1.2rc5) - 2025-08-24
 
 ### Chores
 

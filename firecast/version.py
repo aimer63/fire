@@ -5,4 +5,4 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 
-__version__ = "0.1.2rc4"
+__version__ = "0.1.2rc5"
