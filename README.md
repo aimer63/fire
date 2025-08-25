@@ -85,7 +85,7 @@ sigma = 0.025
 
 See [Assets](https://github.com/aimer63/fire/blob/master/docs/assets.md) for details.
 
-- **[Simulation Engine](/docs/simulation_engine.md)**
+- **[Simulation Engine](https://github.com/aimer63/fire/blob/master/docs/simulation_engine.md)**
 
   The core of firecast is an engine that models your financial life month by month,
   year by year. For each of the thousands of simulation runs, it projects a unique
@@ -135,16 +135,16 @@ See [Assets](https://github.com/aimer63/fire/blob/master/docs/assets.md) for det
   Plots include:
 
   Wealth evolution over time
-  ![Wealth evolution over time](https://github.com/aimer63/fire/blob/master/docs/pics/wealth_evolution_samples_nominal.png)
+  ![Wealth evolution over time](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/wealth_evolution_samples_nominal.png)
 
   Bank account balance trajectories
-  ![Bank account balance trajectories](https://github.com/aimer63/fire/blob/master/docs/pics/bank_account_trajectories_nominal.png)
+  ![Bank account balance trajectories](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/bank_account_trajectories_nominal.png)
 
   Duration distribution of failed cases
-  ![Duration distribution of failed cases](https://github.com/aimer63/fire/blob/master/docs/pics/failed_duration_distribution.png)
+  ![Duration distribution of failed cases](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/failed_duration_distribution.png)
 
   Distribution of final wealth for successful outcomes
-  ![Distribution of final wealth for successful outcomes](https://github.com/aimer63/fire/blob/master/docs/pics/final_wealth_distribution_nominal.png)
+  ![Distribution of final wealth for successful outcomes](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/final_wealth_distribution_nominal.png)
 
   and all the corresponding plots in real terms and others.
 
@@ -182,7 +182,7 @@ See [Assets](https://github.com/aimer63/fire/blob/master/docs/assets.md) for det
 
   Start with the config example provided in `configs/` (e.g., `configs/config.toml`).
 
-- **[Run the simulation](/docs/usage.md)**
+- **[Run the simulation](https://github.com/aimer63/fire/blob/master/docs/usage.md)**
 
   From the project root:
 
@@ -215,6 +215,7 @@ output_root = "output/"
 
 [deterministic_inputs]
 initial_bank_balance = 8000.0
+
 # To set your initial portfolio, use a planned contribution at year 0 and specify the
 # allocation with a rebalance at year 0.
 planned_contributions = [{ year = 0, amount = 130000.0 }]
@@ -298,7 +299,7 @@ weights = { stocks = 0.60, bonds = 0.40 }
 
 ## Documentation
 
-For mathematical background, advanced usage, and additional guides, see the [docs/](docs/) folder.
+For mathematical background, advanced usage, and additional guides, see the [docs/](https://github.com/aimer63/fire/tree/master/docs) folder.
 
 ### 📃 Documentation Index
 
