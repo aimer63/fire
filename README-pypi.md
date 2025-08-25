@@ -6,9 +6,9 @@
 
 # firecast (FIRE Plan Simulator)
 
-![Logo](fire-small.png)
-
----
+<h1 align="left">
+<img src="https://raw.githubusercontent.com/aimer63/fire/master/fire-small.png">
+</h1><br>
 
 **firecast** is an open-source Python tool for modeling Financial Independence to Retire Early (FIRE)
 scenarios using Monte Carlo simulations.
@@ -23,6 +23,8 @@ realistic conditions.
 - 🎲 Correlated asset/inflation returns, market shocks, and portfolio rebalancing
 - 📊 Automatic reporting and plotting
 
+See [GitHub Repository](https://github.com/aimer63/fire) for detailed documentation, and instructions.
+
 ---
 
 ## Purpose
@@ -35,7 +37,8 @@ asset allocation.
 
 ## Key features
 
-- **[Configuration](/docs/configuration_guide.md)**  
+### Configuration
+
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
@@ -44,12 +47,12 @@ asset allocation.
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url], [ECB Data portal][ecb-url]. <!-- markdownlint-disable-line MD013 -->
-  You can use the script [data_metrics.py](data/data_metrics.py) to estimate these parameters from historical
+  You can use the script `data_metrics.py` in `data` directory to estimate these parameters from historical
   data.
-  See [Data metrics usage](data/data_metrics.md) for details.
+  See [GitHub Repository](https://github.com/aimer63/fire) for details.
 
   Inflation, though not an asset, is defined in this section because it is correlated
-  with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating
+  with assets through a **correlation matrix**, and the mechanism for generating
   random values from `mu` and `sigma` is the same for assets and inflation.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
@@ -81,9 +84,7 @@ mu = 0.025
 sigma = 0.025
 ```
 
-See [Assets](/docs/assets.md) for details.
-
-- **[Simulation Engine](/docs/simulation_engine.md)**
+### Simulation Engine
 
   The core of firecast is an engine that models your financial life month by month,
   year by year. For each of the thousands of simulation runs, it projects a unique
@@ -91,16 +92,16 @@ See [Assets](/docs/assets.md) for details.
 
   Each simulation evolves through a detailed monthly cycle:
 
-  - **Processes Cash Flow:** Handles all income, pensions, contributions, and both regular
+- **Processes Cash Flow:** Handles all income, pensions, contributions, and both regular
     and planned extra expenses.
-  - **Simulates Market Growth:** Applies randomized monthly returns to your investment
+- **Simulates Market Growth:** Applies randomized monthly returns to your investment
     portfolio, growing (or shrinking) your assets according to the statistical model you defined.
     It also accounts for inflation.
-  - **Manages Liquidity:** Maintains your bank account within the bounds you define
+- **Manages Liquidity:** Maintains your bank account within the bounds you define
     in your configuration (`bank_lower_bound`, `bank_upper_bound`), automatically selling
     assets to cover shortfalls or investing excess cash. If it cannot cover expenses,
     the simulation is marked as **failed**.
-  - **Handles Events:** Executes scheduled portfolio rebalances, applies market shocks
+- **Handles Events:** Executes scheduled portfolio rebalances, applies market shocks
     if configured, and deducts recurring fund fees.
 
   This entire lifecycle is repeated for the number of years specified in your
@@ -111,38 +112,38 @@ See [Assets](/docs/assets.md) for details.
 
   **Note**:
 
-  > _The simulation assumes all assets, incomes, expenses, and flows are denominated
+  > *The simulation assumes all assets, incomes, expenses, and flows are denominated
   > in a single currency. There is no currency conversion or multi-currency support;
-  > all values must be provided and interpreted in the same currency throughout the simulation._
+  > all values must be provided and interpreted in the same currency throughout the simulation.*
   >
-  > _The simulation does not consider any fiscal aspects, therefore parameters such as
-  > income, pension, contributions, etc. are to be considered after taxes._
+  > *The simulation does not consider any fiscal aspects, therefore parameters such as
+  > income, pension, contributions, etc. are to be considered after taxes.*
 
-- **[Reporting & Plotting](/docs/output.md)**
+### Reporting & Plotting
 
-  - Prints a summary to the console.
-  - Generates a report in markdown summarizing the
+- Prints a summary to the console.
+- Generates a report in markdown summarizing the
     simulation results, including links to generated plots.
 
-  [Report example](docs/reports/summary.md).
+  [Report example](https://github.com/aimer63/fire/blob/master/docs/reports/summary.md).
 
-  - Generates all plots for wealth evolution, bank account
+- Generates all plots for wealth evolution, bank account
     trajectories, and distributions of outcomes.
-  - Output directories for plots and reports are set via the config file and created automatically.
+- Output directories for plots and reports are set via the config file and created automatically.
 
   Plots include:
 
   Wealth evolution over time
-  ![Wealth evolution over time](docs/pics/wealth_evolution_samples_nominal.png)
+  ![Wealth evolution over time](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/wealth_evolution_samples_nominal.png)
 
   Bank account balance trajectories
-  ![Bank account balance trajectories](docs/pics/bank_account_trajectories_nominal.png)
+  ![Bank account balance trajectories](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/bank_account_trajectories_nominal.png)
 
   Duration distribution of failed cases
-  ![Duration distribution of failed cases](docs/pics/failed_duration_distribution.png)
+  ![Duration distribution of failed cases](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/failed_duration_distribution.png)
 
   Distribution of final wealth for successful outcomes
-  ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
+  ![Distribution of final wealth for successful outcomes](https://raw.githubusercontent.com/aimer63/fire/master/docs/pics/final_wealth_distribution_nominal.png)
 
   and all the corresponding plots in real terms and others.
 
@@ -180,7 +181,7 @@ See [Assets](/docs/assets.md) for details.
 
   Start with the config example provided in `configs/` (e.g., `configs/config.toml`).
 
-- **[Run the simulation](/docs/usage.md)**
+- **Run the simulation**
 
   From the project root:
 
@@ -208,14 +209,7 @@ See [Assets](/docs/assets.md) for details.
 num_simulations = 10_000
 # random_seed = 42
 
-[paths]
-output_root = "output/"
-
-[deterministic_inputs]
-initial_bank_balance = 8000.0
-# To set your initial portfolio, use a planned contribution at year 0 and specify the
-# allocation with a rebalance at year 0.
-planned_contributions = [{ year = 0, amount = 130000.0 }]
+[pathsyear = 0, amount = 130000.0 }]
 
 initial_bank_balance = 8000.0
 
@@ -282,7 +276,6 @@ weights = { stocks = 0.60, bonds = 0.40 }
 - **Plots**: PNG images in `<output_root>/plots/` for all major simulation results.
 - **All output paths are relative to the project root and configurable via `[paths] output_root` in
   your TOML config.**
-- See [Output](docs/output.md) for details on the generated files.
 
 ---
 
@@ -295,16 +288,16 @@ weights = { stocks = 0.60, bonds = 0.40 }
 
 ## Documentation
 
-For mathematical background, advanced usage, and additional guides, see the [docs/](docs/) folder.
+For mathematical background, advanced usage, and additional guides, see the [docs/](https://github.com/aimer63/fire/tree/master/docs) folder.
 
 ### 📃 Documentation Index
 
-- [Installation Guide](docs/install.md): Step-by-step instructions for installing firecast.
-- [Configuration Example](configs/config.toml): Configuration example with all parameters.
-- [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
-- [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
-- [Results](docs/output.md): Detailed explanation of all outputs of the simulation.
-- [Monte Carlo Theory](docs/montecarlo.md): Mathematical background and simulation theory.
+- [Installation Guide](https://github.com/aimer63/fire/blob/master/docs/inflation.md): Step-by-step instructions for installing firecast.
+- [Configuration Example](https://github.com/aimer63/fire/blob/master/configs/config.toml): Configuration example with all parameters.
+- [Configuration Reference](https://github.com/aimer63/fire/blob/master/docs/config.md): Detailed explanation of all configuration parameters.
+- [Usage Guide](https://github.com/aimer63/fire/blob/master/docs/usage.md): How to install, configure, and run the simulation.
+- [Results](https://github.com/aimer63/fire/blob/master/master/docs/output.md): Detailed explanation of all outputs of the simulation.
+- [Monte Carlo Theory](https://github.com/aimer63/fire/blob/master/docs/montecarlo.md): Mathematical background and simulation theory.
 
 **For more details, see the docstrings in each module.**
 
@@ -320,14 +313,14 @@ Feel free to open issues or submit pull requests if you have suggestions or impr
 
 - **Books**:
 
-  - _A Random Walk Down Wall Street_ by Burton G. Malkiel: A classic book explaining the
+  - *A Random Walk Down Wall Street* by Burton G. Malkiel: A classic book explaining the
     basics of investing, efficient markets, index funds, and long-term wealth building.
-  - _The Bogleheads’ Guide to Investing_ by Taylor Larimore, Mel Lindauer, and Michael LeBoeuf:
+  - *The Bogleheads’ Guide to Investing* by Taylor Larimore, Mel Lindauer, and Michael LeBoeuf:
     A practical guide to low-cost investing and financial independence, covering asset
     allocation and risk management.
-  - _Quantitative Finance for Dummies_ by Steve Bell: An accessible introduction to
+  - *Quantitative Finance for Dummies* by Steve Bell: An accessible introduction to
     financial modeling, including Monte Carlo simulations and volatility.
-  - _The Millionaire Next Door_ by Thomas J. Stanley and William D. Danko: insights
+  - *The Millionaire Next Door* by Thomas J. Stanley and William D. Danko: insights
     into wealth-building habits and strategies for financial independence.
 
 - **Online Resources**:
@@ -344,9 +337,9 @@ Feel free to open issues or submit pull requests if you have suggestions or impr
 
 - **Academic/Technical**:
 
-  - _Monte Carlo Methods in Financial Engineering_ by Paul Glasserman: A rigorous text
+  - *Monte Carlo Methods in Financial Engineering* by Paul Glasserman: A rigorous text
     on Monte Carlo techniques for financial modeling, including asset return simulations.
-  - _Options, Futures, and Other Derivatives_ by John C. Hull: A foundational text on
+  - *Options, Futures, and Other Derivatives* by John C. Hull: A foundational text on
     derivatives pricing, ideal for understanding asset return dynamics.
   - [Investopedia: Asset Return Volatility][invopedia-vol-url]: Explains volatility as the standard deviation
     of returns, key for configuring your `mu` and `sigma` parameters.

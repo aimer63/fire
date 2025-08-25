@@ -12,7 +12,7 @@ description = "Monte Carlo simulation tool for FIRE (Financial Independence / Ea
 authors = [{ name = "aimer63", email = "63aimer@gmail.com" }]
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
-readme = "README.md"
+readme = "README-pypi.md"
 requires-python = ">=3.10"
 dependencies = [
   "numpy",
