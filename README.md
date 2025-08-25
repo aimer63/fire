@@ -41,17 +41,17 @@ asset allocation.
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
+  [Where to find configuration examples](https://github.com/aimer63/fire/blob/master/docs/config-samples.md)
 
   Investment assets are defined in the configuration. For each asset you specify the following; `mu`,
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url], [ECB Data portal][ecb-url]. <!-- markdownlint-disable-line MD013 -->
-  You can use the script [data_metrics.py](https://github.com/aimer63/fire/blob/master/data/data_metrics.py) to estimate these parameters from historical
-  data.
+  You can use the script [data_metrics.py](https://github.com/aimer63/fire/blob/master/data/data_metrics.py) to estimate these parameters from historical data. <!-- markdownlint-disable-line MD013 -->
   See [Data metrics usage](https://github.com/aimer63/fire/blob/master/data/data_metrics.md) for details.
 
   Inflation, though not an asset, is defined in this section because it is correlated
-  with assets through a [correlation matrix](https://github.com/aimer63/fire/blob/master/docs/correlation.md), and the mechanism for generating
+  with assets through a [correlation matrix](https://github.com/aimer63/fire/blob/master/docs/correlation.md), and the mechanism for generating <!-- markdownlint-disable-line MD013 -->
   random values from `mu` and `sigma` is the same for assets and inflation.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
