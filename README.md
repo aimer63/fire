@@ -1,3 +1,7 @@
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/aimer63/fire/master/fire-small.png">
+</h1><br>
+
 ![Python Versions](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20macos-FF9900)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue?logo=opensourceinitiative&logoColor=white)
@@ -5,12 +9,6 @@
 [![codecov](https://codecov.io/gh/aimer63/fire/branch/master/graph/badge.svg)](https://codecov.io/gh/aimer63/fire)
 
 # firecast (FIRE Plan Simulator)
-
-<h1 align="left">
-<img src="https://raw.githubusercontent.com/aimer63/fire/master/fire-small.png">
-</h1><br>
-
----
 
 **firecast** is an open-source Python tool for modeling Financial Independence to Retire Early (FIRE)
 scenarios using Monte Carlo simulations.
