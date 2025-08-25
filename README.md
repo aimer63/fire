@@ -6,7 +6,9 @@
 
 # firecast (FIRE Plan Simulator)
 
-![Logo](fire-small.png)
+<h1 align="left">
+<img src="https://raw.githubusercontent.com/aimer63/fire/master/fire-small.png">
+</h1><br>
 
 ---
 
@@ -23,6 +25,8 @@ realistic conditions.
 - 🎲 Correlated asset/inflation returns, market shocks, and portfolio rebalancing
 - 📊 Automatic reporting and plotting
 
+See [GitHub Repository](https://github.com/aimer63/fire) for source code, instructions, and documentation.
+
 ---
 
 ## Purpose
@@ -35,7 +39,7 @@ asset allocation.
 
 ## Key features
 
-- **[Configuration](/docs/configuration_guide.md)**  
+- **[Configuration](https://github.com/aimer63/fire/blob/master/docs/configuration_guide.md)**  
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
@@ -44,12 +48,12 @@ asset allocation.
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
   [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url], [ECB Data portal][ecb-url]. <!-- markdownlint-disable-line MD013 -->
-  You can use the script [data_metrics.py](data/data_metrics.py) to estimate these parameters from historical
+  You can use the script [data_metrics.py](https://github.com/aimer63/fire/blob/master/data/data_metrics.py) to estimate these parameters from historical
   data.
-  See [Data metrics usage](data/data_metrics.md) for details.
+  See [Data metrics usage](https://github.com/aimer63/fire/blob/master/data/data_metrics.md) for details.
 
   Inflation, though not an asset, is defined in this section because it is correlated
-  with assets through a [correlation matrix](/docs/correlation.md), and the mechanism for generating
+  with assets through a [correlation matrix](https://github.com/aimer63/fire/blob/master/docs/correlation.md), and the mechanism for generating
   random values from `mu` and `sigma` is the same for assets and inflation.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
@@ -81,7 +85,7 @@ mu = 0.025
 sigma = 0.025
 ```
 
-See [Assets](/docs/assets.md) for details.
+See [Assets](https://github.com/aimer63/fire/blob/master/docs/assets.md) for details.
 
 - **[Simulation Engine](/docs/simulation_engine.md)**
 
@@ -118,13 +122,13 @@ See [Assets](/docs/assets.md) for details.
   > _The simulation does not consider any fiscal aspects, therefore parameters such as
   > income, pension, contributions, etc. are to be considered after taxes._
 
-- **[Reporting & Plotting](/docs/output.md)**
+- **[Reporting & Plotting](https://github.com/aimer63/fire/blob/master/docs/output.md)**
 
   - Prints a summary to the console.
   - Generates a report in markdown summarizing the
     simulation results, including links to generated plots.
 
-  [Report example](docs/reports/summary.md).
+  [Report example](https://github.com/aimer63/fire/blob/master/docs/reports/summary.md).
 
   - Generates all plots for wealth evolution, bank account
     trajectories, and distributions of outcomes.
@@ -133,16 +137,16 @@ See [Assets](/docs/assets.md) for details.
   Plots include:
 
   Wealth evolution over time
-  ![Wealth evolution over time](docs/pics/wealth_evolution_samples_nominal.png)
+  ![Wealth evolution over time](https://github.com/aimer63/fire/blob/master/docs/pics/wealth_evolution_samples_nominal.png)
 
   Bank account balance trajectories
-  ![Bank account balance trajectories](docs/pics/bank_account_trajectories_nominal.png)
+  ![Bank account balance trajectories](https://github.com/aimer63/fire/blob/master/docs/pics/bank_account_trajectories_nominal.png)
 
   Duration distribution of failed cases
-  ![Duration distribution of failed cases](docs/pics/failed_duration_distribution.png)
+  ![Duration distribution of failed cases](https://github.com/aimer63/fire/blob/master/docs/pics/failed_duration_distribution.png)
 
   Distribution of final wealth for successful outcomes
-  ![Distribution of final wealth for successful outcomes](docs/pics/final_wealth_distribution_nominal.png)
+  ![Distribution of final wealth for successful outcomes](https://github.com/aimer63/fire/blob/master/docs/pics/final_wealth_distribution_nominal.png)
 
   and all the corresponding plots in real terms and others.
 
@@ -255,11 +259,6 @@ year = 10
 description = "October 1929"
 impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 
-[[portfolio_rebalances]]
-year = 0
-period = 1
-description = "Initial allocation"
-weights = { stocks = 0.80, bonds = 0.20 }
 
 # There must always be a rebalance event for year 0 even if a planned contribution
 # at year 0 is not specified, the weights are used to allocate all subsequent investments
@@ -267,6 +266,12 @@ weights = { stocks = 0.80, bonds = 0.20 }
 # The `period` field allows for periodic rebalancing: if `period > 0`, the rebalance is
 # applied every `period` years until the next rebalance event; if `period == 0`, it is
 # applied only once at the specified year.
+[[portfolio_rebalances]]
+year = 0
+period = 1
+description = "Initial allocation"
+weights = { stocks = 0.80, bonds = 0.20 }
+
 [[portfolio_rebalances]]
 year = 20
 period = 2
@@ -299,12 +304,12 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 ### 📃 Documentation Index
 
-- [Installation Guide](docs/install.md): Step-by-step instructions for installing firecast.
-- [Configuration Example](configs/config.toml): Configuration example with all parameters.
-- [Configuration Reference](docs/config.md): Detailed explanation of all configuration parameters.
-- [Usage Guide](docs/usage.md): How to install, configure, and run the simulation.
-- [Results](docs/output.md): Detailed explanation of all outputs of the simulation.
-- [Monte Carlo Theory](docs/montecarlo.md): Mathematical background and simulation theory.
+- [Installation Guide](https://github.com/aimer63/fire/blob/master/docs/install.md): Step-by-step instructions for installing firecast.
+- [Configuration Example](https://github.com/aimer63/fire/blob/master/configs/config.toml): Configuration example with all parameters.
+- [Configuration Reference](https://github.com/aimer63/fire/blob/master/docs/config.md): Detailed explanation of all configuration parameters.
+- [Usage Guide](https://github.com/aimer63/fire/blob/master/docs/usage.md): How to install, configure, and run the simulation.
+- [Results](https://github.com/aimer63/fire/blob/master/docs/output.md): Detailed explanation of all outputs of the simulation.
+- [Monte Carlo Theory](https://github.com/aimer63/fire/blob/master/docs/montecarlo.md): Mathematical background and simulation theory.
 
 **For more details, see the docstrings in each module.**
 

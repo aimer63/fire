@@ -23,7 +23,7 @@ realistic conditions.
 - 🎲 Correlated asset/inflation returns, market shocks, and portfolio rebalancing
 - 📊 Automatic reporting and plotting
 
-See [GitHub Repository](https://github.com/aimer63/fire) for detailed documentation, and instructions.
+See [GitHub Repository](https://github.com/aimer63/fire) for source code, instructions, and documentation.
 
 ---
 
@@ -209,7 +209,14 @@ sigma = 0.025
 num_simulations = 10_000
 # random_seed = 42
 
-[pathsyear = 0, amount = 130000.0 }]
+[paths]
+output_root = "output/"
+
+[deterministic_inputs]
+initial_bank_balance = 8000.0
+# To set your initial portfolio, use a planned contribution at year 0 and specify the
+# allocation with a rebalance at year 0.
+planned_contributions = [{ year = 0, amount = 130000.0 }]
 
 initial_bank_balance = 8000.0
 
@@ -249,11 +256,6 @@ year = 10
 description = "October 1929"
 impact = { stocks = -0.35, bonds = 0.02, inflation = -0.023 }
 
-[[portfolio_rebalances]]
-year = 0
-period = 1
-description = "Initial allocation"
-weights = { stocks = 0.80, bonds = 0.20 }
 
 # There must always be a rebalance event for year 0 even if a planned contribution
 # at year 0 is not specified, the weights are used to allocate all subsequent investments
@@ -261,6 +263,12 @@ weights = { stocks = 0.80, bonds = 0.20 }
 # The `period` field allows for periodic rebalancing: if `period > 0`, the rebalance is
 # applied every `period` years until the next rebalance event; if `period == 0`, it is
 # applied only once at the specified year.
+[[portfolio_rebalances]]
+year = 0
+period = 1
+description = "Initial allocation"
+weights = { stocks = 0.80, bonds = 0.20 }
+
 [[portfolio_rebalances]]
 year = 20
 period = 2
@@ -292,11 +300,11 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 
 ### 📃 Documentation Index
 
-- [Installation Guide](https://github.com/aimer63/fire/blob/master/docs/inflation.md): Step-by-step instructions for installing firecast.
+- [Installation Guide](https://github.com/aimer63/fire/blob/master/docs/install.md): Step-by-step instructions for installing firecast.
 - [Configuration Example](https://github.com/aimer63/fire/blob/master/configs/config.toml): Configuration example with all parameters.
 - [Configuration Reference](https://github.com/aimer63/fire/blob/master/docs/config.md): Detailed explanation of all configuration parameters.
 - [Usage Guide](https://github.com/aimer63/fire/blob/master/docs/usage.md): How to install, configure, and run the simulation.
-- [Results](https://github.com/aimer63/fire/blob/master/master/docs/output.md): Detailed explanation of all outputs of the simulation.
+- [Results](https://github.com/aimer63/fire/blob/master/docs/output.md): Detailed explanation of all outputs of the simulation.
 - [Monte Carlo Theory](https://github.com/aimer63/fire/blob/master/docs/montecarlo.md): Mathematical background and simulation theory.
 
 **For more details, see the docstrings in each module.**
