@@ -41,6 +41,7 @@ asset allocation.
   User inputs are provided in TOML files (e.g., `configs/config.toml`). These specify initial
   wealth, income, expenses, assets, assets allocation, economic assumptions (returns, inflation),
   assets and inflation correlation, simulation parameters, portfolio rebalances and market shocks.
+
   [Where to find configuration examples](https://github.com/aimer63/fire/blob/master/docs/config-samples.md)
 
   Investment assets are defined in the configuration. For each asset you specify the following; `mu`,

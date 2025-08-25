@@ -40,9 +40,10 @@ dev = [
 [project.scripts]
 fire = "firecast.main:main"
 data-metrics = "data.data_metrics:main"
+data_metrics = "data.data_metrics:main"
 
 [tool.setuptools.packages.find]
-include = ["firecast*"]
+include = ["firecast*", "data*"]
 
 [tool.setuptools]
 include-package-data = true

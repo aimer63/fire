@@ -188,7 +188,7 @@ def prepare_data(
         )
     df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
     DATA_COLS = [col for col in df.columns if col != "Date"]
-    print(f"Analyzing indices: {DATA_COLS}")
+    print(f"Analyzing: {DATA_COLS}")
 
     # Convert all index columns to numeric, coercing errors to NaN.
     # Warn if any missing or non-numeric values are found, and display a summary.
