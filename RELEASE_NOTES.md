@@ -1,9 +1,12 @@
-### Chores
 
-- **ci**: add PyPI publishing via OIDC trusted publisher
-- **docker**: add Dockerfile for installation testing
-- **ci**: unify dependency install in workflows
+# Added
 
-### Code Refactoring
+- Dockerfile to test releases and install methods
 
-- **pkg**: rename firestarter to firecast
+- Coverage/codecov integration
+
+- PyPI publishing via OIDC trusted publisher (Github)
+
+# ⚠️ Breaking Changes
+
+- rename firestarter to firecast
