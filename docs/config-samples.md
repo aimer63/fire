@@ -1,7 +1,7 @@
 
 # Where to Find Example Configuration Files
 
-After installing `firecast`, example configuration files (such as `configs/config.toml`)
+After installing `firecast`, example configuration files (such as `firecast/configs/config.toml`)
 are located in your Python's `site-packages` directory:
 
 `
@@ -25,4 +25,4 @@ Depending on your installation method, you can find them here:
   `C:\Users\<user>\AppData\Roaming\Python\PythonXY\site-packages\firecast\configs\config.toml`
 
 > **Note:**
-> You can also download the latest example configuration files directly from the [GitHub repository](https://github.com/aimer63/fire/tree/master/configs).
+> You can also download the latest example configuration files directly from the [GitHub repository](https://github.com/aimer63/fire/tree/master/firecast/configs).

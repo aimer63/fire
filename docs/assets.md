@@ -55,9 +55,10 @@ inflation-adjusted terms.
 
 ## Portfolio Initialization
 
-You can initialize your portfolio using `planned_contributions` at year 0 (or any year)
-using **Weight-based allocation:** omit the `asset` field to allocate according to current
-portfolio weights (requires a rebalance at year 0 and that's mandatory).
+You can initialize your portfolio using `planned_contributions` at year 0 using
+**weight-based allocation**: omit the `asset` field to allocate according to current
+portfolio weights, a rebalance at year 0 it's always required, it sets the initial
+portfolio weights.
 
 Example:
 

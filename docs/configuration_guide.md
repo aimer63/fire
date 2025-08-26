@@ -136,5 +136,5 @@ You can further configure:
 
 ---
 
-For more details, see the [Configuration Reference](config.md) and [Example](../configs/config.toml)
+For more details, see the [Configuration Reference](config.md) and [Example](../firecast/configs/config.toml)
 in the `config` directory.

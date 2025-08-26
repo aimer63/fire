@@ -37,6 +37,6 @@ RUN if [ "$INSTALL_METHOD" = "release" ]; then \
       echo "Unknown INSTALL_METHOD: $INSTALL_METHOD" && exit 1; \
     fi
 
-COPY configs/config.toml configs/config.toml
+COPY firecast/configs/config.toml config.toml
 
 RUN echo "INSTALL_METHOD: $INSTALL_METHOD, VERSION: $VERSION"
