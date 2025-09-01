@@ -39,27 +39,27 @@ When you install `firecast`, any bundled data files (such as those in the `data/
 directory) are placed inside your Python's `site-packages` directory:
 
 ```
-.../site-packages/firecast/data/
+.../site-packages/firecast_data/
 ```
 
 The exact location depends on your setup:
 
 - **Virtual environment:**  
-  `<venv>/lib/pythonX.Y/site-packages/firecast/data/`
+  `<venv>/lib/pythonX.Y/site-packages/firecast_data/`
 
 - **System-wide install:**  
-  `/usr/local/lib/pythonX.Y/site-packages/firecast/data/`  
+  `/usr/local/lib/pythonX.Y/site-packages/firecast_data/`  
   or  
-  `/usr/lib/pythonX.Y/site-packages/firecast/data/`
+  `/usr/lib/pythonX.Y/site-packages/firecast_data/`
 
 - **User install:**  
-  `~/.local/lib/pythonX.Y/site-packages/firecast/data/`
+  `~/.local/lib/pythonX.Y/site-packages/firecast_data/`
 
 - **Windows:**  
-  `C:\Users\<user>\AppData\Roaming\Python\PythonXY\site-packages\firecast\data\`
+  `C:\Users\<user>\AppData\Roaming\Python\PythonXY\site-packages\firecast_data\`
 
-Just look for the `site-packages/firecast/data/` folder inside your Python environment
-to access the data files.
+Just look for the `site-packages/firecast_data/` folder inside your Python environment
+to access the data files or refer to `firecast_data/` in the Github repository.
 
 ## Usage
 
