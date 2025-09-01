@@ -39,22 +39,23 @@ dev = [
 
 [project.scripts]
 fire = "firecast.main:main"
-data-metrics = "data.data_metrics:main"
-data_metrics = "data.data_metrics:main"
+data-metrics = "firecast_data.data_metrics:main"
+portfolios = "firecast_data.portfolios:main"
 
 [tool.setuptools.packages.find]
-include = ["firecast*", "data*"]
+include = ["firecast*", "firecast_data*"]
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.package-data]
 "firecast" = [
- "data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx",
- "data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx",
- "data/data_metrics.md",
- "data/data_metrics.py",
- "data/shocks.md"
+ "firecast_data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx",
+ "firecast_data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx",
+ "firecast_data/data_metrics.md",
+ "firecast_data/data_metrics.py",
+ "firecast_data/portfolios.py",
+ "firecast_data/shocks.md"
 ]
 
 [tool.ruff]
