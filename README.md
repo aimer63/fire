@@ -7,6 +7,7 @@
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue?logo=opensourceinitiative&logoColor=white)
 [![CI](https://github.com/aimer63/fire/actions/workflows/test.yml/badge.svg)](https://github.com/aimer63/fire/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/aimer63/fire/branch/master/graph/badge.svg)](https://codecov.io/gh/aimer63/fire)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/firecast?period=total&units=INTERNATIONAL_SYSTEM&left_color=grey&right_color=GREEN&left_text=PyPI%20Downloads)](https://pepy.tech/projects/firecast)
 
 # firecast (FIRE Plan Simulator)
 
@@ -287,7 +288,7 @@ weights = { stocks = 0.60, bonds = 0.40 }
 - **Plots**: PNG images in `<output_root>/plots/` for all major simulation results.
 - **All output paths are relative to the project root and configurable via `[paths] output_root` in
   your TOML config.**
-- See [Output](docs/output.md) for details on the generated files.
+- See [Output](https://github.com/aimer63/fire/blob/master/docs/output.md) for details on the generated files.
 
 ---
 

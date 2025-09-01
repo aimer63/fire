@@ -1,8 +1,5 @@
 > #buffers:visible
 > #file:copilot-interaction-rules.md
-> #file:firecast/config/config.py
-> #file:firecast/core/simulation_state.py
-> #file:firecast/core/sequences_generator.py
 > #file:firecast/core/simulation.py
 > #file:firecast/main.py
 > #file:data/data_metrics.py

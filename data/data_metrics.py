@@ -205,7 +205,7 @@ def prepare_data(
         print("Missing values per column:")
         for col, val in num_missing[num_missing > 0].items():
             print(f"{col}: {val} (dtype: {df[col].dtype})")
-        # Fill missing values in the index columns by propagating the last valid
+        # Fill missing values in the assets columns by propagating the last valid
         # observation forward (forward fill) for price input, or with zero for return input.
         # Only fill internal gaps, not leading/trailing NaNs, per column.
         for col in DATA_COLS:
