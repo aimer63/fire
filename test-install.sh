@@ -6,6 +6,7 @@ VERSION=$2
 # Build the wheel locally
 if [ "$INSTALL_METHOD" = "local" ]; then
   rm -f dist/firecast-*-py3-none-any.whl
+  rm -rf build/ dist/ *.egg-info
   if ! python3 -m build --wheel; then
     echo "ERROR: Wheel build failed. Aborting." >&2
     exit 1

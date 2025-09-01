@@ -1,4 +1,3 @@
-include firecast/configs/*
 include data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx
 include data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx
 include data/data_metrics.md

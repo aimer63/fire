@@ -50,7 +50,6 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "firecast" = [
- "configs/*",
  "data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx",
  "data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx",
  "data/data_metrics.md",
