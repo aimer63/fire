@@ -6,52 +6,58 @@
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
 #
 """
-Portfolio Analysis Tool for Asset Prices.
+Portfolio Analysis and Optimization Tool.
 
 This script analyzes historical asset price data from an Excel file to compute
-key financial metrics for portfolio construction. It calculates the expected
-annualized return, annualized volatility (standard deviation), and the
-correlation matrix for all assets in the file.
+key financial metrics, simulate random portfolios, and identify optimal
+allocations based on risk and return.
 
-The primary purpose is to provide the foundational inputs required for
-portfolio optimization and risk management analysis.
+The analysis is based on a series of rolling 1-year returns, providing a
+view of historical performance over a fixed investment horizon.
 
 Key Features
 ------------
-- Loads daily price data from an Excel file.
-- Calculates expected annualized returns using a geometric mean approach, which
-  accurately reflects compounding.
-- Calculates annualized volatility by scaling the daily standard deviation.
-- Computes the correlation matrix for all assets over their maximum
-  overlapping period of historical data.
-- Configurable number of trading days per year for annualization.
+- Loads and cleans daily price data from an Excel file.
+- Calculates expected annualized returns and volatility based on the mean and
+  standard deviation of rolling 1-year returns for each asset.
+- Simulates a specified number of random portfolios to map the efficient
+  frontier.
+- Identifies and highlights the Minimum Volatility and Maximum Sharpe Ratio
+  portfolios.
+- Prints detailed metrics and asset weights for these optimal portfolios.
+- Computes and plots the correlation matrix for all assets over their maximum
+  overlapping period.
+- Supports analyzing a "tail" period (last N years) of the data.
 
 Dependencies
 ------------
-This script requires pandas. Install it with::
+This script requires pandas, numpy, matplotlib, and seaborn. Install them with::
 
-    pip install pandas openpyxl
+    pip install pandas numpy matplotlib seaborn openpyxl
 
 Usage
 -----
-Analyze a daily price file with the default 252 trading days per year::
+Analyze a daily price file and simulate 10,000 portfolios::
 
-    python portfolios.py -f my_daily_prices.xlsx
+    python portfolios.py -f my_prices.xlsx -p 10000
 
-Analyze a daily price file with a custom number of trading days (e.g., 250)::
+Analyze only the last 5 years of data::
 
-    python portfolios.py -f my_daily_prices.xlsx -d 250
+    python portfolios.py -f my_prices.xlsx -p 10000 -t 5
+
+Analyze with a custom number of trading days (e.g., 250)::
+
+    python portfolios.py -f my_prices.xlsx -d 250
 """
 
 import argparse
 import os
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
 
 # This local import is assumed to be available, similar to data_metrics.py
@@ -93,20 +99,21 @@ parser.add_argument(
 
 def prepare_data(
     filename: str,
-) -> Tuple[pd.DataFrame, List[str]]:
+) -> Tuple[pd.DataFrame, List[str], Dict[str, int]]:
     """
     Loads, cleans, and preprocesses historical price data from an Excel file.
 
     - Reads the Excel file and validates the presence of a 'Date' column.
-    - Removes unnamed columns and identifies asset columns.
     - Sets 'Date' as a DatetimeIndex and handles duplicates.
     - Converts price data to numeric types, coercing errors.
-    - Forward-fills missing values to ensure data continuity.
+    - Robustly forward-fills only internal missing values, leaving leading and
+      trailing NaNs untouched.
 
     Returns:
         A tuple containing:
-        - df (pd.DataFrame): DataFrame of prices for each asset.
+        - df (pd.DataFrame): Cleaned DataFrame of prices for each asset.
         - data_cols (List[str]): List of the asset column names.
+        - filling_summary (Dict[str, int]): A summary of filled values per asset.
     """
     # Read the Excel file and get column names
     df = pd.read_excel(filename)
@@ -124,52 +131,73 @@ def prepare_data(
     df.set_index("Date", inplace=True)
     df = df[~df.index.duplicated(keep="last")]
 
+    filling_summary = {}
     for col in data_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
+        initial_nans = df[col].isna().sum()
 
-    return df, data_cols
+        # Only forward-fill internal gaps, leaving leading/trailing NaNs.
+        first_valid = df[col].first_valid_index()
+        last_valid = df[col].last_valid_index()
+        if first_valid is not None and last_valid is not None:
+            mask = (df.index >= first_valid) & (df.index <= last_valid)
+            df.loc[mask, col] = df.loc[mask, col].ffill()
+
+        final_nans = df[col].isna().sum()
+        filled_count = initial_nans - final_nans
+        if filled_count > 0:
+            filling_summary[col] = filled_count
+
+    return df, data_cols, filling_summary
 
 
 def analyze_assets(
     price_df: pd.DataFrame, trading_days: int
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Calculates annualized returns, volatility, and the correlation matrix.
+    Calculates key metrics based on rolling 1-year returns.
 
-    - Return/Volatility are calculated per-asset on all its available data.
-    - Correlation is calculated on the maximum overlapping period for all assets.
+    - Return/Volatility are calculated per-asset on its full available history
+      using a series of rolling 1-year windows.
+    - Correlation and covariance are calculated on the maximum overlapping
+      period for all assets.
 
     Args:
-        price_df: DataFrame of prices for each asset, with NaNs
-                  in non-overlapping periods.
-        trading_days: The number of trading days in a year.
+        price_df: DataFrame of prices for each asset.
+        trading_days: The number of trading days in a year, used as the window size.
 
     Returns:
         A tuple containing:
-        - summary_df (pd.DataFrame): A table of annualized metrics and date ranges.
-        - correlation_matrix (pd.DataFrame): The correlation matrix of daily returns.
-        - overlapping_returns (pd.DataFrame): The returns used for correlation.
-        - cov_matrix (pd.DataFrame): The annualized covariance matrix.
+        - summary_df (pd.DataFrame): Table of annualized metrics and date ranges.
+        - correlation_matrix (pd.DataFrame): Correlation matrix of daily returns.
+        - overlapping_returns (pd.DataFrame): Daily returns for the common period.
+        - cov_matrix (pd.DataFrame): Annualized covariance matrix.
     """
     metrics = []
     for asset in price_df.columns:
-        # Create a clean series for this asset only
+        # Drop NaNs for this asset only to use its full history
         asset_prices = price_df[asset].dropna()
-        asset_returns = asset_prices.pct_change().dropna()
+        window_size = trading_days
 
-        # Calculate metrics for this asset
-        mean_daily_return = asset_returns.mean()
-        std_daily_return = asset_returns.std()
-        annualized_return = (1 + mean_daily_return) ** trading_days - 1
-        annualized_volatility = std_daily_return * np.sqrt(trading_days)
+        if len(asset_prices) < window_size:
+            continue  # Not enough data to calculate even one window
+
+        # Calculate a series of 1-year returns using a rolling window
+        one_year_returns = (asset_prices / asset_prices.shift(window_size)) - 1
+        one_year_returns.dropna(inplace=True)
+
+        # New metrics based on the series of 1-year returns
+        annualized_return = one_year_returns.mean()
+        annualized_volatility = one_year_returns.std()
 
         metrics.append(
             {
                 "Asset": asset,
-                "Start Date": asset_returns.index.min().strftime("%Y-%m-%d"),
-                "End Date": asset_returns.index.max().strftime("%Y-%m-%d"),
+                "Start Date": asset_prices.index.min().strftime("%Y-%m-%d"),
+                "End Date": one_year_returns.index.max().strftime("%Y-%m-%d"),
                 "Expected Annualized Return": annualized_return,
                 "Annualized Volatility": annualized_volatility,
+                "Year Windows": len(one_year_returns),
             }
         )
 
@@ -392,7 +420,16 @@ def main() -> None:
     trading_days = args.daily
 
     # Prepare data
-    price_df, _ = prepare_data(filename)
+    price_df, _, filling_summary = prepare_data(filename)
+
+    # Print data cleaning summary
+    print("\n--- Data Cleaning Summary ---")
+    if not filling_summary:
+        print("No internal missing values were found or filled.")
+    else:
+        print("Internal missing values were forward-filled:")
+        for col, count in filling_summary.items():
+            print(f"- {col}: {count} values filled")
 
     # If --tail is specified, slice the DataFrame to the last N years
     if args.tail is not None:
@@ -432,7 +469,7 @@ def main() -> None:
         )
         # Find pairs with correlation > 0.5
         stacked_upper = upper_tri.stack()
-        high_corr_pairs = stacked_upper.loc[lambda s: s > 0.5]
+        high_corr_pairs = stacked_upper.loc[lambda s: s > 0.75]
 
         if not high_corr_pairs.empty:
             print(high_corr_pairs.to_string(float_format="{:.2f}".format))
@@ -461,10 +498,6 @@ def main() -> None:
         min_vol_portfolio = portfolios_df.iloc[portfolios_df["Volatility"].argmin()]
         max_sharpe_portfolio = portfolios_df.iloc[portfolios_df["Sharpe"].argmax()]
 
-        plot_efficient_frontier(
-            portfolios_df, summary_df, min_vol_portfolio, max_sharpe_portfolio
-        )
-
         # Print details of the optimal portfolios
         print("\n--- Minimum Volatility Portfolio ---")
         print(f"Return: {min_vol_portfolio['Return']:.2%}")
@@ -485,6 +518,10 @@ def main() -> None:
         )
         weights = weights[weights > 0.0001]
         print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
+
+        plot_efficient_frontier(
+            portfolios_df, summary_df, min_vol_portfolio, max_sharpe_portfolio
+        )
 
 
 if __name__ == "__main__":
