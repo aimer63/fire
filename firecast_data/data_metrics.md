@@ -35,7 +35,7 @@ historical performance.
 
 ## Where to find data samples
 
-When you install `firecast`, any bundled data files (such as those in the `data/`
+When you install `firecast`, any bundled data files (such as those in the `firecast_data/`
 directory) are placed inside your Python's `site-packages` directory:
 
 ```

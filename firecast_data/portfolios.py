@@ -82,6 +82,13 @@ parser.add_argument(
     help="The number of trading days per year for annualization. Default is 252.",
 )
 parser.add_argument(
+    "-w",
+    "--window",
+    type=int,
+    default=1,
+    help="The number of years for the rolling window to calculate returns and volatility. Default is 1.",
+)
+parser.add_argument(
     "-t",
     "--tail",
     type=int,
@@ -152,64 +159,83 @@ def prepare_data(
 
 
 def analyze_assets(
-    price_df: pd.DataFrame, trading_days: int
+    price_df: pd.DataFrame, trading_days: int, window_years: int
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Calculates key metrics based on rolling 1-year returns.
+    Calculates two sets of metrics: one for reporting and one for simulation.
 
-    - Return/Volatility are calculated per-asset on its full available history
-      using a series of rolling 1-year windows.
-    - Correlation and covariance are calculated on the maximum overlapping
-      period for all assets.
+    - Reporting Metrics: Calculated per-asset on its full available history
+      using a series of rolling N-year windows.
+    - Simulation/Plotting Metrics: Based on the maximum common (overlapping)
+      history for all assets to ensure consistency.
 
     Args:
         price_df: DataFrame of prices for each asset.
-        trading_days: The number of trading days in a year, used as the window size.
+        trading_days: The number of trading days in a year.
+        window_years: The number of years in the rolling window.
 
     Returns:
         A tuple containing:
-        - summary_df (pd.DataFrame): Table of annualized metrics and date ranges.
+        - summary_df_reporting (pd.DataFrame): Metrics from per-asset history.
+        - summary_df_plotting (pd.DataFrame): Metrics from overlapping history.
+        - window_returns_df (pd.DataFrame): Aligned N-year returns for simulation.
         - correlation_matrix (pd.DataFrame): Correlation matrix of daily returns.
-        - overlapping_returns (pd.DataFrame): Daily returns for the common period.
-        - cov_matrix (pd.DataFrame): Annualized covariance matrix.
     """
-    metrics = []
+    window_returns_list = []
+    reporting_metrics = []
+
     for asset in price_df.columns:
-        # Drop NaNs for this asset only to use its full history
         asset_prices = price_df[asset].dropna()
-        window_size = trading_days
+        window_size = trading_days * window_years
 
         if len(asset_prices) < window_size:
-            continue  # Not enough data to calculate even one window
+            continue
 
-        # Calculate a series of 1-year returns using a rolling window
-        one_year_returns = (asset_prices / asset_prices.shift(window_size)) - 1
-        one_year_returns.dropna(inplace=True)
+        n_year_returns = (asset_prices / asset_prices.shift(window_size)) - 1
+        annualized_returns_series = (1 + n_year_returns) ** (1 / window_years) - 1
+        annualized_returns_series.name = asset
+        window_returns_list.append(annualized_returns_series)
 
-        # New metrics based on the series of 1-year returns
-        annualized_return = one_year_returns.mean()
-        annualized_volatility = one_year_returns.std()
+        # Calculate metrics for reporting using the full series for this asset
+        if not annualized_returns_series.empty:
+            reporting_metrics.append(
+                {
+                    "Asset": asset,
+                    "Start Date": asset_prices.index.min().strftime("%Y-%m-%d"),
+                    "End Date": annualized_returns_series.index.max().strftime(
+                        "%Y-%m-%d"
+                    ),
+                    "Expected Annualized Return": annualized_returns_series.mean(),
+                    "Annualized Volatility": annualized_returns_series.std(),
+                    "Number of Windows": len(annualized_returns_series),
+                }
+            )
 
-        metrics.append(
-            {
-                "Asset": asset,
-                "Start Date": asset_prices.index.min().strftime("%Y-%m-%d"),
-                "End Date": one_year_returns.index.max().strftime("%Y-%m-%d"),
-                "Expected Annualized Return": annualized_return,
-                "Annualized Volatility": annualized_volatility,
-                "Year Windows": len(one_year_returns),
-            }
-        )
+    summary_df_reporting = pd.DataFrame(reporting_metrics).set_index("Asset")
 
-    summary_df = pd.DataFrame(metrics).set_index("Asset")
+    # Align all series by date and drop non-overlapping windows for simulation
+    window_returns_df = pd.concat(window_returns_list, axis=1).dropna()
 
-    # For correlation, find the maximum overlapping period on the price data
+    # Calculate summary metrics for plotting from the common set of window returns
+    expected_returns_plotting = window_returns_df.mean()
+    volatility_plotting = window_returns_df.std()
+    summary_df_plotting = pd.DataFrame(
+        {
+            "Expected Annualized Return": expected_returns_plotting,
+            "Annualized Volatility": volatility_plotting,
+        }
+    )
+
+    # For the correlation report, still use daily returns on overlapping prices
     overlapping_prices = price_df.dropna()
-    overlapping_returns = overlapping_prices.pct_change().dropna()
-    correlation_matrix = overlapping_returns.corr()
-    cov_matrix = overlapping_returns.cov() * trading_days
+    correlation_matrix = overlapping_prices.pct_change().corr()
 
-    return summary_df, correlation_matrix, overlapping_returns, cov_matrix
+    return (
+        summary_df_reporting,
+        summary_df_plotting,
+        window_returns_df,
+        correlation_matrix,
+    )
 
 
 def plot_correlation_heatmap(correlation_matrix: pd.DataFrame) -> None:
@@ -293,20 +319,21 @@ def plot_asset_prices(price_df: pd.DataFrame) -> None:
 
 
 def simulate_portfolios(
-    num_portfolios: int, expected_returns: pd.Series, cov_matrix: pd.DataFrame
+    num_portfolios: int, window_returns_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    Generates random portfolios and calculates their return and volatility.
+    Generates random portfolios and calculates their return and volatility based
+    on the historical distribution of N-year window returns.
 
     Args:
         num_portfolios: The number of random portfolios to generate.
-        expected_returns: A Series of expected annualized returns for each asset.
-        cov_matrix: The annualized covariance matrix of the assets.
+        window_returns_df: DataFrame where each column is an asset and each row
+                           is the annualized return for a specific N-year window.
 
     Returns:
         A DataFrame containing the return, volatility, and weights for each portfolio.
     """
-    num_assets = len(expected_returns)
+    num_assets = window_returns_df.shape[1]
     results = np.zeros((3, num_portfolios))
     weights_record = []
 
@@ -316,13 +343,16 @@ def simulate_portfolios(
         weights /= np.sum(weights)
         weights_record.append(weights)
 
-        # Calculate portfolio return and volatility
-        portfolio_return = np.dot(weights, expected_returns)
-        portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+        # Calculate the portfolio's historical window returns
+        portfolio_window_returns = window_returns_df.dot(weights)
+
+        # Calculate portfolio metrics from the distribution of its window returns
+        portfolio_return = portfolio_window_returns.mean()
+        portfolio_volatility = portfolio_window_returns.std()
 
         results[0, i] = portfolio_return
         results[1, i] = portfolio_volatility
-        # Sharpe ratio (optional, but good to have)
+        # Sharpe ratio
         results[2, i] = portfolio_return / portfolio_volatility
 
     portfolios_df = pd.DataFrame(results.T, columns=["Return", "Volatility", "Sharpe"])
@@ -418,6 +448,7 @@ def main() -> None:
     args = parser.parse_args()
     filename = args.file
     trading_days = args.daily
+    window_years = args.window
 
     # Prepare data
     price_df, _, filling_summary = prepare_data(filename)
@@ -442,14 +473,17 @@ def main() -> None:
     plot_asset_prices(price_df)
 
     # Analyze portfolio
-    summary_df, correlation_matrix, overlapping_returns, cov_matrix = analyze_assets(
-        price_df, trading_days
-    )
+    (
+        summary_df_reporting,
+        summary_df_plotting,
+        window_returns_df,
+        correlation_matrix,
+    ) = analyze_assets(price_df, trading_days, window_years)
 
-    # Print results
+    # Print results based on each asset's full history
     print("\n--- Portfolio Metrics Summary (per-asset history) ---")
     print(
-        summary_df.to_string(
+        summary_df_reporting.to_string(
             formatters={
                 "Expected Annualized Return": "{:.2%}".format,
                 "Annualized Volatility": "{:.2%}".format,
@@ -457,24 +491,24 @@ def main() -> None:
         )
     )
 
-    if not overlapping_returns.empty:
-        start_date = overlapping_returns.index.min().strftime("%Y-%m-%d")
-        end_date = overlapping_returns.index.max().strftime("%Y-%m-%d")
+    if not correlation_matrix.empty:
+        start_date = price_df.dropna().index.min().strftime("%Y-%m-%d")
+        end_date = price_df.dropna().index.max().strftime("%Y-%m-%d")
         print(
-            f"\n--- High Correlation Pairs (> 0.5) (Period: {start_date} to {end_date}) ---"
+            f"\n--- High Correlation Pairs (> 0.75) (Daily Returns, Period: {start_date} to {end_date}) ---"
         )
         # Get the upper triangle of the correlation matrix to avoid duplicates
         upper_tri = correlation_matrix.where(
             np.triu(np.ones(correlation_matrix.shape), k=1).astype(bool)
         )
-        # Find pairs with correlation > 0.5
+        # Find pairs with correlation > 0.75
         stacked_upper = upper_tri.stack()
         high_corr_pairs = stacked_upper.loc[lambda s: s > 0.75]
 
         if not high_corr_pairs.empty:
             print(high_corr_pairs.to_string(float_format="{:.2f}".format))
         else:
-            print("No asset pairs with correlation greater than 0.5 found.")
+            print("No asset pairs with correlation greater than 0.75 found.")
     else:
         print("\n--- Correlation Analysis ---")
         print("No overlapping data found to compute correlations.")
@@ -484,15 +518,9 @@ def main() -> None:
         plot_correlation_heatmap(correlation_matrix)
 
     # Run portfolio simulation if requested
-    if args.portfolios is not None and not overlapping_returns.empty:
+    if args.portfolios is not None and not window_returns_df.empty:
         print(f"\n--- Simulating {args.portfolios} random portfolios ---")
-        # Use returns from the overlapping period for simulation consistency
-        expected_returns = summary_df.loc[cov_matrix.index][
-            "Expected Annualized Return"
-        ]
-        portfolios_df = simulate_portfolios(
-            args.portfolios, expected_returns, cov_matrix
-        )
+        portfolios_df = simulate_portfolios(args.portfolios, window_returns_df)
 
         # Find and highlight the optimal portfolios
         min_vol_portfolio = portfolios_df.iloc[portfolios_df["Volatility"].argmin()]
@@ -504,7 +532,9 @@ def main() -> None:
         print(f"Volatility: {min_vol_portfolio['Volatility']:.2%}")
         print(f"Sharpe Ratio: {min_vol_portfolio['Sharpe']:.2f}")
         print("\nWeights:")
-        weights = pd.Series(min_vol_portfolio["Weights"], index=expected_returns.index)
+        weights = pd.Series(
+            min_vol_portfolio["Weights"], index=window_returns_df.columns
+        )
         weights = weights[weights > 0.0001]
         print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
@@ -514,13 +544,16 @@ def main() -> None:
         print(f"Sharpe Ratio: {max_sharpe_portfolio['Sharpe']:.2f}")
         print("\nWeights:")
         weights = pd.Series(
-            max_sharpe_portfolio["Weights"], index=expected_returns.index
+            max_sharpe_portfolio["Weights"], index=window_returns_df.columns
         )
         weights = weights[weights > 0.0001]
         print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
         plot_efficient_frontier(
-            portfolios_df, summary_df, min_vol_portfolio, max_sharpe_portfolio
+            portfolios_df,
+            summary_df_plotting,
+            min_vol_portfolio,
+            max_sharpe_portfolio,
         )
 
 
