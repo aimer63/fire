@@ -12,14 +12,14 @@ This script analyzes historical asset price data from an Excel file to compute
 key financial metrics, simulate random portfolios, and identify optimal
 allocations based on risk and return.
 
-The analysis is based on a series of rolling 1-year returns, providing a
+The analysis is based on a series of rolling N-year returns, providing a
 view of historical performance over a fixed investment horizon.
 
 Key Features
 ------------
 - Loads and cleans daily price data from an Excel file.
 - Calculates expected annualized returns and volatility based on the mean and
-  standard deviation of rolling 1-year returns for each asset.
+  standard deviation of rolling N-year returns for each asset.
 - Simulates a specified number of random portfolios to map the efficient
   frontier.
 - Identifies and highlights the Minimum Volatility and Maximum Sharpe Ratio
@@ -40,6 +40,10 @@ Usage
 Analyze a daily price file and simulate 10,000 portfolios::
 
     python portfolios.py -f my_prices.xlsx -p 10000
+
+Analyze using a 3-year rolling window::
+
+    python portfolios.py -f my_prices.xlsx -p 10000 -w 3
 
 Analyze only the last 5 years of data::
 

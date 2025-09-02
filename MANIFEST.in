@@ -1,5 +1,4 @@
-include firecast_data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx
-include firecast_data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx
+include firecast_data/MSCI-All-daily.xlsx
 include firecast_data/data_metrics.md
 include firecast_data/data_metrics.py
 include firecast_data/portfolios.py

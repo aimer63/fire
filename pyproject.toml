@@ -50,8 +50,7 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "firecast" = [
- "firecast_data/MSCI-World-ACWI-ACWIIMI-1999-2025-daily.xlsx",
- "firecast_data/MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx",
+ "firecast_data/MSCI-All-daily.xlsx",
  "firecast_data/data_metrics.md",
  "firecast_data/data_metrics.py",
  "firecast_data/portfolios.py",
