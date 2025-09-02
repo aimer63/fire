@@ -22,6 +22,8 @@ Key Features
   standard deviation of rolling N-year returns for each asset.
 - Simulates a specified number of random portfolios to map the efficient
   frontier.
+- Generates all equal-weight portfolios for every combination of a specified
+  number of assets.
 - Identifies and highlights the Minimum Volatility and Maximum Sharpe Ratio
   portfolios.
 - Prints detailed metrics and asset weights for these optimal portfolios.
@@ -41,6 +43,10 @@ Analyze a daily price file and simulate 10,000 portfolios::
 
     python portfolios.py -f my_prices.xlsx -p 10000
 
+Generate all equal-weight portfolios of 3 assets::
+
+    python portfolios.py -f my_prices.xlsx -e 3
+
 Analyze using a 3-year rolling window::
 
     python portfolios.py -f my_prices.xlsx -p 10000 -w 3
@@ -55,6 +61,7 @@ Analyze with a custom number of trading days (e.g., 250)::
 """
 
 import argparse
+import itertools
 import os
 from typing import Dict, List, Tuple
 
@@ -99,12 +106,20 @@ parser.add_argument(
     default=None,
     help="Analyze only the most recent N years of data.",
 )
-parser.add_argument(
+group = parser.add_mutually_exclusive_group()
+group.add_argument(
     "-p",
     "--portfolios",
     type=int,
     default=None,
     help="Number of random portfolios to simulate.",
+)
+group.add_argument(
+    "-e",
+    "--equal-weight",
+    type=int,
+    default=None,
+    help="Generate all equal-weight combinations of N assets.",
 )
 
 
@@ -364,6 +379,59 @@ def simulate_portfolios(
     return portfolios_df
 
 
+def generate_equal_weight_portfolios(
+    n_assets_in_portfolio: int, window_returns_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Generates all equal-weight portfolios for every combination of N assets.
+
+    Args:
+        n_assets_in_portfolio: The number of assets to include in each portfolio.
+        window_returns_df: DataFrame of aligned N-year returns for all assets.
+
+    Returns:
+        A DataFrame containing the return, volatility, and weights for each portfolio.
+    """
+    all_assets = window_returns_df.columns
+    num_total_assets = len(all_assets)
+
+    if not 1 <= n_assets_in_portfolio <= num_total_assets:
+        raise ValueError(
+            f"Number of assets for equal-weight portfolios ({n_assets_in_portfolio}) "
+            f"must be between 1 and {num_total_assets}."
+        )
+
+    asset_combinations = itertools.combinations(all_assets, n_assets_in_portfolio)
+    num_combinations = 0
+    results = []
+    weights_record = []
+
+    for combo in asset_combinations:
+        num_combinations += 1
+        # Create a weights vector: 1/N for selected assets, 0 for others
+        weights = pd.Series(0.0, index=all_assets)
+        weights[list(combo)] = 1.0 / n_assets_in_portfolio
+        weights_record.append(weights.values)
+
+        # Calculate portfolio metrics using the same logic as the simulation
+        portfolio_window_returns = window_returns_df.dot(weights.values)
+        portfolio_return = portfolio_window_returns.mean()
+        portfolio_volatility = portfolio_window_returns.std()
+
+        results.append(
+            (
+                portfolio_return,
+                portfolio_volatility,
+                portfolio_return / portfolio_volatility,
+            )
+        )
+
+    print(f"Generated {num_combinations} equal-weight portfolios.")
+    portfolios_df = pd.DataFrame(results, columns=["Return", "Volatility", "Sharpe"])
+    portfolios_df["Weights"] = weights_record
+    return portfolios_df
+
+
 def plot_efficient_frontier(
     portfolios_df: pd.DataFrame,
     summary_df: pd.DataFrame,
@@ -521,11 +589,21 @@ def main() -> None:
     if not correlation_matrix.empty:
         plot_correlation_heatmap(correlation_matrix)
 
-    # Run portfolio simulation if requested
+    # --- Portfolio Generation ---
+    portfolios_df = None
     if args.portfolios is not None and not window_returns_df.empty:
         print(f"\n--- Simulating {args.portfolios} random portfolios ---")
         portfolios_df = simulate_portfolios(args.portfolios, window_returns_df)
+    elif args.equal_weight is not None and not window_returns_df.empty:
+        print(
+            f"\n--- Generating all equal-weight portfolios of {args.equal_weight} assets ---"
+        )
+        portfolios_df = generate_equal_weight_portfolios(
+            args.equal_weight, window_returns_df
+        )
 
+    # --- Portfolio Analysis and Plotting ---
+    if portfolios_df is not None and not portfolios_df.empty:
         # Find and highlight the optimal portfolios
         min_vol_portfolio = portfolios_df.iloc[portfolios_df["Volatility"].argmin()]
         max_sharpe_portfolio = portfolios_df.iloc[portfolios_df["Sharpe"].argmax()]
