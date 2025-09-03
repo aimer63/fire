@@ -306,7 +306,7 @@ For mathematical background, advanced usage, and additional guides, see the [doc
 ### 📃 Documentation Index
 
 - [Installation Guide](https://github.com/aimer63/fire/blob/master/docs/install.md): Step-by-step instructions for installing firecast.
-- [Configuration Example](https://github.com/aimer63/fire/blob/master/firecast/configs/config.toml): Configuration example with all parameters.
+- [Configuration Example](https://github.com/aimer63/fire/blob/master/configs/config.toml): Configuration example with all parameters.
 - [Configuration Reference](https://github.com/aimer63/fire/blob/master/docs/config.md): Detailed explanation of all configuration parameters.
 - [Usage Guide](https://github.com/aimer63/fire/blob/master/docs/usage.md): How to install, configure, and run the simulation.
 - [Results](https://github.com/aimer63/fire/blob/master/docs/output.md): Detailed explanation of all outputs of the simulation.

@@ -356,3 +356,4 @@ weights = { stocks = 0.60, bonds = 0.40 }
 ---
 
 For more details and examples, see [usage.md](usage.md) and [README.md](../README.md).
+For a configuration example see [Example](https://github.com/aimer63/fire/blob/master/configs/config.toml)

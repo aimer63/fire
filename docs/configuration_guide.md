@@ -136,5 +136,4 @@ You can further configure:
 
 ---
 
-For more details, see the [Configuration Reference](config.md) and [Example](../firecast/configs/config.toml)
-in the `config` directory.
+For more details, see the [Configuration Reference](https://github.com/aimer63/fire/blob/master/docs/config.md) and [Example](https://github.com/aimer63/fire/blob/master/configs/config.toml)
