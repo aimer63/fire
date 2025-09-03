@@ -69,6 +69,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from tqdm import trange
 from matplotlib.colors import LinearSegmentedColormap
 
 # This local import is assumed to be available, similar to data_metrics.py
@@ -185,7 +186,7 @@ def analyze_assets(
 
     - Reporting Metrics: Calculated per-asset on its full available history
       using a series of rolling N-year windows.
-    - Simulation/Plotting Metrics: Based on the maximum common (overlapping)
+    - Simulation Metrics: Based on the maximum common (overlapping)
       history for all assets to ensure consistency.
 
     Args:
@@ -196,7 +197,7 @@ def analyze_assets(
     Returns:
         A tuple containing:
         - summary_df_reporting (pd.DataFrame): Metrics from per-asset history.
-        - summary_df_plotting (pd.DataFrame): Metrics from overlapping history.
+        - summary_df_simulation (pd.DataFrame): Metrics from overlapping history.
         - window_returns_df (pd.DataFrame): Aligned N-year returns for simulation.
         - correlation_matrix (pd.DataFrame): Correlation matrix of daily returns.
     """
@@ -235,23 +236,22 @@ def analyze_assets(
     # Align all series by date and drop non-overlapping windows for simulation
     window_returns_df = pd.concat(window_returns_list, axis=1).dropna()
 
-    # Calculate summary metrics for plotting from the common set of window returns
-    expected_returns_plotting = window_returns_df.mean()
-    volatility_plotting = window_returns_df.std()
-    summary_df_plotting = pd.DataFrame(
+    # Calculate summary metrics for simulation from the common set of window returns
+    expected_returns_simulation = window_returns_df.mean()
+    volatility_simulation = window_returns_df.std()
+    summary_df_simulation = pd.DataFrame(
         {
-            "Expected Annualized Return": expected_returns_plotting,
-            "Annualized Volatility": volatility_plotting,
+            "Expected Annualized Return": expected_returns_simulation,
+            "Annualized Volatility": volatility_simulation,
         }
     )
 
-    # For the correlation report, still use daily returns on overlapping prices
-    overlapping_prices = price_df.dropna()
-    correlation_matrix = overlapping_prices.pct_change().corr()
+    # For the correlation report, use rolling window returns instead of daily returns
+    correlation_matrix = window_returns_df.corr()
 
     return (
         summary_df_reporting,
-        summary_df_plotting,
+        summary_df_simulation,
         window_returns_df,
         correlation_matrix,
     )
@@ -356,7 +356,9 @@ def simulate_portfolios(
     results = np.zeros((3, num_portfolios))
     weights_record = []
 
-    for i in range(num_portfolios):
+    term_width = os.get_terminal_size().columns
+    bar_width = max(40, term_width // 2)
+    for i in trange(num_portfolios, desc="Simulating portfolios", ncols=bar_width):
         # Generate random weights that sum to 1
         weights = np.random.random(num_assets)
         weights /= np.sum(weights)
@@ -547,7 +549,7 @@ def main() -> None:
     # Analyze portfolio
     (
         summary_df_reporting,
-        summary_df_plotting,
+        summary_df_simulation,
         window_returns_df,
         correlation_matrix,
     ) = analyze_assets(price_df, trading_days, window_years)
@@ -567,7 +569,7 @@ def main() -> None:
         start_date = price_df.dropna().index.min().strftime("%Y-%m-%d")
         end_date = price_df.dropna().index.max().strftime("%Y-%m-%d")
         print(
-            f"\n--- High Correlation Pairs (> 0.75) (Daily Returns, Period: {start_date} to {end_date}) ---"
+            f"\n--- High Correlation Pairs (> 0.90) (Daily Returns, Period: {start_date} to {end_date}) ---"
         )
         # Get the upper triangle of the correlation matrix to avoid duplicates
         upper_tri = correlation_matrix.where(
@@ -575,12 +577,12 @@ def main() -> None:
         )
         # Find pairs with correlation > 0.75
         stacked_upper = upper_tri.stack()
-        high_corr_pairs = stacked_upper.loc[lambda s: s > 0.75]
+        high_corr_pairs = stacked_upper.loc[lambda s: s > 0.90]
 
         if not high_corr_pairs.empty:
             print(high_corr_pairs.to_string(float_format="{:.2f}".format))
         else:
-            print("No asset pairs with correlation greater than 0.75 found.")
+            print("No asset pairs with correlation greater than 0.90 found.")
     else:
         print("\n--- Correlation Analysis ---")
         print("No overlapping data found to compute correlations.")
@@ -633,7 +635,7 @@ def main() -> None:
 
         plot_efficient_frontier(
             portfolios_df,
-            summary_df_plotting,
+            summary_df_simulation,
             min_vol_portfolio,
             max_sharpe_portfolio,
         )
