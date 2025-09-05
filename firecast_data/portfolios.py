@@ -222,8 +222,8 @@ def analyze_assets(
         annualized_returns_series.name = asset
         window_returns_list.append(annualized_returns_series)
 
-        # Calculate metrics for reporting using the full series for this asset
         if not annualized_returns_series.empty:
+            var_95 = annualized_returns_series.quantile(0.05)
             reporting_metrics.append(
                 {
                     "Asset": asset,
@@ -233,6 +233,7 @@ def analyze_assets(
                     ),
                     "Expected Annualized Return": annualized_returns_series.mean(),
                     "Annualized Volatility": annualized_returns_series.std(),
+                    "VaR 95%": var_95,
                     "Number of Windows": len(annualized_returns_series),
                 }
             )
@@ -245,10 +246,12 @@ def analyze_assets(
     # Calculate summary metrics for simulation from the common set of window returns
     expected_returns_simulation = window_returns_df.mean()
     volatility_simulation = window_returns_df.std()
+    var_95_simulation = window_returns_df.quantile(0.05)
     summary_df_simulation = pd.DataFrame(
         {
             "Expected Annualized Return": expected_returns_simulation,
             "Annualized Volatility": volatility_simulation,
+            "VaR 95%": var_95_simulation,
         }
     )
 
@@ -370,7 +373,7 @@ def simulate_portfolios(
         A DataFrame containing the return, volatility, and weights for each portfolio.
     """
     num_assets = window_returns_df.shape[1]
-    results = np.zeros((3, num_portfolios))
+    results = np.zeros((4, num_portfolios))
     weights_record = []
 
     term_width = os.get_terminal_size().columns
@@ -387,13 +390,17 @@ def simulate_portfolios(
         # Calculate portfolio metrics from the distribution of its window returns
         portfolio_return = portfolio_window_returns.mean()
         portfolio_volatility = portfolio_window_returns.std()
+        portfolio_var_95 = portfolio_window_returns.quantile(0.05)
 
         results[0, i] = portfolio_return
         results[1, i] = portfolio_volatility
         # Sharpe ratio
         results[2, i] = portfolio_return / portfolio_volatility
+        results[3, i] = portfolio_var_95
 
-    portfolios_df = pd.DataFrame(results.T, columns=["Return", "Volatility", "Sharpe"])
+    portfolios_df = pd.DataFrame(
+        results.T, columns=["Return", "Volatility", "Sharpe", "VaR 95%"]
+    )
     portfolios_df["Weights"] = weights_record
     return portfolios_df
 
@@ -436,17 +443,21 @@ def generate_equal_weight_portfolios(
         portfolio_window_returns = window_returns_df.dot(weights.values)
         portfolio_return = portfolio_window_returns.mean()
         portfolio_volatility = portfolio_window_returns.std()
+        portfolio_var_95 = portfolio_window_returns.quantile(0.05)
 
         results.append(
             (
                 portfolio_return,
                 portfolio_volatility,
                 portfolio_return / portfolio_volatility,
+                portfolio_var_95,
             )
         )
 
     print(f"Generated {num_combinations} equal-weight portfolios.")
-    portfolios_df = pd.DataFrame(results, columns=["Return", "Volatility", "Sharpe"])
+    portfolios_df = pd.DataFrame(
+        results, columns=["Return", "Volatility", "Sharpe", "VaR 95%"]
+    )
     portfolios_df["Weights"] = weights_record
     return portfolios_df
 
@@ -456,6 +467,7 @@ def plot_efficient_frontier(
     summary_df: pd.DataFrame,
     min_vol_portfolio: pd.Series,
     max_sharpe_portfolio: pd.Series,
+    max_var_portfolio: pd.Series,
 ) -> None:
     """
     Plots the efficient frontier from simulated portfolios and individual assets.
@@ -518,6 +530,17 @@ def plot_efficient_frontier(
         zorder=5,
     )
 
+    # Highlight the maximum VaR 95% portfolio
+    plt.scatter(
+        max_var_portfolio["Volatility"],
+        max_var_portfolio["Return"],
+        marker="*",
+        color=get_color("mocha", "mauve"),
+        s=250,
+        label="Maximum VaR 95%",
+        zorder=5,
+    )
+
     plt.title("Monte Carlo Simulation for Efficient Frontier")
     plt.xlabel("Annualized Volatility")
     plt.ylabel("Expected Annualized Return")
@@ -529,6 +552,100 @@ def plot_efficient_frontier(
     filepath = os.path.join(output_dir, "efficient_frontier.png")
     plt.savefig(filepath)
     print(f"\nEfficient frontier plot saved to '{filepath}'")
+    plt.show()
+    plt.close()
+
+
+def plot_efficient_frontier_var(
+    portfolios_df: pd.DataFrame,
+    summary_df: pd.DataFrame,
+    min_vol_portfolio: pd.Series,
+    max_sharpe_portfolio: pd.Series,
+    max_var_portfolio: pd.Series,
+) -> None:
+    """
+    Plots the efficient frontier using VaR 95% on the x-axis.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(12, 8))
+
+    # Plot the simulated portfolios
+    plt.scatter(
+        portfolios_df["VaR 95%"],
+        portfolios_df["Return"],
+        c=portfolios_df["Sharpe"],
+        cmap="viridis",
+        marker=".",
+        alpha=0.7,
+    )
+
+    # Plot the individual assets
+    plt.scatter(
+        summary_df["VaR 95%"],
+        summary_df["Expected Annualized Return"],
+        marker="X",
+        color="red",
+        s=100,
+        label="Individual Assets",
+    )
+
+    # Label the individual assets
+    for asset, row in summary_df.iterrows():
+        plt.text(
+            row["VaR 95%"] * 1.01,
+            row["Expected Annualized Return"],
+            str(asset),
+            fontsize=9,
+            color=get_color("mocha", "text"),
+        )
+
+    # Highlight the minimum volatility portfolio
+    plt.scatter(
+        min_vol_portfolio["VaR 95%"],
+        min_vol_portfolio["Return"],
+        marker="*",
+        color=get_color("mocha", "green"),
+        s=250,
+        label="Minimum Volatility Portfolio",
+        zorder=5,
+    )
+
+    # Highlight the maximum Sharpe ratio portfolio
+    plt.scatter(
+        max_sharpe_portfolio["VaR 95%"],
+        max_sharpe_portfolio["Return"],
+        marker="*",
+        color=get_color("mocha", "yellow"),
+        s=250,
+        label="Maximum Sharpe Ratio Portfolio",
+        zorder=5,
+    )
+
+    # Highlight the maximum VaR 95% portfolio
+    plt.scatter(
+        max_var_portfolio["VaR 95%"],
+        max_var_portfolio["Return"],
+        marker="*",
+        color=get_color("mocha", "mauve"),
+        s=250,
+        label="Maximum VaR 95% Portfolio",
+        zorder=5,
+    )
+
+    plt.title("Efficient Frontier (Return vs. VaR 95%)")
+    plt.xlabel("VaR 95% (5th Percentile of Annualized Returns)")
+    plt.ylabel("Expected Annualized Return")
+    plt.colorbar(label="Sharpe Ratio")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+
+    filepath = os.path.join(output_dir, "efficient_frontier_var.png")
+    plt.savefig(filepath)
+    print(f"\nEfficient frontier (VaR) plot saved to '{filepath}'")
     plt.show()
     plt.close()
 
@@ -579,6 +696,7 @@ def main() -> None:
             formatters={
                 "Expected Annualized Return": "{:.2%}".format,
                 "Annualized Volatility": "{:.2%}".format,
+                "VaR 95%": "{:.2%}".format,
             }
         )
     )
@@ -629,6 +747,7 @@ def main() -> None:
         top_3_max_sharpe = portfolios_df.sort_values(by="Sharpe", ascending=False).head(
             3
         )
+        top_3_max_var = portfolios_df.sort_values(by="VaR 95%", ascending=False).head(3)
 
         # Print details of the optimal portfolios
         print("\n--- Top 3 Minimum Volatility Portfolios ---")
@@ -636,6 +755,7 @@ def main() -> None:
             print(f"\n--- Rank #{i} ---")
             print(f"Return: {portfolio['Return']:.2%}")
             print(f"Volatility: {portfolio['Volatility']:.2%}")
+            print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
             print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
             print("Weights:")
             weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
@@ -647,6 +767,19 @@ def main() -> None:
             print(f"\n--- Rank #{i} ---")
             print(f"Return: {portfolio['Return']:.2%}")
             print(f"Volatility: {portfolio['Volatility']:.2%}")
+            print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
+            print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
+            print("Weights:")
+            weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
+            weights = weights[weights > 0.0001]
+            print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
+
+        print("\n\n--- Top 3 Maximum VaR 95% Portfolios ---")
+        for i, (_, portfolio) in enumerate(top_3_max_var.iterrows(), 1):
+            print(f"\n--- Rank #{i} ---")
+            print(f"Return: {portfolio['Return']:.2%}")
+            print(f"Volatility: {portfolio['Volatility']:.2%}")
+            print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
             print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
             print("Weights:")
             weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
@@ -656,12 +789,21 @@ def main() -> None:
         # For plotting, highlight only the single best portfolio from each category
         min_vol_portfolio = top_3_min_vol.iloc[0]
         max_sharpe_portfolio = top_3_max_sharpe.iloc[0]
+        max_var_portfolio = top_3_max_var.iloc[0]
 
         plot_efficient_frontier(
             portfolios_df,
             summary_df_simulation,
             min_vol_portfolio,
             max_sharpe_portfolio,
+            max_var_portfolio,
+        )
+        plot_efficient_frontier_var(
+            portfolios_df,
+            summary_df_simulation,
+            min_vol_portfolio,
+            max_sharpe_portfolio,
+            max_var_portfolio,
         )
 
 
