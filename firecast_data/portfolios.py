@@ -107,6 +107,12 @@ parser.add_argument(
     default=None,
     help="Analyze only the most recent N years of data.",
 )
+parser.add_argument(
+    "-i",
+    "--interactive-plots",
+    action="store_true",
+    help="Show interactive plot windows for correlation and price plots.",
+)
 group = parser.add_mutually_exclusive_group()
 group.add_argument(
     "-p",
@@ -257,12 +263,15 @@ def analyze_assets(
     )
 
 
-def plot_correlation_heatmap(correlation_matrix: pd.DataFrame) -> None:
+def plot_correlation_heatmap(
+    correlation_matrix: pd.DataFrame, interactive: bool
+) -> None:
     """
     Generates and saves a heatmap of the asset correlation matrix.
 
     Args:
         correlation_matrix: The correlation matrix to plot.
+        interactive: If True, show the plot window.
     """
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
@@ -297,12 +306,18 @@ def plot_correlation_heatmap(correlation_matrix: pd.DataFrame) -> None:
     filepath = os.path.join(output_dir, "correlation_heatmap.png")
     plt.savefig(filepath)
     print(f"\nCorrelation heatmap saved to '{filepath}'")
-    plt.show()
+    if interactive:
+        plt.show()
+    plt.close()
 
 
-def plot_asset_prices(price_df: pd.DataFrame) -> None:
+def plot_asset_prices(price_df: pd.DataFrame, interactive: bool) -> None:
     """
     Generates and saves a plot of prices for each asset to help spot anomalies.
+
+    Args:
+        price_df: DataFrame of asset prices.
+        interactive: If True, show the plot windows.
     """
     output_dir = "output/price_plots"
     os.makedirs(output_dir, exist_ok=True)
@@ -334,7 +349,9 @@ def plot_asset_prices(price_df: pd.DataFrame) -> None:
         safe_asset_name = asset.replace("/", "_").replace(" ", "_")
         filepath = os.path.join(output_dir, f"price_history_{safe_asset_name}.png")
         plt.savefig(filepath)
-        plt.show()
+        if interactive:
+            plt.show()
+        plt.close()
 
 
 def simulate_portfolios(
@@ -513,6 +530,7 @@ def plot_efficient_frontier(
     plt.savefig(filepath)
     print(f"\nEfficient frontier plot saved to '{filepath}'")
     plt.show()
+    plt.close()
 
 
 def main() -> None:
@@ -544,7 +562,7 @@ def main() -> None:
         print(f"\n--- Analyzing tail window: last {args.tail} years ---")
 
     # Generate plots for visual inspection of prices
-    plot_asset_prices(price_df)
+    plot_asset_prices(price_df, args.interactive_plots)
 
     # Analyze portfolio
     (
@@ -589,7 +607,7 @@ def main() -> None:
 
     # Plot heatmap
     if not correlation_matrix.empty:
-        plot_correlation_heatmap(correlation_matrix)
+        plot_correlation_heatmap(correlation_matrix, args.interactive_plots)
 
     # --- Portfolio Generation ---
     portfolios_df = None
@@ -606,32 +624,38 @@ def main() -> None:
 
     # --- Portfolio Analysis and Plotting ---
     if portfolios_df is not None and not portfolios_df.empty:
-        # Find and highlight the optimal portfolios
-        min_vol_portfolio = portfolios_df.iloc[portfolios_df["Volatility"].argmin()]
-        max_sharpe_portfolio = portfolios_df.iloc[portfolios_df["Sharpe"].argmax()]
+        # Find the top 3 portfolios for each category
+        top_3_min_vol = portfolios_df.sort_values(by="Volatility").head(3)
+        top_3_max_sharpe = portfolios_df.sort_values(by="Sharpe", ascending=False).head(
+            3
+        )
 
         # Print details of the optimal portfolios
-        print("\n--- Minimum Volatility Portfolio ---")
-        print(f"Return: {min_vol_portfolio['Return']:.2%}")
-        print(f"Volatility: {min_vol_portfolio['Volatility']:.2%}")
-        print(f"Sharpe Ratio: {min_vol_portfolio['Sharpe']:.2f}")
-        print("\nWeights:")
-        weights = pd.Series(
-            min_vol_portfolio["Weights"], index=window_returns_df.columns
-        )
-        weights = weights[weights > 0.0001]
-        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
+        print("\n--- Top 3 Minimum Volatility Portfolios ---")
+        for i, (_, portfolio) in enumerate(top_3_min_vol.iterrows(), 1):
+            print(f"\n--- Rank #{i} ---")
+            print(f"Return: {portfolio['Return']:.2%}")
+            print(f"Volatility: {portfolio['Volatility']:.2%}")
+            print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
+            print("Weights:")
+            weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
+            weights = weights[weights > 0.0001]
+            print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
-        print("\n--- Maximum Sharpe Ratio Portfolio ---")
-        print(f"Return: {max_sharpe_portfolio['Return']:.2%}")
-        print(f"Volatility: {max_sharpe_portfolio['Volatility']:.2%}")
-        print(f"Sharpe Ratio: {max_sharpe_portfolio['Sharpe']:.2f}")
-        print("\nWeights:")
-        weights = pd.Series(
-            max_sharpe_portfolio["Weights"], index=window_returns_df.columns
-        )
-        weights = weights[weights > 0.0001]
-        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
+        print("\n\n--- Top 3 Maximum Sharpe Ratio Portfolios ---")
+        for i, (_, portfolio) in enumerate(top_3_max_sharpe.iterrows(), 1):
+            print(f"\n--- Rank #{i} ---")
+            print(f"Return: {portfolio['Return']:.2%}")
+            print(f"Volatility: {portfolio['Volatility']:.2%}")
+            print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
+            print("Weights:")
+            weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
+            weights = weights[weights > 0.0001]
+            print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
+
+        # For plotting, highlight only the single best portfolio from each category
+        min_vol_portfolio = top_3_min_vol.iloc[0]
+        max_sharpe_portfolio = top_3_max_sharpe.iloc[0]
 
         plot_efficient_frontier(
             portfolios_df,
