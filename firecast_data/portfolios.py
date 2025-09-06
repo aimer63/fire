@@ -62,6 +62,7 @@ Analyze with a custom number of trading days (e.g., 250)::
 
 import argparse
 import itertools
+import math
 import os
 from typing import Dict, List, Tuple
 
@@ -69,7 +70,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from tqdm import trange
+from tqdm import tqdm, trange
 from matplotlib.colors import LinearSegmentedColormap
 
 # This local import is assumed to be available, similar to data_metrics.py
@@ -427,13 +428,23 @@ def generate_equal_weight_portfolios(
             f"must be between 1 and {num_total_assets}."
         )
 
+    # Calculate total combinations for the progress bar
+    num_combinations = math.comb(num_total_assets, n_assets_in_portfolio)
+    print(f"Generating {num_combinations} equal-weight portfolios.")
+
     asset_combinations = itertools.combinations(all_assets, n_assets_in_portfolio)
-    num_combinations = 0
     results = []
     weights_record = []
 
-    for combo in asset_combinations:
-        num_combinations += 1
+    term_width = os.get_terminal_size().columns
+    bar_width = max(40, term_width // 2)
+
+    for combo in tqdm(
+        asset_combinations,
+        total=num_combinations,
+        desc="Generating portfolios",
+        ncols=bar_width,
+    ):
         # Create a weights vector: 1/N for selected assets, 0 for others
         weights = pd.Series(0.0, index=all_assets)
         weights[list(combo)] = 1.0 / n_assets_in_portfolio
@@ -552,8 +563,8 @@ def plot_efficient_frontier(
     filepath = os.path.join(output_dir, "efficient_frontier.png")
     plt.savefig(filepath)
     print(f"\nEfficient frontier plot saved to '{filepath}'")
-    plt.show()
-    plt.close()
+    # plt.show()
+    # plt.close()
 
 
 def plot_efficient_frontier_var(
@@ -646,8 +657,8 @@ def plot_efficient_frontier_var(
     filepath = os.path.join(output_dir, "efficient_frontier_var.png")
     plt.savefig(filepath)
     print(f"\nEfficient frontier (VaR) plot saved to '{filepath}'")
-    plt.show()
-    plt.close()
+    # plt.show()
+    # plt.close()
 
 
 def main() -> None:
@@ -805,6 +816,7 @@ def main() -> None:
             max_sharpe_portfolio,
             max_var_portfolio,
         )
+        plt.show()
 
 
 if __name__ == "__main__":
