@@ -63,8 +63,9 @@ Analyze with a custom number of trading days (e.g., 250)::
 import argparse
 import itertools
 import math
+import multiprocessing
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -358,66 +359,126 @@ def plot_asset_prices(price_df: pd.DataFrame, interactive: bool) -> None:
         plt.close()
 
 
+# --- Parallel Processing Setup ---
+
+# Global variable for worker processes to avoid passing data repeatedly
+worker_window_returns_df = None
+
+
+def init_worker(df: pd.DataFrame):
+    """Initializer for multiprocessing pool to set the global DataFrame."""
+    global worker_window_returns_df
+    worker_window_returns_df = df
+
+
+def _worker_simulate_random(_: int) -> Tuple[float, float, float, float, np.ndarray]:
+    """
+    Worker function to simulate a single random portfolio.
+    Accesses the global 'worker_window_returns_df'.
+    """
+    global worker_window_returns_df
+    assert worker_window_returns_df is not None
+    num_assets = worker_window_returns_df.shape[1]
+
+    # Generate random weights that sum to 1
+    weights = np.random.random(num_assets)
+    weights /= np.sum(weights)
+
+    # Calculate the portfolio's historical window returns
+    portfolio_window_returns = worker_window_returns_df.dot(weights)
+
+    # Calculate portfolio metrics
+    portfolio_return = portfolio_window_returns.mean()
+    portfolio_volatility = portfolio_window_returns.std()
+    portfolio_var_95 = portfolio_window_returns.quantile(0.05)
+    sharpe_ratio = portfolio_return / portfolio_volatility
+
+    return (
+        cast(float, portfolio_return),
+        cast(float, portfolio_volatility),
+        cast(float, sharpe_ratio),
+        cast(float, portfolio_var_95),
+        weights,
+    )
+
+
 def simulate_portfolios(
     num_portfolios: int, window_returns_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    Generates random portfolios and calculates their return and volatility based
-    on the historical distribution of N-year window returns.
-
-    Args:
-        num_portfolios: The number of random portfolios to generate.
-        window_returns_df: DataFrame where each column is an asset and each row
-                           is the annualized return for a specific N-year window.
-
-    Returns:
-        A DataFrame containing the return, volatility, and weights for each portfolio.
+    Generates random portfolios in parallel and calculates their metrics.
     """
-    num_assets = window_returns_df.shape[1]
-    results = np.zeros((4, num_portfolios))
-    weights_record = []
+    num_cores = multiprocessing.cpu_count()
+    print(f"Starting random simulation on {num_cores} cores...")
 
-    term_width = os.get_terminal_size().columns
-    bar_width = max(40, term_width // 2)
-    for i in trange(num_portfolios, desc="Simulating portfolios", ncols=bar_width):
-        # Generate random weights that sum to 1
-        weights = np.random.random(num_assets)
-        weights /= np.sum(weights)
-        weights_record.append(weights)
+    with multiprocessing.Pool(
+        processes=num_cores,
+        initializer=init_worker,
+        initargs=(window_returns_df,),
+    ) as pool:
+        term_width = os.get_terminal_size().columns
+        bar_width = max(40, term_width // 2)
+        results = list(
+            tqdm(
+                pool.imap_unordered(_worker_simulate_random, range(num_portfolios)),
+                total=num_portfolios,
+                desc="Simulating portfolios",
+                ncols=bar_width,
+            )
+        )
 
-        # Calculate the portfolio's historical window returns
-        portfolio_window_returns = window_returns_df.dot(weights)
-
-        # Calculate portfolio metrics from the distribution of its window returns
-        portfolio_return = portfolio_window_returns.mean()
-        portfolio_volatility = portfolio_window_returns.std()
-        portfolio_var_95 = portfolio_window_returns.quantile(0.05)
-
-        results[0, i] = portfolio_return
-        results[1, i] = portfolio_volatility
-        # Sharpe ratio
-        results[2, i] = portfolio_return / portfolio_volatility
-        results[3, i] = portfolio_var_95
+    # Unpack results
+    returns, volatilities, sharpes, vars_95, weights_record = zip(*results)
 
     portfolios_df = pd.DataFrame(
-        results.T, columns=["Return", "Volatility", "Sharpe", "VaR 95%"]
+        {
+            "Return": returns,
+            "Volatility": volatilities,
+            "Sharpe": sharpes,
+            "VaR 95%": vars_95,
+            "Weights": weights_record,
+        }
     )
-    portfolios_df["Weights"] = weights_record
     return portfolios_df
+
+
+def _worker_generate_equal_weight(
+    combo: Tuple[str, ...],
+) -> Tuple[float, float, float, float, np.ndarray]:
+    """
+    Worker function to generate a single equal-weight portfolio.
+    Accesses the global 'worker_window_returns_df'.
+    """
+    global worker_window_returns_df
+    assert worker_window_returns_df is not None
+    all_assets = worker_window_returns_df.columns
+
+    # Create a weights vector: 1/N for selected assets, 0 for others
+    weights = pd.Series(0.0, index=all_assets)
+    weights[list(combo)] = 1.0 / len(combo)
+    weights_np = weights.to_numpy()
+
+    # Calculate portfolio metrics
+    portfolio_window_returns = worker_window_returns_df.dot(weights_np)
+    portfolio_return = portfolio_window_returns.mean()
+    portfolio_volatility = portfolio_window_returns.std()
+    portfolio_var_95 = portfolio_window_returns.quantile(0.05)
+    sharpe_ratio = portfolio_return / portfolio_volatility
+
+    return (
+        cast(float, portfolio_return),
+        cast(float, portfolio_volatility),
+        cast(float, sharpe_ratio),
+        cast(float, portfolio_var_95),
+        weights_np,
+    )
 
 
 def generate_equal_weight_portfolios(
     n_assets_in_portfolio: int, window_returns_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    Generates all equal-weight portfolios for every combination of N assets.
-
-    Args:
-        n_assets_in_portfolio: The number of assets to include in each portfolio.
-        window_returns_df: DataFrame of aligned N-year returns for all assets.
-
-    Returns:
-        A DataFrame containing the return, volatility, and weights for each portfolio.
+    Generates all equal-weight portfolios in parallel for every combination of N assets.
     """
     all_assets = window_returns_df.columns
     num_total_assets = len(all_assets)
@@ -428,48 +489,42 @@ def generate_equal_weight_portfolios(
             f"must be between 1 and {num_total_assets}."
         )
 
-    # Calculate total combinations for the progress bar
-    num_combinations = math.comb(num_total_assets, n_assets_in_portfolio)
-    print(f"Generating {num_combinations} equal-weight portfolios.")
+    # Generate all combinations to be processed
+    asset_combinations = list(itertools.combinations(all_assets, n_assets_in_portfolio))
+    num_combinations = len(asset_combinations)
+    num_cores = multiprocessing.cpu_count()
+    print(
+        f"Generating {num_combinations} equal-weight portfolios on {num_cores} cores..."
+    )
 
-    asset_combinations = itertools.combinations(all_assets, n_assets_in_portfolio)
-    results = []
-    weights_record = []
-
-    term_width = os.get_terminal_size().columns
-    bar_width = max(40, term_width // 2)
-
-    for combo in tqdm(
-        asset_combinations,
-        total=num_combinations,
-        desc="Generating portfolios",
-        ncols=bar_width,
-    ):
-        # Create a weights vector: 1/N for selected assets, 0 for others
-        weights = pd.Series(0.0, index=all_assets)
-        weights[list(combo)] = 1.0 / n_assets_in_portfolio
-        weights_record.append(weights.values)
-
-        # Calculate portfolio metrics using the same logic as the simulation
-        portfolio_window_returns = window_returns_df.dot(weights.values)
-        portfolio_return = portfolio_window_returns.mean()
-        portfolio_volatility = portfolio_window_returns.std()
-        portfolio_var_95 = portfolio_window_returns.quantile(0.05)
-
-        results.append(
-            (
-                portfolio_return,
-                portfolio_volatility,
-                portfolio_return / portfolio_volatility,
-                portfolio_var_95,
+    with multiprocessing.Pool(
+        processes=num_cores,
+        initializer=init_worker,
+        initargs=(window_returns_df,),
+    ) as pool:
+        term_width = os.get_terminal_size().columns
+        bar_width = max(40, term_width // 2)
+        results = list(
+            tqdm(
+                pool.imap_unordered(_worker_generate_equal_weight, asset_combinations),
+                total=num_combinations,
+                desc="Generating portfolios",
+                ncols=bar_width,
             )
         )
 
-    print(f"Generated {num_combinations} equal-weight portfolios.")
+    # Unpack results
+    returns, volatilities, sharpes, vars_95, weights_record = zip(*results)
+
     portfolios_df = pd.DataFrame(
-        results, columns=["Return", "Volatility", "Sharpe", "VaR 95%"]
+        {
+            "Return": returns,
+            "Volatility": volatilities,
+            "Sharpe": sharpes,
+            "VaR 95%": vars_95,
+            "Weights": weights_record,
+        }
     )
-    portfolios_df["Weights"] = weights_record
     return portfolios_df
 
 
