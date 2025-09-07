@@ -77,6 +77,9 @@ from matplotlib.colors import LinearSegmentedColormap
 # This local import is assumed to be available, similar to data_metrics.py
 from firecast.utils.colors import get_color
 
+# --- Constants ---
+DISCRETIZATION_EDGE = 0.05
+
 # Setup CLI argument parsing
 parser = argparse.ArgumentParser(
     description="Analyze historical asset prices for portfolio metrics."
@@ -371,7 +374,46 @@ def init_worker(df: pd.DataFrame):
     worker_window_returns_df = df
 
 
-def _worker_simulate_random(_: int) -> Tuple[float, float, float, float, np.ndarray]:
+def discretize_weights(weights: np.ndarray, edge: float) -> tuple[int, ...]:
+    """
+    Maps a continuous weight vector to a discrete cell representation using a
+    largest remainder method.
+
+    Args:
+        weights: A numpy array of floats representing portfolio weights, summing to 1.0.
+        edge: The discrete increment size (e.g., 0.01 for 1%).
+
+    Returns:
+        A tuple of integers representing the discrete cell, summing to 1/edge.
+    """
+    k = int(round(1 / edge))
+    n_assets = len(weights)
+
+    # Convert continuous weights to desired number of steps
+    steps = [w * k for w in weights]
+
+    # Round down to get the integer part of the steps
+    discrete_steps = [int(s) for s in steps]
+
+    # Calculate the remainder (the "dust") that was lost during rounding
+    remainder = k - sum(discrete_steps)
+
+    # Distribute the remainder to the weights with the largest fractional parts
+    fractional_parts = [s - ds for s, ds in zip(steps, discrete_steps)]
+    indices_to_increment = sorted(
+        range(n_assets), key=lambda i: fractional_parts[i], reverse=True
+    )
+
+    # Add 1 to the 'remainder' largest fractional parts
+    for i in range(remainder):
+        discrete_steps[indices_to_increment[i]] += 1
+
+    return tuple(discrete_steps)
+
+
+def _worker_simulate_random(
+    _: int,
+) -> Tuple[float, float, float, float, np.ndarray, tuple[int, ...]]:
     """
     Worker function to simulate a single random portfolio.
     Accesses the global 'worker_window_returns_df'.
@@ -383,6 +425,9 @@ def _worker_simulate_random(_: int) -> Tuple[float, float, float, float, np.ndar
     # Generate random weights that sum to 1
     weights = np.random.random(num_assets)
     weights /= np.sum(weights)
+
+    # Map to a discrete cell for density tracking
+    discretized_w = discretize_weights(weights, DISCRETIZATION_EDGE)
 
     # Calculate the portfolio's historical window returns
     portfolio_window_returns = worker_window_returns_df.dot(weights)
@@ -399,6 +444,7 @@ def _worker_simulate_random(_: int) -> Tuple[float, float, float, float, np.ndar
         cast(float, sharpe_ratio),
         cast(float, portfolio_var_95),
         weights,
+        discretized_w,
     )
 
 
@@ -409,7 +455,14 @@ def simulate_portfolios(
     Generates random portfolios in parallel and calculates their metrics.
     """
     num_cores = multiprocessing.cpu_count()
+    num_assets = window_returns_df.shape[1]
+    k = int(round(1 / DISCRETIZATION_EDGE))
+    total_cells = math.comb(k + num_assets - 1, num_assets - 1)
+
     print(f"Starting random simulation on {num_cores} cores...")
+    print(
+        f"Tracking density across {total_cells:,} discrete cells (edge: {DISCRETIZATION_EDGE:.2%})."
+    )
 
     with multiprocessing.Pool(
         processes=num_cores,
@@ -428,7 +481,15 @@ def simulate_portfolios(
         )
 
     # Unpack results
-    returns, volatilities, sharpes, vars_95, weights_record = zip(*results)
+    returns, volatilities, sharpes, vars_95, weights_record, discretized_weights = zip(
+        *results
+    )
+
+    # Calculate and report density
+    visited_cells = set(discretized_weights)
+    density = len(visited_cells) / total_cells
+    print(f"Simulation complete. Visited {len(visited_cells):,} unique cells.")
+    print(f"Final Density: {density:.4%}")
 
     portfolios_df = pd.DataFrame(
         {
