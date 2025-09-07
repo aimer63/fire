@@ -77,9 +77,6 @@ from matplotlib.colors import LinearSegmentedColormap
 # This local import is assumed to be available, similar to data_metrics.py
 from firecast.utils.colors import get_color
 
-# --- Constants ---
-DISCRETIZATION_EDGE = 0.05
-
 # Setup CLI argument parsing
 parser = argparse.ArgumentParser(
     description="Analyze historical asset prices for portfolio metrics."
@@ -118,21 +115,29 @@ parser.add_argument(
     action="store_true",
     help="Show interactive plot windows for correlation and price plots.",
 )
-group = parser.add_mutually_exclusive_group()
-group.add_argument(
-    "-p",
-    "--portfolios",
-    type=int,
-    default=None,
-    help="Number of random portfolios to simulate.",
-)
+# Create a mutually exclusive group for portfolio generation methods
+group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument(
     "-e",
     "--equal-weight",
     type=int,
-    default=None,
-    help="Generate all equal-weight combinations of N assets.",
+    nargs="?",
+    const=0,  # A default value if -e is provided with no number
+    help="Generate all equal-weight combinations of N assets. If N is not specified, generates for all possible numbers of assets.",
 )
+group.add_argument(
+    "-a",
+    "--annealing",
+    action="store_true",
+    help="Use simulated annealing to find the optimal portfolio.",
+)
+
+# --- Constants ---
+# Simulated Annealing Parameters
+ANNEALING_TEMP = 1.0
+ANNEALING_COOLING_RATE = 0.999
+ANNEALING_ITERATIONS = 50000
+ANNEALING_STEP_SIZE = 0.05  # Max change in weight per step
 
 
 def prepare_data(
@@ -374,6 +379,101 @@ def init_worker(df: pd.DataFrame):
     worker_window_returns_df = df
 
 
+def _calculate_var_objective(weights: np.ndarray, returns_df: pd.DataFrame) -> float:
+    """Objective function for annealing: we want to MINIMIZE this value."""
+    portfolio_returns = returns_df.dot(weights)
+    # We want to MAXIMIZE VaR, so we MINIMIZE its negative
+    return -cast(float, portfolio_returns.quantile(0.05))
+
+
+def _get_neighbor(weights: np.ndarray, step_size: float) -> np.ndarray:
+    """
+    Generates a new valid portfolio by slightly perturbing the current one.
+    It moves a small amount of weight from one random asset to another.
+    """
+    n_assets = len(weights)
+    neighbor = weights.copy()
+
+    # Choose two distinct assets to move weight between
+    from_idx, to_idx = np.random.choice(n_assets, 2, replace=False)
+
+    # Determine the amount of weight to move
+    move_amount = np.random.uniform(0, step_size)
+
+    # Ensure we don't move more weight than is available
+    move_amount = min(move_amount, float(neighbor[from_idx]))
+
+    # Perform the weight transfer
+    neighbor[from_idx] -= move_amount
+    neighbor[to_idx] += move_amount
+
+    return neighbor
+
+
+def run_simulated_annealing(window_returns_df: pd.DataFrame) -> pd.Series:
+    """
+    Uses simulated annealing to find the portfolio that maximizes VaR 95%.
+
+    Returns:
+        A pandas Series containing the metrics and weights of the best portfolio found.
+    """
+    n_assets = window_returns_df.shape[1]
+    temp = ANNEALING_TEMP
+
+    # Start with an equal-weight portfolio
+    current_weights = np.full(n_assets, 1 / n_assets)
+    current_cost = _calculate_var_objective(current_weights, window_returns_df)
+
+    best_weights = current_weights
+    best_cost = current_cost
+
+    print("Running Simulated Annealing to maximize VaR 95%...")
+    term_width = os.get_terminal_size().columns
+    bar_width = max(40, term_width // 2)
+    for i in trange(ANNEALING_ITERATIONS, desc="Annealing", ncols=bar_width):
+        # Generate a neighbor
+        neighbor_weights = _get_neighbor(current_weights, ANNEALING_STEP_SIZE)
+        neighbor_cost = _calculate_var_objective(neighbor_weights, window_returns_df)
+
+        # Decide whether to accept the neighbor
+        if neighbor_cost < current_cost:
+            # Always accept a better solution
+            current_weights = neighbor_weights
+            current_cost = neighbor_cost
+        else:
+            # Accept a worse solution with a certain probability
+            acceptance_prob = np.exp((current_cost - neighbor_cost) / temp)
+            if np.random.uniform() < acceptance_prob:
+                current_weights = neighbor_weights
+                current_cost = neighbor_cost
+
+        # Update the best solution found so far
+        if current_cost < best_cost:
+            best_weights = current_weights
+            best_cost = current_cost
+
+        # Cool the temperature
+        temp *= ANNEALING_COOLING_RATE
+
+    # Calculate final metrics for the best portfolio
+    portfolio_returns = window_returns_df.dot(best_weights)
+    best_return = portfolio_returns.mean()
+    best_volatility = portfolio_returns.std()
+    best_var_95 = portfolio_returns.quantile(0.05)
+    best_sharpe = best_return / best_volatility
+
+    best_portfolio = pd.Series(
+        {
+            "Return": best_return,
+            "Volatility": best_volatility,
+            "Sharpe": best_sharpe,
+            "VaR 95%": best_var_95,
+            "Weights": best_weights,
+        }
+    )
+    return best_portfolio
+
+
 def discretize_weights(weights: np.ndarray, edge: float) -> tuple[int, ...]:
     """
     Maps a continuous weight vector to a discrete cell representation using a
@@ -409,98 +509,6 @@ def discretize_weights(weights: np.ndarray, edge: float) -> tuple[int, ...]:
         discrete_steps[indices_to_increment[i]] += 1
 
     return tuple(discrete_steps)
-
-
-def _worker_simulate_random(
-    _: int,
-) -> Tuple[float, float, float, float, np.ndarray, tuple[int, ...]]:
-    """
-    Worker function to simulate a single random portfolio.
-    Accesses the global 'worker_window_returns_df'.
-    """
-    global worker_window_returns_df
-    assert worker_window_returns_df is not None
-    num_assets = worker_window_returns_df.shape[1]
-
-    # Generate random weights that sum to 1
-    weights = np.random.random(num_assets)
-    weights /= np.sum(weights)
-
-    # Map to a discrete cell for density tracking
-    discretized_w = discretize_weights(weights, DISCRETIZATION_EDGE)
-
-    # Calculate the portfolio's historical window returns
-    portfolio_window_returns = worker_window_returns_df.dot(weights)
-
-    # Calculate portfolio metrics
-    portfolio_return = portfolio_window_returns.mean()
-    portfolio_volatility = portfolio_window_returns.std()
-    portfolio_var_95 = portfolio_window_returns.quantile(0.05)
-    sharpe_ratio = portfolio_return / portfolio_volatility
-
-    return (
-        cast(float, portfolio_return),
-        cast(float, portfolio_volatility),
-        cast(float, sharpe_ratio),
-        cast(float, portfolio_var_95),
-        weights,
-        discretized_w,
-    )
-
-
-def simulate_portfolios(
-    num_portfolios: int, window_returns_df: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Generates random portfolios in parallel and calculates their metrics.
-    """
-    num_cores = multiprocessing.cpu_count()
-    num_assets = window_returns_df.shape[1]
-    k = int(round(1 / DISCRETIZATION_EDGE))
-    total_cells = math.comb(k + num_assets - 1, num_assets - 1)
-
-    print(f"Starting random simulation on {num_cores} cores...")
-    print(
-        f"Tracking density across {total_cells:,} discrete cells (edge: {DISCRETIZATION_EDGE:.2%})."
-    )
-
-    with multiprocessing.Pool(
-        processes=num_cores,
-        initializer=init_worker,
-        initargs=(window_returns_df,),
-    ) as pool:
-        term_width = os.get_terminal_size().columns
-        bar_width = max(40, term_width // 2)
-        results = list(
-            tqdm(
-                pool.imap_unordered(_worker_simulate_random, range(num_portfolios)),
-                total=num_portfolios,
-                desc="Simulating portfolios",
-                ncols=bar_width,
-            )
-        )
-
-    # Unpack results
-    returns, volatilities, sharpes, vars_95, weights_record, discretized_weights = zip(
-        *results
-    )
-
-    # Calculate and report density
-    visited_cells = set(discretized_weights)
-    density = len(visited_cells) / total_cells
-    print(f"Simulation complete. Visited {len(visited_cells):,} unique cells.")
-    print(f"Final Density: {density:.4%}")
-
-    portfolios_df = pd.DataFrame(
-        {
-            "Return": returns,
-            "Volatility": volatilities,
-            "Sharpe": sharpes,
-            "VaR 95%": vars_95,
-            "Weights": weights_record,
-        }
-    )
-    return portfolios_df
 
 
 def _worker_generate_equal_weight(
@@ -856,16 +864,24 @@ def main() -> None:
 
     # --- Portfolio Generation ---
     portfolios_df = None
-    if args.portfolios is not None and not window_returns_df.empty:
-        print(f"\n--- Simulating {args.portfolios} random portfolios ---")
-        portfolios_df = simulate_portfolios(args.portfolios, window_returns_df)
-    elif args.equal_weight is not None and not window_returns_df.empty:
+    if args.equal_weight is not None and not window_returns_df.empty:
         print(
             f"\n--- Generating all equal-weight portfolios of {args.equal_weight} assets ---"
         )
         portfolios_df = generate_equal_weight_portfolios(
             args.equal_weight, window_returns_df
         )
+    elif args.annealing and not window_returns_df.empty:
+        best_portfolio = run_simulated_annealing(window_returns_df)
+        print("\n--- Optimal Portfolio (Max VaR 95%) via Simulated Annealing ---")
+        print(f"Return: {best_portfolio['Return']:.2%}")
+        print(f"Volatility: {best_portfolio['Volatility']:.2%}")
+        print(f"VaR 95%: {best_portfolio['VaR 95%']:.2%}")
+        print(f"Sharpe Ratio: {best_portfolio['Sharpe']:.2f}")
+        print("Weights:")
+        weights = pd.Series(best_portfolio["Weights"], index=window_returns_df.columns)
+        weights = weights[weights > 0.0001]
+        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
     # --- Portfolio Analysis and Plotting ---
     if portfolios_df is not None and not portfolios_df.empty:
