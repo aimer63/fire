@@ -9,8 +9,8 @@
 Portfolio Analysis and Optimization Tool.
 
 This script analyzes historical asset price data from an Excel file to compute
-key financial metrics, simulate random portfolios, and identify optimal
-allocations based on risk and return.
+key financial metrics, generate portfolios, and find optimal allocations
+using simulated annealing.
 
 The analysis is based on a series of rolling N-year returns, providing a
 view of historical performance over a fixed investment horizon.
@@ -20,12 +20,12 @@ Key Features
 - Loads and cleans daily price data from an Excel file.
 - Calculates expected annualized returns and volatility based on the mean and
   standard deviation of rolling N-year returns for each asset.
-- Simulates a specified number of random portfolios to map the efficient
-  frontier.
+- Uses simulated annealing to search for an optimal portfolio that maximizes a
+  chosen metric (e.g., VaR 95%).
 - Generates all equal-weight portfolios for every combination of a specified
   number of assets.
-- Identifies and highlights the Minimum Volatility and Maximum Sharpe Ratio
-  portfolios.
+- For equal-weight mode, identifies and highlights the Minimum Volatility,
+  Maximum Sharpe Ratio, and Maximum VaR portfolios.
 - Prints detailed metrics and asset weights for these optimal portfolios.
 - Computes and plots the correlation matrix for all assets over their maximum
   overlapping period.
@@ -35,13 +35,13 @@ Dependencies
 ------------
 This script requires pandas, numpy, matplotlib, and seaborn. Install them with::
 
-    pip install pandas numpy matplotlib seaborn openpyxl
+    pip install pandas numpy matplotlib seaborn openpyxl tqdm
 
 Usage
 -----
-Analyze a daily price file and simulate 10,000 portfolios::
+Find an optimal portfolio using simulated annealing::
 
-    python portfolios.py -f my_prices.xlsx -p 10000
+    python portfolios.py -f my_prices.xlsx -a
 
 Generate all equal-weight portfolios of 3 assets::
 
@@ -49,20 +49,19 @@ Generate all equal-weight portfolios of 3 assets::
 
 Analyze using a 3-year rolling window::
 
-    python portfolios.py -f my_prices.xlsx -p 10000 -w 3
+    python portfolios.py -f my_prices.xlsx -a -w 3
 
 Analyze only the last 5 years of data::
 
-    python portfolios.py -f my_prices.xlsx -p 10000 -t 5
+    python portfolios.py -f my_prices.xlsx -a -t 5
 
 Analyze with a custom number of trading days (e.g., 250)::
 
-    python portfolios.py -f my_prices.xlsx -d 250
+    python portfolios.py -f my_prices.xlsx -a -d 250
 """
 
 import argparse
 import itertools
-import math
 import multiprocessing
 import os
 from typing import Dict, List, Tuple, cast
@@ -135,8 +134,8 @@ group.add_argument(
 # --- Constants ---
 # Simulated Annealing Parameters
 ANNEALING_TEMP = 1.0
-ANNEALING_COOLING_RATE = 0.999
-ANNEALING_ITERATIONS = 50000
+ANNEALING_COOLING_RATE = 0.999872
+ANNEALING_ITERATIONS = 100_000
 ANNEALING_STEP_SIZE = 0.05  # Max change in weight per step
 
 
@@ -386,6 +385,25 @@ def _calculate_var_objective(weights: np.ndarray, returns_df: pd.DataFrame) -> f
     return -cast(float, portfolio_returns.quantile(0.05))
 
 
+def _calculate_volatility_objective(
+    weights: np.ndarray, returns_df: pd.DataFrame
+) -> float:
+    """Objective function for annealing: we want to MINIMIZE this value."""
+    portfolio_returns = returns_df.dot(weights)
+    return cast(float, portfolio_returns.std())
+
+
+def _calculate_sharpe_objective(weights: np.ndarray, returns_df: pd.DataFrame) -> float:
+    """Objective function for annealing: we want to MINIMIZE this value."""
+    portfolio_returns = returns_df.dot(weights)
+    volatility = portfolio_returns.std()
+    # We want to MAXIMIZE Sharpe, so we MINIMIZE its negative
+    if np.isclose(volatility, 0):
+        return float("inf")  # Penalize zero-volatility portfolios
+    mean_return = portfolio_returns.mean()
+    return -cast(float, mean_return / volatility)
+
+
 def _get_neighbor(weights: np.ndarray, step_size: float) -> np.ndarray:
     """
     Generates a new valid portfolio by slightly perturbing the current one.
@@ -410,9 +428,11 @@ def _get_neighbor(weights: np.ndarray, step_size: float) -> np.ndarray:
     return neighbor
 
 
-def run_simulated_annealing(window_returns_df: pd.DataFrame) -> pd.Series:
+def run_simulated_annealing(
+    objective_func, description: str, window_returns_df: pd.DataFrame
+) -> pd.Series:
     """
-    Uses simulated annealing to find the portfolio that maximizes VaR 95%.
+    Uses simulated annealing to find the portfolio that optimizes a given metric.
 
     Returns:
         A pandas Series containing the metrics and weights of the best portfolio found.
@@ -422,35 +442,29 @@ def run_simulated_annealing(window_returns_df: pd.DataFrame) -> pd.Series:
 
     # Start with an equal-weight portfolio
     current_weights = np.full(n_assets, 1 / n_assets)
-    current_cost = _calculate_var_objective(current_weights, window_returns_df)
+    current_cost = objective_func(current_weights, window_returns_df)
 
     best_weights = current_weights
     best_cost = current_cost
 
-    print("Running Simulated Annealing to maximize VaR 95%...")
     term_width = os.get_terminal_size().columns
     bar_width = max(40, term_width // 2)
-    for i in trange(ANNEALING_ITERATIONS, desc="Annealing", ncols=bar_width):
+    for _ in trange(ANNEALING_ITERATIONS, desc=description, ncols=bar_width):
         # Generate a neighbor
         neighbor_weights = _get_neighbor(current_weights, ANNEALING_STEP_SIZE)
-        neighbor_cost = _calculate_var_objective(neighbor_weights, window_returns_df)
+        neighbor_cost = objective_func(neighbor_weights, window_returns_df)
 
         # Decide whether to accept the neighbor
         if neighbor_cost < current_cost:
-            # Always accept a better solution
-            current_weights = neighbor_weights
-            current_cost = neighbor_cost
+            current_weights, current_cost = neighbor_weights, neighbor_cost
         else:
-            # Accept a worse solution with a certain probability
             acceptance_prob = np.exp((current_cost - neighbor_cost) / temp)
             if np.random.uniform() < acceptance_prob:
-                current_weights = neighbor_weights
-                current_cost = neighbor_cost
+                current_weights, current_cost = neighbor_weights, neighbor_cost
 
         # Update the best solution found so far
         if current_cost < best_cost:
-            best_weights = current_weights
-            best_cost = current_cost
+            best_weights, best_cost = current_weights, current_cost
 
         # Cool the temperature
         temp *= ANNEALING_COOLING_RATE
@@ -460,7 +474,9 @@ def run_simulated_annealing(window_returns_df: pd.DataFrame) -> pd.Series:
     best_return = portfolio_returns.mean()
     best_volatility = portfolio_returns.std()
     best_var_95 = portfolio_returns.quantile(0.05)
-    best_sharpe = best_return / best_volatility
+    best_sharpe = (
+        best_return / best_volatility if cast(float, best_volatility) > 0 else 0
+    )
 
     best_portfolio = pd.Series(
         {
@@ -785,6 +801,45 @@ def plot_efficient_frontier_var(
     # plt.close()
 
 
+def plot_return_distributions(
+    min_vol_portfolio: pd.Series,
+    max_sharpe_portfolio: pd.Series,
+    max_var_portfolio: pd.Series,
+    window_returns_df: pd.DataFrame,
+) -> None:
+    """
+    Plots the kernel density estimate of the return distributions for the three
+    optimal portfolios.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(12, 8))
+
+    portfolios = {
+        "Minimum Volatility": (min_vol_portfolio, get_color("mocha", "green")),
+        "Maximum Sharpe Ratio": (max_sharpe_portfolio, get_color("mocha", "yellow")),
+        "Maximum VaR 95%": (max_var_portfolio, get_color("mocha", "mauve")),
+    }
+
+    for name, (portfolio, color) in portfolios.items():
+        portfolio_returns = window_returns_df.dot(portfolio["Weights"])
+        sns.kdeplot(portfolio_returns, label=name, color=color, fill=True, alpha=0.3)
+
+    plt.title("Return Distributions of Optimal Portfolios")
+    plt.xlabel("Annualized Return")
+    plt.ylabel("Density")
+    plt.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+
+    filepath = os.path.join(output_dir, "return_distributions.png")
+    plt.savefig(filepath)
+    print(f"\nReturn distribution plot saved to '{filepath}'")
+
+
 def main() -> None:
     """
     Main function to run the portfolio analysis.
@@ -794,10 +849,10 @@ def main() -> None:
     trading_days = args.daily
     window_years = args.window
 
-    # Prepare data
+    # Load, clean, and preprocess the historical price data from the Excel file.
     price_df, _, filling_summary = prepare_data(filename)
 
-    # Print data cleaning summary
+    # Report on any data cleaning that was performed.
     print("\n--- Data Cleaning Summary ---")
     if not filling_summary:
         print("No internal missing values were found or filled.")
@@ -806,17 +861,17 @@ def main() -> None:
         for col, count in filling_summary.items():
             print(f"- {col}: {count} values filled")
 
-    # If --tail is specified, slice the DataFrame to the last N years
+    # If the --tail argument is used, slice the DataFrame to the last N years.
     if args.tail is not None:
         end_date = price_df.index.max()
         start_date = end_date - pd.DateOffset(years=args.tail)
         price_df = price_df.loc[start_date:]
         print(f"\n--- Analyzing tail window: last {args.tail} years ---")
 
-    # Generate plots for visual inspection of prices
+    # Generate and save plots of each asset's price history for visual inspection.
     plot_asset_prices(price_df, args.interactive_plots)
 
-    # Analyze portfolio
+    # Calculate key financial metrics for each asset and for the common overlapping period.
     (
         summary_df_reporting,
         summary_df_simulation,
@@ -824,7 +879,7 @@ def main() -> None:
         correlation_matrix,
     ) = analyze_assets(price_df, trading_days, window_years)
 
-    # Print results based on each asset's full history
+    # Print the summary metrics calculated from each asset's full available history.
     print("\n--- Portfolio Metrics Summary (per-asset history) ---")
     print(
         summary_df_reporting.to_string(
@@ -836,17 +891,16 @@ def main() -> None:
         )
     )
 
+    # Identify and print pairs of assets with high correlation.
     if not correlation_matrix.empty:
         start_date = price_df.dropna().index.min().strftime("%Y-%m-%d")
         end_date = price_df.dropna().index.max().strftime("%Y-%m-%d")
         print(
             f"\n--- High Correlation Pairs (> 0.90) (Daily Returns, Period: {start_date} to {end_date}) ---"
         )
-        # Get the upper triangle of the correlation matrix to avoid duplicates
         upper_tri = correlation_matrix.where(
             np.triu(np.ones(correlation_matrix.shape), k=1).astype(bool)
         )
-        # Find pairs with correlation > 0.75
         stacked_upper = upper_tri.stack()
         high_corr_pairs = stacked_upper.loc[lambda s: s > 0.90]
 
@@ -858,44 +912,97 @@ def main() -> None:
         print("\n--- Correlation Analysis ---")
         print("No overlapping data found to compute correlations.")
 
-    # Plot heatmap
+    # Generate and save a heatmap of the asset correlation matrix.
     if not correlation_matrix.empty:
         plot_correlation_heatmap(correlation_matrix, args.interactive_plots)
 
-    # --- Portfolio Generation ---
     portfolios_df = None
+    min_vol_portfolio, max_sharpe_portfolio, max_var_portfolio = None, None, None
+
     if args.equal_weight is not None and not window_returns_df.empty:
+        # Generate all equal-weight portfolios for a specified number of assets.
         print(
             f"\n--- Generating all equal-weight portfolios of {args.equal_weight} assets ---"
         )
         portfolios_df = generate_equal_weight_portfolios(
             args.equal_weight, window_returns_df
         )
-    elif args.annealing and not window_returns_df.empty:
-        best_portfolio = run_simulated_annealing(window_returns_df)
-        print("\n--- Optimal Portfolio (Max VaR 95%) via Simulated Annealing ---")
-        print(f"Return: {best_portfolio['Return']:.2%}")
-        print(f"Volatility: {best_portfolio['Volatility']:.2%}")
-        print(f"VaR 95%: {best_portfolio['VaR 95%']:.2%}")
-        print(f"Sharpe Ratio: {best_portfolio['Sharpe']:.2f}")
+
+        # Find the single best portfolio for each category
+        min_vol_portfolio = portfolios_df.loc[portfolios_df["Volatility"].idxmin()]
+        max_sharpe_portfolio = portfolios_df.loc[portfolios_df["Sharpe"].idxmax()]
+        max_var_portfolio = portfolios_df.loc[portfolios_df["VaR 95%"].idxmax()]
+
+        # --- Print details of the optimal portfolios ---
+        print("\n--- Best Equal-Weight Portfolios Found ---")
+
+        # Minimum Volatility
+        print("\n--- Minimum Volatility Portfolio ---")
+        print(f"Return: {min_vol_portfolio['Return']:.2%}")
+        print(f"Volatility: {min_vol_portfolio['Volatility']:.2%}")
+        print(f"VaR 95%: {min_vol_portfolio['VaR 95%']:.2%}")
+        print(f"Sharpe Ratio: {min_vol_portfolio['Sharpe']:.2f}")
         print("Weights:")
-        weights = pd.Series(best_portfolio["Weights"], index=window_returns_df.columns)
+        weights = pd.Series(
+            min_vol_portfolio["Weights"], index=window_returns_df.columns
+        )
         weights = weights[weights > 0.0001]
         print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
-    # --- Portfolio Analysis and Plotting ---
-    if portfolios_df is not None and not portfolios_df.empty:
-        # Find the top 3 portfolios for each category
-        top_3_min_vol = portfolios_df.sort_values(by="Volatility").head(3)
-        top_3_max_sharpe = portfolios_df.sort_values(by="Sharpe", ascending=False).head(
-            3
+        # Maximum Sharpe Ratio
+        print("\n--- Maximum Sharpe Ratio Portfolio ---")
+        print(f"Return: {max_sharpe_portfolio['Return']:.2%}")
+        print(f"Volatility: {max_sharpe_portfolio['Volatility']:.2%}")
+        print(f"VaR 95%: {max_sharpe_portfolio['VaR 95%']:.2%}")
+        print(f"Sharpe Ratio: {max_sharpe_portfolio['Sharpe']:.2f}")
+        print("Weights:")
+        weights = pd.Series(
+            max_sharpe_portfolio["Weights"], index=window_returns_df.columns
         )
-        top_3_max_var = portfolios_df.sort_values(by="VaR 95%", ascending=False).head(3)
+        weights = weights[weights > 0.0001]
+        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
-        # Print details of the optimal portfolios
-        print("\n--- Top 3 Minimum Volatility Portfolios ---")
-        for i, (_, portfolio) in enumerate(top_3_min_vol.iterrows(), 1):
-            print(f"\n--- Rank #{i} ---")
+        # Maximum VaR 95%
+        print("\n--- Maximum VaR 95% Portfolio ---")
+        print(f"Return: {max_var_portfolio['Return']:.2%}")
+        print(f"Volatility: {max_var_portfolio['Volatility']:.2%}")
+        print(f"VaR 95%: {max_var_portfolio['VaR 95%']:.2%}")
+        print(f"Sharpe Ratio: {max_var_portfolio['Sharpe']:.2f}")
+        print("Weights:")
+        weights = pd.Series(
+            max_var_portfolio["Weights"], index=window_returns_df.columns
+        )
+        weights = weights[weights > 0.0001]
+        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
+
+    elif args.annealing and not window_returns_df.empty:
+        # Use simulated annealing to find optimal portfolios for different metrics.
+        print("\n--- Running Simulated Annealing for Optimal Portfolios ---")
+        tasks = [
+            ("Min Volatility", _calculate_volatility_objective),
+            ("Max Sharpe", _calculate_sharpe_objective),
+            ("Max VaR 95%", _calculate_var_objective),
+        ]
+
+        # Find the longest description to align progress bars
+        max_desc_len = max(len(desc) for desc, _ in tasks)
+
+        results = []
+        for description, objective_func in tasks:
+            portfolio = run_simulated_annealing(
+                objective_func, description.ljust(max_desc_len), window_returns_df
+            )
+            results.append((description, portfolio))
+
+        # Assign winning portfolios from results
+        results_dict = {desc: p for desc, p in results}
+        min_vol_portfolio = results_dict["Min Volatility"]
+        max_sharpe_portfolio = results_dict["Max Sharpe"]
+        max_var_portfolio = results_dict["Max VaR 95%"]
+
+        print("\n--- Optimal Portfolio Results ---")
+        for description, portfolio in results:
+            print(f"\n--- Optimal Portfolio ({description}) ---")
             print(f"Return: {portfolio['Return']:.2%}")
             print(f"Volatility: {portfolio['Volatility']:.2%}")
             print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
@@ -905,49 +1012,37 @@ def main() -> None:
             weights = weights[weights > 0.0001]
             print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
-        print("\n\n--- Top 3 Maximum Sharpe Ratio Portfolios ---")
-        for i, (_, portfolio) in enumerate(top_3_max_sharpe.iterrows(), 1):
-            print(f"\n--- Rank #{i} ---")
-            print(f"Return: {portfolio['Return']:.2%}")
-            print(f"Volatility: {portfolio['Volatility']:.2%}")
-            print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
-            print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
-            print("Weights:")
-            weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
-            weights = weights[weights > 0.0001]
-            print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-        print("\n\n--- Top 3 Maximum VaR 95% Portfolios ---")
-        for i, (_, portfolio) in enumerate(top_3_max_var.iterrows(), 1):
-            print(f"\n--- Rank #{i} ---")
-            print(f"Return: {portfolio['Return']:.2%}")
-            print(f"Volatility: {portfolio['Volatility']:.2%}")
-            print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
-            print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
-            print("Weights:")
-            weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
-            weights = weights[weights > 0.0001]
-            print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-        # For plotting, highlight only the single best portfolio from each category
-        min_vol_portfolio = top_3_min_vol.iloc[0]
-        max_sharpe_portfolio = top_3_max_sharpe.iloc[0]
-        max_var_portfolio = top_3_max_var.iloc[0]
-
-        plot_efficient_frontier(
-            portfolios_df,
-            summary_df_simulation,
-            min_vol_portfolio,
-            max_sharpe_portfolio,
-            max_var_portfolio,
+    # --- Plotting Section ---
+    # If winning portfolios were found in either mode, generate plots.
+    if min_vol_portfolio is not None:
+        plot_return_distributions(
+            cast(pd.Series, min_vol_portfolio),
+            cast(pd.Series, max_sharpe_portfolio),
+            cast(pd.Series, max_var_portfolio),
+            window_returns_df,
         )
-        plot_efficient_frontier_var(
-            portfolios_df,
-            summary_df_simulation,
-            min_vol_portfolio,
-            max_sharpe_portfolio,
-            max_var_portfolio,
-        )
+
+        # The efficient frontier scatter plots only make sense for the equal-weight mode,
+        # as it generates the necessary cloud of points.
+        if portfolios_df is not None:
+            plot_efficient_frontier(
+                portfolios_df,
+                summary_df_simulation,
+                cast(pd.Series, min_vol_portfolio),
+                cast(pd.Series, max_sharpe_portfolio),
+                cast(pd.Series, max_var_portfolio),
+            )
+            plot_efficient_frontier_var(
+                portfolios_df,
+                summary_df_simulation,
+                cast(pd.Series, min_vol_portfolio),
+                cast(pd.Series, max_sharpe_portfolio),
+                cast(pd.Series, max_var_portfolio),
+            )
+
+        # If interactive mode is enabled, show all generated plots at once.
+        # if args.interactive_plots:
+        #     print("\nDisplaying interactive plots...")
         plt.show()
 
 
