@@ -697,7 +697,7 @@ def plot_efficient_frontier(
     plt.ylabel("Expected Annualized Return")
     plt.colorbar(label="Sharpe Ratio")
     plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.tight_layout()
 
     filepath = os.path.join(output_dir, "efficient_frontier.png")
@@ -791,7 +791,7 @@ def plot_efficient_frontier_var(
     plt.ylabel("Expected Annualized Return")
     plt.colorbar(label="Sharpe Ratio")
     plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.tight_layout()
 
     filepath = os.path.join(output_dir, "efficient_frontier_var.png")
@@ -832,7 +832,7 @@ def plot_return_distributions(
     plt.ylabel("Density")
     plt.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
     plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.tight_layout()
 
     filepath = os.path.join(output_dir, "return_distributions.png")
@@ -877,7 +877,7 @@ def plot_portfolio_returns_over_time(
     plt.ylabel(f"{window_years}-Year Rolling Annualized Return")
     plt.axhline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
     plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.tight_layout()
 
     filepath = os.path.join(output_dir, "portfolio_returns_over_time.png")
