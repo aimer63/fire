@@ -840,6 +840,51 @@ def plot_return_distributions(
     print(f"\nReturn distribution plot saved to '{filepath}'")
 
 
+def plot_portfolio_returns_over_time(
+    min_vol_portfolio: pd.Series,
+    max_sharpe_portfolio: pd.Series,
+    max_var_portfolio: pd.Series,
+    window_returns_df: pd.DataFrame,
+    window_years: int,
+) -> None:
+    """
+    Plots the historical windowed returns for the three optimal portfolios.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(15, 7))
+
+    portfolios = {
+        "Minimum Volatility": (min_vol_portfolio, get_color("mocha", "green")),
+        "Maximum Sharpe Ratio": (max_sharpe_portfolio, get_color("mocha", "yellow")),
+        "Maximum VaR 95%": (max_var_portfolio, get_color("mocha", "mauve")),
+    }
+
+    for name, (portfolio, color) in portfolios.items():
+        portfolio_returns = window_returns_df.dot(portfolio["Weights"])
+        plt.plot(
+            portfolio_returns.index,
+            portfolio_returns,
+            label=name,
+            color=color,
+            linewidth=1.2,
+        )
+
+    plt.title("Historical Windowed Returns of Optimal Portfolios")
+    plt.xlabel("Window End Date")
+    plt.ylabel(f"{window_years}-Year Rolling Annualized Return")
+    plt.axhline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+
+    filepath = os.path.join(output_dir, "portfolio_returns_over_time.png")
+    plt.savefig(filepath)
+    print(f"\nPortfolio returns over time plot saved to '{filepath}'")
+
+
 def main() -> None:
     """
     Main function to run the portfolio analysis.
@@ -1020,6 +1065,13 @@ def main() -> None:
             cast(pd.Series, max_sharpe_portfolio),
             cast(pd.Series, max_var_portfolio),
             window_returns_df,
+        )
+        plot_portfolio_returns_over_time(
+            cast(pd.Series, min_vol_portfolio),
+            cast(pd.Series, max_sharpe_portfolio),
+            cast(pd.Series, max_var_portfolio),
+            window_returns_df,
+            window_years,
         )
 
         # The efficient frontier scatter plots only make sense for the equal-weight mode,
