@@ -127,8 +127,9 @@ group.add_argument(
 group.add_argument(
     "-a",
     "--annealing",
-    action="store_true",
-    help="Use simulated annealing to find the optimal portfolio.",
+    type=str,
+    choices=["transfer", "dirichlet"],
+    help="Use simulated annealing with a specific neighbor generation algorithm ('transfer' or 'dirichlet') to find the optimal portfolio.",
 )
 
 # --- Constants ---
@@ -137,6 +138,10 @@ ANNEALING_TEMP = 1.0
 ANNEALING_COOLING_RATE = 0.999872
 ANNEALING_ITERATIONS = 100_000
 ANNEALING_STEP_SIZE = 0.05  # Max change in weight per step
+
+# ANNEALING_TEMP = 1.0
+# ANNEALING_COOLING_RATE = 0.999988
+# ANNEALING_ITERATIONS = 1_000_000
 
 
 def prepare_data(
@@ -232,6 +237,7 @@ def analyze_assets(
         window_returns_list.append(annualized_returns_series)
 
         if not annualized_returns_series.empty:
+            annualized_returns_series.dropna(inplace=True)
             var_95 = annualized_returns_series.quantile(0.05)
             reporting_metrics.append(
                 {
@@ -366,6 +372,66 @@ def plot_asset_prices(price_df: pd.DataFrame, interactive: bool) -> None:
         plt.close()
 
 
+def plot_asset_return_distributions(
+    window_returns_df: pd.DataFrame, interactive: bool
+) -> None:
+    """
+    Plots the kernel density estimate of the return distribution for each asset.
+    """
+    output_dir = "output/asset_return_distributions"
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"\nSaving asset return distribution plots to '{output_dir}/'")
+
+    plt.style.use("dark_background")
+    plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
+    plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
+
+    for asset in window_returns_df.columns:
+        asset_returns = window_returns_df[asset].dropna()
+
+        if asset_returns.empty:
+            continue
+
+        plt.figure(figsize=(10, 6))
+
+        sns.kdeplot(
+            x=asset_returns, color=get_color("mocha", "blue"), fill=True, alpha=0.3
+        )
+
+        mean_return = asset_returns.mean()
+        var_95 = asset_returns.quantile(0.05)
+
+        plt.axvline(
+            mean_return,
+            color=get_color("mocha", "green"),
+            linestyle="--",
+            label=f"Mean: {mean_return:.2%}",
+        )
+        plt.axvline(
+            var_95,
+            color=get_color("mocha", "red"),
+            linestyle="--",
+            label=f"VaR 95%: {var_95:.2%}",
+        )
+        plt.axvline(0, color=get_color("mocha", "text"), linestyle=":", alpha=0.5)
+
+        plt.title(f"Return Distribution for {asset}")
+        plt.xlabel("Annualized Return")
+        plt.ylabel("Density")
+        plt.grid(True, linestyle="--", alpha=0.5)
+        plt.legend()
+        plt.tight_layout()
+
+        safe_asset_name = asset.replace("/", "_").replace(" ", "_")
+        filepath = os.path.join(output_dir, f"return_dist_{safe_asset_name}.png")
+        plt.savefig(filepath)
+
+        if interactive:
+            plt.show()
+
+        plt.close()
+
+
 # --- Parallel Processing Setup ---
 
 # Global variable for worker processes to avoid passing data repeatedly
@@ -404,7 +470,7 @@ def _calculate_sharpe_objective(weights: np.ndarray, returns_df: pd.DataFrame) -
     return -cast(float, mean_return / volatility)
 
 
-def _get_neighbor(weights: np.ndarray, step_size: float) -> np.ndarray:
+def _get_neighbor_transfer(weights: np.ndarray, step_size: float) -> np.ndarray:
     """
     Generates a new valid portfolio by slightly perturbing the current one.
     It moves a small amount of weight from one random asset to another.
@@ -425,11 +491,46 @@ def _get_neighbor(weights: np.ndarray, step_size: float) -> np.ndarray:
     neighbor[from_idx] -= move_amount
     neighbor[to_idx] += move_amount
 
+    # Extra step to normalize and ensure numerical stability
+    # May be not necessary, but just in case
+    neighbor /= neighbor.sum()
+
     return neighbor
 
 
+def _get_neighbor_dirichlet(weights: np.ndarray, temp: float) -> np.ndarray:
+    """
+    Generates a new portfolio by sampling from a Dirichlet distribution
+    centered around the current portfolio. The concentration of the
+    distribution is inversely proportional to the temperature.
+
+    Args:
+        weights: The current portfolio weights.
+        temp: The current annealing temperature.
+
+    Returns:
+        A new, valid portfolio weight vector.
+    """
+    # A small epsilon to prevent alpha values from being zero.
+    epsilon = 1e-6
+
+    # Concentration is inversely proportional to temperature.
+    # High temp -> low concentration -> more exploration (new portfolio can be very different).
+    # Low temp -> high concentration -> more exploitation (new portfolio is very similar).
+    concentration = 1.0 / max(temp, 1e-9)  # Prevent division by zero
+
+    # The alpha parameters are derived from the current weights.
+    alpha = (weights + epsilon) * concentration
+
+    # Generate a new set of weights from the Dirichlet distribution.
+    return np.random.dirichlet(alpha)
+
+
 def run_simulated_annealing(
-    objective_func, description: str, window_returns_df: pd.DataFrame
+    objective_func,
+    description: str,
+    window_returns_df: pd.DataFrame,
+    algorithm: str,
 ) -> pd.Series:
     """
     Uses simulated annealing to find the portfolio that optimizes a given metric.
@@ -451,7 +552,12 @@ def run_simulated_annealing(
     bar_width = max(40, term_width // 2)
     for _ in trange(ANNEALING_ITERATIONS, desc=description, ncols=bar_width):
         # Generate a neighbor
-        neighbor_weights = _get_neighbor(current_weights, ANNEALING_STEP_SIZE)
+        if algorithm == "transfer":
+            neighbor_weights = _get_neighbor_transfer(
+                current_weights, ANNEALING_STEP_SIZE
+            )
+        else:  # dirichlet
+            neighbor_weights = _get_neighbor_dirichlet(current_weights, temp)
         neighbor_cost = objective_func(neighbor_weights, window_returns_df)
 
         # Decide whether to accept the neighbor
@@ -801,7 +907,7 @@ def plot_efficient_frontier_var(
     # plt.close()
 
 
-def plot_return_distributions(
+def plot_portfolios_return_distributions(
     min_vol_portfolio: pd.Series,
     max_sharpe_portfolio: pd.Series,
     max_var_portfolio: pd.Series,
@@ -924,6 +1030,10 @@ def main() -> None:
         correlation_matrix,
     ) = analyze_assets(price_df, trading_days, window_years)
 
+    # Plot return distributions for each asset
+    if not window_returns_df.empty:
+        plot_asset_return_distributions(window_returns_df, args.interactive_plots)
+
     # Print the summary metrics calculated from each asset's full available history.
     print("\n--- Portfolio Metrics Summary (per-asset history) ---")
     print(
@@ -1035,7 +1145,10 @@ def main() -> None:
         results = []
         for description, objective_func in tasks:
             portfolio = run_simulated_annealing(
-                objective_func, description.ljust(max_desc_len), window_returns_df
+                objective_func,
+                description.ljust(max_desc_len),
+                window_returns_df,
+                args.annealing,
             )
             results.append((description, portfolio))
 
@@ -1060,7 +1173,7 @@ def main() -> None:
     # --- Plotting Section ---
     # If winning portfolios were found in either mode, generate plots.
     if min_vol_portfolio is not None:
-        plot_return_distributions(
+        plot_portfolios_return_distributions(
             cast(pd.Series, min_vol_portfolio),
             cast(pd.Series, max_sharpe_portfolio),
             cast(pd.Series, max_var_portfolio),
