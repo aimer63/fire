@@ -61,6 +61,8 @@ Analyze with a custom number of trading days (e.g., 250)::
 """
 
 import argparse
+import json
+import os
 from typing import cast
 
 import matplotlib.pyplot as plt
@@ -131,6 +133,40 @@ group.add_argument(
     choices=["transfer", "dirichlet"],
     help="Use simulated annealing with a specific neighbor generation algorithm ('transfer' or 'dirichlet') to find the optimal portfolio.",
 )
+
+
+def save_portfolio_to_json(
+    portfolio: pd.Series, name: str, asset_names: pd.Index, filename: str
+) -> None:
+    """Saves portfolio metrics and weights to a JSON file."""
+    output_dir = "output/portfolios"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Create a dictionary of weights {asset_name: weight}
+    weights_dict = {
+        asset: weight
+        for asset, weight in zip(asset_names, portfolio["Weights"])
+        if weight > 0.0001  # Only include assets with significant weight
+    }
+
+    # Structure the data for JSON output
+    portfolio_data = {
+        "name": name,
+        "metrics": {
+            "Return": portfolio["Return"],
+            "Volatility": portfolio["Volatility"],
+            "Sharpe": portfolio["Sharpe"],
+            "VaR 95%": portfolio["VaR 95%"],
+            "CVaR 95%": portfolio["CVaR 95%"],
+        },
+        "weights": weights_dict,
+    }
+
+    filepath = os.path.join(output_dir, filename)
+    with open(filepath, "w") as f:
+        json.dump(portfolio_data, f, indent=4)
+
+    print(f"Saved portfolio to '{filepath}'")
 
 
 def main() -> None:
@@ -222,7 +258,12 @@ def main() -> None:
         plotting.plot_correlation_heatmap(correlation_matrix, args.interactive_plots)
 
     portfolios_df = None
-    min_vol_portfolio, max_sharpe_portfolio, max_var_portfolio, max_cvar_portfolio = (
+    (
+        min_vol_portfolio,
+        max_sharpe_portfolio,
+        max_var_portfolio,
+        max_cvar_portfolio,
+    ) = (
         None,
         None,
         None,
@@ -335,6 +376,32 @@ def main() -> None:
         weights = weights[weights > 0.0001]
         print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
+        # --- Save portfolios to JSON ---
+        save_portfolio_to_json(
+            cast(pd.Series, min_vol_portfolio),
+            "Minimum Volatility",
+            window_returns_df.columns,
+            "min_volatility.json",
+        )
+        save_portfolio_to_json(
+            cast(pd.Series, max_sharpe_portfolio),
+            "Maximum Sharpe Ratio",
+            window_returns_df.columns,
+            "max_sharpe.json",
+        )
+        save_portfolio_to_json(
+            cast(pd.Series, max_var_portfolio),
+            "Maximum VaR 95%",
+            window_returns_df.columns,
+            "max_var.json",
+        )
+        save_portfolio_to_json(
+            cast(pd.Series, max_cvar_portfolio),
+            "Maximum CVaR 95%",
+            window_returns_df.columns,
+            "max_cvar.json",
+        )
+
     elif args.annealing and not window_returns_df.empty:
         # Use simulated annealing to find optimal portfolios for different metrics.
         print("\n--- Running Simulated Annealing for Optimal Portfolios ---")
@@ -386,6 +453,12 @@ def main() -> None:
             weights = weights[weights > 0.0001]
             print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
+            # Save the found portfolio to JSON
+            filename = f"{description.strip().replace(' ', '_').lower()}.json"
+            save_portfolio_to_json(
+                portfolio, description, window_returns_df.columns, filename
+            )
+
     # --- Plotting Section ---
     # If winning portfolios were found in either mode, generate plots.
     if min_vol_portfolio is not None:
@@ -400,7 +473,7 @@ def main() -> None:
             cast(pd.Series, min_vol_portfolio),
             cast(pd.Series, max_sharpe_portfolio),
             cast(pd.Series, max_var_portfolio),
-            cast(pd.Series, max_var_portfolio),
+            cast(pd.Series, max_cvar_portfolio),
             window_returns_df,
             window_years,
         )
@@ -414,7 +487,7 @@ def main() -> None:
                 cast(pd.Series, min_vol_portfolio),
                 cast(pd.Series, max_sharpe_portfolio),
                 cast(pd.Series, max_var_portfolio),
-                cast(pd.Series, max_var_portfolio),
+                cast(pd.Series, max_cvar_portfolio),
             )
             plotting.plot_efficient_frontier_var(
                 portfolios_df,
