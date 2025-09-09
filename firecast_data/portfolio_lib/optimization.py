@@ -1,0 +1,320 @@
+import itertools
+import multiprocessing
+import os
+from typing import Tuple, cast
+
+import numpy as np
+import pandas as pd
+from tqdm import tqdm, trange
+
+from . import plotting
+
+# --- Constants ---
+# Simulated Annealing Parameters
+ANNEALING_TEMP = 1.0
+ANNEALING_COOLING_RATE = 0.999872
+ANNEALING_ITERATIONS = 100_000
+ANNEALING_STEP_SIZE = 0.05  # Max change in weight per step
+
+# ANNEALING_TEMP = 1.0
+# ANNEALING_COOLING_RATE = 0.999988
+# ANNEALING_ITERATIONS = 1_000_000
+
+
+# --- Parallel Processing Setup ---
+
+# Global variable for worker processes to avoid passing data repeatedly
+worker_window_returns_df = None
+
+
+def init_worker(df: pd.DataFrame):
+    """Initializer for multiprocessing pool to set the global DataFrame."""
+    global worker_window_returns_df
+    worker_window_returns_df = df
+
+
+def _calculate_var_objective(weights: np.ndarray, returns_df: pd.DataFrame) -> float:
+    """Objective function for annealing: we want to MINIMIZE this value."""
+    portfolio_returns = returns_df.dot(weights)
+    # We want to MAXIMIZE VaR, so we MINIMIZE its negative
+    return -cast(float, portfolio_returns.quantile(0.05))
+
+
+def _calculate_cvar_objective(weights: np.ndarray, returns_df: pd.DataFrame) -> float:
+    """Objective function for annealing: we want to MINIMIZE this value."""
+    portfolio_returns = returns_df.dot(weights)
+    var_95 = portfolio_returns.quantile(0.05)
+    cvar_95 = portfolio_returns[portfolio_returns <= var_95].mean()
+    # We want to MAXIMIZE CVaR, so we MINIMIZE its negative
+    return -cast(float, cvar_95)
+
+
+def _calculate_volatility_objective(
+    weights: np.ndarray, returns_df: pd.DataFrame
+) -> float:
+    """Objective function for annealing: we want to MINIMIZE this value."""
+    portfolio_returns = returns_df.dot(weights)
+    return cast(float, portfolio_returns.std())
+
+
+def _calculate_sharpe_objective(weights: np.ndarray, returns_df: pd.DataFrame) -> float:
+    """Objective function for annealing: we want to MINIMIZE this value."""
+    portfolio_returns = returns_df.dot(weights)
+    volatility = portfolio_returns.std()
+    # We want to MAXIMIZE Sharpe, so we MINIMIZE its negative
+    if np.isclose(volatility, 0):
+        return float("inf")  # Penalize zero-volatility portfolios
+    mean_return = portfolio_returns.mean()
+    return -cast(float, mean_return / volatility)
+
+
+OBJECTIVE_FUNCTIONS = {
+    "volatility": _calculate_volatility_objective,
+    "sharpe": _calculate_sharpe_objective,
+    "var": _calculate_var_objective,
+    "cvar": _calculate_cvar_objective,
+}
+
+
+def _get_neighbor_transfer(weights: np.ndarray, step_size: float) -> np.ndarray:
+    """
+    Generates a new valid portfolio by slightly perturbing the current one.
+    It moves a small amount of weight from one random asset to another.
+    """
+    n_assets = len(weights)
+    neighbor = weights.copy()
+
+    # Choose two distinct assets to move weight between
+    from_idx, to_idx = np.random.choice(n_assets, 2, replace=False)
+
+    # Determine the amount of weight to move
+    move_amount = np.random.uniform(0, step_size)
+
+    # Ensure we don't move more weight than is available
+    move_amount = min(move_amount, float(neighbor[from_idx]))
+
+    # Perform the weight transfer
+    neighbor[from_idx] -= move_amount
+    neighbor[to_idx] += move_amount
+
+    # Extra step to normalize and ensure numerical stability
+    # May be not necessary, but just in case
+    neighbor /= neighbor.sum()
+
+    return neighbor
+
+
+def _get_neighbor_dirichlet(weights: np.ndarray, temp: float) -> np.ndarray:
+    """
+    Generates a new portfolio by sampling from a Dirichlet distribution
+    centered around the current portfolio. The concentration of the
+    distribution is inversely proportional to the temperature.
+
+    Args:
+        weights: The current portfolio weights.
+        temp: The current annealing temperature.
+
+    Returns:
+        A new, valid portfolio weight vector.
+    """
+    # A small epsilon to prevent alpha values from being zero.
+    epsilon = 1e-6
+
+    # Concentration is inversely proportional to temperature.
+    # High temp -> low concentration -> more exploration (new portfolio can be very different).
+    # Low temp -> high concentration -> more exploitation (new portfolio is very similar).
+    concentration = 1.0 / max(temp, 1e-9)  # Prevent division by zero
+
+    # The alpha parameters are derived from the current weights.
+    alpha = (weights + epsilon) * concentration
+
+    # Generate a new set of weights from the Dirichlet distribution.
+    return np.random.dirichlet(alpha)
+
+
+def run_simulated_annealing(
+    objective: str,
+    description: str,
+    window_returns_df: pd.DataFrame,
+    algorithm: str,
+) -> pd.Series:
+    """
+    Uses simulated annealing to find the portfolio that optimizes a given metric.
+
+    Returns:
+        A pandas Series containing the metrics and weights of the best portfolio found.
+    """
+    n_assets = window_returns_df.shape[1]
+    temp = ANNEALING_TEMP
+    objective_func = OBJECTIVE_FUNCTIONS[objective]
+
+    # Start with an equal-weight portfolio
+    current_weights = np.full(n_assets, 1 / n_assets)
+    current_cost = objective_func(current_weights, window_returns_df)
+
+    best_weights = current_weights
+    best_cost = current_cost
+
+    # --- History Tracking for Convergence Plots ---
+    best_cost_history = []
+    current_cost_history = []
+    temp_history = []
+    acceptance_prob_history = []
+    # ---------------------------------------------
+
+    term_width = os.get_terminal_size().columns
+    bar_width = max(40, term_width // 2)
+    for i in trange(ANNEALING_ITERATIONS, desc=description, ncols=bar_width):
+        # Generate a neighbor
+        if algorithm == "transfer":
+            neighbor_weights = _get_neighbor_transfer(
+                current_weights, ANNEALING_STEP_SIZE
+            )
+        else:  # dirichlet
+            neighbor_weights = _get_neighbor_dirichlet(current_weights, temp)
+
+        neighbor_cost = objective_func(neighbor_weights, window_returns_df)
+
+        # Decide whether to accept the neighbor
+        if neighbor_cost < current_cost:
+            current_weights, current_cost = neighbor_weights, neighbor_cost
+        else:
+            acceptance_prob = np.exp((current_cost - neighbor_cost) / temp)
+            acceptance_prob_history.append((i, acceptance_prob))
+            if np.random.uniform() < acceptance_prob:
+                current_weights, current_cost = neighbor_weights, neighbor_cost
+
+        # Update the best solution found so far
+        if current_cost < best_cost:
+            best_weights, best_cost = current_weights, current_cost
+
+        # Record history for this iteration
+        best_cost_history.append(best_cost)
+        current_cost_history.append(current_cost)
+        temp_history.append(temp)
+
+        # Cool the temperature
+        temp *= ANNEALING_COOLING_RATE
+
+    # Calculate final metrics for the best portfolio
+    portfolio_returns = window_returns_df.dot(best_weights)
+    best_return = portfolio_returns.mean()
+    best_volatility = portfolio_returns.std()
+    best_var_95 = portfolio_returns.quantile(0.05)
+    best_cvar_95 = portfolio_returns[portfolio_returns <= best_var_95].mean()
+    best_sharpe = (
+        best_return / best_volatility if cast(float, best_volatility) > 0 else 0
+    )
+
+    best_portfolio = pd.Series(
+        {
+            "Return": best_return,
+            "Volatility": best_volatility,
+            "Sharpe": best_sharpe,
+            "VaR 95%": best_var_95,
+            "CVaR 95%": best_cvar_95,
+            "Weights": best_weights,
+        }
+    )
+
+    # Plot convergence metrics
+    plotting.plot_annealing_convergence(
+        description,
+        best_cost_history,
+        current_cost_history,
+        temp_history,
+        acceptance_prob_history,
+    )
+
+    return best_portfolio
+
+
+def _worker_generate_equal_weight(
+    combo: Tuple[str, ...],
+) -> Tuple[float, float, float, float, float, np.ndarray]:
+    """
+    Worker function to generate a single equal-weight portfolio.
+    Accesses the global 'worker_window_returns_df'.
+    """
+    global worker_window_returns_df
+    assert worker_window_returns_df is not None
+    all_assets = worker_window_returns_df.columns
+
+    # Create a weights vector: 1/N for selected assets, 0 for others
+    weights = pd.Series(0.0, index=all_assets)
+    weights[list(combo)] = 1.0 / len(combo)
+    weights_np = weights.to_numpy()
+
+    # Calculate portfolio metrics
+    portfolio_window_returns = worker_window_returns_df.dot(weights_np)
+    portfolio_return = portfolio_window_returns.mean()
+    portfolio_volatility = portfolio_window_returns.std()
+    portfolio_var_95 = portfolio_window_returns.quantile(0.05)
+    portfolio_cvar_95 = portfolio_window_returns[
+        portfolio_window_returns <= portfolio_var_95
+    ].mean()
+    sharpe_ratio = portfolio_return / portfolio_volatility
+
+    return (
+        cast(float, portfolio_return),
+        cast(float, portfolio_volatility),
+        cast(float, sharpe_ratio),
+        cast(float, portfolio_var_95),
+        cast(float, portfolio_cvar_95),
+        weights_np,
+    )
+
+
+def generate_equal_weight_portfolios(
+    n_assets_in_portfolio: int, window_returns_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Generates all equal-weight portfolios in parallel for every combination of N assets.
+    """
+    all_assets = window_returns_df.columns
+    num_total_assets = len(all_assets)
+
+    if not 1 <= n_assets_in_portfolio <= num_total_assets:
+        raise ValueError(
+            f"Number of assets for equal-weight portfolios ({n_assets_in_portfolio}) "
+            f"must be between 1 and {num_total_assets}."
+        )
+
+    # Generate all combinations to be processed
+    asset_combinations = list(itertools.combinations(all_assets, n_assets_in_portfolio))
+    num_combinations = len(asset_combinations)
+    num_cores = multiprocessing.cpu_count()
+    print(
+        f"Generating {num_combinations} equal-weight portfolios on {num_cores} cores..."
+    )
+
+    with multiprocessing.Pool(
+        processes=num_cores,
+        initializer=init_worker,
+        initargs=(window_returns_df,),
+    ) as pool:
+        term_width = os.get_terminal_size().columns
+        bar_width = max(40, term_width // 2)
+        results = list(
+            tqdm(
+                pool.imap_unordered(_worker_generate_equal_weight, asset_combinations),
+                total=num_combinations,
+                desc="Generating portfolios",
+                ncols=bar_width,
+            )
+        )
+
+    # Unpack results
+    returns, volatilities, sharpes, vars_95, cvars_95, weights_record = zip(*results)
+
+    portfolios_df = pd.DataFrame(
+        {
+            "Return": returns,
+            "Volatility": volatilities,
+            "Sharpe": sharpes,
+            "VaR 95%": vars_95,
+            "CVaR 95%": cvars_95,
+            "Weights": weights_record,
+        }
+    )
+    return portfolios_df
