@@ -136,7 +136,7 @@ group.add_argument(
 # Simulated Annealing Parameters
 ANNEALING_TEMP = 1.0
 ANNEALING_COOLING_RATE = 0.999872
-ANNEALING_ITERATIONS = 100_000
+ANNEALING_ITERATIONS = 10000
 ANNEALING_STEP_SIZE = 0.05  # Max change in weight per step
 
 # ANNEALING_TEMP = 1.0
@@ -239,6 +239,13 @@ def analyze_assets(
         if not annualized_returns_series.empty:
             annualized_returns_series.dropna(inplace=True)
             var_95 = annualized_returns_series.quantile(0.05)
+
+            # Calculate metrics from monthly sampled data
+            monthly_prices = asset_prices.resample("ME").last()
+            monthly_returns = monthly_prices.pct_change().dropna()
+            monthly_mean_return = monthly_returns.mean() * 12  # Annualized
+            monthly_volatility = monthly_returns.std() * np.sqrt(12)  # Annualized
+
             reporting_metrics.append(
                 {
                     "Asset": asset,
@@ -250,6 +257,8 @@ def analyze_assets(
                     "Annualized Volatility": annualized_returns_series.std(),
                     "VaR 95%": var_95,
                     "Number of Windows": len(annualized_returns_series),
+                    "Monthly Mean Return (Ann.)": monthly_mean_return,
+                    "Monthly Volatility (Ann.)": monthly_volatility,
                 }
             )
 
@@ -531,6 +540,7 @@ def run_simulated_annealing(
     description: str,
     window_returns_df: pd.DataFrame,
     algorithm: str,
+    interactive: bool,
 ) -> pd.Series:
     """
     Uses simulated annealing to find the portfolio that optimizes a given metric.
@@ -548,9 +558,16 @@ def run_simulated_annealing(
     best_weights = current_weights
     best_cost = current_cost
 
+    # --- History Tracking for Convergence Plots ---
+    best_cost_history = []
+    current_cost_history = []
+    temp_history = []
+    acceptance_prob_history = []
+    # ---------------------------------------------
+
     term_width = os.get_terminal_size().columns
     bar_width = max(40, term_width // 2)
-    for _ in trange(ANNEALING_ITERATIONS, desc=description, ncols=bar_width):
+    for i in trange(ANNEALING_ITERATIONS, desc=description, ncols=bar_width):
         # Generate a neighbor
         if algorithm == "transfer":
             neighbor_weights = _get_neighbor_transfer(
@@ -558,6 +575,7 @@ def run_simulated_annealing(
             )
         else:  # dirichlet
             neighbor_weights = _get_neighbor_dirichlet(current_weights, temp)
+
         neighbor_cost = objective_func(neighbor_weights, window_returns_df)
 
         # Decide whether to accept the neighbor
@@ -565,12 +583,18 @@ def run_simulated_annealing(
             current_weights, current_cost = neighbor_weights, neighbor_cost
         else:
             acceptance_prob = np.exp((current_cost - neighbor_cost) / temp)
+            acceptance_prob_history.append((i, acceptance_prob))
             if np.random.uniform() < acceptance_prob:
                 current_weights, current_cost = neighbor_weights, neighbor_cost
 
         # Update the best solution found so far
         if current_cost < best_cost:
             best_weights, best_cost = current_weights, current_cost
+
+        # Record history for this iteration
+        best_cost_history.append(best_cost)
+        current_cost_history.append(current_cost)
+        temp_history.append(temp)
 
         # Cool the temperature
         temp *= ANNEALING_COOLING_RATE
@@ -593,6 +617,17 @@ def run_simulated_annealing(
             "Weights": best_weights,
         }
     )
+
+    # Plot convergence metrics
+    plot_annealing_convergence(
+        description,
+        best_cost_history,
+        current_cost_history,
+        temp_history,
+        acceptance_prob_history,
+        interactive,
+    )
+
     return best_portfolio
 
 
@@ -991,6 +1026,124 @@ def plot_portfolio_returns_over_time(
     print(f"\nPortfolio returns over time plot saved to '{filepath}'")
 
 
+def plot_annealing_convergence(
+    description: str,
+    best_cost_history: List[float],
+    current_cost_history: List[float],
+    temp_history: List[float],
+    acceptance_prob_history: List[Tuple[int, float]],
+    interactive: bool,
+) -> None:
+    """
+    Plots the convergence metrics of the simulated annealing algorithm.
+    """
+    output_dir = "output/annealing_convergence"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(15, 12), sharex=True)
+    fig.suptitle(
+        f"Simulated Annealing Convergence for {description.strip()}", fontsize=16
+    )
+
+    iterations = range(len(best_cost_history))
+
+    # Plot 1: Cost vs. Iteration
+    ax1.plot(
+        iterations,
+        current_cost_history,
+        label="Current Cost",
+        color=get_color("mocha", "blue"),
+        alpha=0.6,
+        linewidth=0.5,
+    )
+    ax1.plot(
+        iterations,
+        best_cost_history,
+        label="Best Cost",
+        color=get_color("mocha", "green"),
+        linewidth=1.5,
+    )
+    ax1.set_ylabel("Cost (Objective Value)")
+    ax1.legend()
+    ax1.grid(True, linestyle="--", alpha=0.3)
+
+    # Plot 2: Temperature vs. Iteration
+    ax2.plot(
+        iterations, temp_history, label="Temperature", color=get_color("mocha", "red")
+    )
+    ax2.set_ylabel("Temperature")
+    ax2.legend()
+    ax2.grid(True, linestyle="--", alpha=0.3)
+
+    # Plot 3: Acceptance Probability vs. Iteration
+    if acceptance_prob_history:
+        prob_iters, probs = zip(*acceptance_prob_history)
+        ax3.scatter(
+            prob_iters,
+            probs,
+            label="Acceptance Probability (Worse Solution)",
+            color=get_color("mocha", "yellow"),
+            marker=".",
+            alpha=0.2,
+            s=10,
+        )
+    ax3.set_xlabel("Iteration")
+    ax3.set_ylabel("Probability")
+    ax3.set_ylim(0, 1)
+    ax3.legend()
+    ax3.grid(True, linestyle="--", alpha=0.3)
+
+    plt.tight_layout(rect=(0, 0.03, 1, 0.96))
+    safe_desc = description.strip().replace(" ", "_")
+    filepath = os.path.join(output_dir, f"convergence_{safe_desc}.png")
+    plt.savefig(filepath)
+    print(f"Annealing convergence plot saved to '{filepath}'")
+
+    # if interactive:
+    plt.show()
+
+    # plt.close()
+
+
+def calculate_monthly_metrics_for_portfolio(
+    weights: np.ndarray, price_df: pd.DataFrame
+) -> Tuple[float, float]:
+    """
+    Calculates annualized mean return and volatility from monthly sampled data
+    for a given portfolio.
+
+    Args:
+        weights: The portfolio weights.
+        price_df: The full daily price history for all assets.
+
+    Returns:
+        A tuple of (annualized_monthly_mean_return, annualized_monthly_volatility).
+    """
+    # Create a DataFrame with only the assets in the portfolio
+    portfolio_assets = price_df.columns[weights > 0]
+    portfolio_price_df = price_df[portfolio_assets].dropna()
+    portfolio_weights = weights[weights > 0]
+
+    if portfolio_price_df.empty:
+        return np.nan, np.nan
+
+    # Resample to get the last price of each month
+    monthly_prices = portfolio_price_df.resample("ME").last().dropna()
+
+    # Calculate monthly returns for each asset
+    monthly_returns = monthly_prices.pct_change().dropna()
+
+    # Calculate portfolio monthly returns
+    portfolio_monthly_returns = monthly_returns.dot(portfolio_weights)
+
+    # Annualize and return the metrics
+    annualized_mean = cast(float, portfolio_monthly_returns.mean()) * 12
+    annualized_vol = cast(float, portfolio_monthly_returns.std()) * np.sqrt(12)
+
+    return annualized_mean, annualized_vol
+
+
 def main() -> None:
     """
     Main function to run the portfolio analysis.
@@ -1042,6 +1195,8 @@ def main() -> None:
                 "Expected Annualized Return": "{:.2%}".format,
                 "Annualized Volatility": "{:.2%}".format,
                 "VaR 95%": "{:.2%}".format,
+                "Monthly Mean Return (Ann.)": "{:.2%}".format,
+                "Monthly Volatility (Ann.)": "{:.2%}".format,
             }
         )
     )
@@ -1097,6 +1252,14 @@ def main() -> None:
         print(f"Volatility: {min_vol_portfolio['Volatility']:.2%}")
         print(f"VaR 95%: {min_vol_portfolio['VaR 95%']:.2%}")
         print(f"Sharpe Ratio: {min_vol_portfolio['Sharpe']:.2f}")
+        (
+            monthly_mean,
+            monthly_vol,
+        ) = calculate_monthly_metrics_for_portfolio(
+            cast(np.ndarray, min_vol_portfolio["Weights"]), price_df
+        )
+        print(f"Monthly Mean Return (Ann.): {monthly_mean:.2%}")
+        print(f"Monthly Volatility (Ann.): {monthly_vol:.2%}")
         print("Weights:")
         weights = pd.Series(
             min_vol_portfolio["Weights"], index=window_returns_df.columns
@@ -1110,6 +1273,14 @@ def main() -> None:
         print(f"Volatility: {max_sharpe_portfolio['Volatility']:.2%}")
         print(f"VaR 95%: {max_sharpe_portfolio['VaR 95%']:.2%}")
         print(f"Sharpe Ratio: {max_sharpe_portfolio['Sharpe']:.2f}")
+        (
+            monthly_mean,
+            monthly_vol,
+        ) = calculate_monthly_metrics_for_portfolio(
+            cast(np.ndarray, max_sharpe_portfolio["Weights"]), price_df
+        )
+        print(f"Monthly Mean Return (Ann.): {monthly_mean:.2%}")
+        print(f"Monthly Volatility (Ann.): {monthly_vol:.2%}")
         print("Weights:")
         weights = pd.Series(
             max_sharpe_portfolio["Weights"], index=window_returns_df.columns
@@ -1123,6 +1294,14 @@ def main() -> None:
         print(f"Volatility: {max_var_portfolio['Volatility']:.2%}")
         print(f"VaR 95%: {max_var_portfolio['VaR 95%']:.2%}")
         print(f"Sharpe Ratio: {max_var_portfolio['Sharpe']:.2f}")
+        (
+            monthly_mean,
+            monthly_vol,
+        ) = calculate_monthly_metrics_for_portfolio(
+            cast(np.ndarray, max_var_portfolio["Weights"]), price_df
+        )
+        print(f"Monthly Mean Return (Ann.): {monthly_mean:.2%}")
+        print(f"Monthly Volatility (Ann.): {monthly_vol:.2%}")
         print("Weights:")
         weights = pd.Series(
             max_var_portfolio["Weights"], index=window_returns_df.columns
@@ -1149,6 +1328,7 @@ def main() -> None:
                 description.ljust(max_desc_len),
                 window_returns_df,
                 args.annealing,
+                args.interactive_plots,
             )
             results.append((description, portfolio))
 
@@ -1165,6 +1345,14 @@ def main() -> None:
             print(f"Volatility: {portfolio['Volatility']:.2%}")
             print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
             print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
+            (
+                monthly_mean,
+                monthly_vol,
+            ) = calculate_monthly_metrics_for_portfolio(
+                cast(np.ndarray, portfolio["Weights"]), price_df
+            )
+            print(f"Monthly Mean Return (Ann.): {monthly_mean:.2%}")
+            print(f"Monthly Volatility (Ann.): {monthly_vol:.2%}")
             print("Weights:")
             weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
             weights = weights[weights > 0.0001]
