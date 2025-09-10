@@ -430,6 +430,13 @@ def plot_portfolios_return_distributions(
     for name, (portfolio, color) in portfolios.items():
         portfolio_returns = window_returns_df.dot(portfolio["Weights"])
         sns.kdeplot(portfolio_returns, label=name, color=color, fill=True, alpha=0.3)
+        plt.axvline(
+            portfolio_returns.mean(),
+            color=color,
+            linestyle="--",
+            alpha=0.8,
+            linewidth=1.0,
+        )
 
     plt.title("Return Distributions of Optimal Portfolios")
     plt.xlabel("Annualized Return")
@@ -592,6 +599,15 @@ def plot_single_portfolio_return_distribution(
         fill=True,
         alpha=0.3,
     )
+
+    mean_return = portfolio_returns.mean()
+    plt.axvline(
+        mean_return,
+        color=get_color("mocha", "green"),
+        linestyle="--",
+        label=f"Mean: {mean_return:.2%}",
+    )
+    plt.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
 
     plt.title(f"Return Distribution for {name}")
     plt.xlabel("Annualized Return")

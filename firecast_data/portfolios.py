@@ -417,36 +417,23 @@ def main() -> None:
         print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
 
         # --- Save portfolios to JSON ---
-        save_portfolio_to_json(
-            cast(pd.Series, min_vol_portfolio),
-            "Minimum Volatility",
-            window_returns_df.columns,
-            "min_volatility.json",
-        )
-        save_portfolio_to_json(
-            cast(pd.Series, max_sharpe_portfolio),
-            "Maximum Sharpe Ratio",
-            window_returns_df.columns,
-            "max_sharpe.json",
-        )
-        save_portfolio_to_json(
-            cast(pd.Series, max_var_portfolio),
-            "Maximum VaR 95%",
-            window_returns_df.columns,
-            "max_var.json",
-        )
-        save_portfolio_to_json(
-            cast(pd.Series, max_cvar_portfolio),
-            "Maximum CVaR 95%",
-            window_returns_df.columns,
-            "max_cvar.json",
-        )
-        save_portfolio_to_json(
-            cast(pd.Series, max_adj_sharpe_portfolio),
-            "Maximum Adjusted Sharpe",
-            window_returns_df.columns,
-            "max_adj_sharpe.json",
-        )
+        portfolios_to_save = {
+            "Minimum Volatility": min_vol_portfolio,
+            "Maximum Sharpe Ratio": max_sharpe_portfolio,
+            "Maximum VaR 95%": max_var_portfolio,
+            "Maximum CVaR 95%": max_cvar_portfolio,
+            "Maximum Adjusted Sharpe": max_adj_sharpe_portfolio,
+        }
+
+        print("\n--- Saving Optimal Equal-Weight Portfolios ---")
+        for name, portfolio in portfolios_to_save.items():
+            filename = f"{name.strip().replace(' ', '_').replace('.', '').lower()}.json"
+            save_portfolio_to_json(
+                cast(pd.Series, portfolio),
+                name,
+                window_returns_df.columns,
+                filename,
+            )
 
     elif args.annealing and not window_returns_df.empty:
         # Use simulated annealing to find optimal portfolios for different metrics.
