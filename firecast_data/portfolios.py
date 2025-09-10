@@ -176,6 +176,157 @@ def save_portfolio_to_json(
     print(f"Saved portfolio to '{filepath}'")
 
 
+def report_and_save_portfolios(
+    winning_portfolios: dict[str, pd.Series],
+    price_df: pd.DataFrame,
+    window_returns_df: pd.DataFrame,
+) -> None:
+    """Prints metrics and saves the given portfolios to JSON files."""
+    print("\n--- Optimal Portfolio Results ---")
+    for name, portfolio in winning_portfolios.items():
+        print(f"\n--- Optimal Portfolio ({name}) ---")
+        print(f"Return: {portfolio['Return']:.2%}")
+        print(f"Volatility: {portfolio['Volatility']:.2%}")
+        print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
+        print(f"CVaR 95%: {portfolio['CVaR 95%']:.2%}")
+        print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
+        print(f"Adjusted Sharpe: {portfolio['Adjusted Sharpe']:.2f}")
+        (
+            monthly_mean,
+            monthly_vol,
+        ) = calculate_monthly_metrics_for_portfolio(
+            cast(np.ndarray, portfolio["Weights"]), price_df
+        )
+        print(f"Monthly Return: {monthly_mean:.2%}")
+        print(f"Monthly Volatility: {monthly_vol:.2%}")
+        print("Weights:")
+        weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
+        weights = weights[weights > 0.0001]
+        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
+
+        # Save the portfolio to JSON
+        filename = f"{name.strip().replace(' ', '_').replace('.', '').lower()}.json"
+        save_portfolio_to_json(portfolio, name, window_returns_df.columns, filename)
+
+
+def plot_portfolio_results(
+    winning_portfolios: dict[str, pd.Series],
+    all_portfolios_df: pd.DataFrame | None,
+    summary_df_simulation: pd.DataFrame,
+    window_returns_df: pd.DataFrame,
+    window_years: int,
+) -> None:
+    """Generates and saves all plots for the winning portfolios."""
+    min_vol = winning_portfolios["Minimum Volatility"]
+    max_sharpe = winning_portfolios["Maximum Sharpe Ratio"]
+    max_var = winning_portfolios["Maximum VaR 95%"]
+    max_cvar = winning_portfolios["Maximum CVaR 95%"]
+    max_adj_sharpe = winning_portfolios["Maximum Adjusted Sharpe"]
+
+    plotting.plot_portfolios_return_distributions(
+        min_vol,
+        max_sharpe,
+        max_var,
+        max_cvar,
+        max_adj_sharpe,
+        window_returns_df,
+    )
+    plotting.plot_portfolio_returns_over_time(
+        min_vol,
+        max_sharpe,
+        max_var,
+        max_cvar,
+        max_adj_sharpe,
+        window_returns_df,
+        window_years,
+    )
+
+    # The efficient frontier scatter plots only make sense for the equal-weight mode,
+    # as it generates the necessary cloud of points.
+    if all_portfolios_df is not None:
+        plotting.plot_efficient_frontier(
+            all_portfolios_df,
+            summary_df_simulation,
+            min_vol,
+            max_sharpe,
+            max_var,
+            max_cvar,
+            max_adj_sharpe,
+        )
+        plotting.plot_efficient_frontier_var(
+            all_portfolios_df,
+            summary_df_simulation,
+            min_vol,
+            max_sharpe,
+            max_var,
+            max_cvar,
+            max_adj_sharpe,
+        )
+
+
+def run_optimization(
+    args: argparse.Namespace, window_returns_df: pd.DataFrame
+) -> tuple[dict[str, pd.Series], pd.DataFrame | None]:
+    """
+    Runs the selected optimization strategy (equal-weight or annealing) and
+    returns the winning portfolios.
+    """
+    all_portfolios_df = None
+    winning_portfolios = {}
+
+    if args.equal_weight is not None:
+        print(
+            f"\n--- Generating all equal-weight portfolios of {args.equal_weight} assets ---"
+        )
+        tasks = [
+            ("Minimum Volatility", "Volatility", "idxmin"),
+            ("Maximum Sharpe Ratio", "Sharpe", "idxmax"),
+            ("Maximum VaR 95%", "VaR 95%", "idxmax"),
+            ("Maximum CVaR 95%", "CVaR 95%", "idxmax"),
+            ("Maximum Adjusted Sharpe", "Adjusted Sharpe", "idxmax"),
+        ]
+
+        all_portfolios_df = optimization.generate_equal_weight_portfolios(
+            args.equal_weight, window_returns_df
+        )
+
+        for name, metric, operation in tasks:
+            if operation == "idxmin":
+                best_portfolio = all_portfolios_df.loc[
+                    all_portfolios_df[metric].idxmin()
+                ]
+            else:  # idxmax
+                best_portfolio = all_portfolios_df.loc[
+                    all_portfolios_df[metric].idxmax()
+                ]
+            winning_portfolios[name] = best_portfolio
+
+    elif args.annealing:
+        print("\n--- Running Simulated Annealing for Optimal Portfolios ---")
+        tasks = [
+            ("Minimum Volatility", "volatility", "Min Volatility"),
+            ("Maximum Sharpe Ratio", "sharpe", "Max Sharpe"),
+            ("Maximum VaR 95%", "var", "Max VaR 95%"),
+            ("Maximum CVaR 95%", "cvar", "Max CVaR 95%"),
+            ("Maximum Adjusted Sharpe", "adjusted_sharpe", "Max Adj. Sharpe"),
+        ]
+
+        max_desc_len = max(len(desc) for _, _, desc in tasks)
+        results = {}
+        for name, objective_key, description in tasks:
+            portfolio = optimization.run_simulated_annealing(
+                objective_key,
+                description.ljust(max_desc_len),
+                window_returns_df,
+                args.annealing,
+            )
+            results[name] = portfolio
+
+        winning_portfolios = results
+
+    return winning_portfolios, all_portfolios_df
+
+
 def main() -> None:
     """
     Main function to run the portfolio analysis.
@@ -270,273 +421,26 @@ def main() -> None:
     if not correlation_matrix.empty:
         plotting.plot_correlation_heatmap(correlation_matrix, args.interactive_plots)
 
-    portfolios_df = None
-    (
-        min_vol_portfolio,
-        max_sharpe_portfolio,
-        max_var_portfolio,
-        max_cvar_portfolio,
-        max_adj_sharpe_portfolio,
-    ) = (
-        None,
-        None,
-        None,
-        None,
-        None,
-    )
-
-    if args.equal_weight is not None and not window_returns_df.empty:
-        # Generate all equal-weight portfolios for a specified number of assets.
-        print(
-            f"\n--- Generating all equal-weight portfolios of {args.equal_weight} assets ---"
-        )
-        portfolios_df = optimization.generate_equal_weight_portfolios(
-            args.equal_weight, window_returns_df
+    # --- Portfolio Generation and Analysis ---
+    if (
+        args.equal_weight is not None or args.annealing
+    ) and not window_returns_df.empty:
+        # Run the selected optimization process
+        winning_portfolios, all_portfolios_df = run_optimization(
+            args, window_returns_df
         )
 
-        # Find the single best portfolio for each category
-        min_vol_portfolio = portfolios_df.loc[portfolios_df["Volatility"].idxmin()]
-        max_sharpe_portfolio = portfolios_df.loc[portfolios_df["Sharpe"].idxmax()]
-        max_var_portfolio = portfolios_df.loc[portfolios_df["VaR 95%"].idxmax()]
-        max_cvar_portfolio = portfolios_df.loc[portfolios_df["CVaR 95%"].idxmax()]
-        max_adj_sharpe_portfolio = portfolios_df.loc[
-            portfolios_df["Adjusted Sharpe"].idxmax()
-        ]
+        # Print results and save portfolios to JSON
+        report_and_save_portfolios(winning_portfolios, price_df, window_returns_df)
 
-        # --- Print details of the optimal portfolios ---
-        print("\n--- Best Equal-Weight Portfolios Found ---")
-
-        # Minimum Volatility
-        print("\n--- Minimum Volatility Portfolio ---")
-        print(f"Return: {min_vol_portfolio['Return']:.2%}")
-        print(f"Volatility: {min_vol_portfolio['Volatility']:.2%}")
-        print(f"VaR 95%: {min_vol_portfolio['VaR 95%']:.2%}")
-        print(f"CVaR 95%: {min_vol_portfolio['CVaR 95%']:.2%}")
-        print(f"Sharpe Ratio: {min_vol_portfolio['Sharpe']:.2f}")
-        (
-            monthly_mean,
-            monthly_vol,
-        ) = calculate_monthly_metrics_for_portfolio(
-            cast(np.ndarray, min_vol_portfolio["Weights"]), price_df
-        )
-        print(f"Monthly Return: {monthly_mean:.2%}")
-        print(f"Monthly Volatility: {monthly_vol:.2%}")
-        print("Weights:")
-        weights = pd.Series(
-            min_vol_portfolio["Weights"], index=window_returns_df.columns
-        )
-        weights = weights[weights > 0.0001]
-        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-        # Maximum Sharpe Ratio
-        print("\n--- Maximum Sharpe Ratio Portfolio ---")
-        print(f"Return: {max_sharpe_portfolio['Return']:.2%}")
-        print(f"Volatility: {max_sharpe_portfolio['Volatility']:.2%}")
-        print(f"VaR 95%: {max_sharpe_portfolio['VaR 95%']:.2%}")
-        print(f"CVaR 95%: {max_sharpe_portfolio['CVaR 95%']:.2%}")
-        print(f"Sharpe Ratio: {max_sharpe_portfolio['Sharpe']:.2f}")
-        (
-            monthly_mean,
-            monthly_vol,
-        ) = calculate_monthly_metrics_for_portfolio(
-            cast(np.ndarray, max_sharpe_portfolio["Weights"]), price_df
-        )
-        print(f"Monthly Return: {monthly_mean:.2%}")
-        print(f"Monthly Volatility: {monthly_vol:.2%}")
-        print("Weights:")
-        weights = pd.Series(
-            max_sharpe_portfolio["Weights"], index=window_returns_df.columns
-        )
-        weights = weights[weights > 0.0001]
-        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-        # Maximum VaR 95%
-        print("\n--- Maximum VaR 95% Portfolio ---")
-        print(f"Return: {max_var_portfolio['Return']:.2%}")
-        print(f"Volatility: {max_var_portfolio['Volatility']:.2%}")
-        print(f"VaR 95%: {max_var_portfolio['VaR 95%']:.2%}")
-        print(f"CVaR 95%: {max_var_portfolio['CVaR 95%']:.2%}")
-        print(f"Sharpe Ratio: {max_var_portfolio['Sharpe']:.2f}")
-        (
-            monthly_mean,
-            monthly_vol,
-        ) = calculate_monthly_metrics_for_portfolio(
-            cast(np.ndarray, max_var_portfolio["Weights"]), price_df
-        )
-        print(f"Monthly Return: {monthly_mean:.2%}")
-        print(f"Monthly Volatility: {monthly_vol:.2%}")
-        print("Weights:")
-        weights = pd.Series(
-            max_var_portfolio["Weights"], index=window_returns_df.columns
-        )
-        weights = weights[weights > 0.0001]
-        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-        # Maximum CVaR 95%
-        print("\n--- Maximum CVaR 95% Portfolio ---")
-        print(f"Return: {max_cvar_portfolio['Return']:.2%}")
-        print(f"Volatility: {max_cvar_portfolio['Volatility']:.2%}")
-        print(f"VaR 95%: {max_cvar_portfolio['VaR 95%']:.2%}")
-        print(f"CVaR 95%: {max_cvar_portfolio['CVaR 95%']:.2%}")
-        print(f"Sharpe Ratio: {max_cvar_portfolio['Sharpe']:.2f}")
-        (
-            monthly_mean,
-            monthly_vol,
-        ) = calculate_monthly_metrics_for_portfolio(
-            cast(np.ndarray, max_cvar_portfolio["Weights"]), price_df
-        )
-        print(f"Monthly Return: {monthly_mean:.2%}")
-        print(f"Monthly Volatility: {monthly_vol:.2%}")
-        print("Weights:")
-        weights = pd.Series(
-            max_cvar_portfolio["Weights"], index=window_returns_df.columns
-        )
-        weights = weights[weights > 0.0001]
-        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-        print("\n--- Maximum Adjusted Sharpe Portfolio ---")
-        print(f"Return: {max_adj_sharpe_portfolio['Return']:.2%}")
-        print(f"Volatility: {max_adj_sharpe_portfolio['Volatility']:.2%}")
-        print(f"VaR 95%: {max_adj_sharpe_portfolio['VaR 95%']:.2%}")
-        print(f"CVaR 95%: {max_adj_sharpe_portfolio['CVaR 95%']:.2%}")
-        print(f"Sharpe Ratio: {max_adj_sharpe_portfolio['Sharpe']:.2f}")
-        print(f"Adjusted Sharpe: {max_adj_sharpe_portfolio['Adjusted Sharpe']:.2f}")
-        (
-            monthly_mean,
-            monthly_vol,
-        ) = calculate_monthly_metrics_for_portfolio(
-            cast(np.ndarray, max_adj_sharpe_portfolio["Weights"]), price_df
-        )
-        print(f"Monthly Return: {monthly_mean:.2%}")
-        print(f"Monthly Volatility: {monthly_vol:.2%}")
-        print("Weights:")
-        weights = pd.Series(
-            max_adj_sharpe_portfolio["Weights"], index=window_returns_df.columns
-        )
-        weights = weights[weights > 0.0001]
-        print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-        # --- Save portfolios to JSON ---
-        portfolios_to_save = {
-            "Minimum Volatility": min_vol_portfolio,
-            "Maximum Sharpe Ratio": max_sharpe_portfolio,
-            "Maximum VaR 95%": max_var_portfolio,
-            "Maximum CVaR 95%": max_cvar_portfolio,
-            "Maximum Adjusted Sharpe": max_adj_sharpe_portfolio,
-        }
-
-        print("\n--- Saving Optimal Equal-Weight Portfolios ---")
-        for name, portfolio in portfolios_to_save.items():
-            filename = f"{name.strip().replace(' ', '_').replace('.', '').lower()}.json"
-            save_portfolio_to_json(
-                cast(pd.Series, portfolio),
-                name,
-                window_returns_df.columns,
-                filename,
-            )
-
-    elif args.annealing and not window_returns_df.empty:
-        # Use simulated annealing to find optimal portfolios for different metrics.
-        print("\n--- Running Simulated Annealing for Optimal Portfolios ---")
-        tasks = [
-            ("Min Volatility", "volatility"),
-            ("Max Sharpe", "sharpe"),
-            ("Max VaR 95%", "var"),
-            ("Max CVaR 95%", "cvar"),
-            ("Max Adj. Sharpe", "adjusted_sharpe"),
-        ]
-
-        # Find the longest description to align progress bars
-        max_desc_len = max(len(desc) for desc, _ in tasks)
-
-        results = []
-        for description, objective_key in tasks:
-            portfolio = optimization.run_simulated_annealing(
-                objective_key,
-                description.ljust(max_desc_len),
-                window_returns_df,
-                args.annealing,
-            )
-            results.append((description, portfolio))
-
-        # Assign winning portfolios from results
-        results_dict = {desc: p for desc, p in results}
-        min_vol_portfolio = results_dict["Min Volatility"]
-        max_sharpe_portfolio = results_dict["Max Sharpe"]
-        max_var_portfolio = results_dict["Max VaR 95%"]
-        max_cvar_portfolio = results_dict["Max CVaR 95%"]
-        max_adj_sharpe_portfolio = results_dict["Max Adj. Sharpe"]
-
-        print("\n--- Optimal Portfolio Results ---")
-        for description, portfolio in results:
-            print(f"\n--- Optimal Portfolio ({description}) ---")
-            print(f"Return: {portfolio['Return']:.2%}")
-            print(f"Volatility: {portfolio['Volatility']:.2%}")
-            print(f"VaR 95%: {portfolio['VaR 95%']:.2%}")
-            print(f"CVaR 95%: {portfolio['CVaR 95%']:.2%}")
-            print(f"Sharpe Ratio: {portfolio['Sharpe']:.2f}")
-            print(f"Adjusted Sharpe: {portfolio['Adjusted Sharpe']:.2f}")
-            (
-                monthly_mean,
-                monthly_vol,
-            ) = calculate_monthly_metrics_for_portfolio(
-                cast(np.ndarray, portfolio["Weights"]), price_df
-            )
-            print(f"Monthly Return: {monthly_mean:.2%}")
-            print(f"Monthly Volatility: {monthly_vol:.2%}")
-            print("Weights:")
-            weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
-            weights = weights[weights > 0.0001]
-            print(weights.to_string(float_format=lambda x: f"{x:.2%}"))
-
-            # Save the found portfolio to JSON
-            filename = f"{description.strip().replace(' ', '_').lower()}.json"
-            save_portfolio_to_json(
-                portfolio, description, window_returns_df.columns, filename
-            )
-
-    # --- Plotting Section ---
-    # If winning portfolios were found in either mode, generate plots.
-    if min_vol_portfolio is not None:
-        plotting.plot_portfolios_return_distributions(
-            cast(pd.Series, min_vol_portfolio),
-            cast(pd.Series, max_sharpe_portfolio),
-            cast(pd.Series, max_var_portfolio),
-            cast(pd.Series, max_cvar_portfolio),
-            cast(pd.Series, max_adj_sharpe_portfolio),
-            window_returns_df,
-        )
-        plotting.plot_portfolio_returns_over_time(
-            cast(pd.Series, min_vol_portfolio),
-            cast(pd.Series, max_sharpe_portfolio),
-            cast(pd.Series, max_var_portfolio),
-            cast(pd.Series, max_cvar_portfolio),
-            cast(pd.Series, max_adj_sharpe_portfolio),
+        # Generate and save all plots
+        plot_portfolio_results(
+            winning_portfolios,
+            all_portfolios_df,
+            summary_df_simulation,
             window_returns_df,
             window_years,
         )
-
-        # The efficient frontier scatter plots only make sense for the equal-weight mode,
-        # as it generates the necessary cloud of points.
-        if portfolios_df is not None:
-            plotting.plot_efficient_frontier(
-                portfolios_df,
-                summary_df_simulation,
-                cast(pd.Series, min_vol_portfolio),
-                cast(pd.Series, max_sharpe_portfolio),
-                cast(pd.Series, max_var_portfolio),
-                cast(pd.Series, max_adj_sharpe_portfolio),
-                cast(pd.Series, max_cvar_portfolio),
-            )
-            plotting.plot_efficient_frontier_var(
-                portfolios_df,
-                summary_df_simulation,
-                cast(pd.Series, min_vol_portfolio),
-                cast(pd.Series, max_sharpe_portfolio),
-                cast(pd.Series, max_var_portfolio),
-                cast(pd.Series, max_cvar_portfolio),
-                cast(pd.Series, max_adj_sharpe_portfolio),
-            )
 
     elif args.manual and not window_returns_df.empty:
         print(f"\n--- Analyzing manual portfolio from {args.manual} ---")
