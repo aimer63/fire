@@ -68,11 +68,38 @@ def _calculate_sharpe_objective(weights: np.ndarray, returns_df: pd.DataFrame) -
     return -cast(float, mean_return / volatility)
 
 
+def _calculate_adjusted_sharpe_objective(
+    weights: np.ndarray, returns_df: pd.DataFrame
+) -> float:
+    """
+    Objective function for annealing: minimize the negative Adjusted Sharpe Ratio.
+    This ratio incorporates skewness and kurtosis.
+    """
+    p_returns = returns_df.dot(weights)
+    volatility = p_returns.std()
+    if np.isclose(volatility, 0):
+        return float("inf")
+
+    mean_return = p_returns.mean()
+    sharpe_ratio = mean_return / volatility
+    skewness = p_returns.skew()
+    kurtosis = p_returns.kurt()  # Fisher's (excess) kurtosis
+
+    # Adjusted Sharpe Ratio formula
+    adj_sharpe = sharpe_ratio * (
+        1 + (skewness / 6) * sharpe_ratio - (kurtosis / 24) * (sharpe_ratio**2)
+    )
+
+    # We want to MAXIMIZE the ratio, so we MINIMIZE its negative
+    return -cast(float, adj_sharpe)
+
+
 OBJECTIVE_FUNCTIONS = {
     "volatility": _calculate_volatility_objective,
     "sharpe": _calculate_sharpe_objective,
     "var": _calculate_var_objective,
     "cvar": _calculate_cvar_objective,
+    "adjusted_sharpe": _calculate_adjusted_sharpe_objective,
 }
 
 
@@ -203,7 +230,12 @@ def run_simulated_annealing(
     best_var_95 = portfolio_returns.quantile(0.05)
     best_cvar_95 = portfolio_returns[portfolio_returns <= best_var_95].mean()
     best_sharpe = (
-        best_return / best_volatility if cast(float, best_volatility) > 0 else 0
+        best_return / best_volatility if not np.isclose(best_volatility, 0) else 0.0
+    )
+
+    # Calculate Adjusted Sharpe Ratio using the objective function
+    adj_sharpe_ratio = -_calculate_adjusted_sharpe_objective(
+        best_weights, window_returns_df
     )
 
     best_portfolio = pd.Series(
@@ -213,6 +245,7 @@ def run_simulated_annealing(
             "Sharpe": best_sharpe,
             "VaR 95%": best_var_95,
             "CVaR 95%": best_cvar_95,
+            "Adjusted Sharpe": adj_sharpe_ratio,
             "Weights": best_weights,
         }
     )
@@ -231,7 +264,7 @@ def run_simulated_annealing(
 
 def _worker_generate_equal_weight(
     combo: Tuple[str, ...],
-) -> Tuple[float, float, float, float, float, np.ndarray]:
+) -> Tuple[float, float, float, float, float, float, np.ndarray]:
     """
     Worker function to generate a single equal-weight portfolio.
     Accesses the global 'worker_window_returns_df'.
@@ -246,21 +279,30 @@ def _worker_generate_equal_weight(
     weights_np = weights.to_numpy()
 
     # Calculate portfolio metrics
-    portfolio_window_returns = worker_window_returns_df.dot(weights_np)
-    portfolio_return = portfolio_window_returns.mean()
-    portfolio_volatility = portfolio_window_returns.std()
-    portfolio_var_95 = portfolio_window_returns.quantile(0.05)
-    portfolio_cvar_95 = portfolio_window_returns[
-        portfolio_window_returns <= portfolio_var_95
-    ].mean()
-    sharpe_ratio = portfolio_return / portfolio_volatility
+    p_returns = worker_window_returns_df.dot(weights_np)
+    p_return = p_returns.mean()
+    p_volatility = p_returns.std()
+    p_var_95 = p_returns.quantile(0.05)
+    p_cvar_95 = p_returns[p_returns <= p_var_95].mean()
+    sharpe_ratio = p_return / p_volatility if not np.isclose(p_volatility, 0) else 0.0
+
+    # Calculate Adjusted Sharpe Ratio
+    skewness = p_returns.skew()
+    kurtosis = p_returns.kurt()
+    if np.isclose(p_volatility, 0):
+        adj_sharpe_ratio = 0.0
+    else:
+        adj_sharpe_ratio = sharpe_ratio * (
+            1 + (skewness / 6) * sharpe_ratio - (kurtosis / 24) * (sharpe_ratio**2)
+        )
 
     return (
-        cast(float, portfolio_return),
-        cast(float, portfolio_volatility),
+        cast(float, p_return),
+        cast(float, p_volatility),
         cast(float, sharpe_ratio),
-        cast(float, portfolio_var_95),
-        cast(float, portfolio_cvar_95),
+        cast(float, p_var_95),
+        cast(float, p_cvar_95),
+        cast(float, adj_sharpe_ratio),
         weights_np,
     )
 
@@ -305,7 +347,9 @@ def generate_equal_weight_portfolios(
         )
 
     # Unpack results
-    returns, volatilities, sharpes, vars_95, cvars_95, weights_record = zip(*results)
+    returns, volatilities, sharpes, vars_95, cvars_95, adj_sharpes, weights_record = (
+        zip(*results)
+    )
 
     portfolios_df = pd.DataFrame(
         {
@@ -314,6 +358,7 @@ def generate_equal_weight_portfolios(
             "Sharpe": sharpes,
             "VaR 95%": vars_95,
             "CVaR 95%": cvars_95,
+            "Adjusted Sharpe": adj_sharpes,
             "Weights": weights_record,
         }
     )

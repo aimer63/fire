@@ -169,6 +169,7 @@ def plot_efficient_frontier(
     max_sharpe_portfolio: pd.Series,
     max_var_portfolio: pd.Series,
     max_cvar_portfolio: pd.Series,
+    max_adj_sharpe_portfolio: pd.Series,
 ) -> None:
     """
     Plots the efficient frontier from simulated portfolios and individual assets.
@@ -253,6 +254,17 @@ def plot_efficient_frontier(
         zorder=5,
     )
 
+    # Highlight the maximum Adjusted Sharpe portfolio
+    plt.scatter(
+        max_adj_sharpe_portfolio["Volatility"],
+        max_adj_sharpe_portfolio["Return"],
+        marker="*",
+        color=get_color("mocha", "peach"),
+        s=250,
+        label="Maximum Adjusted Sharpe",
+        zorder=5,
+    )
+
     plt.title("Monte Carlo Simulation for Efficient Frontier")
     plt.xlabel("Annualized Volatility")
     plt.ylabel("Expected Annualized Return")
@@ -275,6 +287,7 @@ def plot_efficient_frontier_var(
     max_sharpe_portfolio: pd.Series,
     max_var_portfolio: pd.Series,
     max_cvar_portfolio: pd.Series,
+    max_adj_sharpe_portfolio: pd.Series,
 ) -> None:
     """
     Plots the efficient frontier using VaR 95% on the x-axis.
@@ -359,6 +372,17 @@ def plot_efficient_frontier_var(
         zorder=5,
     )
 
+    # Highlight the maximum Adjusted Sharpe portfolio
+    plt.scatter(
+        max_adj_sharpe_portfolio["VaR 95%"],
+        max_adj_sharpe_portfolio["Return"],
+        marker="*",
+        color=get_color("mocha", "peach"),
+        s=250,
+        label="Maximum Adjusted Sharpe Portfolio",
+        zorder=5,
+    )
+
     plt.title("Efficient Frontier (Return vs. VaR 95%)")
     plt.xlabel("VaR 95% (5th Percentile of Annualized Returns)")
     plt.ylabel("Expected Annualized Return")
@@ -379,6 +403,7 @@ def plot_portfolios_return_distributions(
     max_sharpe_portfolio: pd.Series,
     max_var_portfolio: pd.Series,
     max_cvar_portfolio: pd.Series,
+    max_adj_sharpe_portfolio: pd.Series,
     window_returns_df: pd.DataFrame,
 ) -> None:
     """
@@ -396,6 +421,10 @@ def plot_portfolios_return_distributions(
         "Maximum Sharpe Ratio": (max_sharpe_portfolio, get_color("mocha", "yellow")),
         "Maximum VaR 95%": (max_var_portfolio, get_color("mocha", "mauve")),
         "Maximum CVaR 95%": (max_cvar_portfolio, get_color("mocha", "blue")),
+        "Maximum Adjusted Sharpe": (
+            max_adj_sharpe_portfolio,
+            get_color("mocha", "peach"),
+        ),
     }
 
     for name, (portfolio, color) in portfolios.items():
@@ -420,6 +449,7 @@ def plot_portfolio_returns_over_time(
     max_sharpe_portfolio: pd.Series,
     max_var_portfolio: pd.Series,
     max_cvar_portfolio: pd.Series,
+    max_adj_sharpe_portfolio: pd.Series,
     window_returns_df: pd.DataFrame,
     window_years: int,
 ) -> None:
@@ -437,6 +467,10 @@ def plot_portfolio_returns_over_time(
         "Maximum Sharpe Ratio": (max_sharpe_portfolio, get_color("mocha", "yellow")),
         "Maximum VaR 95%": (max_var_portfolio, get_color("mocha", "mauve")),
         "Maximum CVaR 95%": (max_cvar_portfolio, get_color("mocha", "blue")),
+        "Maximum Adjusted Sharpe": (
+            max_adj_sharpe_portfolio,
+            get_color("mocha", "peach"),
+        ),
     }
 
     for name, (portfolio, color) in portfolios.items():
@@ -534,3 +568,78 @@ def plot_annealing_convergence(
     filepath = os.path.join(output_dir, f"convergence_{safe_desc}.png")
     plt.savefig(filepath)
     print(f"Annealing convergence plot saved to '{filepath}'")
+
+
+def plot_single_portfolio_return_distribution(
+    portfolio: pd.Series,
+    name: str,
+    window_returns_df: pd.DataFrame,
+) -> None:
+    """
+    Plots the kernel density estimate of the return distribution for a single portfolio.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(12, 8))
+
+    portfolio_returns = window_returns_df.dot(portfolio["Weights"])
+    sns.kdeplot(
+        portfolio_returns,
+        label=name,
+        color=get_color("mocha", "blue"),
+        fill=True,
+        alpha=0.3,
+    )
+
+    plt.title(f"Return Distribution for {name}")
+    plt.xlabel("Annualized Return")
+    plt.ylabel("Density")
+    plt.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend(loc="upper right")
+    plt.tight_layout()
+
+    safe_name = name.strip().replace(" ", "_").lower()
+    filepath = os.path.join(output_dir, f"return_distribution_{safe_name}.png")
+    plt.savefig(filepath)
+    print(f"\nReturn distribution plot saved to '{filepath}'")
+
+
+def plot_single_portfolio_returns_over_time(
+    portfolio: pd.Series,
+    name: str,
+    window_returns_df: pd.DataFrame,
+    window_years: int,
+) -> None:
+    """
+    Plots the historical windowed returns for a single portfolio.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(15, 7))
+
+    portfolio_returns = window_returns_df.dot(portfolio["Weights"])
+    plt.plot(
+        portfolio_returns.index,
+        portfolio_returns,
+        label=name,
+        color=get_color("mocha", "blue"),
+        linewidth=1.2,
+    )
+
+    plt.title(f"Historical Windowed Returns of {name}")
+    plt.xlabel("Window End Date")
+    plt.ylabel(f"{window_years}-Year Rolling Annualized Return")
+    plt.axhline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend(loc="upper right")
+    plt.tight_layout()
+
+    safe_name = name.strip().replace(" ", "_").lower()
+    filepath = os.path.join(output_dir, f"portfolio_returns_over_time_{safe_name}.png")
+    plt.savefig(filepath)
+    print(f"\nPortfolio returns over time plot saved to '{filepath}'")

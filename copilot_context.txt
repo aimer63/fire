@@ -1,5 +1,7 @@
 > #buffers:visible
 > #file:copilot-interaction-rules.md
+
+
 > #file:firecast/core/simulation.py
 > #file:firecast/main.py
 > #file:data/data_metrics.py
@@ -7,3 +9,11 @@
 > #files:tests/config/*.py
 > #files:tests/simulation/*.py
 > #files:docs/*.md
+
+
+> #buffers:visible
+> #file:copilot-interaction-rules.md
+> #file:firecast_data/portfolios.py
+> #file:firecast_data/portfolio_lib/analysis.py
+> #file:firecast_data/portfolio_lib/optimization.py
+> #file:firecast_data/portfolio_lib/plotting.py
