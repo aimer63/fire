@@ -162,6 +162,37 @@ def plot_asset_return_distributions(
         plt.close()
 
 
+def plot_assets_boxplot(window_returns_df: pd.DataFrame, interactive: bool) -> None:
+    """
+    Plots a boxplot of the return distributions for all assets.
+    Only shows the plot interactively if requested.
+    """
+    if not interactive:
+        return
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(12, 8))
+
+    data = [window_returns_df[col].dropna() for col in window_returns_df.columns]
+    labels = list(window_returns_df.columns)
+    box_colors = [get_color("mocha", "blue") for _ in labels]
+
+    box = plt.boxplot(data, patch_artist=True, widths=0.2)
+    plt.xticks(range(1, len(labels) + 1), labels, rotation=90)
+    for patch, color in zip(box["boxes"], box_colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.5)
+
+    plt.title("Return Distributions of All Assets (Boxplot)")
+    plt.ylabel("Annualized Return")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    if interactive:
+        plt.show()
+
+    plt.close()
+
+
 def plot_efficient_frontier(
     portfolios_df: pd.DataFrame,
     summary_df: pd.DataFrame,
@@ -276,8 +307,6 @@ def plot_efficient_frontier(
     filepath = os.path.join(output_dir, "efficient_frontier.png")
     plt.savefig(filepath)
     print(f"\nEfficient frontier plot saved to '{filepath}'")
-    # plt.show()
-    # plt.close()
 
 
 def plot_efficient_frontier_var(
@@ -394,8 +423,6 @@ def plot_efficient_frontier_var(
     filepath = os.path.join(output_dir, "efficient_frontier_var.png")
     plt.savefig(filepath)
     print(f"\nEfficient frontier (VaR) plot saved to '{filepath}'")
-    # plt.show()
-    # plt.close()
 
 
 def plot_portfolios_return_distributions(
@@ -451,6 +478,61 @@ def plot_portfolios_return_distributions(
     print(f"\nReturn distribution plot saved to '{filepath}'")
 
 
+def plot_portfolios_boxplot(
+    min_vol_portfolio: pd.Series,
+    max_sharpe_portfolio: pd.Series,
+    max_var_portfolio: pd.Series,
+    max_cvar_portfolio: pd.Series,
+    max_adj_sharpe_portfolio: pd.Series,
+    window_returns_df: pd.DataFrame,
+) -> None:
+    """
+    Plots a boxplot of the return distributions for the optimal portfolios.
+    Always shows the plot interactively and saves the figure.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(12, 8))
+
+    portfolios = {
+        "Minimum Volatility": (min_vol_portfolio, get_color("mocha", "green")),
+        "Maximum Sharpe Ratio": (max_sharpe_portfolio, get_color("mocha", "yellow")),
+        "Maximum VaR 95%": (max_var_portfolio, get_color("mocha", "mauve")),
+        "Maximum CVaR 95%": (max_cvar_portfolio, get_color("mocha", "blue")),
+        "Maximum Adjusted Sharpe": (
+            max_adj_sharpe_portfolio,
+            get_color("mocha", "peach"),
+        ),
+    }
+
+    data = []
+    box_colors = []
+    labels = []
+    for name, (portfolio, color) in portfolios.items():
+        portfolio_returns = window_returns_df.dot(portfolio["Weights"])
+        data.append(portfolio_returns)
+        box_colors.append(color)
+        labels.append(name)
+
+    box = plt.boxplot(data, patch_artist=True, widths=0.2)
+    plt.xticks(range(1, len(labels) + 1), labels)
+    for patch, color in zip(box["boxes"], box_colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.5)
+
+    plt.title("Return Distributions of Optimal Portfolios (Boxplot)")
+    plt.ylabel("Annualized Return")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend(labels, loc="upper right")
+    plt.tight_layout()
+
+    filepath = os.path.join(output_dir, "return_distributions_boxplot.png")
+    plt.savefig(filepath)
+    print(f"\nReturn distributions boxplot saved to '{filepath}'")
+
+
 def plot_portfolio_returns_over_time(
     min_vol_portfolio: pd.Series,
     max_sharpe_portfolio: pd.Series,
@@ -501,6 +583,72 @@ def plot_portfolio_returns_over_time(
     filepath = os.path.join(output_dir, "portfolio_returns_over_time.png")
     plt.savefig(filepath)
     print(f"\nPortfolio returns over time plot saved to '{filepath}'")
+
+
+def plot_portfolios_correlation_heatmap(
+    min_vol_portfolio: pd.Series,
+    max_sharpe_portfolio: pd.Series,
+    max_var_portfolio: pd.Series,
+    max_cvar_portfolio: pd.Series,
+    max_adj_sharpe_portfolio: pd.Series,
+    window_returns_df: pd.DataFrame,
+) -> None:
+    """
+    For each winning portfolio, plot a heatmap of the correlation matrix
+    among the assets included in that portfolio (weights > 0).
+    Always shows the plot interactively.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    portfolios = {
+        "Minimum Volatility": min_vol_portfolio,
+        "Maximum Sharpe Ratio": max_sharpe_portfolio,
+        "Maximum VaR 95%": max_var_portfolio,
+        "Maximum CVaR 95%": max_cvar_portfolio,
+        "Maximum Adjusted Sharpe": max_adj_sharpe_portfolio,
+    }
+
+    for name, portfolio in portfolios.items():
+        plt.style.use("dark_background")
+        plt.rcParams["figure.facecolor"] = get_color("mocha", "crust")
+        plt.rcParams["axes.facecolor"] = get_color("mocha", "crust")
+
+        weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
+        selected_assets = weights[weights > 0.0001].index.tolist()
+        asset_returns_df = window_returns_df[selected_assets]
+
+        correlation_matrix = asset_returns_df.corr()
+
+        gradient = LinearSegmentedColormap.from_list(
+            "gradient",
+            [
+                get_color("mocha", "red"),
+                get_color("mocha", "text"),
+                get_color("latte", "mauve"),
+            ],
+        )
+
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(
+            correlation_matrix,
+            annot=True,
+            vmin=-1,
+            vmax=1,
+            cmap=gradient,
+            fmt=".2f",
+            linewidths=0.5,
+            cbar_kws={"label": "Correlation"},
+        )
+        plt.title(f"Correlation Matrix: {name} Portfolio Assets")
+        plt.tight_layout()
+
+        safe_name = name.strip().replace(" ", "_").lower()
+        filepath = os.path.join(
+            output_dir, f"correlation_heatmap_{safe_name}_assets.png"
+        )
+        plt.savefig(filepath)
+        print(f"\nCorrelation heatmap for {name} assets saved to '{filepath}'")
 
 
 def plot_annealing_convergence(
@@ -575,6 +723,36 @@ def plot_annealing_convergence(
     filepath = os.path.join(output_dir, f"convergence_{safe_desc}.png")
     plt.savefig(filepath)
     print(f"Annealing convergence plot saved to '{filepath}'")
+
+
+def plot_pso_convergence(description: str, gbest_cost_history: List[float]) -> None:
+    """
+    Plots the convergence of the global best cost for Particle Swarm Optimization.
+    """
+    output_dir = "output/pso_convergence"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(15, 8))
+    plt.plot(
+        range(len(gbest_cost_history)),
+        gbest_cost_history,
+        label="Global Best Cost",
+        color=get_color("mocha", "green"),
+        linewidth=1.5,
+    )
+
+    plt.title(f"PSO Convergence for {description.strip()}", fontsize=16)
+    plt.xlabel("Iteration")
+    plt.ylabel("Cost (Objective Value)")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.3)
+    plt.tight_layout()
+
+    safe_desc = description.strip().replace(" ", "_")
+    filepath = os.path.join(output_dir, f"convergence_{safe_desc}.png")
+    plt.savefig(filepath)
+    print(f"PSO convergence plot saved to '{filepath}'")
 
 
 def plot_single_portfolio_return_distribution(

@@ -95,6 +95,7 @@ def convert_prices_to_eur(
 
     # Prepare final DataFrame for output
     output_df = combined_df[asset_cols].reset_index()
+    output_df["Date"] = output_df["Date"].dt.strftime("%Y-%m-%d")
 
     print(f"Saving converted EUR prices to '{output_file}'...")
     output_df.to_excel(output_file, index=False)

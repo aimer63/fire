@@ -20,6 +20,11 @@ ANNEALING_STEP_SIZE = 0.05  # Max change in weight per step
 # ANNEALING_COOLING_RATE = 0.999988
 # ANNEALING_ITERATIONS = 1_000_000
 
+# Particle Swarm Optimization Parameters
+PSO_ITERATIONS = 1000
+PSO_INERTIA = 0.8
+PSO_COGNITIVE_C = 1.5
+PSO_SOCIAL_C = 1.5
 
 # --- Parallel Processing Setup ---
 
@@ -258,6 +263,126 @@ def run_simulated_annealing(
         temp_history,
         acceptance_prob_history,
     )
+
+    return best_portfolio
+
+
+def run_particle_swarm_optimization(
+    objective: str,
+    description: str,
+    window_returns_df: pd.DataFrame,
+    n_particles: int,
+) -> pd.Series:
+    """
+    Uses Particle Swarm Optimization to find the portfolio that optimizes a given metric.
+    """
+    n_assets = window_returns_df.shape[1]
+    objective_func = OBJECTIVE_FUNCTIONS[objective]
+
+    # --- Initialization ---
+    # Initialize particle positions (weights) using a Dirichlet distribution for valid portfolios
+    positions = np.random.dirichlet(np.ones(n_assets), size=n_particles)
+    # Initialize particle velocities
+    velocities = np.random.uniform(-0.05, 0.05, (n_particles, n_assets))
+
+    # Initialize personal best positions and their costs
+    pbest_positions = positions.copy()
+    pbest_costs = np.array(
+        [objective_func(p, window_returns_df) for p in pbest_positions]
+    )
+
+    # Initialize global best position and its cost
+    gbest_idx = np.argmin(pbest_costs)
+    gbest_position = pbest_positions[gbest_idx].copy()
+    gbest_cost = pbest_costs[gbest_idx]
+    gbest_cost_history = [gbest_cost]
+
+    term_width = os.get_terminal_size().columns
+    bar_width = max(40, term_width // 2)
+    for _ in trange(PSO_ITERATIONS, desc=description, ncols=bar_width):
+        # --- Update Velocities and Positions ---
+        r1 = np.random.uniform(0, 1, (n_particles, n_assets))
+        r2 = np.random.uniform(0, 1, (n_particles, n_assets))
+
+        velocities = (
+            PSO_INERTIA * velocities
+            + PSO_COGNITIVE_C * r1 * (pbest_positions - positions)
+            + PSO_SOCIAL_C * r2 * (gbest_position - positions)
+        )
+        positions += velocities
+
+        # Reflection
+        # --- Constraint Handling: Reflecting Boundary Conditions ---
+        # Find particles and dimensions that violate the non-negativity constraint
+        violation_mask = positions < 0
+
+        # Reflect the position back into the valid space (take absolute value)
+        positions[violation_mask] *= -1
+
+        # Reverse the velocity component for the violating dimension to "bounce"
+        velocities[violation_mask] *= -1
+
+        # # Clip weights to be non-negative
+        # positions = np.maximum(0, positions)
+        #
+        # # Handle particles that have all zero weights by re-initializing them
+        # row_sums = np.sum(positions, axis=1)
+        # zero_sum_mask = np.isclose(row_sums, 0)
+        # if np.any(zero_sum_mask):
+        #     n_dead_particles = np.sum(zero_sum_mask)
+        #     positions[zero_sum_mask] = np.random.dirichlet(
+        #         np.ones(n_assets), size=n_dead_particles
+        #     )
+
+        # Normalize all positions to ensure they sum to 1
+        positions /= np.sum(positions, axis=1, keepdims=True)
+
+        # --- Evaluate and Update Bests ---
+        current_costs = np.array(
+            [objective_func(p, window_returns_df) for p in positions]
+        )
+
+        # Update personal bests
+        update_mask = current_costs < pbest_costs
+        pbest_positions[update_mask] = positions[update_mask]
+        pbest_costs[update_mask] = current_costs[update_mask]
+
+        # Update global best
+        if np.min(pbest_costs) < gbest_cost:
+            gbest_idx = np.argmin(pbest_costs)
+            gbest_position = pbest_positions[gbest_idx].copy()
+            gbest_cost = pbest_costs[gbest_idx]
+
+        gbest_cost_history.append(gbest_cost)
+
+    # --- Final Metrics Calculation ---
+    best_weights = gbest_position
+    portfolio_returns = window_returns_df.dot(best_weights)
+    best_return = portfolio_returns.mean()
+    best_volatility = portfolio_returns.std()
+    best_sharpe = (
+        best_return / best_volatility if not np.isclose(best_volatility, 0) else 0.0
+    )
+    best_var_95 = portfolio_returns.quantile(0.05)
+    best_cvar_95 = portfolio_returns[portfolio_returns <= best_var_95].mean()
+    adj_sharpe_ratio = -_calculate_adjusted_sharpe_objective(
+        best_weights, window_returns_df
+    )
+
+    best_portfolio = pd.Series(
+        {
+            "Return": best_return,
+            "Volatility": best_volatility,
+            "Sharpe": best_sharpe,
+            "VaR 95%": best_var_95,
+            "CVaR 95%": best_cvar_95,
+            "Adjusted Sharpe": adj_sharpe_ratio,
+            "Weights": best_weights,
+        }
+    )
+
+    # Plot convergence of the global best cost
+    plotting.plot_pso_convergence(description, gbest_cost_history)
 
     return best_portfolio
 

@@ -118,7 +118,7 @@ parser.add_argument(
     help="Show interactive plot windows for correlation and price plots.",
 )
 # Create a mutually exclusive group for portfolio generation methods
-group = parser.add_mutually_exclusive_group(required=True)
+group = parser.add_mutually_exclusive_group(required=False)
 group.add_argument(
     "-e",
     "--equal-weight",
@@ -133,6 +133,14 @@ group.add_argument(
     type=str,
     choices=["transfer", "dirichlet"],
     help="Use simulated annealing with a specific neighbor generation algorithm ('transfer' or 'dirichlet') to find the optimal portfolio.",
+)
+group.add_argument(
+    "-s",
+    "--swarm",
+    type=int,
+    nargs="?",
+    const=100,  # Default number of particles if -s is provided with no number
+    help="Use Particle Swarm Optimization to find the optimal portfolio. Optionally specify the number of particles.",
 )
 group.add_argument(
     "-m",
@@ -240,6 +248,22 @@ def plot_portfolio_results(
         window_returns_df,
         window_years,
     )
+    plotting.plot_portfolios_boxplot(
+        min_vol,
+        max_sharpe,
+        max_var,
+        max_cvar,
+        max_adj_sharpe,
+        window_returns_df,
+    )
+    plotting.plot_portfolios_correlation_heatmap(
+        min_vol,
+        max_sharpe,
+        max_var,
+        max_cvar,
+        max_adj_sharpe,
+        window_returns_df,
+    )
 
     # The efficient frontier scatter plots only make sense for the equal-weight mode,
     # as it generates the necessary cloud of points.
@@ -324,6 +348,29 @@ def run_optimization(
 
         winning_portfolios = results
 
+    elif args.swarm is not None:
+        print(f"\n--- Running Particle Swarm Optimization ({args.swarm} particles) ---")
+        swarm_tasks = [
+            ("Minimum Volatility", "volatility", "Min Volatility"),
+            ("Maximum Sharpe Ratio", "sharpe", "Max Sharpe"),
+            ("Maximum VaR 95%", "var", "Max VaR 95%"),
+            ("Maximum CVaR 95%", "cvar", "Max CVaR 95%"),
+            ("Maximum Adjusted Sharpe", "adjusted_sharpe", "Max Adj. Sharpe"),
+        ]
+
+        max_desc_len = max(len(desc) for _, _, desc in swarm_tasks)
+        results = {}
+        for name, objective_key, description in swarm_tasks:
+            portfolio = optimization.run_particle_swarm_optimization(
+                objective_key,
+                description.ljust(max_desc_len),
+                window_returns_df,
+                args.swarm,
+            )
+            results[name] = portfolio
+
+        winning_portfolios = results
+
     return winning_portfolios, all_portfolios_df
 
 
@@ -377,6 +424,7 @@ def main() -> None:
         plotting.plot_asset_return_distributions(
             window_returns_df, args.interactive_plots
         )
+        plotting.plot_assets_boxplot(window_returns_df, args.interactive_plots)
 
     # Print the summary metrics calculated from each asset's full available history.
     print("\n--- Portfolio Metrics Summary (per-asset history) ---")
@@ -423,7 +471,7 @@ def main() -> None:
 
     # --- Portfolio Generation and Analysis ---
     if (
-        args.equal_weight is not None or args.annealing
+        args.equal_weight is not None or args.annealing or args.swarm is not None
     ) and not window_returns_df.empty:
         # Run the selected optimization process
         winning_portfolios, all_portfolios_df = run_optimization(
