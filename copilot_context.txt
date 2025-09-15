@@ -17,3 +17,4 @@
 > #file:firecast_data/portfolio_lib/analysis.py
 > #file:firecast_data/portfolio_lib/optimization.py
 > #file:firecast_data/portfolio_lib/plotting.py
+> #file:firecast_data/price_to_eur.py

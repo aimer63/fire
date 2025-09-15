@@ -248,14 +248,6 @@ def plot_portfolio_results(
         window_returns_df,
         window_years,
     )
-    plotting.plot_portfolios_boxplot(
-        min_vol,
-        max_sharpe,
-        max_var,
-        max_cvar,
-        max_adj_sharpe,
-        window_returns_df,
-    )
     plotting.plot_portfolios_correlation_heatmap(
         min_vol,
         max_sharpe,
@@ -572,6 +564,11 @@ def main() -> None:
             portfolio_name,
             window_returns_df,
             window_years,
+        )
+        plotting.plot_single_portfolio_correlation_heatmap(
+            manual_portfolio,
+            portfolio_name,
+            window_returns_df,
         )
 
     plt.show()

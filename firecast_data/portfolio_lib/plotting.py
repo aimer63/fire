@@ -434,14 +434,16 @@ def plot_portfolios_return_distributions(
     window_returns_df: pd.DataFrame,
 ) -> None:
     """
-    Plots the kernel density estimate of the return distributions for the three
-    optimal portfolios.
+    Plots the kernel density estimate of the return distributions for the optimal portfolios,
+    and adds a stacked horizontal boxplot below, sharing the x-axis.
     """
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
 
     plt.style.use("dark_background")
-    plt.figure(figsize=(12, 8))
+    _, (ax1, ax2) = plt.subplots(
+        2, 1, figsize=(12, 8), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+    )
 
     portfolios = {
         "Minimum Volatility": (min_vol_portfolio, get_color("mocha", "green")),
@@ -454,10 +456,13 @@ def plot_portfolios_return_distributions(
         ),
     }
 
+    # KDE plot
     for name, (portfolio, color) in portfolios.items():
         portfolio_returns = window_returns_df.dot(portfolio["Weights"])
-        sns.kdeplot(portfolio_returns, label=name, color=color, fill=True, alpha=0.3)
-        plt.axvline(
+        sns.kdeplot(
+            portfolio_returns, label=name, color=color, fill=True, alpha=0.3, ax=ax1
+        )
+        ax1.axvline(
             portfolio_returns.mean(),
             color=color,
             linestyle="--",
@@ -465,48 +470,14 @@ def plot_portfolios_return_distributions(
             linewidth=1.0,
         )
 
-    plt.title("Return Distributions of Optimal Portfolios")
-    plt.xlabel("Annualized Return")
-    plt.ylabel("Density")
-    plt.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend(loc="upper right")
-    plt.tight_layout()
+    ax1.set_title("Return Distributions of Optimal Portfolios")
+    ax1.set_xlabel("Annualized Return")
+    ax1.set_ylabel("Density")
+    ax1.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
+    ax1.grid(True, linestyle="--", alpha=0.5)
+    ax1.legend(loc="upper right")
 
-    filepath = os.path.join(output_dir, "return_distributions.png")
-    plt.savefig(filepath)
-    print(f"\nReturn distribution plot saved to '{filepath}'")
-
-
-def plot_portfolios_boxplot(
-    min_vol_portfolio: pd.Series,
-    max_sharpe_portfolio: pd.Series,
-    max_var_portfolio: pd.Series,
-    max_cvar_portfolio: pd.Series,
-    max_adj_sharpe_portfolio: pd.Series,
-    window_returns_df: pd.DataFrame,
-) -> None:
-    """
-    Plots a boxplot of the return distributions for the optimal portfolios.
-    Always shows the plot interactively and saves the figure.
-    """
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
-
-    plt.style.use("dark_background")
-    plt.figure(figsize=(12, 8))
-
-    portfolios = {
-        "Minimum Volatility": (min_vol_portfolio, get_color("mocha", "green")),
-        "Maximum Sharpe Ratio": (max_sharpe_portfolio, get_color("mocha", "yellow")),
-        "Maximum VaR 95%": (max_var_portfolio, get_color("mocha", "mauve")),
-        "Maximum CVaR 95%": (max_cvar_portfolio, get_color("mocha", "blue")),
-        "Maximum Adjusted Sharpe": (
-            max_adj_sharpe_portfolio,
-            get_color("mocha", "peach"),
-        ),
-    }
-
+    # Boxplot
     data = []
     box_colors = []
     labels = []
@@ -516,21 +487,20 @@ def plot_portfolios_boxplot(
         box_colors.append(color)
         labels.append(name)
 
-    box = plt.boxplot(data, patch_artist=True, widths=0.2)
-    plt.xticks(range(1, len(labels) + 1), labels)
+    box = ax2.boxplot(data, vert=False, patch_artist=True)
     for patch, color in zip(box["boxes"], box_colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.5)
+    ax2.set_xlabel("Annualized Return")
+    ax2.set_yticks(range(1, len(labels) + 1))
+    ax2.set_yticklabels(labels)
+    ax2.set_title("Boxplot")
+    ax2.grid(True, linestyle="--", alpha=0.5)
 
-    plt.title("Return Distributions of Optimal Portfolios (Boxplot)")
-    plt.ylabel("Annualized Return")
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend(labels, loc="upper right")
     plt.tight_layout()
-
-    filepath = os.path.join(output_dir, "return_distributions_boxplot.png")
+    filepath = os.path.join(output_dir, "return_distributions_stacked_boxplot.png")
     plt.savefig(filepath)
-    print(f"\nReturn distributions boxplot saved to '{filepath}'")
+    print(f"\nReturn distributions + boxplot saved to '{filepath}'")
 
 
 def plot_portfolio_returns_over_time(
@@ -651,6 +621,154 @@ def plot_portfolios_correlation_heatmap(
         print(f"\nCorrelation heatmap for {name} assets saved to '{filepath}'")
 
 
+def plot_single_portfolio_return_distribution(
+    portfolio: pd.Series,
+    name: str,
+    window_returns_df: pd.DataFrame,
+) -> None:
+    """
+    Plots the kernel density estimate and horizontal boxplot of the return distribution
+    for a manual portfolio as two stacked plots with aligned x-axis. Always shows the plot interactively.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    portfolio_returns = window_returns_df.dot(portfolio["Weights"])
+
+    plt.style.use("dark_background")
+    _, (ax1, ax2) = plt.subplots(
+        2, 1, figsize=(12, 8), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+    )
+
+    # KDE plot
+    sns.kdeplot(
+        portfolio_returns,
+        label=name,
+        color=get_color("mocha", "blue"),
+        fill=True,
+        alpha=0.3,
+        ax=ax1,
+    )
+    mean_return = portfolio_returns.mean()
+    ax1.axvline(
+        mean_return,
+        color=get_color("mocha", "green"),
+        linestyle="--",
+        label=f"Mean: {mean_return:.2%}",
+    )
+    ax1.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
+    ax1.set_title(f"Return Distribution for {name}")
+    ax1.set_xlabel("Annualized Return")
+    ax1.set_ylabel("Density")
+    ax1.grid(True, linestyle="--", alpha=0.5)
+    ax1.legend(loc="upper right")
+
+    # Boxplot
+    ax2.boxplot(
+        portfolio_returns,
+        vert=False,
+        patch_artist=True,
+        boxprops=dict(facecolor=get_color("mocha", "blue"), alpha=0.4),
+        medianprops=dict(color=get_color("mocha", "green")),
+    )
+    ax2.set_xlabel("Annualized Return")
+    ax2.set_yticks([])
+    ax2.set_title("Boxplot")
+    ax2.grid(True, linestyle="--", alpha=0.5)
+
+    plt.tight_layout()
+    safe_name = name.strip().replace(" ", "_").lower()
+    filepath = os.path.join(output_dir, f"return_distribution_{safe_name}.png")
+    plt.savefig(filepath)
+    print(f"\nReturn distribution saved to '{filepath}'")
+
+
+def plot_single_portfolio_returns_over_time(
+    portfolio: pd.Series,
+    name: str,
+    window_returns_df: pd.DataFrame,
+    window_years: int,
+) -> None:
+    """
+    Plots the historical windowed returns for a single portfolio.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(15, 7))
+
+    portfolio_returns = window_returns_df.dot(portfolio["Weights"])
+    plt.plot(
+        portfolio_returns.index,
+        portfolio_returns,
+        label=name,
+        color=get_color("mocha", "blue"),
+        linewidth=1.2,
+    )
+
+    plt.title(f"Historical Windowed Returns of {name}")
+    plt.xlabel("Window End Date")
+    plt.ylabel(f"{window_years}-Year Rolling Annualized Return")
+    plt.axhline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend(loc="upper right")
+    plt.tight_layout()
+
+    safe_name = name.strip().replace(" ", "_").lower()
+    filepath = os.path.join(output_dir, f"portfolio_returns_over_time_{safe_name}.png")
+    plt.savefig(filepath)
+    print(f"\nPortfolio returns over time plot saved to '{filepath}'")
+
+
+def plot_single_portfolio_correlation_heatmap(
+    portfolio: pd.Series,
+    name: str,
+    window_returns_df: pd.DataFrame,
+) -> None:
+    """
+    Plots a heatmap of the correlation matrix among assets included in a manual portfolio (weights > 0).
+    Always shows the plot interactively.
+    """
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+
+    weights = pd.Series(portfolio["Weights"], index=window_returns_df.columns)
+    selected_assets = weights[weights > 0.0001].index.tolist()
+    asset_returns_df = window_returns_df[selected_assets]
+
+    correlation_matrix = asset_returns_df.corr()
+
+    gradient = LinearSegmentedColormap.from_list(
+        "gradient",
+        [
+            get_color("mocha", "red"),
+            get_color("mocha", "text"),
+            get_color("latte", "mauve"),
+        ],
+    )
+
+    plt.style.use("dark_background")
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(
+        correlation_matrix,
+        annot=True,
+        vmin=-1,
+        vmax=1,
+        cmap=gradient,
+        fmt=".2f",
+        linewidths=0.5,
+        cbar_kws={"label": "Correlation"},
+    )
+    plt.title(f"Correlation Matrix: {name} Portfolio Assets")
+    plt.tight_layout()
+
+    safe_name = name.strip().replace(" ", "_").lower()
+    filepath = os.path.join(output_dir, f"correlation_heatmap_{safe_name}_assets.png")
+    plt.savefig(filepath)
+    print(f"\nCorrelation heatmap for {name} assets saved to '{filepath}'")
+
+
 def plot_annealing_convergence(
     description: str,
     best_cost_history: List[float],
@@ -753,87 +871,3 @@ def plot_pso_convergence(description: str, gbest_cost_history: List[float]) -> N
     filepath = os.path.join(output_dir, f"convergence_{safe_desc}.png")
     plt.savefig(filepath)
     print(f"PSO convergence plot saved to '{filepath}'")
-
-
-def plot_single_portfolio_return_distribution(
-    portfolio: pd.Series,
-    name: str,
-    window_returns_df: pd.DataFrame,
-) -> None:
-    """
-    Plots the kernel density estimate of the return distribution for a single portfolio.
-    """
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
-
-    plt.style.use("dark_background")
-    plt.figure(figsize=(12, 8))
-
-    portfolio_returns = window_returns_df.dot(portfolio["Weights"])
-    sns.kdeplot(
-        portfolio_returns,
-        label=name,
-        color=get_color("mocha", "blue"),
-        fill=True,
-        alpha=0.3,
-    )
-
-    mean_return = portfolio_returns.mean()
-    plt.axvline(
-        mean_return,
-        color=get_color("mocha", "green"),
-        linestyle="--",
-        label=f"Mean: {mean_return:.2%}",
-    )
-    plt.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
-
-    plt.title(f"Return Distribution for {name}")
-    plt.xlabel("Annualized Return")
-    plt.ylabel("Density")
-    plt.axvline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend(loc="upper right")
-    plt.tight_layout()
-
-    safe_name = name.strip().replace(" ", "_").lower()
-    filepath = os.path.join(output_dir, f"return_distribution_{safe_name}.png")
-    plt.savefig(filepath)
-    print(f"\nReturn distribution plot saved to '{filepath}'")
-
-
-def plot_single_portfolio_returns_over_time(
-    portfolio: pd.Series,
-    name: str,
-    window_returns_df: pd.DataFrame,
-    window_years: int,
-) -> None:
-    """
-    Plots the historical windowed returns for a single portfolio.
-    """
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
-
-    plt.style.use("dark_background")
-    plt.figure(figsize=(15, 7))
-
-    portfolio_returns = window_returns_df.dot(portfolio["Weights"])
-    plt.plot(
-        portfolio_returns.index,
-        portfolio_returns,
-        label=name,
-        color=get_color("mocha", "blue"),
-        linewidth=1.2,
-    )
-
-    plt.title(f"Historical Windowed Returns of {name}")
-    plt.xlabel("Window End Date")
-    plt.ylabel(f"{window_years}-Year Rolling Annualized Return")
-    plt.axhline(0, color=get_color("mocha", "red"), linestyle="--", alpha=0.7)
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend(loc="upper right")
-    plt.tight_layout()
-
-    safe_name = name.strip().replace(" ", "_").lower()
-    filepath = os.path.join(output_dir, f"portfolio_returns_over_time_{safe_name}.png")
-    plt.savefig(filepath)
-    print(f"\nPortfolio returns over time plot saved to '{filepath}'")
