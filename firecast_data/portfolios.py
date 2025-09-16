@@ -10,7 +10,7 @@ Portfolio Analysis and Optimization Tool.
 
 This script analyzes historical asset price data from an Excel file to compute
 key financial metrics, generate portfolios, and find optimal allocations
-using simulated annealing.
+using simulated annealing or particle swarm optimization.
 
 The analysis is based on a series of rolling N-year returns, providing a
 view of historical performance over a fixed investment horizon.
@@ -20,16 +20,20 @@ Key Features
 - Loads and cleans daily price data from an Excel file.
 - Calculates expected annualized returns and volatility based on the mean and
   standard deviation of rolling N-year returns for each asset.
-- Uses simulated annealing to search for an optimal portfolio that maximizes a
-  chosen metric (e.g., VaR 95%).
+- Uses simulated annealing or particle swarm optimization to search for an
+  optimal portfolio that maximizes a chosen metric (e.g., VaR 95%).
 - Generates all equal-weight portfolios for every combination of a specified
   number of assets.
-- For equal-weight mode, identifies and highlights the Minimum Volatility,
-  Maximum Sharpe Ratio, and Maximum VaR portfolios.
+- Identifies and highlights the Minimum Volatility, Maximum Sharpe Ratio, Maximum VaR,
+  Maximum CVaR, and Maximum Adjusted Sharpe portfolios.
 - Prints detailed metrics and asset weights for these optimal portfolios.
 - Computes and plots the correlation matrix for all assets over their maximum
-  overlapping period.
+  overlapping period, and for the assets included in each optimal portfolio.
 - Supports analyzing a "tail" period (last N years) of the data.
+- Plots kernel density and stacked horizontal boxplots for portfolio return
+  distributions.
+- For manual portfolios loaded from JSON, analyzes metrics and plots return
+  distribution, returns over time, and a correlation heatmap for selected assets.
 
 Dependencies
 ------------
@@ -41,7 +45,11 @@ Usage
 -----
 Find an optimal portfolio using simulated annealing::
 
-    python portfolios.py -f my_prices.xlsx -a
+    python portfolios.py -f my_prices.xlsx -a transfer
+
+Find an optimal portfolio using particle swarm optimization::
+
+    python portfolios.py -f my_prices.xlsx -s 500
 
 Generate all equal-weight portfolios of 3 assets::
 
@@ -49,15 +57,19 @@ Generate all equal-weight portfolios of 3 assets::
 
 Analyze using a 3-year rolling window::
 
-    python portfolios.py -f my_prices.xlsx -a -w 3
+    python portfolios.py -f my_prices.xlsx -a transfer -w 3
 
 Analyze only the last 5 years of data::
 
-    python portfolios.py -f my_prices.xlsx -a -t 5
+    python portfolios.py -f my_prices.xlsx -a transfer -t 5
 
 Analyze with a custom number of trading days (e.g., 250)::
 
-    python portfolios.py -f my_prices.xlsx -a -d 250
+    python portfolios.py -f my_prices.xlsx -a dirichlet -d 250
+
+Analyze a manual portfolio from JSON::
+
+    python portfolios.py -f my_prices.xlsx -m my_portfolio.json
 """
 
 import argparse
