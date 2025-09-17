@@ -518,7 +518,6 @@ def run_tail_analysis_simple(
             print(
                 f"\n--- Correlation Matrix (Tail Window, Overlapping Period: {overlap_start} / {overlap_end}) ---"
             )
-            print(corr_matrix.to_string(float_format=lambda x: f"{x:6.2f}"))
             gradient = LinearSegmentedColormap.from_list(
                 "gradient",
                 [
@@ -526,7 +525,12 @@ def run_tail_analysis_simple(
                     get_color("latte", "mauve"),
                 ],
             )
-            plt.figure(figsize=(6, 5))
+            n_assets = len(corr_matrix.columns)
+            fig_width = max(8, n_assets * 0.6)
+            fig_height = max(8, n_assets * 0.6)
+            fig, ax = plt.subplots(
+                figsize=(fig_width, fig_height), constrained_layout=True
+            )
             sns.heatmap(
                 corr_matrix,
                 annot=True,
@@ -536,9 +540,9 @@ def run_tail_analysis_simple(
                 fmt=".2f",
                 linewidths=0.5,
                 cbar_kws={"label": "Correlation"},
+                ax=ax,
             )
-            plt.title("Correlation Matrix (Tail Window, Overlapping Period)")
-            plt.tight_layout()
+            plt.title("Correlation Heatmap (Tail Window, Overlapping Period)")
             plt.savefig(
                 os.path.join(OUTPUT_DIR, "tail_window_correlation_heatmap_simple.png")
             )
@@ -678,7 +682,6 @@ def run_tail_analysis(
             print(
                 f"\n--- Correlation Matrix (Tail Window, Overlapping Period: {overlap_start} / {overlap_end}) ---"
             )
-            print(corr_matrix.to_string(float_format=lambda x: f"{x:6.2f}"))
             gradient = LinearSegmentedColormap.from_list(
                 "gradient",
                 [
@@ -686,7 +689,12 @@ def run_tail_analysis(
                     get_color("latte", "mauve"),
                 ],
             )
-            plt.figure(figsize=(6, 5))
+            n_assets = len(corr_matrix.columns)
+            fig_width = max(8, n_assets * 0.6)
+            fig_height = max(8, n_assets * 0.6)
+            fig, ax = plt.subplots(
+                figsize=(fig_width, fig_height), constrained_layout=True
+            )
             sns.heatmap(
                 corr_matrix,
                 annot=True,
@@ -696,9 +704,9 @@ def run_tail_analysis(
                 fmt=".2f",
                 linewidths=0.5,
                 cbar_kws={"label": "Correlation"},
+                ax=ax,
             )
             plt.title("Correlation Matrix (Tail Window, Overlapping Period)")
-            plt.tight_layout()
             plt.savefig(os.path.join(OUTPUT_DIR, "tail_window_correlation_heatmap.png"))
             print(
                 "Correlation heatmap saved to 'output/tail_window_correlation_heatmap.png'"
@@ -840,50 +848,24 @@ def run_single_horizon_analysis_simple(
         )
     )
 
-    # Generate and Save Distribution Plots
-    for index in DATA_COLS:
-        safe_index_name = index.replace("/", "_")
-        plt.figure(figsize=(10, 6))
-        plt.hist(
-            means_df[index].dropna(),
-            bins=50,
-            edgecolor="black",
-            alpha=0.8,
-            color=get_color("mocha", "blue"),
-        )
-        plt.title(f"Distribution of {n_years}-Year Expected Values for {index}")
-        plt.xlabel("Expected Value")
-        plt.ylabel("Number of Windows")
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(
-                OUTPUT_DIR, f"expected_value_distribution_{safe_index_name}.png"
-            )
-        )
-    print(f"\nDistribution plots saved to '{OUTPUT_DIR}/'")
+    # Boxplot of rolling mean distributions for all assets (simple mode)
+    plt.figure(figsize=(12, 8))
+    data = [means_df[col].dropna() for col in DATA_COLS]
+    labels = list(DATA_COLS)
+    box_colors = [get_color("mocha", "blue") for _ in labels]
 
-    # Plot: Expected Value vs. Window Start Date for each asset
-    plt.figure(figsize=(12, 6))
-    used_labels = []
-    for index in DATA_COLS:
-        color, _ = get_random_color("latte", used_labels)
-        plt.plot(
-            means_df.index,
-            means_df[index],
-            label=index,
-            linewidth=1,
-            color=color,
-        )
-    plt.xlabel("Window Start Year")
-    plt.ylabel("Expected Value")
-    plt.title(f"Expected Value vs. Window Start Date ({n_years}-Year Windows)")
-    plt.legend()
+    box = plt.boxplot(data, patch_artist=True, widths=0.2)
+    plt.xticks(range(1, len(labels) + 1), labels, rotation=90)
+    for patch, color in zip(box["boxes"], box_colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.5)
+
+    plt.title("Rolling Mean Distributions of All Assets (Boxplot)")
+    plt.ylabel("Mean Value")
+    plt.grid(True, linestyle="--", alpha=0.5)
     plt.tight_layout()
-    plt.grid(axis="y", linestyle="--", alpha=0.7)
-    plt.savefig(os.path.join(OUTPUT_DIR, "expected_value_vs_window_start.png"))
-    print(
-        f"Expected value vs. window start plot saved to '{OUTPUT_DIR}/expected_value_vs_window_start.png'"
-    )
+    plt.savefig(os.path.join(OUTPUT_DIR, "rolling_mean_distributions_boxplot.png"))
+    print(f"\nBoxplot saved to '{OUTPUT_DIR}/rolling_mean_distributions_boxplot.png'")
     plt.show()
 
 
@@ -1074,65 +1056,26 @@ def run_single_horizon_analysis(
             index=True,
         )
     )
-    # Generate and Save Distribution Plots
-    for index in DATA_COLS:
-        safe_index_name = index.replace("/", "_")
-        plt.figure(figsize=(10, 6))
-        plt.hist(
-            results_df[f"Return_Rate_{index}"].dropna(),
-            bins=50,
-            edgecolor="black",
-            alpha=0.8,
-            color=get_color("mocha", "blue"),
-        )
-        plt.title(f"Distribution of {n_years}-Year Annualized Returns for {index}")
-        plt.xlabel("Annualized Return Rate")
-        plt.ylabel("Number of Windows")
-        plt.gca().xaxis.set_major_formatter(
-            ticker.FuncFormatter(lambda x, _: f"{x:.0%}")
-        )
-        plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(OUTPUT_DIR, f"return_distribution_{safe_index_name}.png")
-        )
-    print(f"\nDistribution plots saved to '{OUTPUT_DIR}/'")
 
-    # Plot: Annualized Return vs. Window Start Date for each asset
-    plt.figure(figsize=(12, 6))
-    used_labels = []
-    for index in DATA_COLS:
-        color, _ = get_random_color("latte", used_labels)
-        plt.plot(
-            results_df["Window Start"],
-            results_df[f"Return_Rate_{index}"],
-            label=index,
-            linewidth=1,
-            color=color,
-        )
+    # Boxplot of annualized return distributions for all assets (price/return mode)
+    plt.figure(figsize=(12, 8))
+    data = [annualized_return_df[col].dropna() for col in DATA_COLS]
+    labels = list(DATA_COLS)
+    box_colors = [get_color("mocha", "blue") for _ in labels]
 
-    # Set year ticks at the beginning of each year
-    # Find the first and last year in your data
-    first_year = pd.to_datetime(results_df.index).year.min()
-    last_year = pd.to_datetime(results_df.index).year.max()
+    box = plt.boxplot(data, patch_artist=True, widths=0.2)
+    plt.xticks(range(1, len(labels) + 1), labels, rotation=90)
+    for patch, color in zip(box["boxes"], box_colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.5)
 
-    # Generate a list of YYYY-01-01 for each year in the range
-    year_ticks = pd.to_datetime(
-        [f"{year}-01-01" for year in range(first_year, last_year + 1)]
-    )
-    year_labels = [str(year) for year in range(first_year, last_year + 1)]
-
-    plt.xlabel("Window Start Year")
-    plt.ylabel("Annualized Return Rate (%)")
-    plt.gca().yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1, decimals=0))
-    plt.title(f"Annualized Return vs. Window Start Date ({n_years}-Year Windows)")
-    plt.legend()
-    plt.xticks(ticks=year_ticks, labels=year_labels, rotation=45)
+    plt.title("Annualized Return Distributions of All Assets (Boxplot)")
+    plt.ylabel("Annualized Return")
+    plt.grid(True, linestyle="--", alpha=0.5)
     plt.tight_layout()
-    plt.grid(axis="y", linestyle="--", alpha=0.7)
-    plt.savefig(os.path.join(OUTPUT_DIR, "annualized_return_vs_window_start.png"))
+    plt.savefig(os.path.join(OUTPUT_DIR, "annualized_return_distributions_boxplot.png"))
     print(
-        f"Annualized return vs. window start plot saved to '{OUTPUT_DIR}/annualized_return_vs_window_start.png'"
+        f"\nBoxplot saved to '{OUTPUT_DIR}/annualized_return_distributions_boxplot.png'"
     )
     plt.show()
 

@@ -36,30 +36,26 @@ historical performance.
 ## Where to find data samples
 
 When you install `firecast`, any bundled data files (such as those in the `firecast_data/`
-directory) are placed inside your Python's `site-packages` directory:
-
-```
-.../site-packages/firecast_data/
-```
+directory) are placed inside your Python's `site-packages` directory: `.../site-packages/firecast_data/data`
 
 The exact location depends on your setup:
 
 - **Virtual environment:**  
-  `<venv>/lib/pythonX.Y/site-packages/firecast_data/`
+  `<venv>/lib/pythonX.Y/site-packages/firecast_data/data`
 
 - **System-wide install:**  
-  `/usr/local/lib/pythonX.Y/site-packages/firecast_data/`  
+  `/usr/local/lib/pythonX.Y/site-packages/firecast_data/data`  
   or  
-  `/usr/lib/pythonX.Y/site-packages/firecast_data/`
+  `/usr/lib/pythonX.Y/site-packages/firecast_data/data`
 
 - **User install:**  
-  `~/.local/lib/pythonX.Y/site-packages/firecast_data/`
+  `~/.local/lib/pythonX.Y/site-packages/firecast_data/data`
 
 - **Windows:**  
-  `C:\Users\<user>\AppData\Roaming\Python\PythonXY\site-packages\firecast_data\`
+  `C:\Users\<user>\AppData\Roaming\Python\PythonXY\site-packages\firecast_data\data`
 
-Just look for the `site-packages/firecast_data/` folder inside your Python environment
-to access the data files or refer to `firecast_data/` in the Github repository.
+Just look for the `site-packages/firecast_data/data` folder inside your Python environment
+to access the data files or refer to `firecast_data/data` in the Github repository.
 
 ## Usage
 
@@ -67,16 +63,16 @@ The script is run from the command line. You can specify the investment horizon,
 filename, data frequency, input type, the name of the date column, or use `--tail N` to
 analyze only the most recent N-year window.
 
-**Run with a monthly file (price input):**
+**Run with a daily file (price input):**
 
 ```bash
-python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx --monthly
+python data_metrics.py -f MSCI-All-USD-daily.xlsx --daily 252
 ```
 
 **Run with a custom 15 years window and a monthly file (price input):**
 
 ```bash
-python data_metrics.py -f MSCI-World-ACWI-ACWIIMI-1999-2025-monthly.xlsx --years 15 --monthly
+python data_metrics.py -f MSCI-All-EUR-monthly.xlsx --years 15 --monthly
 ```
 
 **Run with a daily file, custom 5 years windows and a custom trading days per year (price input):**

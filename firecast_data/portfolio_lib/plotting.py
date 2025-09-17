@@ -1,8 +1,13 @@
+#
+# Copyright (c) 2025-Present aimer <63aimer@gmail.com
+# All rights reserved.
+#
+# Licensed under GNU Affero General Public License v3 (AGPLv3).
+#
 import os
 from typing import List, Tuple
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
