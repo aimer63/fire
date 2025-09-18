@@ -528,7 +528,7 @@ def run_tail_analysis_simple(
             n_assets = len(corr_matrix.columns)
             fig_width = max(8, n_assets * 0.6)
             fig_height = max(8, n_assets * 0.6)
-            fig, ax = plt.subplots(
+            _, ax = plt.subplots(
                 figsize=(fig_width, fig_height), constrained_layout=True
             )
             sns.heatmap(
@@ -685,6 +685,7 @@ def run_tail_analysis(
             gradient = LinearSegmentedColormap.from_list(
                 "gradient",
                 [
+                    get_color("mocha", "red"),
                     get_color("mocha", "text"),
                     get_color("latte", "mauve"),
                 ],
@@ -692,7 +693,7 @@ def run_tail_analysis(
             n_assets = len(corr_matrix.columns)
             fig_width = max(8, n_assets * 0.6)
             fig_height = max(8, n_assets * 0.6)
-            fig, ax = plt.subplots(
+            _, ax = plt.subplots(
                 figsize=(fig_width, fig_height), constrained_layout=True
             )
             sns.heatmap(

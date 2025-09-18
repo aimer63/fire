@@ -223,7 +223,7 @@ class DeterministicInputs(BaseModel):
         description="List of planned purchases of illiquid assets from liquid assets.",
     )
     monthly_expenses_steps: list[ExpenseStep] = Field(
-        ...,
+        default_factory=list,
         description="List of expense steps, each with a start year and monthly amount.",
     )
     planned_extra_expenses: list[PlannedExtraExpense] = Field(
@@ -280,11 +280,10 @@ class DeterministicInputs(BaseModel):
                 )
         return self
 
-    @model_validator(mode="after")
     def validate_expense_steps(self) -> "DeterministicInputs":
-        # If expense steps are not provided or empty, raise error
+        # If expense steps are not provided or empty, treat as zero expenses
         if not self.monthly_expenses_steps:
-            raise ValueError("monthly_expenses_steps must be provided and non-empty.")
+            return self
         years = [step.year for step in self.monthly_expenses_steps]
         if len(set(years)) != len(years):
             raise ValueError("Years in monthly_expenses_steps must be unique.")
@@ -292,7 +291,7 @@ class DeterministicInputs(BaseModel):
             raise ValueError(
                 "Years in monthly_expenses_steps must be sorted in ascending order."
             )
-        if years[0] != 0:
+        if years and years[0] != 0:
             raise ValueError(
                 "The first step in monthly_expenses_steps must start at year 0."
             )
