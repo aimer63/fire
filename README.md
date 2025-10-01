@@ -48,20 +48,15 @@ asset allocation.
   Investment assets are defined in the configuration. For each asset you specify the following; `mu`,
   the sample mean of return rate and `sigma`, the sample standard deviation of return rate.
   You can find these data for a specific period on several online sources, such as
-  [Yahoo Finance][yahoo-fianance-url], [Investing.com][Investing-url], [Federal Reserve Economic Data][fred-url], [ECB Data portal][ecb-url]. <!-- markdownlint-disable-line MD013 -->
-  You can use the script [data_metrics.py](https://github.com/aimer63/fire/blob/master/firecast_data/data_metrics.py) to estimate these parameters from historical data. <!-- markdownlint-disable-line MD013 -->
-  See [Data metrics usage](https://github.com/aimer63/fire/blob/master/firecast_data/data_metrics.md) for details.
+
+  You can use the scripts [data_metrics.py](https://github.com/aimer63/fire/blob/master/firecast_data/data_metrics.py) and [portfolios.py](https://github.com/aimer63/fire/blob/master/firecast_data/portfolios.py) to estimate these parameters from historical data.
+  See [Data metrics usage](https://github.com/aimer63/fire/blob/master/firecast_data/data_metrics.md) and [Portfolios usage](https://github.com/aimer63/fire/blob/master/firecast_data/portfolios.md)for details.
 
   Inflation, though not an asset, is defined in this section because it is correlated
-  with assets through a [correlation matrix](https://github.com/aimer63/fire/blob/master/docs/correlation.md), and the mechanism for generating <!-- markdownlint-disable-line MD013 -->
+  with assets through a [correlation matrix](https://github.com/aimer63/fire/blob/master/docs/correlation.md), and the mechanism for generating
   random values from `mu` and `sigma` is the same for assets and inflation.
   The inflation asset is mandatory because it's used to track all the real values, wealth,
   expenses...
-
-[yahoo-fianance-url]: https://finance.yahoo.com/
-[Investing-url]: https://www.investing.com/
-[fred-url]: https://fred.stlouisfed.org/
-[ecb-url]: https://data.ecb.europa.eu/
 
 **Example**:
 

@@ -1,9 +1,3 @@
-# config.toml
-
-# This is a comprehensive configuration file for the FIRE Monte Carlo simulation.
-# It is designed to exercise all features and validation rules of the configuration
-# parser.
-
 # ==============================================================================
 # 1. SIMULATION PARAMETERS
 # ==============================================================================
@@ -130,7 +124,7 @@ monthly_expenses_steps = [
 
 # One-time extra expenses (in today's money, will be inflation-adjusted).
 planned_extra_expenses = [
-  { amount = 30_000.0, year = 17, description = "Buy a car" },
+  { amount = 40_000.0, year = 17, description = "Buy a car" },
 ]
 
 # Annual fee (Total Expense Ratio, TER) applied to all investments.
@@ -350,10 +344,10 @@ matrix = [
 year = 0
 period = 1
 weights = { stocks = 0.80, bonds = 0.15, eth = 0.025, ag = 0.025 }
-description = "start allocation"
+description = "Start allocation"
 
-[[portfolio_rebalances]]
-year = 10
-period = 1
-description = "De-risking for retirement"
-weights = { stocks = 0.60, bonds = 0.40 }
+# [[portfolio_rebalances]]
+# year = 10
+# period = 1
+# description = "De-risking for retirement"
+# weights = { stocks = 0.60, bonds = 0.40 }
