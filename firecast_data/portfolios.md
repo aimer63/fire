@@ -24,8 +24,7 @@ performance and portfolio optimization.
 - Computes and plots the correlation matrix for all assets over their maximum overlapping period,
   and for the assets included in each optimal portfolio.
 - Supports analyzing a "tail" period (last N years) of the data.
-- Plots kernel density and stacked horizontal boxplots for portfolio return distributions,
-  aligning the x-axis.
+- Plots kernel density and stacked horizontal boxplots for portfolio return distributions.
 - For manual portfolios loaded from JSON, analyzes metrics and plots return distribution,
   returns over time, and a correlation heatmap for selected assets.
 
@@ -100,6 +99,27 @@ Analyze a manual portfolio from JSON:
 
 ```bash
 python portfolios.py -f my_prices.xlsx -m my_portfolio.json
+```
+
+## Manual Portfolio JSON Format
+
+When using the `-m` or `--manual` flag, the script expects a JSON file with the following structure:
+
+- `name` (optional): A string to name your portfolio in plots and outputs. If omitted, it defaults to "Manual Portfolio".
+- `weights`: A dictionary where keys are the asset names (matching the column headers in your Excel file) and values are their corresponding weights (as decimals).
+
+The weights do not need to sum to 1.0; the script will automatically normalize them.
+
+Example `my_portfolio.json`:
+
+```json
+{
+  "name": "My 60/40 Portfolio",
+  "weights": {
+      "MSCI China Index": 0.6,
+      "MSCI India Index": 0.4,
+  }
+}
 ```
 
 ## Output
