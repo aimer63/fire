@@ -128,3 +128,28 @@ Example `my_portfolio.json`:
 - Distribution plots for rolling window returns and optimal portfolios.
 - Correlation heatmaps for all assets and for each optimal/manual portfolio.
 - Plots of portfolio returns over time and stacked boxplots for distributions.
+
+### Console Output Explained
+
+When the script reports on an optimal or manual portfolio, it prints a block of key metrics. Here is what each one means:
+
+```
+--- Optimal Portfolio (Maximum CVaR 95%) ---
+Return: 11.66%
+Volatility: 14.09%
+VaR 95%: -7.33%
+CVaR 95%: -10.59%
+Sharpe Ratio: 0.83
+Adjusted Sharpe: 0.88
+Monthly Return: 12.67%
+Monthly Volatility: 14.83%
+```
+
+- **Return**: The average of the annualized returns calculated from all rolling N-year windows. It represents the mean historical performance for the chosen investment horizon.
+- **Volatility**: The standard deviation of the rolling N-year annualized returns. It measures the portfolio's historical price fluctuation (risk).
+- **VaR 95% (Value at Risk)**: The 5th percentile of the rolling N-year returns. This is a downside risk metric indicating that in 5% of historical N-year periods, the portfolio's return was this value or worse. A value of `-7.33%` means there is a 5% historical chance of losing at least 7.33% over an N-year period.
+- **CVaR 95% (Conditional VaR)**: The average return of the periods that fall into the worst 5% of outcomes (i.e., the average of all returns less than or equal to the VaR 95%). It answers the question: "If things go badly, how bad is it likely to be?" A value of `-10.59%` means that in the worst 5% of cases, the average loss was 10.59%.
+- **Sharpe Ratio**: Calculated as `Return / Volatility`. It measures the risk-adjusted return. A higher value is better.
+- **Adjusted Sharpe**: A modified Sharpe Ratio that accounts for the skewness and kurtosis (fat tails) of the return distribution, providing a more accurate measure of risk-adjusted return for non-normal distributions.
+- **Monthly Return**: Calculated by resampling the entire available price history (or the tail period if `-t` is used) to a monthly frequency and then finding the annualized mean of those monthly returns. Unlike the rolling window metrics, this reflects the average performance over the full period of analysis.
+- **Monthly Volatility**: The annualized volatility of the monthly returns described above.

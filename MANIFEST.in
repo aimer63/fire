@@ -1,5 +1,0 @@
-include firecast_data/MSCI-All-daily.xlsx
-include firecast_data/data_metrics.md
-include firecast_data/data_metrics.py
-include firecast_data/portfolios.py
-include firecast_data/shocks.md

@@ -49,15 +49,14 @@ include = ["firecast*", "firecast_data*"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-"firecast" = [
- "firecast_data/MSCI-All-EUR-daily.xlsx",
- "firecast_data/MSCI-All-EUR-monthly.xlsx",
- "firecast_data/MSCI-All-USD-daily.xlsx",
- "firecast_data/MSCI-All-USD-monthly.xlsx",
- "firecast_data/data_metrics.md",
- "firecast_data/data_metrics.py",
- "firecast_data/portfolios.py",
- "firecast_data/shocks.md"
+"firecast_data" = [
+ "data/MSCI-All-EUR-daily.xlsx",
+ "data/MSCI-All-EUR-monthly.xlsx",
+ "data/MSCI-All-USD-daily.xlsx",
+ "data/MSCI-All-USD-monthly.xlsx",
+ "data/shocks.md",
+ "data_metrics.md",
+ "portfolios.md"
 ]
 
 [tool.ruff]

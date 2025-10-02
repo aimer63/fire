@@ -103,19 +103,6 @@ parser.add_argument(
     help="Path to the Excel file containing historical market data.",
 )
 parser.add_argument(
-    "-d",
-    "--daily",
-    type=int,
-    required=False,
-    help="Analyze daily data. Specify the number of trading days per year (e.g., 252). Required for daily analysis.",
-)
-parser.add_argument(
-    "-m",
-    "--monthly",
-    action="store_true",
-    help="Analyze monthly data. No trading days parameter needed.",
-)
-parser.add_argument(
     "--input-type",
     type=str,
     choices=["price", "return", "simple"],
@@ -129,6 +116,21 @@ parser.add_argument(
     default=None,
     help="Analyze only the most recent N years window. Not compatible with --years or heatmap mode.",
 )
+# Create a mutually exclusive group for frequency arguments.
+# One of them is required.
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument(
+    "-d",
+    "--daily",
+    type=int,
+    help="Analyze daily data. Specify the number of trading days per year (e.g., 252).",
+)
+group.add_argument(
+    "-m",
+    "--monthly",
+    action="store_true",
+    help="Analyze monthly data.",
+)
 
 # Gets the cli arguments and sets up the analysis parameters
 args = parser.parse_args()
@@ -136,16 +138,12 @@ INPUT_TYPE = args.input_type
 N_YEARS = args.years
 FILENAME = args.file
 
-if args.daily is not None and args.monthly:
-    raise ValueError("Specify only one of --daily or --monthly, not both.")
 if args.daily is not None:
     TRADING_DAYS_PER_YEAR = args.daily
     FREQUENCY = "daily"
-elif args.monthly:
+else:  # args.monthly must be true because the group is required
     TRADING_DAYS_PER_YEAR = None
     FREQUENCY = "monthly"
-else:
-    raise ValueError("You must specify either --daily N or --monthly.")
 
 # Sets the parameters for plotting and output
 OUTPUT_DIR = "output"
@@ -1314,9 +1312,15 @@ def run_heatmap_analysis(
 
 def main() -> None:
     # Read and prepare the data
-    df, DATA_COLS, periods_per_year, single_period_returns = prepare_data(
-        FILENAME, INPUT_TYPE, FREQUENCY, TRADING_DAYS_PER_YEAR
-    )
+    try:
+        df, DATA_COLS, periods_per_year, single_period_returns = prepare_data(
+            FILENAME, INPUT_TYPE, FREQUENCY, TRADING_DAYS_PER_YEAR
+        )
+    except FileNotFoundError:
+        print(
+            f"Error: The file '{FILENAME}' was not found. Please check the path and try again."
+        )
+        return
 
     if args.tail is not None:
         if N_YEARS is not None:
