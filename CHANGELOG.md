@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [v0.1.3](https://github.com/aimer63/fire/releases/tag/v0.1.3) - 2025-10-02
+
+### Bug Fixes
+
+- **firecast**: remove currency from some plot labels
+- **firecast**: allow omission of expense steps in config
+- **firecast**: allow omission of pension in config
+
+### Chores
+
+- **data**: rename data/ to firecast_data/
+
+### Features
+
+- **data**: added a script, `portfolios.py`, to generate and analyze optimal portfolios``
+
 ## [v0.1.2](https://github.com/aimer63/fire/releases/tag/v0.1.2) - 2025-08-26
 
 ### Added
