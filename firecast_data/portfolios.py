@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #
 # Copyright (c) 2025-Present aimer <63aimer@gmail.com
 # All rights reserved.
@@ -83,13 +82,13 @@ import numpy as np
 import pandas as pd
 
 # This local import is assumed to be available
-from .portfolio_lib import plotting
-from .portfolio_lib.analysis import (
+from .analytics import plotting
+from .analytics.analysis import (
     calculate_monthly_metrics_for_portfolio,
     analyze_assets,
     prepare_data,
 )
-from .portfolio_lib import optimization
+from .analytics import optimization
 
 # Setup CLI argument parsing
 parser = argparse.ArgumentParser(

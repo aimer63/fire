@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #
 # Copyright (c) 2025-Present aimer <63aimer@gmail.com
 # All rights reserved.
