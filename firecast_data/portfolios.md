@@ -59,46 +59,65 @@ pip install pandas numpy matplotlib seaborn openpyxl tqdm
 
 ## Usage
 
-Find an optimal portfolio using simulated annealing:
+After installing the package (with `pip install firecast` from PyPI, or after
+cloning the repository with `pip install -e .`), you can run the script from
+any location using the CLI entrypoint:
 
 ```bash
-python portfolios.py -f my_prices.xlsx -a transfer
+portfolios <arguments>
 ```
 
-Find an optimal portfolio using particle swarm optimization:
+For example:
 
 ```bash
-python portfolios.py -f my_prices.xlsx -s 100
+portfolios -f my_prices.xlsx -a transfer
 ```
 
-Generate all equal-weight portfolios of 3 assets:
+This will invoke the CLI entrypoint and run the portfolio analysis as described below.
+You can specify the input filename, optimization method, rolling window size, tail period, and other options as shown in the usage examples:
+
+**Find an optimal portfolio using simulated annealing:**
 
 ```bash
-python portfolios.py -f my_prices.xlsx -e 3
+portfolios -f my_prices.xlsx -a transfer
 ```
 
-Analyze using a 3-year rolling window:
+**Find an optimal portfolio using particle swarm optimization:**
 
 ```bash
-python portfolios.py -f my_prices.xlsx -a transfer -w 3
+portfolios -f my_prices.xlsx -s 500
 ```
 
-Analyze only the last 5 years of data:
+**Generate all equal-weight portfolios of 3 assets:**
 
 ```bash
-python portfolios.py -f my_prices.xlsx -a transfer -t 5
+portfolios -f my_prices.xlsx -e 3
 ```
 
-Analyze with a custom number of trading days (e.g., 250):
+**Analyze using a 3-year rolling window:**
 
 ```bash
-python portfolios.py -f my_prices.xlsx -a transfer -d 250
+portfolios -f my_prices.xlsx -a transfer -w 3
 ```
 
-Analyze a manual portfolio from JSON:
+**Analyze only the last 5 years of data:**
 
 ```bash
-python portfolios.py -f my_prices.xlsx -m my_portfolio.json
+portfolios -f my_prices.xlsx -a transfer -t 5
+```
+
+**Analyze with a custom number of trading days (e.g., 250):**
+
+```bash
+portfolios -f my_prices.xlsx -a dirichlet -d 250
+```
+
+**Analyze a manual portfolio from JSON:**
+
+```bash
+portfolios -f my_prices.xlsx -m my_portfolio.json
+```
+
 ```
 
 ## Manual Portfolio JSON Format

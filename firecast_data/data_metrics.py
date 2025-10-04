@@ -81,11 +81,25 @@ from matplotlib import ticker
 from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 
-from firecast.utils.colors import get_color, get_random_color
+from firecast.utils.colors import get_color
 
 # Setup CLI argument parsing
 parser = argparse.ArgumentParser(
-    description="Analyze historical stock market index data for n-years rolling windows."
+    description="""
+Analyze historical stock market index data for rolling N-year windows.
+
+Modes:
+  - Single Horizon: Specify -n/--years to analyze a fixed investment horizon.
+  - Heatmap Mode:  Omit -n/--years to analyze all possible horizons and
+                   generate summary heatmaps of risk/return metrics.
+  - Tail Mode:     Use -t/--tail to analyze only the most recent N years.
+
+Examples:
+  Heatmap mode (all horizons): python data_metrics.py -f file.xlsx -d 252
+  Single horizon:              python data_metrics.py -n 10 -f file.xlsx -d 252
+  Tail mode:                   python data_metrics.py --tail 5 -f file.xlsx -d 252
+""",
+    formatter_class=argparse.RawTextHelpFormatter,
 )
 parser.add_argument(
     "-n",

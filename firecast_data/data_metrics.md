@@ -59,6 +59,22 @@ to access the data files or refer to `firecast_data/data` in the Github reposito
 
 ## Usage
 
+After installing the package (with `pip install firecast` from PyPI, or after
+cloning the repository with `pip install -e .`), you can run the script from
+any location using the CLI entrypoint:
+
+```bash
+data-metrics <arguments>
+```
+
+For example:
+
+```bash
+data-metrics -f MSCI-All-USD-daily.xlsx --daily 252
+```
+
+This will invoke the analysis as described below.
+
 The script is run from the command line. You can specify the investment horizon, input
 filename, data frequency, input type, the name of the date column, or use `--tail N` to
 analyze only the most recent N-year window.
@@ -66,31 +82,31 @@ analyze only the most recent N-year window.
 **Run with a daily file (price input):**
 
 ```bash
-python data_metrics.py -f MSCI-All-USD-daily.xlsx --daily 252
+data-metrics -f MSCI-All-USD-daily.xlsx --daily 252
 ```
 
 **Run with a custom 15 years window and a monthly file (price input):**
 
 ```bash
-python data_metrics.py -f MSCI-All-EUR-monthly.xlsx --years 15 --monthly
+data-metrics -f MSCI-All-EUR-monthly.xlsx --years 15 --monthly
 ```
 
 **Run with a daily file, custom 5 years windows and a custom trading days per year (price input):**
 
 ```bash
-python data_metrics.py -n 5 -f CB_BTCUSD-daily.xlsx -d 365
+data-metrics -n 5 -f CB_BTCUSD-daily.xlsx --daily 365
 ```
 
 **Run with a daily file containing single-period returns:**
 
 ```bash
-python data_metrics.py -n 5 -f data-daily.xlsx -d 252 --input-type return
+data-metrics -n 5 -f data-daily.xlsx --daily 252 --input-type return
 ```
 
 **Run with --tail to analyze only the most recent N-year window:**
 
 ```bash
-python data_metrics.py --tail 5 -f EONIAPLUSESTR-daily.xlsx -d 252 --input-type simple
+data-metrics --tail 5 -f EONIAPLUSESTR-daily.xlsx --daily 252 --input-type simple
 ```
 
 ## Data Cleaning and Missing Values
