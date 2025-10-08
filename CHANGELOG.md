@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [v0.1.3](https://github.com/aimer63/fire/releases/tag/v0.1.3) - 2025-10-02
+## [v0.1.3](https://github.com/aimer63/fire/releases/tag/v0.1.3) - 2025-10-04
 
 ### Bug Fixes
 
