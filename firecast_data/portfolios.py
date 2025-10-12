@@ -75,7 +75,7 @@ import argparse
 import json
 import os
 import sys
-from typing import cast
+from typing import cast, Callable, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -455,18 +455,23 @@ def main() -> None:
         "- Number of Windows:  Count of rolling N-year periods available for the asset."
     )
     print("-" * 80)
-    print(
-        summary_df_reporting.to_string(
-            formatters={
-                "Rolling Return": "{:.2%}".format,
-                "Rolling Volatility": "{:.2%}".format,
-                "Rolling VaR 95%": "{:.2%}".format,
-                "Rolling CVaR 95%": "{:.2%}".format,
-                "Monthly Return": "{:.2%}".format,
-                "Monthly Volatility": "{:.2%}".format,
-            }
-        )
-    )
+    # Create a copy for printing with modified headers for readability
+    print_df = summary_df_reporting.copy()
+    print_df.columns = [f"| {col}" for col in summary_df_reporting.columns]
+
+    # Define formatters for the new column names, ensuring keys match the new columns
+    formatters: Dict[str | int, Callable] = {
+        "| Start Date": "{:>10}".format,
+        "| End Date": "{:>10}".format,
+        "| Rolling Return": "{:.2%}".format,
+        "| Rolling Volatility": "{:.2%}".format,
+        "| Rolling VaR 95%": "{:.2%}".format,
+        "| Rolling CVaR 95%": "{:.2%}".format,
+        "| Monthly Return": "{:.2%}".format,
+        "| Monthly Volatility": "{:.2%}".format,
+    }
+
+    print(print_df.to_string(formatters=formatters))
 
     # Generate and save a heatmap of the asset correlation matrix.
     if not correlation_matrix.empty:
@@ -563,6 +568,33 @@ def main() -> None:
         save_portfolio_to_json(
             manual_portfolio, portfolio_name, window_returns_df.columns, filename
         )
+
+        # --- Leftover Window Analysis ---
+        window_size = window_years * trading_days
+        # Find assets with weights and get their slice from the original price_df
+        active_assets = weights[weights > 0.0001].index
+        active_price_df = price_df[active_assets].dropna()
+
+        if len(active_price_df) > window_size:
+            leftover_periods = len(active_price_df) % window_size
+            if leftover_periods >= 2:
+                # Get prices for the leftover window
+                leftover_prices = active_price_df.iloc[-leftover_periods:]
+                # Calculate portfolio value over the leftover window
+                normalized_prices = leftover_prices / leftover_prices.iloc[0]
+                portfolio_values = normalized_prices.dot(weights[active_assets])
+                # Calculate metrics
+                total_return = portfolio_values.iloc[-1] - 1
+                annualized_return = (1 + total_return) ** (
+                    trading_days / leftover_periods
+                ) - 1
+                portfolio_returns = portfolio_values.pct_change().dropna()
+                annualized_volatility = portfolio_returns.std() * np.sqrt(trading_days)
+
+                print("\n--- Leftover Window (Incomplete Period) ---")
+                print(f"Periods: {leftover_periods}")
+                print(f"Annualized Return: {annualized_return:.2%}")
+                print(f"Annualized Volatility: {annualized_volatility:.2%}")
 
         # Plotting
         plotting.plot_single_portfolio_return_distribution(

@@ -2,6 +2,7 @@
 > #file:copilot-interaction-rules.md
 
 
+> #buffer:current
 > #file:firecast/core/simulation.py
 > #file:firecast/main.py
 > #file:data/data_metrics.py
@@ -11,10 +12,9 @@
 > #files:docs/*.md
 
 
-> #buffers:visible
+> #buffer:current
 > #file:copilot-interaction-rules.md
 > #file:firecast_data/portfolios.py
-> #file:firecast_data/portfolio_lib/analysis.py
-> #file:firecast_data/portfolio_lib/optimization.py
-> #file:firecast_data/portfolio_lib/plotting.py
-> #file:firecast_data/price_to_eur.py
+> #file:firecast_data/data_metrics.py
+> #files:firecast_data/analytics/**/*.py
+> #file:pyproject.toml
