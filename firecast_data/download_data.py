@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025-Present aimer <63aimer@gmail.com>
+# Copyright (c) 2025-Present Imerio Dall'Olio>
 # All rights reserved.
 #
 # Licensed under GNU Affero General Public License v3 (AGPLv3).
@@ -44,6 +44,8 @@ import sys
 from typing import List
 
 import yfinance as yf
+import pandas as pd
+import numpy as np
 
 # Setup CLI argument parsing
 parser = argparse.ArgumentParser(
@@ -99,7 +101,7 @@ def parse_ticker_file(filepath: str) -> List[str]:
 
 
 def main() -> None:
-    """Main function to download and save the data."""
+    """Main function to download and save the data with longName columns."""
     args = parser.parse_args()
 
     try:
@@ -129,22 +131,38 @@ def main() -> None:
         print("No data downloaded. Check tickers and date range.")
         sys.exit(1)
 
-    # Select 'Adj Close' and drop levels if necessary
+    # Select 'Adj Close' and flatten columns if MultiIndex
     adj_close = data["Close"]
+    if isinstance(adj_close.columns, pd.MultiIndex):
+        adj_close.columns = adj_close.columns.get_level_values(-1)
 
-    # Report any tickers that failed to download (all NaN columns)
-    failed_tickers = adj_close.columns[adj_close.isna().all()].tolist()
+    # Identify failed tickers (all NaN columns)
+    failed_mask = np.array(adj_close.isna().all(axis=0))
+    failed_tickers = adj_close.columns[failed_mask].tolist()
     if failed_tickers:
         print(f"\nWarning: Failed to download data for: {', '.join(failed_tickers)}")
-        # Drop failed tickers from the DataFrame
         adj_close = adj_close.drop(columns=failed_tickers)
 
     if adj_close.empty:
         print("No valid data remains after removing failed tickers. Exiting.")
         sys.exit(1)
 
-    # Reset index to turn 'Date' into a column, format it, and save
-    output_df = adj_close.reset_index()
+    # Map tickers to longName using yfinance
+    ticker_longnames = {}
+    for ticker in adj_close.columns:
+        try:
+            info = yf.Ticker(ticker).info
+            longname = info.get("longName", ticker)
+        except Exception:
+            longname = ticker
+        ticker_longnames[ticker] = longname
+        print(f"Ticker: {ticker} -> longName: {longname}")
+
+    # Create new DataFrame with longName columns
+    longname_columns = [ticker_longnames[ticker] for ticker in adj_close.columns]
+    output_df = pd.DataFrame(
+        adj_close.values, columns=longname_columns, index=adj_close.index
+    ).reset_index()
     output_df["Date"] = output_df["Date"].dt.strftime("%Y-%m-%d")
     output_df.to_excel(args.output_file, index=False)
     print(f"\nSuccessfully saved data to '{args.output_file}'")

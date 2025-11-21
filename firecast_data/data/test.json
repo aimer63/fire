@@ -1,0 +1,11 @@
+{
+  "name": "US 48.5%",
+  "weights": {
+    "MSCI ACWI IMI Index": 50.0,
+    "MSCI World Equal Weighted Index": 15.0,
+    "MSCI World ex USA Index": 15.0,
+    "MSCI World Momentum Index": 6.5,
+    "MSCI World Value Index": 7.0,
+    "MSCI World Quality Index": 6.5
+  }
+}

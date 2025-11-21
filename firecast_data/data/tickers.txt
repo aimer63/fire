@@ -1,0 +1,6 @@
+#
+DFNS.L    # Vaneck Defense
+SMH       # Vaneck Semiconductors
+USPY.L    # L&G Cyber Security
+SSLV.L    # Invesco Physical Silver
+URNU.L    # Global X Uranium
